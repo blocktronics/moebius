@@ -1,0 +1,25 @@
+:root {
+    --mid-color: rgb(208, 208, 208);
+    --dark-mid-color: rgb(41, 44, 51);
+    --border-color: rgb(165, 165, 165);
+    --dark-border-color: rgb(30, 31, 35);
+    --view-color: rgb(128, 128, 128);
+    --dark-view-color: rgb(34, 37, 43);
+}
+html, body {
+    width: 100%;
+    height: 100%;
+}
+body {
+    margin: 0px;
+    user-select: none;
+    font-family: BlinkMacSystemFont;
+    color: black;
+}
+body.dark {
+    color: white;
+}
+canvas {
+    image-rendering: pixelated;
+    vertical-align: bottom;
+}

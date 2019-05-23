@@ -1,0 +1,30 @@
+directories:
+  output: dist
+  buildResources: build
+appId: org.andyherbert.moebius
+productName: Mœbius
+copyright: Copyright © 2019 Andy Herbert
+buildVersion: '0001'
+extraResources:
+  - from: build/ans
+    to: ans
+    filter: "*.ans"
+fileAssociations:
+  - ext: .ans
+    name: ANSI Art
+    role: Editor
+    icon: document_icon.icns
+  - ext: .bin
+    name: Binary Text
+    role: Editor
+    icon: document_icon.icns
+  - ext: .xb
+    name: XBin
+    role: Editor
+    icon: document_icon.icns
+mac:
+  category: public.app-category.graphics-design
+  target: dmg
+  icon: app_icon.png
+  darkModeSupport: true
+electronVersion: 5.0.1

@@ -1,0 +1,105 @@
+body {
+    margin: 0;
+    user-select: none;
+}
+
+#resize_requester, #sauce_requester {
+    font-size: 13px;
+    opacity: 0.9;
+    margin: 0 auto;
+    overflow: hidden;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+    background-color: var(--dark-view-color);
+    color: rgb(200, 200, 200);
+}
+
+#resize_requester {
+    width: 300px;
+    height: 180px;
+}
+
+#sauce_requester {
+    width: 350px;
+    height: 335px;
+}
+
+form {
+    padding: 32px 0px 8px 0px;
+    width: 300px;
+}
+
+p {
+    margin: 8px;
+}
+
+p.note {
+    margin: 4px 8px;
+    font-size: 10px;
+}
+
+textarea {
+    border: none;
+    border-top: 1px solid rgb(50, 50, 50);
+    border-bottom: 1px solid rgb(50, 50, 50);
+    padding: 0 8px;
+    width: 334px;
+    height: 100px;
+    margin: 0 auto;
+    resize: none;
+}
+
+label {
+    display: inline-block;
+    text-align: right;
+    width: 120px;
+}
+
+input, textarea {
+    background: none;
+    outline: none;
+    color: white;
+}
+
+textarea.illegal {
+    background-color: rgba(255, 0, 0, 0.5);
+    color: white;
+}
+
+input {
+    margin: 4px;
+    padding: 4px;
+    border: 1px solid var(--mid-color);
+}
+
+input[type=number] {
+    margin-left: 8px;
+    width: 100px;
+}
+
+button {
+    border: 1px solid var(--mid-color); 
+    border-radius: 6px;
+    background: none;
+    color: var(--text);
+    padding: 4px 16px;
+    margin: 8px;
+    outline: none;
+    transition-property: background-color;
+    transition-duration: 20ms;
+    transition-timing-function: linear;
+}
+
+button:active {
+    border: 1px solid white;
+    background-color: var(--status);
+    color: var(--text);
+}
+
+#cancel {
+    float: left;
+}
+
+#ok {
+    float: right;
+}

@@ -1,0 +1,51 @@
+body {
+    background-color: black;
+}
+
+body div:first-child {
+    margin: 0px auto;
+    width: 720px;
+    height: 384px;
+    overflow: hidden;
+    -webkit-app-region: drag;
+}
+
+button {
+    width: 100px;
+    height: 32px;
+    border-radius: 3px;
+    background: none;
+    color: white;
+    outline: none;
+    border: 1px solid #AAAAAA;
+    -webkit-app-region: none;
+    animation: slide 0.5s ease-out;
+}
+
+@keyframes slide {
+    0% {transform: translateY(100px);}
+    100% {transform: translateY(0px);}
+}
+
+#new_document {
+    position: absolute;
+    left: 16px;
+    bottom: 16px;
+}
+
+#open {
+    position: absolute;
+    left: 132px;
+    bottom: 16px;
+}
+
+#connect_to_server {
+    position: absolute;
+    width: 150px;
+    right: 16px;
+    bottom: 16px;
+}
+
+button:active {
+    border-color: white;
+}

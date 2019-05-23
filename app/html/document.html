@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang = "en">
+    <head>
+        <meta charset = "UTF-8">
+        <link rel = "stylesheet" href = "../css/global.css">
+        <link rel = "stylesheet" href = "../css/document.css">
+        <title>Untitled</title>
+        <script>require ("electron").ipcRenderer.on("change_appearance", (event, {is_dark_mode}) => document.body.classList[is_dark_mode ? "add" : "remove"]("dark"));</script>
+        <script src = "../js/document.js"></script>
+    </head>
+    <body>
+        <div id = "sidebar">
+            <div id = "current_colors">
+                <canvas id = "bg" width = "24" height = "24"></canvas>
+                <canvas id = "fg" width = "24" height = "24"></canvas>
+            </div>
+            <div id = "swatches"></div>
+            <div class = "seperator"></div>
+            <div class = "tool selected" id = "select_mode"></div>
+            <div class = "tool" id = "brush_mode"></div>
+            <div class = "seperator"></div>
+            <div class = "tool" id = "sample_mode"></div>
+        </div>
+        <div id= "preview">
+            <div id = "view_frame" class = "hidden"></div>
+        </div>
+        <div id = "toolbar"></div>
+        <div id = "viewport">
+            <div id = "canvas_container">
+                <div id = "ice_color_container"></div>
+                <div id = "blink_off_container"></div>
+                <div id = "blink_on_container"></div>
+                <div id = "editing_layer"></div>
+                <div id = "reference_image"></div>
+            </div>
+        </div>
+        <div id = "statusbar">
+            <div id = "left_info">
+                <div id = "use_9px_font_toggle">Letter Spacing <span id = "use_9px_font">Off</span></div>
+                <div id = "ice_colors_toggle">iCE Colors <span id = "ice_colors">Off</span></div>
+            </div>
+            <div id = "mid_info">
+                <div id = "dimensions"><span id = "columns">0</span> Columns × <span id = "rows">0</span> Rows</div>
+            </div>
+            <div id = "right_info">
+                <div id = "font_name"></div>
+                <div id = "cursor_position">Ln <span id="cursor_y">0</span>, Col <span id="cursor_x">0</span></div>
+                <div id = "insert_mode"></div>
+            </div>
+        </div>
+        <div id = "zoom"></div>
+    </body>
+</html>

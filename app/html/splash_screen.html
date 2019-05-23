@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang = "en">
+<head>
+    <meta charset = "UTF-8">
+    <title></title>
+    <link rel = "stylesheet" href = "../css/global.css">
+    <link rel = "stylesheet" href = "../css/splash_screen.css">
+    <script src="../js/splash_screen.js"></script>
+    <script>require ("electron").ipcRenderer.on("change_appearance", (event, {is_dark_mode}) => document.body.classList[is_dark_mode ? "add": "remove"]("dark"));</script>
+</head>
+<body>
+    <div>
+        <canvas id = "splash_terminal" width = "720" height = "384"></canvas>
+        <button id = "new_document" type="button">New</button>
+        <button id = "open" type="button">Open</button>
+        <button id = "connect_to_server" type="button">Connect to Server</button>
+    </div>
+</body>
+</html>

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang = "en">
+<head>
+    <meta charset = "UTF-8">
+    <title></title>
+    <link rel = "stylesheet" href = "../css/global.css">
+    <link rel = "stylesheet" href = "../css/requester.css">
+    <script src = "../js/resize.js"></script>
+    <script>require ("electron").ipcRenderer.on("change_appearance", (event, {is_dark_mode}) => document.body.classList[is_dark_mode ? "add": "remove"]("dark"));</script>
+</head>
+<body>
+    <div id = "resize_requester">
+        <form>
+            <label for = "columns">Columns:</label>
+            <input id = "columns" type = "number" name = "columns" value = "" autocomplete = "off" autofocus>
+            <div>
+                <label for = "rows">Rows:</label>
+                <input id = "rows" type = "number" name = "rows" autocomplete = "off" value = "">
+            </div>
+        </form>
+        <p class = "note">Note: Artwork with an odd amount of columns cannot be saved in Binary Text format</p>
+        <div id = "button_container">
+            <button id = "cancel" type = "button">Cancel</button>
+            <button id = "ok" class = "default" type = "button">Resize</button>
+        </div>
+    </div>
+</body>
+</html>

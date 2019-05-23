@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang = "en">
+<head>
+    <meta charset = "UTF-8">
+    <title></title>
+    <link rel = "stylesheet" href = "../css/global.css">
+    <link rel = "stylesheet" href = "../css/requester.css">
+    <script src = "../js/sauce.js"></script>
+    <script>require ("electron").ipcRenderer.on("change_appearance", (event, {is_dark_mode}) => document.body.classList[is_dark_mode ? "add": "remove"]("dark"));</script>
+</head>
+<body>
+    <div id = "sauce_requester">
+        <form>
+            <label for = "title">Title:</label>
+            <input id = "title" type = "text" name = "title" value = "" autocomplete = "off" maxlength = "35" autofocus spellcheck = "false">
+            <label for = "author">Author:</label>
+            <input id = "author" type = "text" name = "author" value = "" autocomplete = "off" maxlength = "20" spellcheck = "false">
+            <label for = "group">Group:</label>
+            <input id = "group" type = "text" name = "group" value = "" autocomplete = "off" maxlength = "20" spellcheck = "false">
+            <p>Comments:</p>
+            <textarea id = "comments" rows = "256" cols = "64" autocomplete = "off" spellcheck = "false"></textarea>
+            <p class = "note">Note: Limited to 64 characters per line, with a total of 256 lines</p>
+        </form>
+        <div id = "button_container">
+            <button id = "cancel" type = "button">Cancel</button>
+            <button id = "ok" class = "default" type = "button">Update</button>
+        </div>
+    </div>
+</body>
+</html>
