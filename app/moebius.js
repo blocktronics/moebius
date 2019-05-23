@@ -1,0 +1,686 @@
+const electron = require("electron");
+const path = require("path");
+const docs = {};
+let splash_screen_win;
+let last_document_xy_position;
+const NEW_DOCUMENT_WIDTH = 1280;
+const NEW_DOCUMENT_HEIGHT = 800;
+
+function create_touch_bar(win) {
+    return {
+        editing: new electron.TouchBar({
+            items: [
+                new electron.TouchBar.TouchBarButton({label: "F1", click() {win.send("f_key", 0);}}),
+                new electron.TouchBar.TouchBarButton({label: "F2", click() {win.send("f_key", 1);}}),
+                new electron.TouchBar.TouchBarButton({label: "F3", click() {win.send("f_key", 2);}}),
+                new electron.TouchBar.TouchBarButton({label: "F4", click() {win.send("f_key", 3);}}),
+                new electron.TouchBar.TouchBarButton({label: "F5", click() {win.send("f_key", 4);}}),
+                new electron.TouchBar.TouchBarButton({label: "F6", click() {win.send("f_key", 5);}}),
+                new electron.TouchBar.TouchBarButton({label: "F7", click() {win.send("f_key", 6);}}),
+                new electron.TouchBar.TouchBarButton({label: "F8", click() {win.send("f_key", 7);}})
+            ],
+            escapeItem: new electron.TouchBar.TouchBarButton({label: "Brush", click() {win.send("change_to_brush_mode");}})
+        }), selection: new electron.TouchBar({
+            items: [
+                new electron.TouchBar.TouchBarSpacer({size: "flexible"}),
+                new electron.TouchBar.TouchBarButton({label: "Copy", click() {win.send("copy_block");}}),
+                new electron.TouchBar.TouchBarButton({label: "Move", click() {win.send("move_block");}}),
+                new electron.TouchBar.TouchBarSpacer({size: "flexible"}),
+                new electron.TouchBar.TouchBarButton({label: "Delete", click() {win.send("delete_selection");}}),
+                new electron.TouchBar.TouchBarSpacer({size: "flexible"}),
+                new electron.TouchBar.TouchBarButton({label: "Copy to Clipboard", click() {win.send("copy");}}),
+                new electron.TouchBar.TouchBarButton({label: "Cut to Clipboard", click() {win.send("cut");}}),
+            ],
+            escapeItem: new electron.TouchBar.TouchBarButton({label: "Deselect", click() {win.send("deselect");}})
+        }), operation: new electron.TouchBar({
+            items: [
+                new electron.TouchBar.TouchBarSpacer({size: "flexible"}),
+                new electron.TouchBar.TouchBarButton({label: "Stamp", click() {win.send("stamp");}}),
+                new electron.TouchBar.TouchBarButton({label: "Place", click() {win.send("place");}}),
+                new electron.TouchBar.TouchBarSpacer({size: "flexible"}),
+                new electron.TouchBar.TouchBarButton({label: "Center", click() {win.send("center");}}),
+                new electron.TouchBar.TouchBarSpacer({size: "flexible"}),
+                new electron.TouchBar.TouchBarButton({label: "Rotate", click() {win.send("rotate");}}),
+                new electron.TouchBar.TouchBarButton({label: "Flip X", click() {win.send("flip_x");}}),
+                new electron.TouchBar.TouchBarButton({label: "Flip Y", click() {win.send("flip_y");}}),
+            ],
+            escapeItem: new electron.TouchBar.TouchBarButton({label: "Cancel", click() {win.send("deselect");}})
+        }), brush: new electron.TouchBar({
+            items: [
+                new electron.TouchBar.TouchBarSpacer({size: "flexible"}),
+                new electron.TouchBar.TouchBarButton({label: "Prev. Foreground", click() {win.send("previous_foreground_color", 2);}}),
+                new electron.TouchBar.TouchBarButton({label: "Next Foreground", click() {win.send("next_foreground_color", 2);}}),
+                new electron.TouchBar.TouchBarSpacer({size: "flexible"}),
+                new electron.TouchBar.TouchBarButton({label: "Prev. Background", click() {win.send("next_background_color", 2);}}),
+                new electron.TouchBar.TouchBarButton({label: "Next Background", click() {win.send("next_background_color", 2);}}),
+            ],
+            escapeItem: new electron.TouchBar.TouchBarButton({label: "Edit", click() {win.send("change_to_select_mode", 8);}})
+        })
+    };
+}
+
+function set_application_menu() {
+    electron.Menu.setApplicationMenu(application_menu);
+}
+
+function change_appearance(win) {
+    if (!win.isDestroyed()) win.send("change_appearance", {is_dark_mode: electron.systemPreferences.isDarkMode()});
+}
+
+async function new_window({width, height, file}) {
+    return new Promise((resolve) => {
+        const win = new electron.BrowserWindow({width, height, minWidth: 800, minHeight: 500, show: false, webPreferences: {nodeIntegration: true}, backgroundColor: electron.systemPreferences.isDarkMode() ? "#22252B" : "#f6f6f6"});
+        electron.systemPreferences.subscribeNotification("AppleInterfaceThemeChangedNotification", (event) => change_appearance(win));
+        win.on("ready-to-show", (event) => {
+            change_appearance(win);
+            win.show();
+            resolve(win);
+        });
+        win.loadFile(file);
+    });
+}
+
+async function new_modal_window({width, height, file, parent}) {
+    return new Promise((resolve) => {
+        const win = new electron.BrowserWindow({parent, width, height, show: false, modal: true, useContentSize: true, transparent: true, webPreferences: {nodeIntegration: true}});
+        electron.systemPreferences.subscribeNotification("AppleInterfaceThemeChangedNotification", (event) => change_appearance(win));
+        win.on("ready-to-show", (event) => {
+            change_appearance(win);
+            win.show();
+            resolve(win);
+        });
+        win.loadFile(file);
+    });
+}
+
+function cleanup_document(id) {
+    delete docs[id];
+    if (docs.length == 0) set_application_menu();
+}
+
+async function new_document_window() {
+    if (splash_screen_win && !splash_screen_win.isDestroyed()) splash_screen_win.close();
+    const win = await new_window({width: NEW_DOCUMENT_WIDTH, height: NEW_DOCUMENT_HEIGHT, file: "app/html/document.html"});
+    if (last_document_xy_position) {
+        const display = electron.screen.getPrimaryDisplay();
+        win.setPosition(Math.min(display.workArea.width + display.workArea.x - NEW_DOCUMENT_WIDTH, last_document_xy_position[0] + 30), Math.min(display.workArea.height + display.workArea.y - NEW_DOCUMENT_HEIGHT, last_document_xy_position[1] + 30));
+    }
+    last_document_xy_position = win.getPosition();
+    docs[win.id] = {win, menu: document_menu(), modal_menu: modal_menu(), touch_bars: create_touch_bar(win), edited: false};
+    win.on("focus", (event) => {
+        if (docs[win.id] && docs[win.id].modal && !docs[win.id].modal.isDestroyed()) {
+            electron.Menu.setApplicationMenu(docs[win.id].modal_menu);
+        } else {
+            electron.Menu.setApplicationMenu(docs[win.id].menu);
+        }
+    });
+    win.on("close", (event) => {
+        if (docs[win.id].edited) {
+            const choice = electron.dialog.showMessageBox(win, {message: "Save this document?", detail: "This document contains unsaved changes.", buttons: ["Save", "Cancel", "Don't Save"], defaultId: 0, cancelId: 1});
+            if (choice == 0) {
+                event.preventDefault();
+                save({win, close_on_save: true});
+            } else if (choice == 1) {
+                event.preventDefault();
+            } else {
+                last_document_xy_position = win.getPosition();
+                cleanup_document(win.id);
+            }
+        } else {
+            last_document_xy_position = win.getPosition();
+            cleanup_document(win.id);
+        }
+    });
+    return win;
+}
+
+async function new_document({columns = 80, rows = 24} = {}) {
+    const win = await new_document_window();
+    win.send("new_document", {columns, rows});
+}
+
+function open(win) {
+    electron.dialog.showOpenDialog(win, {filters: [{name: "TextArt", extensions: ["ans", "xb", "bin"]}, {name: "All Files", extensions: ["*"]}], properties: ["openFile", "multiSelections"]}, (files) => {
+        if (files) {
+            if (win && !docs[win.id].file && !docs[win.id].edited) {
+                docs[win.id].file = files[0];
+                electron.app.addRecentDocument(files[0]);
+                win.setRepresentedFilename(files[0]);
+                win.setTitle(path.basename(files[0]));
+                win.send("open_file", {file: files[0]});
+            } else {
+                open_file(files[0]);
+            }
+            for (let i = 1; i < files.length; i++) open_file(files[i]);
+        }
+    });
+}
+
+function save_as({win, close_on_save = false}) {
+    electron.dialog.showSaveDialog(win, {filters: [{name: "ANSI Art", extensions: ["ans"]}, {name: "XBin", extensions: ["xb"]}, {name: "Binary Text", extensions: ["bin"]}], defaultPath: `${docs[win.id].file ? path.parse(docs[win.id].file).name : "Untitled"}.ans`}, (file) => {
+        if (file) {
+            docs[win.id].file = file;
+            docs[win.id].edited = false;
+            win.setRepresentedFilename(file);
+            win.setTitle(path.basename(file));
+            win.setDocumentEdited(false);
+            electron.app.addRecentDocument(file);
+            win.send("save", {file, close_on_save});
+        }
+    });
+}
+
+function save({win, close_on_save = false}) {
+    if (docs[win.id].file) {
+        docs[win.id].edited = false;
+        win.setDocumentEdited(false);
+        win.send("save", {file: docs[win.id].file, close_on_save});
+    } else {
+        save_as({win, close_on_save});
+    }
+}
+
+function export_as_png({win}) {
+    electron.dialog.showSaveDialog(win, {filters: [{name: "Portable Network Graphics ", extensions: ["png"]}]}, (file) => {
+        if (file) win.send("export_as_png", file);
+    });
+}
+
+function open_reference_image({win}) {
+    electron.dialog.showOpenDialog(win, {filters: [{name: "Images", extensions: ["png", "jpg"]}], properties: ["openFile"]}, (files) => {
+        if (files) {
+            win.send("open_reference_image", {image: electron.nativeImage.createFromPath(files[0]).toDataURL()});
+            docs[win.id].menu.getMenuItemById("clear_reference_image").enabled = true;
+        }
+    });
+}
+
+function start_server({item, win}) {
+    console.log("start_server");
+}
+
+function connect_to_server() {
+    console.log("connect_to_server");
+}
+
+function disconnect({item, win}) {
+    console.log("disconnect");
+}
+
+function open_dev_tools({win}) {
+    if (win && !win.isDestroyed()) win.webContents.openDevTools({activate: false, mode: "detach"});
+}
+
+// Displayed when anything other than a document is frontmost.
+const application_menu = electron.Menu.buildFromTemplate([{
+    label: "Mœbius",
+    submenu: [
+        {role: "about", label: "About Mœbius"},
+        {type: "separator"},
+        {role: "services"},
+        {type: "separator"},
+        {role: "hide", label: "Hide Mœbius"},
+        {role: "hideothers"},
+        {role: "unhide"},
+        {type: "separator"},
+        {role: "quit", label: "Quit Mœbius"}
+    ]
+}, {
+    label: "File",
+    submenu: [
+        {label: "New", id: "new_document", accelerator: "Cmd+N", click(item, win) {new_document();}},
+        {type: "separator"},
+        {label: "Open\u2026", id: "open", accelerator: "Cmd+O", click(item, win) {open();}},
+        {role: "recentDocuments", submenu: [{label: "Clear Menu", id: "clear_recent_documents", click(item, win) {electron.app.clearRecentDocuments();}}]},
+        {type: "separator"},
+        {role: "close"},
+    ]
+}, {
+    label: "Network", submenu: [
+        {label: "Connect to Server…", id: "connect_to_server", click(item, win) {connect_to_server();}},
+    ]
+}, {
+    label: "Window", submenu: [{role: "minimize"}, {role: "zoom"}, {type: "separator"}, {role: "front"}]
+}, {
+    label: "Debug",
+    submenu: [{label: "Open Dev Tools", id: "open_dev_tools", accelerator: "Ctrl+C", click(item, win) {open_dev_tools({win});}}]
+}, {
+    label: "Help", role: "help", submenu: []
+}]);
+
+// Displayed when modal window is frontmost.
+function modal_menu() {
+    return electron.Menu.buildFromTemplate([{
+        label: "Mœbius",
+        submenu: [
+            {role: "about", label: "About Mœbius"},
+            {type: "separator"},
+            {role: "services"},
+            {type: "separator"},
+            {role: "hide", label: "Hide Mœbius"},
+            {role: "hideothers"},
+            {role: "unhide"},
+            {type: "separator"},
+            {role: "quit", label: "Quit Mœbius"}
+        ]
+    }, {
+        label: "Window", submenu: [{role: "minimize"}, {role: "zoom"}, {type: "separator"}, {role: "front"}]
+    }, {
+        label: "Debug",
+        submenu: [{label: "Open Dev Tools", id: "open_dev_tools", accelerator: "Ctrl+C", click(item, win) {open_dev_tools({win});}}]
+    }, {
+        label: "Help", role: "help", submenu: []
+    }]);
+}
+
+function document_menu() {
+    return electron.Menu.buildFromTemplate([{
+            label: "Mœbius",
+            submenu: [{role: "about", label: "About Mœbius"},
+                {type: "separator"},
+                {role: "services"},
+                {type: "separator"},
+                {role: "hide", label: "Hide Mœbius"},
+                {role: "hideothers"},
+                {role: "unhide"},
+                {type: "separator"},
+                {role: "quit", label: "Quit Mœbius"}
+            ]
+        }, {
+            label: "File",
+            submenu: [
+                {label: "New", id: "new_document", accelerator: "Cmd+N", click(item, win) {new_document();}},
+                {type: "separator"},
+                {label: "Open\u2026", id: "open", accelerator: "Cmd+O", click(item, win) {open(win);}},
+                {role: "recentDocuments", submenu: [
+                    {label: "Clear Menu", id: "clear_recent_documents", click(item, win) {electron.app.clearRecentDocuments();}},
+                ]},
+                {type: "separator"},
+                {label: "Edit Sauce Info\u2026", id: "edit_sauce_info", accelerator: "Cmd+I", click(item, win) {win.send("get_sauce_info");}},
+                {type: "separator"},
+                {label: "Save", id: "save", accelerator: "Cmd+S", click(item, win) {save({win});}},
+                {label: "Save As\u2026", id: "save_as", accelerator: "Cmd+Shift+S", click(item, win) {save_as({win});}},
+                {type: "separator"},
+                {label: "Export As PNG\u2026", id: "export_as_png", accelerator: "Cmd+Shift+E", click(item, win) {export_as_png({win});}},
+                {type: "separator"},
+                {role: "close"}
+            ]
+        }, {
+            label: "Edit",
+            submenu: [
+                {label: "Undo", id: "undo", accelerator: "Cmd+Z", click(item, win) {win.send("undo");}, enabled: false},
+                {label: "Redo", id: "redo", accelerator: "Cmd+Shift+Z", click(item, win) {win.send("redo");}, enabled: false},
+                {label: "Toggle Insert Mode", id: "toggle_insert_mode", click(item, win) {win.send("insert_mode", item.checked);}, type: "checkbox", checked: false},
+                {type: "separator"},
+                {label: "Cut", id: "cut", accelerator: "Cmd+X", click(item, win) {win.send("cut");}, enabled: false},
+                {label: "Copy", id: "copy", accelerator: "Cmd+C", click(item, win) {win.send("copy");}, enabled: false},
+                {label: "Paste", id: "paste", accelerator: "Cmd+V", click(item, win) {win.send("paste");}},
+                {label: "Delete", id: "delete_selection", accelerator: "Cmd+Backspace", click(item, win) {win.send("delete_selection");}, enabled: false},
+                {type: "separator"},
+                {label: "Select All", id: "select_all", accelerator: "Cmd+A", click(item, win) {win.send("select_all");}},
+                {label: "Deselect", id: "deselect", accelerator: "Escape", click(item, win) {win.send("deselect");}, enabled: false},
+                {type: "separator"},
+                {label: "Move Block", id: "move_block", accelerator: "M", click(item, win) {win.send("move_block");}, enabled: false},
+                {label: "Copy Block", id: "copy_block", accelerator: "C", click(item, win) {win.send("copy_block");}, enabled: false},
+                {type: "separator"},
+                {label: "Stamp", id: "stamp", accelerator: "S", click(item, win) {win.send("stamp");}, enabled: false},
+                {label: "Rotate", id: "rotate", accelerator: "R", click(item, win) {win.send("rotate");}, enabled: false},
+                {label: "Flip X", id: "flip_x", accelerator: "X", click(item, win) {win.send("flip_x");}, enabled: false},
+                {label: "Flip Y", id: "flip_y", accelerator: "Y", click(item, win) {win.send("flip_y");}, enabled: false},
+                {label: "Center", id: "center", accelerator: "=", click(item, win) {win.send("center");}, enabled: false},
+                {type: "separator"},
+                {label: "Set Canvas Size\u2026", id: "set_canvas_size", accelerator: "Cmd+Alt+C", click(item, win) {win.send("get_canvas_size");}},
+                {type: "separator"},
+                {label: "Previous Foreground Color", id: "previous_foreground_color", accelerator: "Alt+Up", click(item, win) {win.send("previous_foreground_color");}},
+                {label: "Next Foreground Color", id: "next_foreground_color", accelerator: "Alt+Down", click(item, win) {win.send("next_foreground_color");}},
+                {type: "separator"},
+                {label: "Previous Background Color", id: "previous_background_colour", accelerator: "Alt+Left", click(item, win) {win.send("previous_background_colour");}},
+                {label: "Next Background Color", id: "next_background_color", accelerator: "Alt+Right", click(item, win) {win.send("next_background_color");}},
+                {type: "separator"},
+                {label: "Use Attribute Under Cursor", id: "use_attribute_under_cursor", accelerator: "Alt+U", click(item, win) {win.send("use_attribute_under_cursor");}},
+                {label: "Default Color", id: "default_color", accelerator: "Cmd+D", click(item, win) {win.send("default_color");}},
+                {label: "Switch Foreground / Background", id: "switch_foreground_background", accelerator: "Shift+Cmd+X", click(item, win) {win.send("switch_foreground_background");}}
+            ]
+        }, {
+            label: "View",
+            submenu: [
+                {label: "Show Status Bar", id: "show_status_bar", accelerator: "Cmd+/", click(item, win) {win.send("show_statusbar", item.checked);}, type: "checkbox", checked: true},
+                {label: "Show Preview", id: "show_preview", accelerator: "Cmd+Alt+P", click(item, win) {win.send("show_preview", item.checked);}, type: "checkbox", checked: true},
+                {type: "separator"},
+                {label: "Use 9px Font", id: "use_9px_font", click(item, win) {win.send("use_9px_font", item.checked);}, type: "checkbox", checked: false},
+                {label: "Use iCE Colors", id: "ice_colors", click(item, win) {win.send("ice_colors", item.checked);}, type: "checkbox", checked: false},
+                {type: "separator"},
+                {label: "Actual Size", id: "actual_size", accelerator: "Cmd+0", click(item, win) {win.send("actual_size");}, type: "checkbox", checked: false},
+                {label: "Zoom In", id: "zoom_in", accelerator: "Cmd+=", click(item, win) {win.send("zoom_in");}},
+                {label: "Zoom Out", id: "zoom_out", accelerator: "Cmd+-", click(item, win) {win.send("zoom_out");}},
+                {type: "separator"},
+                {label: "Change Font", submenu: [
+                    {label: "Amiga", submenu: [
+                        {label: "Amiga Topaz 1 (8×16)", id: "Amiga Topaz 1", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "Amiga Topaz 1+ (8×16)", id: "Amiga Topaz 1+", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "Amiga Topaz 2 (8×16)", id: "Amiga Topaz 2", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "Amiga Topaz 2+ (8×16)", id: "Amiga Topaz 2+", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "Amiga P0T-NOoDLE (8×16)", id: "Amiga P0T-NOoDLE", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "Amiga MicroKnight (8×16)", id: "Amiga MicroKnight", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "Amiga MicroKnight+ (8×16)", id: "Amiga MicroKnight+", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "Amiga mOsOul (8×16)", id: "Amiga mOsOul", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                    ]},
+                    {label: "Arabic", submenu: [
+                        {label: "IBM VGA50 864 (8×8)", id: "IBM VGA50 864", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 864 (8×14)", id: "IBM EGA 864", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 864 (8×16)", id: "IBM VGA 864", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                    ]},
+                    {label: "Baltic Rim", submenu: [
+                        {label: "IBM VGA50 775 (8×8)", id: "IBM VGA50 775", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 775 (8×14)", id: "IBM EGA 775", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 775 (8×16)", id: "IBM VGA 775", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                    ]},
+                    {label: "Cyrillic", submenu: [
+                        {label: "IBM VGA50 866 (8×8)", id: "IBM VGA50 866", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 866 (8×14)", id: "IBM EGA 866", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 866 (8×16)", id: "IBM VGA 866", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 855 (8×8)", id: "IBM VGA50 855", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 855 (8×14)", id: "IBM EGA 855", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 855 (8×16)", id: "IBM VGA 855", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                    ]},
+                    {label: "French Canadian", submenu: [
+                        {label: "IBM VGA50 863 (8×8)", id: "IBM VGA50 863", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 863 (8×14)", id: "IBM EGA 863", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 863 (8×16)", id: "IBM VGA 863", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 863 (8×19)", id: "IBM VGA25G 863", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                    ]},
+                    {label: "Greek", submenu: [
+                        {label: "IBM VGA50 737 (8×8)", id: "IBM VGA50 737", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 737 (8×14)", id: "IBM EGA 737", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 737 (8×16)", id: "IBM VGA 737", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 869 (8×8)", id: "IBM VGA50 869", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 869 (8×14)", id: "IBM EGA 869", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 869 (8×16)", id: "IBM VGA 869", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 851 (8×8)", id: "IBM VGA50 851", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 851 (8×14)", id: "IBM EGA 851", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 851 (8×16)", id: "IBM VGA 851", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 851 (8×19)", id: "IBM VGA25G 851", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                    ]},
+                    {label: "Hebrew", submenu: [
+                        {label: "IBM VGA50 862 (8×8)", id: "IBM VGA50 862", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 862 (8×14)", id: "IBM EGA 862", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 862 (8×16)", id: "IBM VGA 862", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                    ]},
+                    {label: "IBM PC", submenu: [
+                        {label: "IBM VGA50 (8×8)",  id: "IBM VGA50", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA (8×14)", id: "IBM EGA", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA (8×16)", id: "IBM VGA", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G (8×19 (8×19)", id: "IBM VGA25G", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                    ]},
+                    {label: "Icelandic", submenu: [
+                        {label: "IBM VGA50 861 (8×8)", id: "IBM VGA50 861", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 861 (8×14)", id: "IBM EGA 861", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 861 (8×16)", id: "IBM VGA 861", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 861 (8×19)", id: "IBM VGA25G 861", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                    ]},
+                    {label: "Latin-1 Western European", submenu: [
+                        {label: "IBM VGA50 850 (8×8)", id: "IBM VGA50 850", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 850 (8×14)", id: "IBM EGA 850", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 850 (8×16)", id: "IBM VGA 850", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 850 (8×19)", id: "IBM VGA25G 850", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                    ]},
+                    {label: "Latin-1 Central European", submenu: [
+                        {label: "IBM VGA50 852 (8×8)", id: "IBM VGA50 852", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 852 (8×14)", id: "IBM EGA 852", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 852 (8×16)", id: "IBM VGA 852", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 852 (8×19)", id: "IBM VGA25G 852", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                    ]},
+                    {label: "Latin-1 Multilingual", submenu: [
+                        {label: "IBM VGA50 853 (8×8)", id: "IBM VGA50 853", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 853 (8×14)", id: "IBM EGA 853", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 853 (8×16)", id: "IBM VGA 853", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 853 (8×19)", id: "IBM VGA25G 853", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                    ]},
+                    {label: "Nordic", submenu: [
+                        {label: "IBM VGA50 865 (8×8)", id: "IBM VGA50 865", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 865 (8×14)", id: "IBM EGA 865", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 865 (8×16)", id: "IBM VGA 865", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 865 (8×19)", id: "IBM VGA25G 865", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                    ]},
+                    {label: "Portuguese", submenu: [
+                        {label: "IBM VGA50 860 (8×8)", id: "IBM VGA50 860", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 860 (8×14)", id: "IBM EGA 860", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 860 (8×16)", id: "IBM VGA 860", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 860 (8×19)", id: "IBM VGA25G 860", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                    ]},
+                    {label: "Turkish", submenu: [
+                        {label: "IBM VGA50 857 (8×8)", id: "IBM VGA50 857", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 857 (8×14)", id: "IBM EGA 857", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 857 (8×16)", id: "IBM VGA 857", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                    ]}
+                ]},
+                {type: "separator"},
+                {label: "Open Reference Image\u2026", id: "open_reference_image", click(item, win) {open_reference_image({win});}},
+                {label: "Clear", id: "clear_reference_image", click(item, win) {win.send("clear_reference_image");}, enabled: false},
+                {type: "separator"},
+                {role: "togglefullscreen"}
+            ]
+        }, {
+            label: "Network", submenu: [
+                {label: "Start Server…", id: "start_server", click(item, win) {start_server({item, win});}},
+                {label: "Connect to Server…", id: "connect_to_server", click(item, win) {connect_to_server();}},
+                {type: "separator"},
+                {label: "Disconnect", id: "disconnect", click(item, win) {disconnect({item, win});}, enabled: false},
+            ]
+        }, {
+            label: "Window", submenu: [{role: "minimize"}, {role: "zoom"}, {type: "separator"}, {role: "front"}]
+        }, {
+            label: "Debug",
+            submenu: [
+                {label: "Open Dev Tools", id: "open_dev_tools", accelerator: "Ctrl+C", click(item, win) {open_dev_tools({item, win});}},
+            ]
+        }, {label: "Help", role: "help", submenu: []}
+    ]);
+}
+
+function show_splash_screen() {
+    if (splash_screen_win && !splash_screen_win.isDestroyed()) {
+        splash_screen_win.focus();
+    } else {
+        splash_screen_win = new electron.BrowserWindow({width: 720, height: 384, show: false, backgroundColor: "#000000", titleBarStyle: "hiddenInset", maximizable: false, resizable: false, frame: false, fullscreenable: false, useContentSize: true, webPreferences: {nodeIntegration: true}});
+        splash_screen_win.on("focus", (event) => set_application_menu());
+        splash_screen_win.on("ready-to-show", (event) => splash_screen_win.show());
+        splash_screen_win.loadFile("app/html/splash_screen.html");
+        splash_screen_win.setTouchBar(new electron.TouchBar({
+            items: [
+                new electron.TouchBar.TouchBarSpacer({size: "flexible"}),
+                new electron.TouchBar.TouchBarButton({label: "New", click() {new_document();}}),
+                new electron.TouchBar.TouchBarButton({label: "Open", click() {open();}}),
+                new electron.TouchBar.TouchBarSpacer({size: "flexible"}),
+                new electron.TouchBar.TouchBarButton({label: "Connect to Server", click() {connect_to_server();}}),
+                new electron.TouchBar.TouchBarSpacer({size: "flexible"}),
+            ], escapeItem: new electron.TouchBar.TouchBarLabel({label: "Mœbius", textColor: "#939393"})
+        }));
+    }
+}
+
+async function open_file(file) {
+    for (const id of Object.keys(docs)) {
+        if (docs[id].file == file) {
+            docs[id].win.show();
+            return;
+        }
+    }
+    const win = await new_document_window();
+    docs[win.id].file = file;
+    electron.app.addRecentDocument(file);
+    win.setRepresentedFilename(file);
+    win.setTitle(path.basename(file));
+    win.send("open_file", {file});
+}
+
+function has_document_windows() {
+    return Object.keys(docs).length > 0;
+}
+
+async function show_rendering_modal(event, id) {
+    docs[id].modal = await new_modal_window({width: 300, height: 200, file: "app/html/rendering.html", parent: docs[id].win});
+    electron.Menu.setApplicationMenu(docs[id].modal_menu);
+    event.returnValue = true;
+}
+
+function close_modal(id) {
+    if (docs[id].modal && !docs[id].modal.isDestroyed()) docs[id].modal.close();
+    electron.Menu.setApplicationMenu(docs[id].menu);
+}
+
+function update_menu_checkboxes({id, insert_mode, use_9px_font, ice_colors, actual_size, font_name}) {
+    const menu = docs[id].menu;
+    menu.getMenuItemById("toggle_insert_mode").checked = insert_mode;
+    menu.getMenuItemById("use_9px_font").checked = use_9px_font;
+    menu.getMenuItemById("ice_colors").checked = ice_colors;
+    menu.getMenuItemById("actual_size").checked = actual_size;
+    if (docs[id].font_name) {
+        menu.getMenuItemById(docs[id].font_name).checked = false;
+        delete docs[id].font_name;
+    }
+    const font_menu_item = menu.getMenuItemById(font_name);
+    if (font_menu_item) {
+        font_menu_item.checked = true;
+        docs[id].font_name = font_name;
+    }
+}
+
+function enable_undo(id) {
+    docs[id].menu.getMenuItemById("undo").enabled = true;
+}
+
+function disable_undo(id) {
+    docs[id].menu.getMenuItemById("undo").enabled = false;
+}
+
+function enable_redo(id) {
+    docs[id].menu.getMenuItemById("redo").enabled = true;
+}
+
+function disable_redo(id) {
+    docs[id].menu.getMenuItemById("redo").enabled = false;
+}
+
+function disable_selection_menu_items(id) {
+    docs[id].menu.getMenuItemById("cut").enabled = false;
+    docs[id].menu.getMenuItemById("copy").enabled = false;
+    docs[id].menu.getMenuItemById("delete_selection").enabled = false;
+    docs[id].menu.getMenuItemById("deselect").enabled = false;
+    docs[id].menu.getMenuItemById("move_block").enabled = false;
+    docs[id].menu.getMenuItemById("copy_block").enabled = false;
+}
+
+function disable_selection_menu_items_except_deselect(id) {
+    disable_selection_menu_items(id);
+    docs[id].menu.getMenuItemById("deselect").enabled = true;
+}
+
+function enable_selection_menu_items(id) {
+    docs[id].menu.getMenuItemById("cut").enabled = true;
+    docs[id].menu.getMenuItemById("copy").enabled = true;
+    docs[id].menu.getMenuItemById("delete_selection").enabled = true;
+    docs[id].menu.getMenuItemById("deselect").enabled = true;
+    docs[id].menu.getMenuItemById("move_block").enabled = true;
+    docs[id].menu.getMenuItemById("copy_block").enabled = true;
+}
+
+function enable_operation_menu_items(id) {
+    docs[id].menu.getMenuItemById("stamp").enabled = true;
+    docs[id].menu.getMenuItemById("rotate").enabled = true;
+    docs[id].menu.getMenuItemById("flip_x").enabled = true;
+    docs[id].menu.getMenuItemById("flip_y").enabled = true;
+    docs[id].menu.getMenuItemById("center").enabled = true;
+}
+
+function disable_operation_menu_items(id) {
+    docs[id].menu.getMenuItemById("stamp").enabled = false;
+    docs[id].menu.getMenuItemById("rotate").enabled = false;
+    docs[id].menu.getMenuItemById("flip_x").enabled = false;
+    docs[id].menu.getMenuItemById("flip_y").enabled = false;
+    docs[id].menu.getMenuItemById("center").enabled = false;
+}
+
+function disable_editing_shortcuts(id) {
+    disable_selection_menu_items(id);
+    disable_operation_menu_items(id);
+    docs[id].menu.getMenuItemById("use_attribute_under_cursor").enabled = false;
+}
+
+function enable_editing_shortcuts(id) {
+    disable_selection_menu_items(id);
+    disable_operation_menu_items(id);
+    docs[id].menu.getMenuItemById("use_attribute_under_cursor").enabled = true;
+}
+
+function show_editing_touchbar(id) {
+    docs[id].win.setTouchBar(docs[id].touch_bars.editing);
+}
+
+function show_selection_touchbar(id) {
+    docs[id].win.setTouchBar(docs[id].touch_bars.selection);
+}
+
+function show_operation_touchbar(id) {
+    docs[id].win.setTouchBar(docs[id].touch_bars.operation);
+}
+
+async function get_canvas_size({id, columns, rows}) {
+    docs[id].modal = await new_modal_window({width: 300, height: 180, file: "app/html/resize.html", parent: docs[id].win});
+    docs[id].modal.send("set_canvas_size", {columns, rows});
+    electron.Menu.setApplicationMenu(docs[id].modal_menu);
+}
+
+function set_canvas_size({id, columns, rows}) {
+    close_modal(id);
+    docs[id].win.send("set_canvas_size", {columns, rows});
+}
+
+async function get_sauce_info({id, title, author, group, comments}) {
+    docs[id].modal = await new_modal_window({width: 350, height: 335, file: "app/html/sauce.html", parent: docs[id].win});
+    docs[id].modal.send("set_sauce_info", {title, author, group, comments});
+    electron.Menu.setApplicationMenu(docs[id].modal_menu);
+}
+
+function set_sauce_info({id, title, author, group, comments}) {
+    close_modal(id);
+    docs[id].win.send("set_sauce_info", {title, author, group, comments});
+}
+
+function document_changed(id) {
+    docs[id].edited = true;
+    docs[id].win.setDocumentEdited(true);
+}
+
+function show_brush_touchbar(id) {
+    docs[id].win.setTouchBar(docs[id].touch_bars.brush);
+}
+
+electron.ipcMain.on("new_document", (event) => new_document());
+electron.ipcMain.on("open", (event) => open());
+electron.ipcMain.on("connect_to_server", (event) => connect_to_server());
+electron.ipcMain.on("show_rendering_modal", (event, {id}) => show_rendering_modal(event, id));
+electron.ipcMain.on("close_modal", (event, {id}) => close_modal(id));
+electron.ipcMain.on("update_menu_checkboxes", (event, opts) => update_menu_checkboxes(opts));
+electron.ipcMain.on("enable_undo", (event, {id}) => enable_undo(id));
+electron.ipcMain.on("disable_undo", (event, {id}) => disable_undo(id));
+electron.ipcMain.on("enable_redo", (event, {id}) => enable_redo(id));
+electron.ipcMain.on("disable_redo", (event, {id}) => disable_redo(id));
+electron.ipcMain.on("disable_selection_menu_items", (event, {id}) => disable_selection_menu_items(id));
+electron.ipcMain.on("disable_selection_menu_items_except_deselect", (event, {id}) => disable_selection_menu_items_except_deselect(id));
+electron.ipcMain.on("enable_selection_menu_items", (event, {id}) => enable_selection_menu_items(id));
+electron.ipcMain.on("enable_operation_menu_items", (event, {id}) => enable_operation_menu_items(id));
+electron.ipcMain.on("disable_operation_menu_items", (event, {id}) => disable_operation_menu_items(id));
+electron.ipcMain.on("show_editing_touchbar", (event, {id}) => show_editing_touchbar(id));
+electron.ipcMain.on("show_selection_touchbar", (event, {id}) => show_selection_touchbar(id));
+electron.ipcMain.on("show_operation_touchbar", (event, {id}) => show_operation_touchbar(id));
+electron.ipcMain.on("get_canvas_size", (event, opts) => get_canvas_size(opts));
+electron.ipcMain.on("set_canvas_size", (event, opts) => set_canvas_size(opts));
+electron.ipcMain.on("get_sauce_info", (event, opts) => get_sauce_info(opts));
+electron.ipcMain.on("set_sauce_info", (event, opts) => set_sauce_info(opts));
+electron.ipcMain.on("document_changed", (event, {id}) => document_changed(id));
+electron.ipcMain.on("disable_editing_shortcuts", (event, {id}) => disable_editing_shortcuts(id));
+electron.ipcMain.on("enable_editing_shortcuts", (event, {id}) => enable_editing_shortcuts(id));
+electron.ipcMain.on("show_brush_touchbar", (event, {id}) => show_brush_touchbar(id));
+
+module.exports = {show_splash_screen, open_file, set_application_menu, has_document_windows};
