@@ -50,6 +50,7 @@ class Cursor {
 
     move_to(x, y, scroll_view = false) {
         this.x = x; this.y = y;
+        if (this.connection) cursor.connection(x, y);
         update_status_bar_cursor_pos();
         switch (this.mode) {
             case cursor_modes.EDITING:
@@ -134,7 +135,7 @@ class Cursor {
     resize_to_font() {
         this.canvas.width = render.font.width;
         this.canvas.height = render.font.height;
-        this.move_to(this.x, this.y, true);
+        this.move_to(this.x, this.y);
     }
 
     show() {

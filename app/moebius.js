@@ -48,13 +48,23 @@ function create_touch_bar(win) {
         }), brush: new electron.TouchBar({
             items: [
                 new electron.TouchBar.TouchBarSpacer({size: "flexible"}),
-                new electron.TouchBar.TouchBarButton({label: "Prev. Foreground", click() {win.send("previous_foreground_color", 2);}}),
-                new electron.TouchBar.TouchBarButton({label: "Next Foreground", click() {win.send("next_foreground_color", 2);}}),
+                new electron.TouchBar.TouchBarButton({label: "Prev. Foreground", click() {win.send("previous_foreground_color");}}),
+                new electron.TouchBar.TouchBarButton({label: "Next Foreground", click() {win.send("next_foreground_color");}}),
                 new electron.TouchBar.TouchBarSpacer({size: "flexible"}),
-                new electron.TouchBar.TouchBarButton({label: "Prev. Background", click() {win.send("next_background_color", 2);}}),
-                new electron.TouchBar.TouchBarButton({label: "Next Background", click() {win.send("next_background_color", 2);}}),
+                new electron.TouchBar.TouchBarButton({label: "Prev. Background", click() {win.send("next_background_color");}}),
+                new electron.TouchBar.TouchBarButton({label: "Next Background", click() {win.send("next_background_color");}}),
             ],
-            escapeItem: new electron.TouchBar.TouchBarButton({label: "Edit", click() {win.send("change_to_select_mode", 8);}})
+            escapeItem: new electron.TouchBar.TouchBarButton({label: "Edit", click() {win.send("change_to_select_mode");}})
+        }), resize: new electron.TouchBar({
+            items: [
+                new electron.TouchBar.TouchBarButton({label: "Resize", click() {docs[win.id].modal.send("ok");}})
+            ],
+            escapeItem: new electron.TouchBar.TouchBarButton({label: "Cancel", click() {docs[win.id].modal.send("cancel");}})
+        }), sauce: new electron.TouchBar({
+            items: [
+                new electron.TouchBar.TouchBarButton({label: "Update", click() {docs[win.id].modal.send("ok");}})
+            ],
+            escapeItem: new electron.TouchBar.TouchBarButton({label: "Cancel", click() {docs[win.id].modal.send("cancel");}})
         })
     };
 }
@@ -82,7 +92,7 @@ async function new_window({width, height, file}) {
 
 async function new_modal_window({width, height, file, parent}) {
     return new Promise((resolve) => {
-        const win = new electron.BrowserWindow({parent, width, height, show: false, modal: true, useContentSize: true, transparent: true, webPreferences: {nodeIntegration: true}});
+        const win = new electron.BrowserWindow({parent, width, height, show: false, modal: true, useContentSize: true, transparent: true, vibrancy: "dark", webPreferences: {nodeIntegration: true}});
         electron.systemPreferences.subscribeNotification("AppleInterfaceThemeChangedNotification", (event) => change_appearance(win));
         win.on("ready-to-show", (event) => {
             change_appearance(win);
@@ -115,7 +125,7 @@ async function new_document_window() {
         }
     });
     win.on("close", (event) => {
-        if (docs[win.id].edited) {
+        if (!docs[win.id].network && docs[win.id].edited) {
             const choice = electron.dialog.showMessageBox(win, {message: "Save this document?", detail: "This document contains unsaved changes.", buttons: ["Save", "Cancel", "Don't Save"], defaultId: 0, cancelId: 1});
             if (choice == 0) {
                 event.preventDefault();
@@ -196,15 +206,18 @@ function open_reference_image({win}) {
 }
 
 function start_server({item, win}) {
-    console.log("start_server");
+    // TODO
 }
 
-function connect_to_server() {
-    console.log("connect_to_server");
+async function connect_to_server({ip, port, nick, pass}) {
+    const win = await new_document_window();
+    docs[win.id].network = true;
+    win.setTitle(`${ip}:${port}`);
+    win.send("connect_to_server", {ip, port, nick, pass});
 }
 
 function disconnect({item, win}) {
-    console.log("disconnect");
+    // TODO
 }
 
 function open_dev_tools({win}) {
@@ -345,7 +358,12 @@ function document_menu() {
             label: "View",
             submenu: [
                 {label: "Show Status Bar", id: "show_status_bar", accelerator: "Cmd+/", click(item, win) {win.send("show_statusbar", item.checked);}, type: "checkbox", checked: true},
+                {label: "Show Tool Bar", id: "show_tool_bar", accelerator: "Cmd+T", click(item, win) {win.send("show_toolbar", item.checked);}, type: "checkbox", checked: true},
                 {label: "Show Preview", id: "show_preview", accelerator: "Cmd+Alt+P", click(item, win) {win.send("show_preview", item.checked);}, type: "checkbox", checked: true},
+                {type: "separator"},
+                {label: "Selection Mode", id: "change_to_select_mode", accelerator: "Cmd+1", click(item, win) {win.send("change_to_select_mode");}, type: "checkbox", chacked: false},
+                {label: "Brush Mode", id: "change_to_brush_mode", accelerator: "Cmd+2", click(item, win) {win.send("change_to_brush_mode");}, type: "checkbox", chacked: false},
+                {label: "Sample Mode", id: "change_to_sample_mode", accelerator: "Cmd+3", click(item, win) {win.send("change_to_sample_mode");}, type: "checkbox", chacked: false},
                 {type: "separator"},
                 {label: "Use 9px Font", id: "use_9px_font", click(item, win) {win.send("use_9px_font", item.checked);}, type: "checkbox", checked: false},
                 {label: "Use iCE Colors", id: "ice_colors", click(item, win) {win.send("ice_colors", item.checked);}, type: "checkbox", checked: false},
@@ -473,6 +491,7 @@ function document_menu() {
             label: "Debug",
             submenu: [
                 {label: "Open Dev Tools", id: "open_dev_tools", accelerator: "Ctrl+C", click(item, win) {open_dev_tools({item, win});}},
+                {label: "Connect to Test Server", id: "connect_to_test_server", accelerator: "Cmd+0", click(item, win) {connect_to_server({ip: "74.207.246.247", port: 8000, nick: "andyh", pass: "secret"});}},
             ]
         }, {label: "Help", role: "help", submenu: []}
     ]);
@@ -519,7 +538,7 @@ function has_document_windows() {
 }
 
 async function show_rendering_modal(event, id) {
-    docs[id].modal = await new_modal_window({width: 300, height: 200, file: "app/html/rendering.html", parent: docs[id].win});
+    docs[id].modal = await new_modal_window({width: 200, height: 80, file: "app/html/rendering.html", parent: docs[id].win});
     electron.Menu.setApplicationMenu(docs[id].modal_menu);
     event.returnValue = true;
 }
@@ -626,7 +645,8 @@ function show_operation_touchbar(id) {
 }
 
 async function get_canvas_size({id, columns, rows}) {
-    docs[id].modal = await new_modal_window({width: 300, height: 180, file: "app/html/resize.html", parent: docs[id].win});
+    docs[id].modal = await new_modal_window({width: 300, height: 172, file: "app/html/resize.html", parent: docs[id].win});
+    docs[id].modal.setTouchBar(docs[id].touch_bars.resize);
     docs[id].modal.send("set_canvas_size", {columns, rows});
     electron.Menu.setApplicationMenu(docs[id].modal_menu);
 }
@@ -637,8 +657,9 @@ function set_canvas_size({id, columns, rows}) {
 }
 
 async function get_sauce_info({id, title, author, group, comments}) {
-    docs[id].modal = await new_modal_window({width: 350, height: 335, file: "app/html/sauce.html", parent: docs[id].win});
+    docs[id].modal = await new_modal_window({width: 350, height: 340, file: "app/html/sauce.html", parent: docs[id].win});
     docs[id].modal.send("set_sauce_info", {title, author, group, comments});
+    docs[id].modal.setTouchBar(docs[id].touch_bars.sauce);
     electron.Menu.setApplicationMenu(docs[id].modal_menu);
 }
 
@@ -648,12 +669,40 @@ function set_sauce_info({id, title, author, group, comments}) {
 }
 
 function document_changed(id) {
-    docs[id].edited = true;
-    docs[id].win.setDocumentEdited(true);
+    if (!docs[id].win.network) {
+        docs[id].edited = true;
+        docs[id].win.setDocumentEdited(true);
+    }
 }
 
 function show_brush_touchbar(id) {
     docs[id].win.setTouchBar(docs[id].touch_bars.brush);
+}
+
+function disable_clear_reference_image(id) {
+    docs[id].menu.getMenuItemById("clear_reference_image").enabled = false;
+}
+
+function change_to_select_mode(id) {
+    docs[id].menu.getMenuItemById("change_to_select_mode").checked = true;
+    docs[id].menu.getMenuItemById("change_to_brush_mode").checked = false;
+    docs[id].menu.getMenuItemById("change_to_sample_mode").checked = false;
+}
+
+function change_to_brush_mode(id) {
+    docs[id].menu.getMenuItemById("change_to_select_mode").checked = false;
+    docs[id].menu.getMenuItemById("change_to_brush_mode").checked = true;
+    docs[id].menu.getMenuItemById("change_to_sample_mode").checked = false;
+}
+
+function change_to_sample_mode(id) {
+    docs[id].menu.getMenuItemById("change_to_select_mode").checked = false;
+    docs[id].menu.getMenuItemById("change_to_brush_mode").checked = false;
+    docs[id].menu.getMenuItemById("change_to_sample_mode").checked = true;
+}
+
+function connect_to_test_server() {
+    connect_to_server({ip: "74.207.246.247", port: 8000, nick: "andyh", pass: "secret"});
 }
 
 electron.ipcMain.on("new_document", (event) => new_document());
@@ -682,5 +731,10 @@ electron.ipcMain.on("document_changed", (event, {id}) => document_changed(id));
 electron.ipcMain.on("disable_editing_shortcuts", (event, {id}) => disable_editing_shortcuts(id));
 electron.ipcMain.on("enable_editing_shortcuts", (event, {id}) => enable_editing_shortcuts(id));
 electron.ipcMain.on("show_brush_touchbar", (event, {id}) => show_brush_touchbar(id));
+electron.ipcMain.on("disable_clear_reference_image", (event, {id}) => disable_clear_reference_image(id));
+electron.ipcMain.on("change_to_select_mode", (event, {id}) => change_to_select_mode(id));
+electron.ipcMain.on("change_to_brush_mode", (event, {id}) => change_to_brush_mode(id));
+electron.ipcMain.on("change_to_sample_mode", (event, {id}) => change_to_sample_mode(id));
+electron.ipcMain.on("connect_to_test_server", (event, opts) => connect_to_test_server(opts));
 
-module.exports = {show_splash_screen, open_file, set_application_menu, has_document_windows};
+module.exports = {show_splash_screen, open_file, set_application_menu, has_document_windows, connect_to_server};

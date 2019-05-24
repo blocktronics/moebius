@@ -1,0 +1,84 @@
+.panel {
+    position: absolute;
+    top: 0px; left: 0px;
+    width: 100%; height: 100%;
+}
+
+.panel > div {
+    width: fit-content;
+    margin: 0px auto;
+    font-size: 12px;
+    line-height: 48px;
+    color: rgba(0, 0, 0, 0.7);
+}
+
+body.dark .panel > div {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.panel > div > canvas {
+    display: inline-block;
+    border: 1px solid black;
+    width: 16px;
+    height: 32px;
+}
+
+.panel > div > div {
+    display: inline-block;
+    text-align: right;
+}
+
+#sample_fg, #sample_bg {
+    margin: 8px;
+}
+
+#code_value {
+    width: 16px;
+}
+#fg_value, #bg_value {
+    width: 8px;
+}
+#half_block, #colorize, #colorize_fg, #colorize_bg {
+    float: left;
+    line-height: 32px;
+    color: rgba(255, 255, 255, 0.8);
+    padding: 0px 16px;
+    height: 32px;
+    margin: 7px;
+    border: 1px solid rgba(0, 0, 0, 0.5);
+}
+
+#colorize {
+    margin-right: 0px;
+    border-right: none;
+}
+
+#colorize_fg {
+    border-left: none;
+    margin-left: 0px;
+    margin-right: 0px;
+    border-right: none;
+}
+
+#colorize_bg {
+    border-left: none;
+    margin-left: 0px;
+}
+
+#brush_size {
+    border: none;
+    outline: none;
+    vertical-align: top;
+    margin-top: 12px;
+    height: 16px;
+    width: 48px;
+    display: inline-block;
+}
+
+.brush_mode_selected {
+    background-color: rgba(85, 85, 255, 0.7);
+}
+
+.brush_mode_ghosted {
+    opacity: 0.4;
+}

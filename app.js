@@ -17,6 +17,8 @@ electron.app.on("ready", (event) => {
     if (!prevent_splash_screen_at_startup) moebius.show_splash_screen();
     // moebius.open_file("/Users/andyh/Documents/blocktronics_wtf4/Blocktronics-WTF4_Megajoint.ans");
     // moebius.open_file("/Users/andyh/Documents/rad-PIRANHA.ANS");
+    // moebius.connect_to_server({ip: "localhost", port: 8000, nick: "andyh", pass: "secret"});
+    // moebius.connect_to_server({ip: "localhost", port: 8000, nick: "andyh", pass: "secret"});
 });
 
 electron.app.on("activate", (event) => {

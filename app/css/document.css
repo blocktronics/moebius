@@ -1,17 +1,18 @@
 :root {
     --sidebar-width: 48px;
     --toolbar-height: 48px;
-    --toolbar-height: 0px;
     --statusbar-height: 22px;
     --preview-width: 300px;
 }
 #sidebar {
     float: left;
-    width: calc(var(--sidebar-width) - 1px);
+    width: calc(var(--sidebar-width));
     height: calc(100% - var(--statusbar-height));
 }
 #toolbar {
-    width: calc(100% - var(--preview-width));
+    position: relative;
+    float: right;
+    width: calc(100% - var(--preview-width) - var(--sidebar-width));
     height: var(--toolbar-height);
 }
 .tool {
@@ -96,7 +97,7 @@ body.dark #current_colors > canvas {
 }
 #viewport {
     float: left;
-    width: calc(100% - var(--sidebar-width) -  var(--preview-width));
+    width: calc(100% - var(--sidebar-width) -  var(--preview-width) - 1px);
     height: calc(100% - var(--toolbar-height) - var(--statusbar-height) - 1px);
     border-top: 1px solid var(--border-color);
     border-left: 1px solid var(--border-color);

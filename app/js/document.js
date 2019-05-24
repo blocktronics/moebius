@@ -2,6 +2,8 @@ const electron = require("electron");
 const libtextmode = require("../js/libtextmode/libtextmode");
 const canvas = require("../js/canvas.js");
 const palette = require("../js/palette");
+const toolbar = require("../js/toolbar");
+const network = require("../js/network");
 let doc, render;
 let insert_mode = false;
 let fg = 7;
@@ -14,8 +16,9 @@ const mouse_button_types = {NONE: 0, LEFT: 1, RIGHT: 2};
 let mouse_button = mouse_button_types.NONE;
 let mouse_x, mouse_y;
 const editor_modes = {SELECT: 0, BRUSH: 1, SAMPLE: 2};
-let mode = editor_modes.SELECT;
+let mode;
 let previous_mode;
+let connection;
 
 function send_sync(channel, opts) {
     return electron.ipcRenderer.sendSync(channel, {id: electron.remote.getCurrentWindow().id, ...opts});
@@ -50,19 +53,19 @@ function update_status_bar() {
 }
 
 function set_fg(value) {
+    toolbar.set_fg_bg(value, bg);
     palette.set_fg(value);
     fg = value;
 }
 
 function set_bg(value) {
+    toolbar.set_fg_bg(fg, value);
     palette.set_bg(value);
     bg = value;
 }
 
-async function update_everything() {
+async function start_render() {
     palette.add({palette: doc.palette, set_fg, set_bg});
-    set_fg(fg);
-    set_bg(bg);
     if (doc.data.length > 80 * 1000) {
         send_sync("show_rendering_modal");
         render = await libtextmode.render_split(doc);
@@ -73,6 +76,9 @@ async function update_everything() {
     update_menu_checkboxes();
     update_status_bar();
     canvas.add(render);
+    toolbar.set_font(render.font);
+    set_fg(fg);
+    set_bg(bg);
     if (doc.ice_colors) {
         canvas.stop_blinking();
     } else {
@@ -82,11 +88,56 @@ async function update_everything() {
     cursor.show();
 }
 
+function connect_to_server({ip, port, nick, pass}) {
+    network.connect(ip, port, nick, pass, {
+        connected: (new_connection, new_doc) => {
+            connection = new_connection;
+            cursor.connection = connection.cursor;
+            doc = new_doc;
+            start_render().then(() => {
+                cursor.start_editing_mode();
+                change_to_select_mode();
+                for (const user of connection.users) {
+                    if (user.id != connection.id) {
+                        connection.users[user.id].cursor = new canvas.Cursor();
+                        connection.users[user.id].cursor.resize_to_font();
+                        connection.users[user.id].cursor.show();
+                    }
+                }
+            });
+        },
+        refused: () => {
+            console.log("refused!");
+        },
+        join: (id, nick) => {
+            connection.users[id] = {id, nick, cursor: new canvas.Cursor()};
+            connection.users[id].cursor.resize_to_font();
+            connection.users[id].cursor.show();
+        },
+        leave: (id) => {
+            connection.users[id].cursor.hide();
+            delete connection.users[id];
+        },
+        cursor: (id, x, y) => {
+            connection.users[id].cursor.move_to(x, y, false);
+        },
+        draw: (id, x, y, block) => {
+            const i = doc.columns * y + x;
+            doc.data[i] = Object.assign(block);
+            render_at(x, y);
+        },
+        chat: () => {
+
+        }
+    });
+}
+
 async function open_file({file}) {
     reset_undo_buffer();
     doc = await libtextmode.read_file(file);
-    await update_everything();
+    await start_render();
     cursor.start_editing_mode();
+    change_to_select_mode();
 }
 
 function ice_colors(value) {
@@ -102,7 +153,7 @@ function ice_colors(value) {
 
 function use_9px_font(value) {
     doc.use_9px_font = value;
-    update_everything();
+    start_render();
 }
 
 function set_var(name, value) {
@@ -117,10 +168,18 @@ function show_statusbar(visible) {
     set_var("statusbar-height", visible ? 22 : 0);
 }
 
+function show_toolbar(visible) {
+    if (!visible) {
+        toolbar.hide();
+    } else {
+        toolbar.show();
+    }
+}
+
 function change_font(font_name) {
     doc.font_name = font_name;
     if (doc.font_bytes) delete doc.font_bytes;
-    update_everything();
+    start_render();
 }
 
 function set_insert_mode(value) {
@@ -178,6 +237,7 @@ function change_data({x, y, code, fg, bg, pre_cursor_x, pre_cursor_y}) {
     }
     doc.data[i] = {code, fg, bg};
     render_at(x, y);
+    if (connection) connection.draw(x, y, doc.data[i]);
 }
 
 function start_undo_chunk() {
@@ -219,7 +279,7 @@ function delete_key() {
 }
 
 function f_key(value) {
-    key_typed([176, 177, 178, 219, 223, 220, 221, 222, 254, 249][value]);
+    key_typed(toolbar.get_f_key(value));
 }
 
 function stamp(single_undo = false) {
@@ -342,6 +402,10 @@ document.addEventListener("keydown", (event) => {
                     case "Digit5": toggle_fg(5); break;
                     case "Digit6": toggle_fg(6); break;
                     case "Digit7": toggle_fg(7); break;
+                    case "ArrowLeft": previous_background_color(); event.preventDefault(); break;
+                    case "ArrowRight": next_background_color(); event.preventDefault(); break;
+                    case "ArrowUp": previous_foreground_color(); event.preventDefault(); break;
+                    case "ArrowDown": next_foreground_color(); event.preventDefault(); break;
                 }
             } else if (event.ctrlKey && !event.altKey && !event.metaKey) {
                 switch (event.code) {
@@ -481,6 +545,7 @@ function undo() {
             redos.push(Object.assign({...doc.data[i], x: undo.x, y: undo.y, pre_cursor_x: undo.pre_cursor_x, pre_cursor_y: undo.pre_cursor_y, post_cursor_x: undo.post_cursor_x, post_cursor_y: undo.post_cursor_y}));
             doc.data[i] = Object.assign(undo);
             render_at(undo.x, undo.y);
+            if (connection) connection.draw(undo.x, undo.y, doc.data[i]);
             if (undo.pre_cursor_x != undefined && undo.pre_cursor_y != undefined) {
                 cursor.move_to(undo.pre_cursor_x, undo.pre_cursor_y, true);
             }
@@ -502,6 +567,7 @@ function redo() {
             undos.push(Object.assign({...doc.data[i], x: redo.x, y: redo.y, pre_cursor_x: redo.pre_cursor_x, pre_cursor_y: redo.pre_cursor_y, post_cursor_x: redo.post_cursor_x, post_cursor_y: redo.post_cursor_y}));
             doc.data[i] = Object.assign(redo);
             render_at(redo.x, redo.y);
+            if (connection) connection.draw(redo.x, redo.y, doc.data[i]);
             if (redo.post_cursor_x != undefined && redo.post_cursor_y != undefined) {
                 cursor.move_to(redo.post_cursor_x, redo.post_cursor_y, true);
             }
@@ -580,8 +646,7 @@ function half_block_brush(x, y, col) {
     const coords = line(mouse_x, mouse_y, x, y);
     for (const coord of coords) {
         const block_y = Math.floor(coord.y / 2);
-        const i = block_y * doc.columns + coord.x;
-        const block = doc.data[i];
+        const block = doc.data[block_y * doc.columns + coord.x];
         const is_top = (coord.y % 2) == 0;
         if (block.code == 219) {
             if (block.fg != col) {
@@ -630,6 +695,15 @@ function half_block_brush(x, y, col) {
     mouse_y = y;
 }
 
+function colorize_brush(x, y) {
+    const coords = line(mouse_x, mouse_y, x, y);
+    for (const coord of coords) {
+        const block = doc.data[coord.y * doc.columns + coord.x];
+        change_data({x: coord.x, y: coord.y, code: block.code, fg: toolbar.is_in_colorize_fg_mode() ? fg : block.fg, bg: toolbar.is_in_colorize_bg_mode() ? bg : block.bg});
+    }
+    mouse_x = x;
+    mouse_y = y;
+}
 
 function get_canvas_xy(event) {
     const canvas_container = document.getElementById("canvas_container");
@@ -667,8 +741,13 @@ function mouse_down(event) {
         break;
         case editor_modes.BRUSH:
             start_undo_chunk();
-            mouse_x = x; mouse_y = half_y;
-            half_block_brush(x, half_y, (mouse_button == mouse_button_types.LEFT) ? fg : bg);
+            if (toolbar.is_in_half_block_mode()) {
+                mouse_x = x; mouse_y = half_y;
+                half_block_brush(x, half_y, (mouse_button == mouse_button_types.LEFT) ? fg : bg);
+            } else if (toolbar.is_in_colorize_mode()) {
+                mouse_x = x; mouse_y = y;
+                colorize_brush(x, y);
+            }
         break;
         case editor_modes.SAMPLE:
             const block = doc.data[doc.columns * y + x];
@@ -701,9 +780,16 @@ function mouse_move(event) {
             }
         break;
         case editor_modes.BRUSH:
-            if (mouse_button) half_block_brush(x, half_y, mouse_button == mouse_button_types.LEFT ? fg : bg);
-            break;
+            if (mouse_button) {
+                if (toolbar.is_in_half_block_mode()) {
+                    half_block_brush(x, half_y, mouse_button == mouse_button_types.LEFT ? fg : bg);
+                } else if (toolbar.is_in_colorize_mode()) {
+                    colorize_brush(x, y);
+                }
+            }
+        break;
     }
+    toolbar.set_sample(doc.data[doc.columns * y + x]);
 }
 
 function mouse_up(event) {
@@ -716,6 +802,7 @@ function open_reference_image({image}) {
 
 function clear_reference_image() {
     document.getElementById("reference_image").style.removeProperty("background-image");
+    send("disable_clear_reference_image");
 }
 
 function rotate() {
@@ -770,7 +857,7 @@ function set_canvas_size({columns, rows}) {
         reset_undo_buffer();
         libtextmode.resize_canvas(doc, columns, rows);
         cursor.move_to(Math.min(cursor.x, columns - 1), Math.min(cursor.y, rows - 1), true);
-        update_everything();
+        start_render();
     }
 }
 
@@ -788,8 +875,9 @@ function set_sauce_info({title, author, group, comments}) {
 async function new_document({columns, rows}) {
     reset_undo_buffer();
     doc = libtextmode.new_document({columns, rows});
-    await update_everything();
+    await start_render();
     cursor.start_editing_mode();
+    change_to_select_mode();
 }
 
 function change_to_select_mode() {
@@ -798,10 +886,12 @@ function change_to_select_mode() {
         case editor_modes.SAMPLE: document.getElementById("sample_mode").classList.remove("selected"); break;
     }
     if (mode != editor_modes.SELECT) {
+        toolbar.show_select();
         document.getElementById("select_mode").classList.add("selected");
         cursor.show();
         cursor.start_editing_mode();
         send("enable_editing_shortcuts");
+        send("change_to_select_mode");
         mode = editor_modes.SELECT;
     }
 }
@@ -816,9 +906,11 @@ function change_to_brush_mode() {
         case editor_modes.SAMPLE: document.getElementById("sample_mode").classList.remove("selected"); break;
     }
     if (mode != editor_modes.BRUSH) {
+        toolbar.show_brush();
         document.getElementById("brush_mode").classList.add("selected");
         mode = editor_modes.BRUSH;
         send("show_brush_touchbar");
+        send("change_to_brush_mode");
     }
 }
 
@@ -834,9 +926,12 @@ function change_to_sample_mode() {
         break;
     }
     if (mode != editor_modes.SAMPLE) {
+        toolbar.show_sample();
         previous_mode = mode;
         document.getElementById("sample_mode").classList.add("selected");
         mode = editor_modes.SAMPLE;
+        send("show_brush_touchbar");
+        send("change_to_sample_mode");
     }
 }
 
@@ -844,6 +939,7 @@ electron.ipcRenderer.on("open_file", (event, opts) => open_file(opts));
 electron.ipcRenderer.on("save", (event, opts) => save(opts));
 electron.ipcRenderer.on("show_statusbar", (event, opts) => show_statusbar(opts));
 electron.ipcRenderer.on("show_preview", (event, opts) => show_preview(opts));
+electron.ipcRenderer.on("show_toolbar", (event, opts) => show_toolbar(opts));
 electron.ipcRenderer.on("ice_colors", (event, opts) => ice_colors(opts));
 electron.ipcRenderer.on("use_9px_font", (event, opts) => use_9px_font(opts));
 electron.ipcRenderer.on("change_font", (event, opts) => change_font(opts));
@@ -885,6 +981,8 @@ electron.ipcRenderer.on("set_sauce_info", (event, opts) => set_sauce_info(opts))
 electron.ipcRenderer.on("new_document", (event, opts) => new_document(opts));
 electron.ipcRenderer.on("change_to_select_mode", (event, opts) => change_to_select_mode(opts));
 electron.ipcRenderer.on("change_to_brush_mode", (event, opts) => change_to_brush_mode(opts));
+electron.ipcRenderer.on("change_to_sample_mode", (event, opts) => change_to_sample_mode(opts));
+electron.ipcRenderer.on("connect_to_server", (event, opts) => connect_to_server(opts));
 
 document.addEventListener("DOMContentLoaded", (event) => {
     document.getElementById("ice_colors_toggle").addEventListener("mousedown", (event) => ice_colors(!doc.ice_colors), true);

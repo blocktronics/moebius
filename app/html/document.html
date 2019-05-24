@@ -4,11 +4,12 @@
         <meta charset = "UTF-8">
         <link rel = "stylesheet" href = "../css/global.css">
         <link rel = "stylesheet" href = "../css/document.css">
+        <link rel = "stylesheet" href = "../css/toolbar.css">
         <title>Untitled</title>
-        <script>require ("electron").ipcRenderer.on("change_appearance", (event, {is_dark_mode}) => document.body.classList[is_dark_mode ? "add" : "remove"]("dark"));</script>
+        <!-- <script>require ("electron").ipcRenderer.on("change_appearance", (event, {is_dark_mode}) => document.body.classList[is_dark_mode ? "add" : "remove"]("dark"));</script> -->
         <script src = "../js/document.js"></script>
     </head>
-    <body>
+    <body class = "dark">
         <div id = "sidebar">
             <div id = "current_colors">
                 <canvas id = "bg" width = "24" height = "24"></canvas>
@@ -16,7 +17,7 @@
             </div>
             <div id = "swatches"></div>
             <div class = "seperator"></div>
-            <div class = "tool selected" id = "select_mode"></div>
+            <div class = "tool" id = "select_mode"></div>
             <div class = "tool" id = "brush_mode"></div>
             <div class = "seperator"></div>
             <div class = "tool" id = "sample_mode"></div>
@@ -24,7 +25,42 @@
         <div id= "preview">
             <div id = "view_frame" class = "hidden"></div>
         </div>
-        <div id = "toolbar"></div>
+        <div id = "toolbar">
+            <div class = "panel hidden" id = "select_panel">
+                <div>
+                    <div>F1: <canvas id = "f1" width = "8" height = "16"></canvas></div>
+                    <div>F2: <canvas id = "f2" width = "8" height = "16"></canvas></div>
+                    <div>F3: <canvas id = "f3" width = "8" height = "16"></canvas></div>
+                    <div>F4: <canvas id = "f4" width = "8" height = "16"></canvas></div>
+                    <div>F5: <canvas id = "f5" width = "8" height = "16"></canvas></div>
+                    <div>F6: <canvas id = "f6" width = "8" height = "16"></canvas></div>
+                    <div>F7: <canvas id = "f7" width = "8" height = "16"></canvas></div>
+                    <div>F8: <canvas id = "f8" width = "8" height = "16"></canvas></div>
+                    <div>F9: <canvas id = "f9" width = "8" height = "16"></canvas></div>
+                    <div>F10: <canvas id = "f10" width = "8" height = "16"></canvas></div>
+                </div>
+            </div>
+            <div class = "panel hidden" id = "brush_panel">
+                <div>
+                    <div id = "half_block">Half Block</div>
+                    <div id = "colorize_container">
+                        <div id = "colorize">Colorize</div>
+                        <div id = "colorize_fg">Foreground</div>
+                        <div id = "colorize_bg">Background</div>
+                    </div>
+                </div>
+            </div>
+            <div class = "panel hidden" id = "sample_panel">
+                <div>
+                    Code: <div id = "code_value"></div>
+                    <canvas id = "sample_block" width = "8" height = "16"></canvas>
+                    Foreground: <div id = "fg_value"></div>
+                    <canvas id = "sample_fg" width = "32" height = "32"></canvas>
+                    Background: <div id = "bg_value"></div>
+                    <canvas id = "sample_bg" width = "32" height = "32"></canvas>
+                </div>
+            </div>
+        </div>
         <div id = "viewport">
             <div id = "canvas_container">
                 <div id = "ice_color_container"></div>

@@ -8,17 +8,6 @@ body div:first-child {
     width: 200px;
     height: var(--window-height);
     margin: 0px auto;
-    border-right: 1px solid var(--border-color);
-    border-left: 1px solid var(--border-color);
-    border-bottom: 1px solid var(--border-color);
-    border-bottom-right-radius: 8px;
-    border-bottom-left-radius: 8px;
-    background-color: var(--mid-color);
-}
-
-body.dark div:first-child {
-    background-color: var(--dark-mid-color);
-    border-color: var(--dark-border-color);
 }
 
 body div:first-child p {

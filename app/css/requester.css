@@ -5,23 +5,19 @@ body {
 
 #resize_requester, #sauce_requester {
     font-size: 13px;
-    opacity: 0.9;
     margin: 0 auto;
     overflow: hidden;
-    border-bottom-left-radius: 6px;
-    border-bottom-right-radius: 6px;
-    background-color: var(--dark-view-color);
-    color: rgb(200, 200, 200);
+    color: white;
 }
 
 #resize_requester {
     width: 300px;
-    height: 180px;
+    height: 172px;
 }
 
 #sauce_requester {
     width: 350px;
-    height: 335px;
+    height: 340px;
 }
 
 form {

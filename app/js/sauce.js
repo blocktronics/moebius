@@ -64,3 +64,6 @@ electron.ipcRenderer.on("set_sauce_info", (event, {title, author, group, comment
     document.getElementById("group").value = group;
     document.getElementById("comments").value = comments.join("\n");
 });
+
+electron.ipcRenderer.on("ok", (event) => ok());
+electron.ipcRenderer.on("cancel", (event) => cancel());

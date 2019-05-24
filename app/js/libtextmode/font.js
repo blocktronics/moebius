@@ -1,4 +1,4 @@
-const {bright_white, get_rgba, convert_ega_to_vga, ega} = require("./palette");
+const {white, bright_white, get_rgba, convert_ega_to_vga, ega} = require("./palette");
 const {create_canvas} = require("./canvas");
 
 function generate_font_canvas(bitmask, height, length) {
@@ -270,6 +270,14 @@ class Font {
         } else {
             ctx.drawImage(this.glyphs[block.fg], block.code * this.width, 0, this.width, this.height, x, y, this.width, this.height);
         }
+    }
+
+    draw_raw(ctx, block, x, y) {
+        ctx.drawImage(create_coloured_glyph({canvas: this.canvas, code: block.code, rgb: convert_ega_to_vga(white), width: this.width, height: this.height}), x, y);
+    }
+
+    get_rgb(i) {
+        return convert_ega_to_vga(this.palette[i]);
     }
 
     draw_bg(ctx, bg, x, y) {

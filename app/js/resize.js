@@ -31,3 +31,6 @@ electron.ipcRenderer.on("set_canvas_size", (event, {columns, rows}) => {
     document.getElementById("columns").value = `${columns}`;
     document.getElementById("rows").value = `${rows}`;
 });
+
+electron.ipcRenderer.on("ok", (event) => ok());
+electron.ipcRenderer.on("cancel", (event) => cancel());

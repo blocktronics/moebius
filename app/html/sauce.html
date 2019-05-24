@@ -6,9 +6,8 @@
     <link rel = "stylesheet" href = "../css/global.css">
     <link rel = "stylesheet" href = "../css/requester.css">
     <script src = "../js/sauce.js"></script>
-    <script>require ("electron").ipcRenderer.on("change_appearance", (event, {is_dark_mode}) => document.body.classList[is_dark_mode ? "add": "remove"]("dark"));</script>
 </head>
-<body>
+<body class = "dark">
     <div id = "sauce_requester">
         <form>
             <label for = "title">Title:</label>
