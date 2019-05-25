@@ -256,7 +256,11 @@ const application_menu = electron.Menu.buildFromTemplate([{
     label: "Window", submenu: [{role: "minimize"}, {role: "zoom"}, {type: "separator"}, {role: "front"}]
 }, {
     label: "Debug",
-    submenu: [{label: "Open Dev Tools", id: "open_dev_tools", accelerator: "Ctrl+C", click(item, win) {open_dev_tools({win});}}]
+    submenu: [
+        {label: "Open Dev Tools", id: "open_dev_tools", accelerator: "Ctrl+C", click(item, win) {open_dev_tools({win});}},
+        {label: "Connect to Test Server", id: "connect_to_test_server", accelerator: "Cmd+Alt+1", click(item, win) {connect_to_server({ip: "74.207.246.247", port: 8000, nick: "andyh", pass: "secret"});}},
+        {label: "Connect to Local Server", id: "connect_to_local_server", accelerator: "Cmd+Alt+2", click(item, win) {connect_to_server({ip: "localhost", port: 8000, nick: "andyh", pass: "secret"});}
+    }]
 }, {
     label: "Help", role: "help", submenu: []
 }]);
@@ -491,7 +495,8 @@ function document_menu() {
             label: "Debug",
             submenu: [
                 {label: "Open Dev Tools", id: "open_dev_tools", accelerator: "Ctrl+C", click(item, win) {open_dev_tools({item, win});}},
-                {label: "Connect to Test Server", id: "connect_to_test_server", accelerator: "Cmd+0", click(item, win) {connect_to_server({ip: "74.207.246.247", port: 8000, nick: "andyh", pass: "secret"});}},
+                {label: "Connect to Test Server", id: "connect_to_test_server", accelerator: "Cmd+Alt+1", click(item, win) {connect_to_server({ip: "74.207.246.247", port: 8000, nick: "andyh", pass: "secret"});}},
+                {label: "Connect to Local Server", id: "connect_to_local_server", accelerator: "Cmd+Alt+2", click(item, win) {connect_to_server({ip: "localhost", port: 8000, nick: "andyh", pass: "secret"});}},
             ]
         }, {label: "Help", role: "help", submenu: []}
     ]);
@@ -501,7 +506,7 @@ function show_splash_screen() {
     if (splash_screen_win && !splash_screen_win.isDestroyed()) {
         splash_screen_win.focus();
     } else {
-        splash_screen_win = new electron.BrowserWindow({width: 720, height: 384, show: false, backgroundColor: "#000000", titleBarStyle: "hiddenInset", maximizable: false, resizable: false, frame: false, fullscreenable: false, useContentSize: true, webPreferences: {nodeIntegration: true}});
+        splash_screen_win = new electron.BrowserWindow({width: 720, height: 544, show: false, backgroundColor: "#000000", titleBarStyle: "hiddenInset", maximizable: false, resizable: false, frame: false, fullscreenable: false, useContentSize: true, webPreferences: {nodeIntegration: true}});
         splash_screen_win.on("focus", (event) => set_application_menu());
         splash_screen_win.on("ready-to-show", (event) => splash_screen_win.show());
         splash_screen_win.loadFile("app/html/splash_screen.html");
@@ -539,6 +544,12 @@ function has_document_windows() {
 
 async function show_rendering_modal(event, id) {
     docs[id].modal = await new_modal_window({width: 200, height: 80, file: "app/html/rendering.html", parent: docs[id].win});
+    electron.Menu.setApplicationMenu(docs[id].modal_menu);
+    event.returnValue = true;
+}
+
+async function show_connecting_modal(event, id) {
+    docs[id].modal = await new_modal_window({width: 200, height: 80, file: "app/html/connecting.html", parent: docs[id].win});
     electron.Menu.setApplicationMenu(docs[id].modal_menu);
     event.returnValue = true;
 }
@@ -669,7 +680,7 @@ function set_sauce_info({id, title, author, group, comments}) {
 }
 
 function document_changed(id) {
-    if (!docs[id].win.network) {
+    if (!docs[id].network) {
         docs[id].edited = true;
         docs[id].win.setDocumentEdited(true);
     }
@@ -709,6 +720,7 @@ electron.ipcMain.on("new_document", (event) => new_document());
 electron.ipcMain.on("open", (event) => open());
 electron.ipcMain.on("connect_to_server", (event) => connect_to_server());
 electron.ipcMain.on("show_rendering_modal", (event, {id}) => show_rendering_modal(event, id));
+electron.ipcMain.on("show_connecting_modal", (event, {id}) => show_connecting_modal(event, id));
 electron.ipcMain.on("close_modal", (event, {id}) => close_modal(id));
 electron.ipcMain.on("update_menu_checkboxes", (event, opts) => update_menu_checkboxes(opts));
 electron.ipcMain.on("enable_undo", (event, {id}) => enable_undo(id));

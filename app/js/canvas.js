@@ -50,7 +50,6 @@ class Cursor {
 
     move_to(x, y, scroll_view = false) {
         this.x = x; this.y = y;
-        if (this.connection) cursor.connection(x, y);
         update_status_bar_cursor_pos();
         switch (this.mode) {
             case cursor_modes.EDITING:
@@ -58,6 +57,7 @@ class Cursor {
                 this.canvas.style.top = `${y * render.font.height}px`;
                 this.canvas.style.width = `${render.font.width}px`;
                 this.canvas.style.height = `${render.font.height}px`;
+                if (this.connection) this.connection.cursor(x, y);
                 break;
             case cursor_modes.SELECTION:
                 this.selection.dx = x;
@@ -67,10 +67,12 @@ class Cursor {
                 this.canvas.style.top = `${sy * render.font.height}px`;
                 this.canvas.style.width = `${(dx - sx + 1) * render.font.width}px`;
                 this.canvas.style.height = `${(dy - sy + 1) * render.font.height}px`;
+                if (this.connection) this.connection.selection(x, y);
                 break;
             case cursor_modes.OPERATION:
                 this.canvas.style.left = `${x * render.font.width}px`;
                 this.canvas.style.top = `${y * render.font.height}px`;
+                if (this.connection) this.connection.operation(x, y);
                 break;
         }
         this.draw();
@@ -142,6 +144,7 @@ class Cursor {
         if (this.hidden) {
             document.getElementById("editing_layer").appendChild(this.canvas);
             this.hidden = false;
+            if (this.connection) this.connection.cursor(this.x, this.y);
         }
     }
 
@@ -149,14 +152,26 @@ class Cursor {
         if (!this.hidden) {
             document.getElementById("editing_layer").removeChild(this.canvas);
             this.hidden = true;
+            if (this.connection) this.connection.hide_cursor();
         }
+    }
+
+    start_using_selection_border() {
+        this.selection = {sx: this.x, sy: this.y};
+        this.canvas.classList.add("selection");
+        this.mode = cursor_modes.SELECTION;
+    }
+
+    stop_using_selection_border() {
+        this.mode = cursor_modes.EDITING;
+        this.x = this.selection.sx; this.y = this.selection.sy;
+        this.canvas.classList.remove("selection");
+        this.resize_to_font();
     }
 
     start_selection_mode() {
         send("enable_selection_menu_items");
-        this.selection = {sx: this.x, sy: this.y};
-        this.canvas.classList.add("selection");
-        this.mode = cursor_modes.SELECTION;
+        this.start_using_selection_border();
         send("show_selection_touchbar");
     }
 
@@ -167,10 +182,7 @@ class Cursor {
                 break;
             case cursor_modes.SELECTION:
                 send("disable_selection_menu_items");
-                this.mode = cursor_modes.EDITING;
-                this.x = this.selection.sx; this.y = this.selection.sy;
-                this.canvas.classList.remove("selection");
-                this.resize_to_font();
+                this.stop_using_selection_border();
                 send("show_editing_touchbar");
                 break;
             case cursor_modes.OPERATION:
@@ -197,11 +209,16 @@ class Cursor {
         }
     }
 
+    resize_selection(columns, rows) {
+        this.canvas.width = columns * render.font.width - 2; this.canvas.height = rows * render.font.height - 2;
+        this.canvas.style.width = `${this.canvas.width + 2}px`; this.canvas.style.height = `${this.canvas.height + 2}px`;
+        if (this.connection) this.connection.resize_selection(columns, rows);
+    }
+
     update_cursor_with_blocks(blocks) {
         const canvas = libtextmode.render_blocks(blocks, render.font);
-        this.canvas.width = canvas.width - 2; this.canvas.height = canvas.height - 2;
+        this.resize_selection(blocks.columns, blocks.rows);
         this.canvas.getContext("2d").drawImage(canvas, 1, 1, canvas.width - 2, canvas.height - 2, 0, 0, canvas.width - 2, canvas.height - 2);
-        this.canvas.style.width = `${canvas.width}px`; this.canvas.style.height = `${canvas.height}px`;
     }
 
     start_operation_mode(data, is_move_operation = false) {
@@ -221,6 +238,10 @@ class Cursor {
 
     index() {
         return render.columns * this.y + this.x;
+    }
+
+    appear_ghosted() {
+        this.canvas.classList.add("ghosted");
     }
 
     constructor() {
@@ -267,18 +288,20 @@ function update_frame() {
     const viewport = document.getElementById("viewport");
     const view_rect = viewport.getBoundingClientRect();
     const view_frame = document.getElementById("view_frame");
-    const scale_factor = render.width / 260;
-    const width = Math.min(Math.ceil(view_rect.width / scale_factor), 260);
-    const height = Math.min(Math.ceil(view_rect.height / scale_factor), render.height / scale_factor);
-    const top = Math.ceil(viewport.scrollTop / scale_factor);
-    const left = Math.ceil(viewport.scrollLeft / scale_factor);
-    view_frame.style.width = `${width}px`;
-    view_frame.style.height = `${height}px`;
-    view_frame.style.top = `${top}px`;
-    view_frame.style.left = `${20 + left}px`;
-    if (top < preview.scrollTop) preview.scrollTop = top;
-    const preview_height = preview.getBoundingClientRect().height;
-    if (top > preview_height + preview.scrollTop - height - 2) preview.scrollTop = top - preview_height + height + 2;
+    if (render) {
+        const scale_factor = render.width / 260;
+        const width = Math.min(Math.ceil(view_rect.width / scale_factor), 260);
+        const height = Math.min(Math.ceil(view_rect.height / scale_factor), render.height / scale_factor);
+        const top = Math.ceil(viewport.scrollTop / scale_factor);
+        const left = Math.ceil(viewport.scrollLeft / scale_factor);
+        view_frame.style.width = `${width}px`;
+        view_frame.style.height = `${height}px`;
+        view_frame.style.top = `${top}px`;
+        view_frame.style.left = `${20 + left}px`;
+        if (top < preview.scrollTop) preview.scrollTop = top;
+        const preview_height = preview.getBoundingClientRect().height;
+        if (top > preview_height + preview.scrollTop - height - 2) preview.scrollTop = top - preview_height + height + 2;
+    }
 }
 
 function add(new_render) {

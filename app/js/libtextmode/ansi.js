@@ -183,7 +183,7 @@ class Screen {
         this.y += 1;
     }
 
-    put({fg = 7, bg = 0, code = ascii.SPACE, fg_rgb, bg_rgb}) {
+    put({fg = 7, bg = 0, code = ascii.SPACE, fg_rgb, bg_rgb} = {}) {
         const i = this.y * this.columns + this.x;
         if (i >= this.data.length) {
             const more_data = new Array(this.columns * 1000);
@@ -202,7 +202,6 @@ class Screen {
     }
 
     literal(code) {
-        const current_attribute = {};
         if (this.inverse) {
             this.put({
                 code,
@@ -266,7 +265,7 @@ class Screen {
         this.x = 0;
         this.y = 0;
         while(!(this.x == this.columns && this.y == tmp_y)) {
-            put();
+            this.put();
         }
         this.x = tmp_x;
         this.y = tmp_y;
@@ -284,7 +283,7 @@ class Screen {
         const tmp_x = this.x;
         this.x = 0;
         while(this.x < tmp_x + 1) {
-            put();
+            this.put();
         }
         this.x = tmp_x;
     }
@@ -362,16 +361,16 @@ class Ansi extends Textmode {
                     case sequence_type.MOVE: screen.move(sequence.values[1], sequence.values[0]); break;
                     case sequence.ERASE_DISPLAY:
                     switch (sequence.values[0]) {
-                        case erase_display_types.UNTIL_END_OF_SCREEN: screen.clear_until_end_of_screen(); break;
-                        case erase_display_types.FROM_START_OF_SCREEN: screen.clear_from_start_of_screen(); break;
-                        case erase_display_types.CLEAR_SCREEN: screen.clear(); break;
+                        // case erase_display_types.UNTIL_END_OF_SCREEN: screen.clear_until_end_of_screen(); break;
+                        // case erase_display_types.FROM_START_OF_SCREEN: screen.clear_from_start_of_screen(); break;
+                        // case erase_display_types.CLEAR_SCREEN: screen.clear(); break;
                     }
                     break;
                     case sequence_type.ERASE_LINE:
                     switch (sequence.values[0]) {
-                        case erase_line_types.UNTIL_END_OF_LINE: screen.clear_until_end_of_line(); break;
-                        case erase_line_types.FROM_START_OF_LINE: screen.clear_from_start_of_line(); break;
-                        case erase_line_types.CLEAR_LINE: screen.clear_line(); break;
+                        // case erase_line_types.UNTIL_END_OF_LINE: screen.clear_until_end_of_line(); break;
+                        // case erase_line_types.FROM_START_OF_LINE: screen.clear_from_start_of_line(); break;
+                        // case erase_line_types.CLEAR_LINE: screen.clear_line(); break;
                     }
                     break;
                     case sequence_type.SGR:

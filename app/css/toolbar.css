@@ -40,29 +40,40 @@ body.dark .panel > div {
 }
 #half_block, #colorize, #colorize_fg, #colorize_bg {
     float: left;
-    line-height: 32px;
-    color: rgba(255, 255, 255, 0.8);
+    line-height: 30px;
+    color: rgba(255, 255, 255, 0.7);
     padding: 0px 16px;
-    height: 32px;
-    margin: 7px;
+    height: 30px;
+    margin: 8px;
     border: 1px solid rgba(0, 0, 0, 0.5);
 }
 
-#colorize {
+#half_block {
     margin-right: 0px;
     border-right: none;
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+}
+
+#colorize {
+    margin-left: 0px;
+    border-left: none;
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
 }
 
 #colorize_fg {
-    border-left: none;
-    margin-left: 0px;
     margin-right: 0px;
     border-right: none;
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
 }
 
 #colorize_bg {
     border-left: none;
     margin-left: 0px;
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
 }
 
 #brush_size {
@@ -76,7 +87,8 @@ body.dark .panel > div {
 }
 
 .brush_mode_selected {
-    background-color: rgba(85, 85, 255, 0.7);
+    background-color: rgba(85, 85, 128, 0.9);
+    text-shadow: 0px 1px rgba(0, 0, 0, 0.6);
 }
 
 .brush_mode_ghosted {

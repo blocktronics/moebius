@@ -237,3 +237,6 @@ body.dark #statusbar > div > div {
 @keyframes fade {
     0% {opacity: 0.7;} 100% {opacity: 0;}
 }
+.ghosted {
+    opacity: 0.3;
+}

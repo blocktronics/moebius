@@ -1,0 +1,16 @@
+:root {
+    --window-height: 80px
+}
+
+body div:first-child {
+    opacity: 0.7;
+    text-align: center;
+    width: 200px;
+    height: var(--window-height);
+    margin: 0px auto;
+}
+
+body div:first-child p {
+    margin: 0px;
+    line-height: var(--window-height);
+}
