@@ -1,7 +1,7 @@
 const electron = require("electron");
 const path = require("path");
 const docs = {};
-let splash_screen_win;
+let splash_screen_win, preferences_win;
 let last_document_xy_position;
 const NEW_DOCUMENT_WIDTH = 1280;
 const NEW_DOCUMENT_HEIGHT = 800;
@@ -205,6 +205,17 @@ function open_reference_image({win}) {
     });
 }
 
+function preferences() {
+    if (preferences_win && !preferences_win.isDestroyed()) {
+        preferences_win.focus();
+    } else {
+        preferences_win = new electron.BrowserWindow({width: 512, height: 145, show: false, backgroundColor: "#000000", maximizable: false, resizable: false, fullscreenable: false, webPreferences: {nodeIntegration: true}});
+        preferences_win.on("focus", (event) => set_application_menu());
+        preferences_win.on("ready-to-show", (event) => preferences_win.show());
+        preferences_win.loadFile("app/html/preferences.html");
+    }
+}
+
 function start_server({item, win}) {
     // TODO
 }
@@ -272,6 +283,8 @@ function modal_menu() {
         submenu: [
             {role: "about", label: "About Mœbius"},
             {type: "separator"},
+            // {label: "Preferences", id: "preferences", accelerator: "Cmd+,", click(item, win) {preferences();}},
+            // {type: "separator"},
             {role: "services"},
             {type: "separator"},
             {role: "hide", label: "Hide Mœbius"},
@@ -294,16 +307,17 @@ function document_menu() {
     return electron.Menu.buildFromTemplate([{
             label: "Mœbius",
             submenu: [{role: "about", label: "About Mœbius"},
-                {type: "separator"},
-                {role: "services"},
-                {type: "separator"},
-                {role: "hide", label: "Hide Mœbius"},
-                {role: "hideothers"},
-                {role: "unhide"},
-                {type: "separator"},
-                {role: "quit", label: "Quit Mœbius"}
-            ]
-        }, {
+            {type: "separator"},
+            // {label: "Preferences", id: "preferences", accelerator: "Cmd+,", click(item, win) {preferences();}},
+            // {type: "separator"},
+            {role: "services"},
+            {type: "separator"},
+            {role: "hide", label: "Hide Mœbius"},
+            {role: "hideothers"},
+            {role: "unhide"},
+            {type: "separator"},
+            {role: "quit", label: "Quit Mœbius"}
+        ]}, {
             label: "File",
             submenu: [
                 {label: "New", id: "new_document", accelerator: "Cmd+N", click(item, win) {new_document();}},
