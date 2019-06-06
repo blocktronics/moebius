@@ -22,6 +22,10 @@ fileAssociations:
     name: XBin
     role: Editor
     icon: document_icon.icns
+  - ext: .diz
+    name: Description in Zip File
+    role: Editor
+    icon: document_icon.icns
 mac:
   category: public.app-category.graphics-design
   target: dmg
