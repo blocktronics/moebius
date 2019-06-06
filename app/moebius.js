@@ -150,7 +150,7 @@ async function new_document({columns = 80, rows = 24} = {}) {
 }
 
 function open(win) {
-    electron.dialog.showOpenDialog(win, {filters: [{name: "TextArt", extensions: ["ans", "xb", "bin"]}, {name: "All Files", extensions: ["*"]}], properties: ["openFile", "multiSelections"]}, (files) => {
+    electron.dialog.showOpenDialog(win, {filters: [{name: "TextArt", extensions: ["ans", "xb", "bin", "diz"]}, {name: "All Files", extensions: ["*"]}], properties: ["openFile", "multiSelections"]}, (files) => {
         if (files) {
             if (win && !docs[win.id].file && !docs[win.id].edited) {
                 docs[win.id].file = files[0];
