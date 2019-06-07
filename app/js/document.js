@@ -751,6 +751,13 @@ function colorize_brush(x, y) {
     mouse_y = y;
 }
 
+function clear_brush(x, y) {
+    const coords = line(mouse_x, mouse_y, x, y);
+    for (const coord of coords) change_data({x: coord.x, y: coord.y, code: 32, fg: 7, bg: 0});
+    mouse_x = x;
+    mouse_y = y;
+}
+
 function get_canvas_xy(event) {
     const canvas_container = document.getElementById("canvas_container");
     const canvas_container_rect = canvas_container.getBoundingClientRect();
@@ -827,7 +834,9 @@ function mouse_move(event) {
         break;
         case editor_modes.BRUSH:
             if (mouse_button) {
-                if (toolbar.is_in_half_block_mode()) {
+                if (event.shiftKey) {
+                    clear_brush(x, y);
+                } else if (toolbar.is_in_half_block_mode()) {
                     half_block_brush(x, half_y, mouse_button == mouse_button_types.LEFT ? fg : bg);
                 } else if (toolbar.is_in_colorize_mode()) {
                     colorize_brush(x, y);
