@@ -358,11 +358,21 @@ document.addEventListener("keydown", (event) => {
                                 const code = event.key.charCodeAt(0);
                                 if (code >= 32 && code <= 126) {
                                     key_typed(code);
-                                    event.preventDefault();
+                                    // event.preventDefault();
                                 }
                             }
+                        } else if (event.ctrlKey && !event.altKey && !event.metaKey && !event.shiftKey) {
+                            switch (event.key) {
+                                case "a": select_all(); event.preventDefault(); break;
+                                case "v": paste(); event.preventDefault(); break;
+                            }
                         }
-                        break;
+                }
+            } else if (cursor.mode == canvas.cursor_modes.SELECTION && event.ctrlKey && !event.altKey && !event.metaKey && !event.shiftKey) {
+                switch (event.key) {
+                    case "x": cut(); event.preventDefault(); break;
+                    case "c": copy(); event.preventDefault(); break;
+                    case "a": select_all(); event.preventDefault(); break;
                 }
             } else if (cursor.mode == canvas.cursor_modes.OPERATION && event.code == "Enter") {
                 place();
@@ -422,6 +432,7 @@ document.addEventListener("keydown", (event) => {
                     cursor.page_down();
                     event.preventDefault();
                     break;
+                case "Insert":
                 case "NumpadEnter":
                     set_insert_mode(!insert_mode);
                     update_menu_checkboxes();

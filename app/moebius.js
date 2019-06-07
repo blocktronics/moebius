@@ -5,6 +5,8 @@ let splash_screen_win, preferences_win;
 let last_document_xy_position;
 const NEW_DOCUMENT_WIDTH = 1280;
 const NEW_DOCUMENT_HEIGHT = 800;
+const win32 = (process.platform == "win32");
+const darwin = (process.platform == "darwin");
 
 function create_touch_bar(win) {
     return {
@@ -70,7 +72,7 @@ function create_touch_bar(win) {
 }
 
 function set_application_menu() {
-    electron.Menu.setApplicationMenu(application_menu);
+    if (darwin) electron.Menu.setApplicationMenu(application_menu);
 }
 
 function change_appearance(win) {
@@ -80,9 +82,9 @@ function change_appearance(win) {
 async function new_window({width, height, file}) {
     return new Promise((resolve) => {
         const win = new electron.BrowserWindow({width, height, minWidth: 800, minHeight: 500, show: false, webPreferences: {nodeIntegration: true}, backgroundColor: electron.systemPreferences.isDarkMode() ? "#22252B" : "#f6f6f6"});
-        electron.systemPreferences.subscribeNotification("AppleInterfaceThemeChangedNotification", (event) => change_appearance(win));
+        // electron.systemPreferences.subscribeNotification("AppleInterfaceThemeChangedNotification", (event) => change_appearance(win));
         win.on("ready-to-show", (event) => {
-            change_appearance(win);
+            // change_appearance(win);
             win.show();
             resolve(win);
         });
@@ -92,10 +94,11 @@ async function new_window({width, height, file}) {
 
 async function new_modal_window({width, height, file, parent}) {
     return new Promise((resolve) => {
-        const win = new electron.BrowserWindow({parent, width, height, show: false, modal: true, useContentSize: true, transparent: true, vibrancy: "dark", webPreferences: {nodeIntegration: true}});
-        electron.systemPreferences.subscribeNotification("AppleInterfaceThemeChangedNotification", (event) => change_appearance(win));
+        const win = (darwin) ? new electron.BrowserWindow({parent, width, height, show: false, modal: true, useContentSize: true, transparent: true, vibrancy: "dark", webPreferences: {nodeIntegration: true}}) : new electron.BrowserWindow({parent, width, height, show: false, modal: true, useContentSize: true, backgroundColor: "#000000", webPreferences: {nodeIntegration: true}});
+        // electron.systemPreferences.subscribeNotification("AppleInterfaceThemeChangedNotification", (event) => change_appearance(win));
+        if (win32) win.setMenu(null);
         win.on("ready-to-show", (event) => {
-            change_appearance(win);
+            // change_appearance(win);
             win.show();
             resolve(win);
         });
@@ -109,19 +112,23 @@ function cleanup_document(id) {
 }
 
 async function new_document_window() {
-    if (splash_screen_win && !splash_screen_win.isDestroyed()) splash_screen_win.close();
     const win = await new_window({width: NEW_DOCUMENT_WIDTH, height: NEW_DOCUMENT_HEIGHT, file: "app/html/document.html"});
+    if (splash_screen_win && !splash_screen_win.isDestroyed()) splash_screen_win.close();
     if (last_document_xy_position) {
         const display = electron.screen.getPrimaryDisplay();
         win.setPosition(Math.min(display.workArea.width + display.workArea.x - NEW_DOCUMENT_WIDTH, last_document_xy_position[0] + 30), Math.min(display.workArea.height + display.workArea.y - NEW_DOCUMENT_HEIGHT, last_document_xy_position[1] + 30));
     }
     last_document_xy_position = win.getPosition();
-    docs[win.id] = {win, menu: document_menu(), modal_menu: modal_menu(), touch_bars: create_touch_bar(win), edited: false};
+    docs[win.id] = {win, menu: document_menu(win), modal_menu: modal_menu(), touch_bars: create_touch_bar(win), edited: false};
     win.on("focus", (event) => {
-        if (docs[win.id] && docs[win.id].modal && !docs[win.id].modal.isDestroyed()) {
-            electron.Menu.setApplicationMenu(docs[win.id].modal_menu);
+        if (darwin) {
+            if (docs[win.id] && docs[win.id].modal && !docs[win.id].modal.isDestroyed()) {
+                electron.Menu.setApplicationMenu(docs[win.id].modal_menu);
+            } else {
+                electron.Menu.setApplicationMenu(docs[win.id].menu);
+            }
         } else {
-            electron.Menu.setApplicationMenu(docs[win.id].menu);
+            docs[win.id].win.setMenu(docs[win.id].menu);
         }
     });
     win.on("close", (event) => {
@@ -252,38 +259,38 @@ const application_menu = electron.Menu.buildFromTemplate([{
 }, {
     label: "File",
     submenu: [
-        {label: "New", id: "new_document", accelerator: "Cmd+N", click(item, win) {new_document();}},
+        {label: "New", id: "new_document", accelerator: "CmdOrCtrl+N", click(item) {new_document();}},
         {type: "separator"},
-        {label: "Open\u2026", id: "open", accelerator: "Cmd+O", click(item, win) {open();}},
-        {role: "recentDocuments", submenu: [{label: "Clear Menu", id: "clear_recent_documents", click(item, win) {electron.app.clearRecentDocuments();}}]},
+        {label: "Open\u2026", id: "open", accelerator: "CmdOrCtrl+O", click(item) {open();}},
+        {role: "recentDocuments", submenu: [{label: "Clear Menu", id: "clear_recent_documents", click(item) {electron.app.clearRecentDocuments();}}]},
         {type: "separator"},
         {role: "close"},
     ]
 }, {
     label: "Network", submenu: [
-        {label: "Connect to Server…", id: "connect_to_server", click(item, win) {connect_to_server();}},
+        {label: "Connect to Server…", id: "connect_to_server", click(item) {connect_to_server();}},
     ]
 }, {
     label: "Window", submenu: [{role: "minimize"}, {role: "zoom"}, {type: "separator"}, {role: "front"}]
 }, {
     label: "Debug",
     submenu: [
-        {label: "Open Dev Tools", id: "open_dev_tools", accelerator: "Ctrl+C", click(item, win) {open_dev_tools({win});}},
-        {label: "Connect to Test Server", id: "connect_to_test_server", accelerator: "Cmd+Alt+1", click(item, win) {connect_to_server({ip: "74.207.246.247", port: 8000, nick: "andyh", pass: "secret"});}},
-        {label: "Connect to Local Server", id: "connect_to_local_server", accelerator: "Cmd+Alt+2", click(item, win) {connect_to_server({ip: "localhost", port: 8000, nick: "andyh", pass: "secret"});}
+        {label: "Open Dev Tools", id: "open_dev_tools", click(item) {open_dev_tools({win});}},
+        {label: "Connect to Test Server", id: "connect_to_test_server", accelerator: "CmdOrCtrl+Alt+1", click(item) {connect_to_server({ip: "74.207.246.247", port: 8000, nick: "andyh", pass: "secret"});}},
+        {label: "Connect to Local Server", id: "connect_to_local_server", accelerator: "CmdOrCtrl+Alt+2", click(item) {connect_to_server({ip: "localhost", port: 8000, nick: "andyh", pass: "secret"});}
     }]
 }, {
     label: "Help", role: "help", submenu: []
 }]);
 
 // Displayed when modal window is frontmost.
-function modal_menu() {
+function modal_menu(win) {
     return electron.Menu.buildFromTemplate([{
         label: "Mœbius",
         submenu: [
             {role: "about", label: "About Mœbius"},
             {type: "separator"},
-            // {label: "Preferences", id: "preferences", accelerator: "Cmd+,", click(item, win) {preferences();}},
+            // {label: "Preferences", id: "preferences", accelerator: "Cmd+,", click(item) {preferences();}},
             // {type: "separator"},
             {role: "services"},
             {type: "separator"},
@@ -297,18 +304,19 @@ function modal_menu() {
         label: "Window", submenu: [{role: "minimize"}, {role: "zoom"}, {type: "separator"}, {role: "front"}]
     }, {
         label: "Debug",
-        submenu: [{label: "Open Dev Tools", id: "open_dev_tools", accelerator: "Ctrl+C", click(item, win) {open_dev_tools({win});}}]
+        submenu: [{label: "Open Dev Tools", id: "open_dev_tools", click(item) {open_dev_tools({win});}}]
     }, {
         label: "Help", role: "help", submenu: []
     }]);
 }
 
-function document_menu() {
-    return electron.Menu.buildFromTemplate([{
+function document_menu(win) {
+    if (darwin) {
+        return electron.Menu.buildFromTemplate([{
             label: "Mœbius",
             submenu: [{role: "about", label: "About Mœbius"},
             {type: "separator"},
-            // {label: "Preferences", id: "preferences", accelerator: "Cmd+,", click(item, win) {preferences();}},
+            // {label: "Preferences", id: "preferences", accelerator: "Cmd+,", click(item) {preferences();}},
             // {type: "separator"},
             {role: "services"},
             {type: "separator"},
@@ -320,200 +328,393 @@ function document_menu() {
         ]}, {
             label: "File",
             submenu: [
-                {label: "New", id: "new_document", accelerator: "Cmd+N", click(item, win) {new_document();}},
+                {label: "New", id: "new_document", accelerator: "CmdOrCtrl+N", click(item) {new_document();}},
                 {type: "separator"},
-                {label: "Open\u2026", id: "open", accelerator: "Cmd+O", click(item, win) {open(win);}},
+                {label: "Open\u2026", id: "open", accelerator: "CmdOrCtrl+O", click(item) {open(win);}},
                 {role: "recentDocuments", submenu: [
-                    {label: "Clear Menu", id: "clear_recent_documents", click(item, win) {electron.app.clearRecentDocuments();}},
+                    {label: "Clear Menu", id: "clear_recent_documents", click(item) {electron.app.clearRecentDocuments();}},
                 ]},
                 {type: "separator"},
-                {label: "Edit Sauce Info\u2026", id: "edit_sauce_info", accelerator: "Cmd+I", click(item, win) {win.send("get_sauce_info");}},
+                {label: "Edit Sauce Info\u2026", id: "edit_sauce_info", accelerator: "CmdOrCtrl+I", click(item) {win.send("get_sauce_info");}},
                 {type: "separator"},
-                {label: "Save", id: "save", accelerator: "Cmd+S", click(item, win) {save({win});}},
-                {label: "Save As\u2026", id: "save_as", accelerator: "Cmd+Shift+S", click(item, win) {save_as({win});}},
+                {label: "Save", id: "save", accelerator: "CmdOrCtrl+S", click(item) {save({win});}},
+                {label: "Save As\u2026", id: "save_as", accelerator: "CmdOrCtrl+Shift+S", click(item) {save_as({win});}},
                 {type: "separator"},
-                {label: "Export As PNG\u2026", id: "export_as_png", accelerator: "Cmd+Shift+E", click(item, win) {export_as_png({win});}},
+                {label: "Export As PNG\u2026", id: "export_as_png", accelerator: "CmdOrCtrl+Shift+E", click(item) {export_as_png({win});}},
                 {type: "separator"},
                 {role: "close"}
             ]
         }, {
             label: "Edit",
             submenu: [
-                {label: "Undo", id: "undo", accelerator: "Cmd+Z", click(item, win) {win.send("undo");}, enabled: false},
-                {label: "Redo", id: "redo", accelerator: "Cmd+Shift+Z", click(item, win) {win.send("redo");}, enabled: false},
-                {label: "Toggle Insert Mode", id: "toggle_insert_mode", click(item, win) {win.send("insert_mode", item.checked);}, type: "checkbox", checked: false},
+                {label: "Undo", id: "undo", accelerator: "CmdOrCtrl+Z", click(item) {win.send("undo");}, enabled: false},
+                {label: "Redo", id: "redo", accelerator: darwin ? "CmdOrCtrl+Shift+Z" : "CmdOrCtrl+Y", click(item) {win.send("redo");}, enabled: false},
+                {label: "Toggle Insert Mode", id: "toggle_insert_mode", click(item) {win.send("insert_mode", item.checked);}, type: "checkbox", checked: false},
                 {type: "separator"},
-                {label: "Cut", id: "cut", accelerator: "Cmd+X", click(item, win) {win.send("cut");}, enabled: false},
-                {label: "Copy", id: "copy", accelerator: "Cmd+C", click(item, win) {win.send("copy");}, enabled: false},
-                {label: "Paste", id: "paste", accelerator: "Cmd+V", click(item, win) {win.send("paste");}},
-                {label: "Delete", id: "delete_selection", accelerator: "Cmd+Backspace", click(item, win) {win.send("delete_selection");}, enabled: false},
+                {label: "Cut", id: "cut", accelerator: "CmdOrCtrl+X", click(item) {win.send("cut");}, enabled: false},
+                {label: "Copy", id: "copy", accelerator: "CmdOrCtrl+C", click(item) {win.send("copy");}, enabled: false},
+                {label: "Paste", id: "paste", accelerator: "CmdOrCtrl+V", click(item) {win.send("paste");}},
+                {label: "Delete", id: "delete_selection", accelerator: "CmdOrCtrl+Backspace", click(item) {win.send("delete_selection");}, enabled: false},
                 {type: "separator"},
-                {label: "Select All", id: "select_all", accelerator: "Cmd+A", click(item, win) {win.send("select_all");}},
-                {label: "Deselect", id: "deselect", accelerator: "Escape", click(item, win) {win.send("deselect");}, enabled: false},
+                {label: "Select All", id: "select_all", accelerator: "CmdOrCtrl+A", click(item) {win.send("select_all");}},
+                {label: "Deselect", id: "deselect", accelerator: "Escape", click(item) {win.send("deselect");}, enabled: false},
                 {type: "separator"},
-                {label: "Move Block", id: "move_block", accelerator: "M", click(item, win) {win.send("move_block");}, enabled: false},
-                {label: "Copy Block", id: "copy_block", accelerator: "C", click(item, win) {win.send("copy_block");}, enabled: false},
+                {label: "Move Block", id: "move_block", accelerator: "M", click(item) {win.send("move_block");}, enabled: false},
+                {label: "Copy Block", id: "copy_block", accelerator: "C", click(item) {win.send("copy_block");}, enabled: false},
                 {type: "separator"},
-                {label: "Stamp", id: "stamp", accelerator: "S", click(item, win) {win.send("stamp");}, enabled: false},
-                {label: "Rotate", id: "rotate", accelerator: "R", click(item, win) {win.send("rotate");}, enabled: false},
-                {label: "Flip X", id: "flip_x", accelerator: "X", click(item, win) {win.send("flip_x");}, enabled: false},
-                {label: "Flip Y", id: "flip_y", accelerator: "Y", click(item, win) {win.send("flip_y");}, enabled: false},
-                {label: "Center", id: "center", accelerator: "=", click(item, win) {win.send("center");}, enabled: false},
+                {label: "Stamp", id: "stamp", accelerator: "S", click(item) {win.send("stamp");}, enabled: false},
+                {label: "Rotate", id: "rotate", accelerator: "R", click(item) {win.send("rotate");}, enabled: false},
+                {label: "Flip X", id: "flip_x", accelerator: "X", click(item) {win.send("flip_x");}, enabled: false},
+                {label: "Flip Y", id: "flip_y", accelerator: "Y", click(item) {win.send("flip_y");}, enabled: false},
+                {label: "Center", id: "center", accelerator: "=", click(item) {win.send("center");}, enabled: false},
                 {type: "separator"},
-                {label: "Set Canvas Size\u2026", id: "set_canvas_size", accelerator: "Cmd+Alt+C", click(item, win) {win.send("get_canvas_size");}},
+                {label: "Set Canvas Size\u2026", id: "set_canvas_size", accelerator: "CmdOrCtrl+Alt+C", click(item) {win.send("get_canvas_size");}},
                 {type: "separator"},
-                {label: "Previous Foreground Color", id: "previous_foreground_color", accelerator: "Alt+Up", click(item, win) {win.send("previous_foreground_color");}},
-                {label: "Next Foreground Color", id: "next_foreground_color", accelerator: "Alt+Down", click(item, win) {win.send("next_foreground_color");}},
+                {label: "Previous Foreground Color", id: "previous_foreground_color", accelerator: "Alt+Up", click(item) {win.send("previous_foreground_color");}},
+                {label: "Next Foreground Color", id: "next_foreground_color", accelerator: "Alt+Down", click(item) {win.send("next_foreground_color");}},
                 {type: "separator"},
-                {label: "Previous Background Color", id: "previous_background_colour", accelerator: "Alt+Left", click(item, win) {win.send("previous_background_colour");}},
-                {label: "Next Background Color", id: "next_background_color", accelerator: "Alt+Right", click(item, win) {win.send("next_background_color");}},
+                {label: "Previous Background Color", id: "previous_background_colour", accelerator: "Alt+Left", click(item) {win.send("previous_background_colour");}},
+                {label: "Next Background Color", id: "next_background_color", accelerator: "Alt+Right", click(item) {win.send("next_background_color");}},
                 {type: "separator"},
-                {label: "Use Attribute Under Cursor", id: "use_attribute_under_cursor", accelerator: "Alt+U", click(item, win) {win.send("use_attribute_under_cursor");}},
-                {label: "Default Color", id: "default_color", accelerator: "Cmd+D", click(item, win) {win.send("default_color");}},
-                {label: "Switch Foreground / Background", id: "switch_foreground_background", accelerator: "Shift+Cmd+X", click(item, win) {win.send("switch_foreground_background");}}
+                {label: "Use Attribute Under Cursor", id: "use_attribute_under_cursor", accelerator: "Alt+U", click(item) {win.send("use_attribute_under_cursor");}},
+                {label: "Default Color", id: "default_color", accelerator: "CmdOrCtrl+D", click(item) {win.send("default_color");}},
+                {label: "Switch Foreground / Background", id: "switch_foreground_background", accelerator: "Shift+CmdOrCtrl+X", click(item) {win.send("switch_foreground_background");}}
             ]
         }, {
             label: "View",
             submenu: [
-                {label: "Show Status Bar", id: "show_status_bar", accelerator: "Cmd+/", click(item, win) {win.send("show_statusbar", item.checked);}, type: "checkbox", checked: true},
-                {label: "Show Tool Bar", id: "show_tool_bar", accelerator: "Cmd+T", click(item, win) {win.send("show_toolbar", item.checked);}, type: "checkbox", checked: true},
-                {label: "Show Preview", id: "show_preview", accelerator: "Cmd+Alt+P", click(item, win) {win.send("show_preview", item.checked);}, type: "checkbox", checked: true},
+                {label: "Show Status Bar", id: "show_status_bar", accelerator: "CmdOrCtrl+/", click(item) {win.send("show_statusbar", item.checked);}, type: "checkbox", checked: true},
+                {label: "Show Tool Bar", id: "show_tool_bar", accelerator: "CmdOrCtrl+T", click(item) {win.send("show_toolbar", item.checked);}, type: "checkbox", checked: true},
+                {label: "Show Preview", id: "show_preview", accelerator: "CmdOrCtrl+Alt+P", click(item) {win.send("show_preview", item.checked);}, type: "checkbox", checked: true},
                 {type: "separator"},
-                {label: "Selection Mode", id: "change_to_select_mode", accelerator: "Cmd+1", click(item, win) {win.send("change_to_select_mode");}, type: "checkbox", chacked: false},
-                {label: "Brush Mode", id: "change_to_brush_mode", accelerator: "Cmd+2", click(item, win) {win.send("change_to_brush_mode");}, type: "checkbox", chacked: false},
-                {label: "Sample Mode", id: "change_to_sample_mode", accelerator: "Cmd+3", click(item, win) {win.send("change_to_sample_mode");}, type: "checkbox", chacked: false},
+                {label: "Selection Mode", id: "change_to_select_mode", accelerator: "CmdOrCtrl+1", click(item) {win.send("change_to_select_mode");}, type: "checkbox", chacked: false},
+                {label: "Brush Mode", id: "change_to_brush_mode", accelerator: "CmdOrCtrl+2", click(item) {win.send("change_to_brush_mode");}, type: "checkbox", chacked: false},
+                {label: "Sample Mode", id: "change_to_sample_mode", accelerator: "CmdOrCtrl+3", click(item) {win.send("change_to_sample_mode");}, type: "checkbox", chacked: false},
                 {type: "separator"},
-                {label: "Use 9px Font", id: "use_9px_font", click(item, win) {win.send("use_9px_font", item.checked);}, type: "checkbox", checked: false},
-                {label: "Use iCE Colors", id: "ice_colors", click(item, win) {win.send("ice_colors", item.checked);}, type: "checkbox", checked: false},
+                {label: "Use 9px Font", id: "use_9px_font", click(item) {win.send("use_9px_font", item.checked);}, type: "checkbox", checked: false},
+                {label: "Use iCE Colors", id: "ice_colors", click(item) {win.send("ice_colors", item.checked);}, type: "checkbox", checked: false},
                 {type: "separator"},
-                {label: "Actual Size", id: "actual_size", accelerator: "Cmd+0", click(item, win) {win.send("actual_size");}, type: "checkbox", checked: false},
-                {label: "Zoom In", id: "zoom_in", accelerator: "Cmd+=", click(item, win) {win.send("zoom_in");}},
-                {label: "Zoom Out", id: "zoom_out", accelerator: "Cmd+-", click(item, win) {win.send("zoom_out");}},
+                {label: "Actual Size", id: "actual_size", accelerator: "CmdOrCtrl+0", click(item) {win.send("actual_size");}, type: "checkbox", checked: false},
+                {label: "Zoom In", id: "zoom_in", accelerator: "CmdOrCtrl+=", click(item) {win.send("zoom_in");}},
+                {label: "Zoom Out", id: "zoom_out", accelerator: "CmdOrCtrl+-", click(item) {win.send("zoom_out");}},
                 {type: "separator"},
                 {label: "Change Font", submenu: [
                     {label: "Amiga", submenu: [
-                        {label: "Amiga Topaz 1 (8×16)", id: "Amiga Topaz 1", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "Amiga Topaz 1+ (8×16)", id: "Amiga Topaz 1+", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "Amiga Topaz 2 (8×16)", id: "Amiga Topaz 2", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "Amiga Topaz 2+ (8×16)", id: "Amiga Topaz 2+", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "Amiga P0T-NOoDLE (8×16)", id: "Amiga P0T-NOoDLE", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "Amiga MicroKnight (8×16)", id: "Amiga MicroKnight", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "Amiga MicroKnight+ (8×16)", id: "Amiga MicroKnight+", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "Amiga mOsOul (8×16)", id: "Amiga mOsOul", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "Amiga Topaz 1 (8×16)", id: "Amiga Topaz 1", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "Amiga Topaz 1+ (8×16)", id: "Amiga Topaz 1+", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "Amiga Topaz 2 (8×16)", id: "Amiga Topaz 2", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "Amiga Topaz 2+ (8×16)", id: "Amiga Topaz 2+", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "Amiga P0T-NOoDLE (8×16)", id: "Amiga P0T-NOoDLE", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "Amiga MicroKnight (8×16)", id: "Amiga MicroKnight", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "Amiga MicroKnight+ (8×16)", id: "Amiga MicroKnight+", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "Amiga mOsOul (8×16)", id: "Amiga mOsOul", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "Arabic", submenu: [
-                        {label: "IBM VGA50 864 (8×8)", id: "IBM VGA50 864", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 864 (8×14)", id: "IBM EGA 864", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 864 (8×16)", id: "IBM VGA 864", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 864 (8×8)", id: "IBM VGA50 864", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 864 (8×14)", id: "IBM EGA 864", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 864 (8×16)", id: "IBM VGA 864", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "Baltic Rim", submenu: [
-                        {label: "IBM VGA50 775 (8×8)", id: "IBM VGA50 775", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 775 (8×14)", id: "IBM EGA 775", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 775 (8×16)", id: "IBM VGA 775", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 775 (8×8)", id: "IBM VGA50 775", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 775 (8×14)", id: "IBM EGA 775", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 775 (8×16)", id: "IBM VGA 775", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "Cyrillic", submenu: [
-                        {label: "IBM VGA50 866 (8×8)", id: "IBM VGA50 866", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 866 (8×14)", id: "IBM EGA 866", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 866 (8×16)", id: "IBM VGA 866", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA50 855 (8×8)", id: "IBM VGA50 855", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 855 (8×14)", id: "IBM EGA 855", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 855 (8×16)", id: "IBM VGA 855", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 866 (8×8)", id: "IBM VGA50 866", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 866 (8×14)", id: "IBM EGA 866", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 866 (8×16)", id: "IBM VGA 866", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 855 (8×8)", id: "IBM VGA50 855", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 855 (8×14)", id: "IBM EGA 855", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 855 (8×16)", id: "IBM VGA 855", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "French Canadian", submenu: [
-                        {label: "IBM VGA50 863 (8×8)", id: "IBM VGA50 863", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 863 (8×14)", id: "IBM EGA 863", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 863 (8×16)", id: "IBM VGA 863", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA25G 863 (8×19)", id: "IBM VGA25G 863", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 863 (8×8)", id: "IBM VGA50 863", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 863 (8×14)", id: "IBM EGA 863", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 863 (8×16)", id: "IBM VGA 863", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 863 (8×19)", id: "IBM VGA25G 863", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "Greek", submenu: [
-                        {label: "IBM VGA50 737 (8×8)", id: "IBM VGA50 737", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 737 (8×14)", id: "IBM EGA 737", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 737 (8×16)", id: "IBM VGA 737", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA50 869 (8×8)", id: "IBM VGA50 869", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 869 (8×14)", id: "IBM EGA 869", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 869 (8×16)", id: "IBM VGA 869", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA50 851 (8×8)", id: "IBM VGA50 851", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 851 (8×14)", id: "IBM EGA 851", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 851 (8×16)", id: "IBM VGA 851", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA25G 851 (8×19)", id: "IBM VGA25G 851", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 737 (8×8)", id: "IBM VGA50 737", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 737 (8×14)", id: "IBM EGA 737", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 737 (8×16)", id: "IBM VGA 737", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 869 (8×8)", id: "IBM VGA50 869", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 869 (8×14)", id: "IBM EGA 869", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 869 (8×16)", id: "IBM VGA 869", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 851 (8×8)", id: "IBM VGA50 851", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 851 (8×14)", id: "IBM EGA 851", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 851 (8×16)", id: "IBM VGA 851", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 851 (8×19)", id: "IBM VGA25G 851", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "Hebrew", submenu: [
-                        {label: "IBM VGA50 862 (8×8)", id: "IBM VGA50 862", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 862 (8×14)", id: "IBM EGA 862", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 862 (8×16)", id: "IBM VGA 862", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 862 (8×8)", id: "IBM VGA50 862", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 862 (8×14)", id: "IBM EGA 862", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 862 (8×16)", id: "IBM VGA 862", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "IBM PC", submenu: [
-                        {label: "IBM VGA50 (8×8)",  id: "IBM VGA50", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA (8×14)", id: "IBM EGA", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA (8×16)", id: "IBM VGA", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA25G (8×19 (8×19)", id: "IBM VGA25G", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 (8×8)",  id: "IBM VGA50", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA (8×14)", id: "IBM EGA", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA (8×16)", id: "IBM VGA", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G (8×19 (8×19)", id: "IBM VGA25G", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "Icelandic", submenu: [
-                        {label: "IBM VGA50 861 (8×8)", id: "IBM VGA50 861", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 861 (8×14)", id: "IBM EGA 861", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 861 (8×16)", id: "IBM VGA 861", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA25G 861 (8×19)", id: "IBM VGA25G 861", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 861 (8×8)", id: "IBM VGA50 861", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 861 (8×14)", id: "IBM EGA 861", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 861 (8×16)", id: "IBM VGA 861", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 861 (8×19)", id: "IBM VGA25G 861", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "Latin-1 Western European", submenu: [
-                        {label: "IBM VGA50 850 (8×8)", id: "IBM VGA50 850", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 850 (8×14)", id: "IBM EGA 850", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 850 (8×16)", id: "IBM VGA 850", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA25G 850 (8×19)", id: "IBM VGA25G 850", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 850 (8×8)", id: "IBM VGA50 850", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 850 (8×14)", id: "IBM EGA 850", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 850 (8×16)", id: "IBM VGA 850", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 850 (8×19)", id: "IBM VGA25G 850", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "Latin-1 Central European", submenu: [
-                        {label: "IBM VGA50 852 (8×8)", id: "IBM VGA50 852", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 852 (8×14)", id: "IBM EGA 852", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 852 (8×16)", id: "IBM VGA 852", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA25G 852 (8×19)", id: "IBM VGA25G 852", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 852 (8×8)", id: "IBM VGA50 852", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 852 (8×14)", id: "IBM EGA 852", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 852 (8×16)", id: "IBM VGA 852", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 852 (8×19)", id: "IBM VGA25G 852", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "Latin-1 Multilingual", submenu: [
-                        {label: "IBM VGA50 853 (8×8)", id: "IBM VGA50 853", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 853 (8×14)", id: "IBM EGA 853", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 853 (8×16)", id: "IBM VGA 853", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA25G 853 (8×19)", id: "IBM VGA25G 853", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 853 (8×8)", id: "IBM VGA50 853", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 853 (8×14)", id: "IBM EGA 853", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 853 (8×16)", id: "IBM VGA 853", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 853 (8×19)", id: "IBM VGA25G 853", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "Nordic", submenu: [
-                        {label: "IBM VGA50 865 (8×8)", id: "IBM VGA50 865", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 865 (8×14)", id: "IBM EGA 865", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 865 (8×16)", id: "IBM VGA 865", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA25G 865 (8×19)", id: "IBM VGA25G 865", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 865 (8×8)", id: "IBM VGA50 865", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 865 (8×14)", id: "IBM EGA 865", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 865 (8×16)", id: "IBM VGA 865", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 865 (8×19)", id: "IBM VGA25G 865", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "Portuguese", submenu: [
-                        {label: "IBM VGA50 860 (8×8)", id: "IBM VGA50 860", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 860 (8×14)", id: "IBM EGA 860", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 860 (8×16)", id: "IBM VGA 860", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA25G 860 (8×19)", id: "IBM VGA25G 860", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 860 (8×8)", id: "IBM VGA50 860", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 860 (8×14)", id: "IBM EGA 860", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 860 (8×16)", id: "IBM VGA 860", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 860 (8×19)", id: "IBM VGA25G 860", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "Turkish", submenu: [
-                        {label: "IBM VGA50 857 (8×8)", id: "IBM VGA50 857", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 857 (8×14)", id: "IBM EGA 857", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 857 (8×16)", id: "IBM VGA 857", click(item, win) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 857 (8×8)", id: "IBM VGA50 857", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 857 (8×14)", id: "IBM EGA 857", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 857 (8×16)", id: "IBM VGA 857", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]}
                 ]},
                 {type: "separator"},
-                {label: "Open Reference Image\u2026", id: "open_reference_image", click(item, win) {open_reference_image({win});}},
-                {label: "Clear", id: "clear_reference_image", click(item, win) {win.send("clear_reference_image");}, enabled: false},
+                {label: "Open Reference Image\u2026", id: "open_reference_image", click(item) {open_reference_image({win});}},
+                {label: "Clear", id: "clear_reference_image", click(item) {win.send("clear_reference_image");}, enabled: false},
                 {type: "separator"},
                 {role: "togglefullscreen"}
             ]
         }, {
             label: "Network", submenu: [
-                {label: "Start Server…", id: "start_server", click(item, win) {start_server({item, win});}},
-                {label: "Connect to Server…", id: "connect_to_server", click(item, win) {connect_to_server();}},
+                {label: "Start Server…", id: "start_server", click(item) {start_server({item, win});}},
+                {label: "Connect to Server…", id: "connect_to_server", click(item) {connect_to_server();}},
                 {type: "separator"},
-                {label: "Disconnect", id: "disconnect", click(item, win) {disconnect({item, win});}, enabled: false},
+                {label: "Disconnect", id: "disconnect", click(item) {disconnect({item, win});}, enabled: false},
             ]
         }, {
             label: "Window", submenu: [{role: "minimize"}, {role: "zoom"}, {type: "separator"}, {role: "front"}]
         }, {
             label: "Debug",
             submenu: [
-                {label: "Open Dev Tools", id: "open_dev_tools", accelerator: "Ctrl+C", click(item, win) {open_dev_tools({item, win});}},
-                {label: "Connect to Test Server", id: "connect_to_test_server", accelerator: "Cmd+Alt+1", click(item, win) {connect_to_server({ip: "74.207.246.247", port: 8000, nick: "andyh", pass: "secret"});}},
-                {label: "Connect to Local Server", id: "connect_to_local_server", accelerator: "Cmd+Alt+2", click(item, win) {connect_to_server({ip: "localhost", port: 8000, nick: "andyh", pass: "secret"});}},
+                {label: "Open Dev Tools", id: "open_dev_tools", click(item) {open_dev_tools({item, win});}},
+                {label: "Connect to Test Server", id: "connect_to_test_server", accelerator: "CmdOrCtrl+Alt+1", click(item) {connect_to_server({ip: "74.207.246.247", port: 8000, nick: "andyh", pass: "secret"});}},
+                {label: "Connect to Local Server", id: "connect_to_local_server", accelerator: "CmdOrCtrl+Alt+2", click(item) {connect_to_server({ip: "localhost", port: 8000, nick: "andyh", pass: "secret"});}},
             ]
         }, {label: "Help", role: "help", submenu: []}
-    ]);
+        ]);
+    } else {
+        return electron.Menu.buildFromTemplate([{
+            label: "File",
+            submenu: [
+                {label: "New", id: "new_document", accelerator: "CmdOrCtrl+N", click(item) {new_document();}},
+                {type: "separator"},
+                {label: "Open\u2026", id: "open", accelerator: "CmdOrCtrl+O", click(item) {open(win);}},
+                {type: "separator"},
+                {label: "Edit Sauce Info\u2026", id: "edit_sauce_info", accelerator: "CmdOrCtrl+I", click(item) {win.send("get_sauce_info");}},
+                {type: "separator"},
+                {label: "Save", id: "save", accelerator: "CmdOrCtrl+S", click(item) {save({win});}},
+                {label: "Save As\u2026", id: "save_as", accelerator: "CmdOrCtrl+Shift+S", click(item) {save_as({win});}},
+                {type: "separator"},
+                {label: "Export As PNG\u2026", id: "export_as_png", accelerator: "CmdOrCtrl+Shift+E", click(item) {export_as_png({win});}},
+                {type: "separator"},
+                {role: "close"}
+            ]
+        }, {
+            label: "Edit",
+            submenu: [
+                {label: "Undo", id: "undo", accelerator: "CmdOrCtrl+Z", click(item) {win.send("undo");}, enabled: false},
+                {label: "Redo", id: "redo", accelerator: darwin ? "CmdOrCtrl+Shift+Z" : "CmdOrCtrl+Y", click(item) {win.send("redo");}, enabled: false},
+                {label: "Toggle Insert Mode", id: "toggle_insert_mode", click(item) {win.send("insert_mode", item.checked);}, type: "checkbox", checked: false},
+                {type: "separator"},
+                {label: "Cut", id: "cut", accelerator: "CmdOrCtrl+X", click(item) {win.send("cut");}, enabled: false},
+                {label: "Copy", id: "copy", accelerator: "CmdOrCtrl+C", click(item) {win.send("copy");}, enabled: false},
+                {label: "Paste", id: "paste", accelerator: "CmdOrCtrl+V", click(item) {win.send("paste");}},
+                {label: "Delete", id: "delete_selection", accelerator: "CmdOrCtrl+Backspace", click(item) {win.send("delete_selection");}, enabled: false},
+                {type: "separator"},
+                {label: "Select All", id: "select_all", accelerator: "CmdOrCtrl+A", click(item) {win.send("select_all");}},
+                {label: "Deselect", id: "deselect", accelerator: "Escape", click(item) {win.send("deselect");}, enabled: false},
+                {type: "separator"},
+                {label: "Move Block", id: "move_block", accelerator: "M", click(item) {win.send("move_block");}, enabled: false},
+                {label: "Copy Block", id: "copy_block", accelerator: "C", click(item) {win.send("copy_block");}, enabled: false},
+                {type: "separator"},
+                {label: "Stamp", id: "stamp", accelerator: "S", click(item) {win.send("stamp");}, enabled: false},
+                {label: "Rotate", id: "rotate", accelerator: "R", click(item) {win.send("rotate");}, enabled: false},
+                {label: "Flip X", id: "flip_x", accelerator: "X", click(item) {win.send("flip_x");}, enabled: false},
+                {label: "Flip Y", id: "flip_y", accelerator: "Y", click(item) {win.send("flip_y");}, enabled: false},
+                {label: "Center", id: "center", accelerator: "=", click(item) {win.send("center");}, enabled: false},
+                {type: "separator"},
+                {label: "Set Canvas Size\u2026", id: "set_canvas_size", accelerator: "CmdOrCtrl+Alt+C", click(item) {win.send("get_canvas_size");}},
+                {type: "separator"},
+                {label: "Previous Foreground Color", id: "previous_foreground_color", accelerator: "Alt+Up", click(item) {win.send("previous_foreground_color");}},
+                {label: "Next Foreground Color", id: "next_foreground_color", accelerator: "Alt+Down", click(item) {win.send("next_foreground_color");}},
+                {type: "separator"},
+                {label: "Previous Background Color", id: "previous_background_colour", accelerator: "Alt+Left", click(item) {win.send("previous_background_colour");}},
+                {label: "Next Background Color", id: "next_background_color", accelerator: "Alt+Right", click(item) {win.send("next_background_color");}},
+                {type: "separator"},
+                {label: "Use Attribute Under Cursor", id: "use_attribute_under_cursor", accelerator: "Alt+U", click(item) {win.send("use_attribute_under_cursor");}},
+                {label: "Default Color", id: "default_color", accelerator: "CmdOrCtrl+D", click(item) {win.send("default_color");}},
+                {label: "Switch Foreground / Background", id: "switch_foreground_background", accelerator: "Shift+CmdOrCtrl+X", click(item) {win.send("switch_foreground_background");}}
+            ]
+        }, {
+            label: "View",
+            submenu: [
+                {label: "Show Status Bar", id: "show_status_bar", accelerator: "CmdOrCtrl+/", click(item) {win.send("show_statusbar", item.checked);}, type: "checkbox", checked: true},
+                {label: "Show Tool Bar", id: "show_tool_bar", accelerator: "CmdOrCtrl+T", click(item) {win.send("show_toolbar", item.checked);}, type: "checkbox", checked: true},
+                {label: "Show Preview", id: "show_preview", accelerator: "CmdOrCtrl+Alt+P", click(item) {win.send("show_preview", item.checked);}, type: "checkbox", checked: true},
+                {type: "separator"},
+                {label: "Selection Mode", id: "change_to_select_mode", accelerator: "CmdOrCtrl+1", click(item) {win.send("change_to_select_mode");}, type: "checkbox", chacked: false},
+                {label: "Brush Mode", id: "change_to_brush_mode", accelerator: "CmdOrCtrl+2", click(item) {win.send("change_to_brush_mode");}, type: "checkbox", chacked: false},
+                {label: "Sample Mode", id: "change_to_sample_mode", accelerator: "CmdOrCtrl+3", click(item) {win.send("change_to_sample_mode");}, type: "checkbox", chacked: false},
+                {type: "separator"},
+                {label: "Use 9px Font", id: "use_9px_font", click(item) {win.send("use_9px_font", item.checked);}, type: "checkbox", checked: false},
+                {label: "Use iCE Colors", id: "ice_colors", click(item) {win.send("ice_colors", item.checked);}, type: "checkbox", checked: false},
+                {type: "separator"},
+                {label: "Actual Size", id: "actual_size", accelerator: "CmdOrCtrl+0", click(item) {win.send("actual_size");}, type: "checkbox", checked: false},
+                {label: "Zoom In", id: "zoom_in", accelerator: "CmdOrCtrl+=", click(item) {win.send("zoom_in");}},
+                {label: "Zoom Out", id: "zoom_out", accelerator: "CmdOrCtrl+-", click(item) {win.send("zoom_out");}},
+                {type: "separator"},
+                {label: "Change Font", submenu: [
+                    {label: "Amiga", submenu: [
+                        {label: "Amiga Topaz 1 (8×16)", id: "Amiga Topaz 1", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "Amiga Topaz 1+ (8×16)", id: "Amiga Topaz 1+", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "Amiga Topaz 2 (8×16)", id: "Amiga Topaz 2", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "Amiga Topaz 2+ (8×16)", id: "Amiga Topaz 2+", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "Amiga P0T-NOoDLE (8×16)", id: "Amiga P0T-NOoDLE", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "Amiga MicroKnight (8×16)", id: "Amiga MicroKnight", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "Amiga MicroKnight+ (8×16)", id: "Amiga MicroKnight+", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "Amiga mOsOul (8×16)", id: "Amiga mOsOul", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                    ]},
+                    {label: "Arabic", submenu: [
+                        {label: "IBM VGA50 864 (8×8)", id: "IBM VGA50 864", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 864 (8×14)", id: "IBM EGA 864", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 864 (8×16)", id: "IBM VGA 864", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                    ]},
+                    {label: "Baltic Rim", submenu: [
+                        {label: "IBM VGA50 775 (8×8)", id: "IBM VGA50 775", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 775 (8×14)", id: "IBM EGA 775", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 775 (8×16)", id: "IBM VGA 775", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                    ]},
+                    {label: "Cyrillic", submenu: [
+                        {label: "IBM VGA50 866 (8×8)", id: "IBM VGA50 866", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 866 (8×14)", id: "IBM EGA 866", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 866 (8×16)", id: "IBM VGA 866", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 855 (8×8)", id: "IBM VGA50 855", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 855 (8×14)", id: "IBM EGA 855", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 855 (8×16)", id: "IBM VGA 855", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                    ]},
+                    {label: "French Canadian", submenu: [
+                        {label: "IBM VGA50 863 (8×8)", id: "IBM VGA50 863", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 863 (8×14)", id: "IBM EGA 863", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 863 (8×16)", id: "IBM VGA 863", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 863 (8×19)", id: "IBM VGA25G 863", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                    ]},
+                    {label: "Greek", submenu: [
+                        {label: "IBM VGA50 737 (8×8)", id: "IBM VGA50 737", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 737 (8×14)", id: "IBM EGA 737", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 737 (8×16)", id: "IBM VGA 737", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 869 (8×8)", id: "IBM VGA50 869", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 869 (8×14)", id: "IBM EGA 869", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 869 (8×16)", id: "IBM VGA 869", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 851 (8×8)", id: "IBM VGA50 851", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 851 (8×14)", id: "IBM EGA 851", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 851 (8×16)", id: "IBM VGA 851", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 851 (8×19)", id: "IBM VGA25G 851", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                    ]},
+                    {label: "Hebrew", submenu: [
+                        {label: "IBM VGA50 862 (8×8)", id: "IBM VGA50 862", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 862 (8×14)", id: "IBM EGA 862", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 862 (8×16)", id: "IBM VGA 862", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                    ]},
+                    {label: "IBM PC", submenu: [
+                        {label: "IBM VGA50 (8×8)",  id: "IBM VGA50", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA (8×14)", id: "IBM EGA", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA (8×16)", id: "IBM VGA", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G (8×19 (8×19)", id: "IBM VGA25G", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                    ]},
+                    {label: "Icelandic", submenu: [
+                        {label: "IBM VGA50 861 (8×8)", id: "IBM VGA50 861", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 861 (8×14)", id: "IBM EGA 861", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 861 (8×16)", id: "IBM VGA 861", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 861 (8×19)", id: "IBM VGA25G 861", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                    ]},
+                    {label: "Latin-1 Western European", submenu: [
+                        {label: "IBM VGA50 850 (8×8)", id: "IBM VGA50 850", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 850 (8×14)", id: "IBM EGA 850", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 850 (8×16)", id: "IBM VGA 850", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 850 (8×19)", id: "IBM VGA25G 850", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                    ]},
+                    {label: "Latin-1 Central European", submenu: [
+                        {label: "IBM VGA50 852 (8×8)", id: "IBM VGA50 852", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 852 (8×14)", id: "IBM EGA 852", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 852 (8×16)", id: "IBM VGA 852", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 852 (8×19)", id: "IBM VGA25G 852", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                    ]},
+                    {label: "Latin-1 Multilingual", submenu: [
+                        {label: "IBM VGA50 853 (8×8)", id: "IBM VGA50 853", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 853 (8×14)", id: "IBM EGA 853", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 853 (8×16)", id: "IBM VGA 853", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 853 (8×19)", id: "IBM VGA25G 853", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                    ]},
+                    {label: "Nordic", submenu: [
+                        {label: "IBM VGA50 865 (8×8)", id: "IBM VGA50 865", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 865 (8×14)", id: "IBM EGA 865", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 865 (8×16)", id: "IBM VGA 865", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 865 (8×19)", id: "IBM VGA25G 865", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                    ]},
+                    {label: "Portuguese", submenu: [
+                        {label: "IBM VGA50 860 (8×8)", id: "IBM VGA50 860", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 860 (8×14)", id: "IBM EGA 860", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 860 (8×16)", id: "IBM VGA 860", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 860 (8×19)", id: "IBM VGA25G 860", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                    ]},
+                    {label: "Turkish", submenu: [
+                        {label: "IBM VGA50 857 (8×8)", id: "IBM VGA50 857", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 857 (8×14)", id: "IBM EGA 857", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 857 (8×16)", id: "IBM VGA 857", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                    ]}
+                ]},
+                {type: "separator"},
+                {label: "Open Reference Image\u2026", id: "open_reference_image", click(item) {open_reference_image({win});}},
+                {label: "Clear", id: "clear_reference_image", click(item) {win.send("clear_reference_image");}, enabled: false},
+                {type: "separator"},
+                {role: "togglefullscreen"}
+            ]
+        }, {
+            label: "Network", submenu: [
+                {label: "Start Server…", id: "start_server", click(item) {start_server({item, win});}},
+                {label: "Connect to Server…", id: "connect_to_server", click(item) {connect_to_server();}},
+                {type: "separator"},
+                {label: "Disconnect", id: "disconnect", click(item) {disconnect({item, win});}, enabled: false},
+            ]
+        }, {
+            label: "Debug",
+            submenu: [
+                {label: "Open Dev Tools", id: "open_dev_tools", click(item) {open_dev_tools({item, win});}},
+                {label: "Connect to Test Server", id: "connect_to_test_server", accelerator: "CmdOrCtrl+Alt+1", click(item) {connect_to_server({ip: "74.207.246.247", port: 8000, nick: "andyh", pass: "secret"});}},
+                {label: "Connect to Local Server", id: "connect_to_local_server", accelerator: "CmdOrCtrl+Alt+2", click(item) {connect_to_server({ip: "localhost", port: 8000, nick: "andyh", pass: "secret"});}},
+            ]
+        }]);
+    }
 }
 
 function show_splash_screen() {
@@ -558,19 +759,19 @@ function has_document_windows() {
 
 async function show_rendering_modal(event, id) {
     docs[id].modal = await new_modal_window({width: 200, height: 80, file: "app/html/rendering.html", parent: docs[id].win});
-    electron.Menu.setApplicationMenu(docs[id].modal_menu);
+    if (darwin) electron.Menu.setApplicationMenu(docs[id].modal_menu);
     event.returnValue = true;
 }
 
 async function show_connecting_modal(event, id) {
     docs[id].modal = await new_modal_window({width: 200, height: 80, file: "app/html/connecting.html", parent: docs[id].win});
-    electron.Menu.setApplicationMenu(docs[id].modal_menu);
+    if (darwin) electron.Menu.setApplicationMenu(docs[id].modal_menu);
     event.returnValue = true;
 }
 
 function close_modal(id) {
     if (docs[id].modal && !docs[id].modal.isDestroyed()) docs[id].modal.close();
-    electron.Menu.setApplicationMenu(docs[id].menu);
+    if (darwin) electron.Menu.setApplicationMenu(docs[id].menu);
 }
 
 function update_menu_checkboxes({id, insert_mode, use_9px_font, ice_colors, actual_size, font_name}) {
@@ -673,7 +874,7 @@ async function get_canvas_size({id, columns, rows}) {
     docs[id].modal = await new_modal_window({width: 300, height: 172, file: "app/html/resize.html", parent: docs[id].win});
     docs[id].modal.setTouchBar(docs[id].touch_bars.resize);
     docs[id].modal.send("set_canvas_size", {columns, rows});
-    electron.Menu.setApplicationMenu(docs[id].modal_menu);
+    if (darwin) electron.Menu.setApplicationMenu(docs[id].modal_menu);
 }
 
 function set_canvas_size({id, columns, rows}) {
@@ -685,7 +886,7 @@ async function get_sauce_info({id, title, author, group, comments}) {
     docs[id].modal = await new_modal_window({width: 350, height: 340, file: "app/html/sauce.html", parent: docs[id].win});
     docs[id].modal.send("set_sauce_info", {title, author, group, comments});
     docs[id].modal.setTouchBar(docs[id].touch_bars.sauce);
-    electron.Menu.setApplicationMenu(docs[id].modal_menu);
+    if (darwin) electron.Menu.setApplicationMenu(docs[id].modal_menu);
 }
 
 function set_sauce_info({id, title, author, group, comments}) {

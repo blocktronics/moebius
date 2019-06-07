@@ -31,4 +31,6 @@ mac:
   target: dmg
   icon: app_icon.png
   darkModeSupport: true
+win:
+  target: nsis
 electronVersion: 5.0.1

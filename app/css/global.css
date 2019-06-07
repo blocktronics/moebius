@@ -13,7 +13,7 @@ html, body {
 body {
     margin: 0px;
     user-select: none;
-    font-family: BlinkMacSystemFont;
+    font-family: BlinkMacSystemFont, "Segoe UI";
     color: black;
 }
 body.dark {

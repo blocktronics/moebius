@@ -1,5 +1,6 @@
 const electron = require("electron");
 const moebius = require("./app/moebius");
+const darwin = (process.platform == "darwin");
 let prevent_splash_screen_at_startup = false;
 
 electron.app.on("will-finish-launching", (event) => {
@@ -26,4 +27,4 @@ electron.app.on("activate", (event) => {
     if (!moebius.has_document_windows()) moebius.show_splash_screen();
 });
 
-electron.app.on("window-all-closed", (event) => moebius.set_application_menu());
+if (darwin) electron.app.on("window-all-closed", (event) => moebius.set_application_menu());

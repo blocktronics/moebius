@@ -137,6 +137,7 @@ body.dark #preview {
 #canvas_container {
     position: relative;
     margin: 0 auto;
+    cursor: crosshair;
 }
 #canvas_container > div {
     position: absolute;
