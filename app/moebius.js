@@ -1,7 +1,7 @@
 const electron = require("electron");
 const path = require("path");
 const docs = {};
-let splash_screen_win, preferences_win;
+let splash_screen_win, cheatsheet_win, preferences_win;
 let last_document_xy_position;
 const NEW_DOCUMENT_WIDTH = 1280;
 const NEW_DOCUMENT_HEIGHT = 800;
@@ -286,12 +286,14 @@ const application_menu = electron.Menu.buildFromTemplate([{
 }, {
     label: "Debug",
     submenu: [
-        {label: "Open Dev Tools", id: "open_dev_tools", click(item) {open_dev_tools({win});}, enabled: false},
+        {label: "Open Dev Tools", id: "open_dev_tools", click(item) {open_dev_tools();}, enabled: false},
         {label: "Connect to Test Server", id: "connect_to_test_server", accelerator: "Cmd+Alt+1", click(item) {connect_to_server({ip: "74.207.246.247", port: 8000, nick: "andyh", pass: "secret"});}, enabled: false},
         {label: "Connect to Local Server", id: "connect_to_local_server", accelerator: "Cmd+Alt+2", click(item) {connect_to_server({ip: "localhost", port: 8000, nick: "andyh", pass: "secret"});}, enabled: false
     }]
 }, {
-    label: "Help", role: "help", submenu: []
+    label: "Help", role: "help", submenu: [
+        {label: "Show Cheatsheat", id: "show_cheatsheet", click(item) {show_cheatsheet();}},
+    ]
 }]);
 
 // Displayed when modal window is frontmost.
@@ -531,8 +533,11 @@ function document_menu(win) {
                 {label: "Connect to Test Server", id: "connect_to_test_server", accelerator: "Cmd+Alt+1", click(item) {connect_to_server({ip: "74.207.246.247", port: 8000, nick: "andyh", pass: "secret"});}, enabled: false},
                 {label: "Connect to Local Server", id: "connect_to_local_server", accelerator: "Cmd+Alt+2", click(item) {connect_to_server({ip: "localhost", port: 8000, nick: "andyh", pass: "secret"});}, enabled: false},
             ]
-        }, {label: "Help", role: "help", submenu: []}
-        ]);
+        }, {
+            label: "Help", role: "help", submenu: [
+                {label: "Show Cheatsheat", id: "show_cheatsheet", click(item) {show_cheatsheet();}},
+            ]
+        }]);
     } else {
         return electron.Menu.buildFromTemplate([{
             label: "&File",
@@ -724,6 +729,10 @@ function document_menu(win) {
                 {label: "Connect to Test Server", id: "connect_to_test_server", click(item) {connect_to_server({ip: "74.207.246.247", port: 8000, nick: "andyh", pass: "secret"});}, enabled: false},
                 {label: "Connect to Local Server", id: "connect_to_local_server", click(item) {connect_to_server({ip: "localhost", port: 8000, nick: "andyh", pass: "secret"});}, enabled: false},
             ]
+        }, {
+            label: "Help", role: "help", submenu: [
+                {label: "Show Cheatsheat", id: "show_cheatsheet", click(item) {show_cheatsheet();}},
+            ]
         }]);
     }
 }
@@ -758,6 +767,21 @@ function show_splash_screen() {
                 new electron.TouchBar.TouchBarSpacer({size: "flexible"}),
             ], escapeItem: new electron.TouchBar.TouchBarLabel({label: "Mœbius", textColor: "#939393"})
         }));
+    }
+}
+
+function show_cheatsheet() {
+    if (cheatsheet_win && !cheatsheet_win.isDestroyed()) {
+        cheatsheet_win.focus();
+    } else {
+        cheatsheet_win = new electron.BrowserWindow({width: 640, height: 832, show: false, backgroundColor: "#000000", titleBarStyle: "hiddenInset", maximizable: false, resizable: false, useContentSize: true, frame: darwin ? false : true, fullscreenable: false, webPreferences: {nodeIntegration: true}});
+        if (!darwin) cheatsheet_win.setMenu(null);
+        cheatsheet_win.on("focus", (event) => {
+            set_application_menu();
+            discord_rpc.set_details("Admiring the cheatsheet");
+        });
+        cheatsheet_win.on("ready-to-show", (event) => cheatsheet_win.show());
+        cheatsheet_win.loadFile("app/html/cheatsheet.html");
     }
 }
 
