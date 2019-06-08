@@ -12,9 +12,11 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "electron": "^5.0.1",
-    "electron-builder": "^20.41.0"
+    "electron-builder": "^20.41.0",
+    "register-scheme": "0.0.2"
   },
   "dependencies": {
+    "discord-rpc": "^3.0.2",
     "ws": "^7.0.0"
   }
 }

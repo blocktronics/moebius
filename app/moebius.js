@@ -7,6 +7,7 @@ const NEW_DOCUMENT_WIDTH = 1280;
 const NEW_DOCUMENT_HEIGHT = 800;
 const win32 = (process.platform == "win32");
 const darwin = (process.platform == "darwin");
+const discord_rpc = require("./discord_rpc.js");
 
 function create_touch_bar(win) {
     return {
@@ -130,6 +131,13 @@ async function new_document_window() {
         } else {
             docs[win.id].win.setMenu(docs[win.id].menu);
         }
+        if (docs[win.id].network) {
+            discord_rpc.set_details("Working on a joint");
+        } else if (docs[win.id].file) {
+            discord_rpc.set_details("Working on a project");
+        } else {
+            discord_rpc.set_details("Working on something new");
+        }
     });
     win.on("close", (event) => {
         if (!docs[win.id].network && docs[win.id].edited) {
@@ -147,6 +155,7 @@ async function new_document_window() {
             last_document_xy_position = win.getPosition();
             cleanup_document(win.id);
         }
+        discord_rpc.set_details("Stopped working on something");
     });
     return win;
 }
@@ -165,6 +174,7 @@ function open(win) {
                 win.setRepresentedFilename(files[0]);
                 win.setTitle(path.basename(files[0]));
                 win.send("open_file", {file: files[0]});
+                discord_rpc.set_details("Working on a project");
             } else {
                 open_file(files[0]);
             }
@@ -732,7 +742,10 @@ function show_splash_screen() {
     } else {
         splash_screen_win = new electron.BrowserWindow({width: 720, height: 544, show: false, backgroundColor: "#000000", titleBarStyle: "hiddenInset", maximizable: false, resizable: false, useContentSize: true, frame: darwin ? false : true, fullscreenable: false, webPreferences: {nodeIntegration: true}});
         if (!darwin) splash_screen_win.setMenu(null);
-        splash_screen_win.on("focus", (event) => set_application_menu());
+        splash_screen_win.on("focus", (event) => {
+            set_application_menu();
+            discord_rpc.set_details("Admiring the splash screen");
+        });
         splash_screen_win.on("ready-to-show", (event) => splash_screen_win.show());
         splash_screen_win.loadFile("app/html/splash_screen.html");
         splash_screen_win.setTouchBar(new electron.TouchBar({
