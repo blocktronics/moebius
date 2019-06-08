@@ -198,7 +198,7 @@ function save({win, close_on_save = false}) {
 }
 
 function export_as_png({win}) {
-    electron.dialog.showSaveDialog(win, {filters: [{name: "Portable Network Graphics ", extensions: ["png"]}]}, (file) => {
+    electron.dialog.showSaveDialog(win, {filters: [{name: "Portable Network Graphics ", extensions: ["png"]}], defaultPath: `${docs[win.id].file ? path.parse(docs[win.id].file).name : "Untitled"}.png`}, (file) => {
         if (file) win.send("export_as_png", file);
     });
 }
