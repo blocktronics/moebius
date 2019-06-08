@@ -29,7 +29,6 @@ fileAssociations:
 mac:
   category: public.app-category.graphics-design
   target: dmg
-  icon: app_icon.png
   darkModeSupport: true
 win:
   target:
