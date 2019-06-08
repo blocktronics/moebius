@@ -32,5 +32,7 @@ mac:
   icon: app_icon.png
   darkModeSupport: true
 win:
-  target: nsis
+  target:
+  - target: nsis
+    arch: [x64, ia32]
 electronVersion: 5.0.1

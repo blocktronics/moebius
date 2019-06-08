@@ -5,8 +5,7 @@
   "main": "app.js",
   "scripts": {
     "start": "electron .",
-    "build": "node_modules/.bin/build",
-    "build-win": "node_modules/.bin/build --ia32 --x64 -w"
+    "build": "node_modules/.bin/build"
   },
   "author": "Andy Herbert",
   "license": "Apache-2.0",
