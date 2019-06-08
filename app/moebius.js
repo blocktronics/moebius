@@ -774,7 +774,7 @@ function show_cheatsheet() {
     if (cheatsheet_win && !cheatsheet_win.isDestroyed()) {
         cheatsheet_win.focus();
     } else {
-        cheatsheet_win = new electron.BrowserWindow({width: 640, height: 816, show: false, backgroundColor: "#000000", titleBarStyle: "hiddenInset", maximizable: false, resizable: false, useContentSize: true, frame: darwin ? false : true, fullscreenable: false, webPreferences: {nodeIntegration: true}});
+        cheatsheet_win = new electron.BrowserWindow({width: 640, height: 808, show: false, backgroundColor: "#000000", titleBarStyle: "hiddenInset", maximizable: false, resizable: false, useContentSize: true, frame: darwin ? false : true, fullscreenable: false, webPreferences: {nodeIntegration: true}});
         if (!darwin) cheatsheet_win.setMenu(null);
         cheatsheet_win.on("focus", (event) => {
             set_application_menu();
