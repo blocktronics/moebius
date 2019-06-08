@@ -169,19 +169,23 @@ async function open_file({file}) {
 }
 
 function ice_colors(value) {
-    doc.ice_colors = value;
-    if (value) {
-        canvas.stop_blinking();
-    } else {
-        canvas.start_blinking();
+    if (!connection) {
+        doc.ice_colors = value;
+        if (value) {
+            canvas.stop_blinking();
+        } else {
+            canvas.start_blinking();
+        }
+        update_status_bar();
+        update_menu_checkboxes();
     }
-    update_status_bar();
-    update_menu_checkboxes();
 }
 
 function use_9px_font(value) {
-    doc.use_9px_font = value;
-    start_render();
+    if (!connection) {
+        doc.use_9px_font = value;
+        start_render();
+    }
 }
 
 function set_var(name, value) {
@@ -905,7 +909,7 @@ function actual_size() {
 }
 
 function get_canvas_size() {
-    send("get_canvas_size", {columns: doc.columns, rows: doc.rows});
+    if (!connection) send("get_canvas_size", {columns: doc.columns, rows: doc.rows});
 }
 
 function set_canvas_size({columns, rows}) {
