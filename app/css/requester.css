@@ -12,7 +12,7 @@ body {
 
 #resize_requester {
     width: 300px;
-    height: 172px;
+    height: 190px;
 }
 
 #sauce_requester {
@@ -48,7 +48,7 @@ textarea {
 label {
     display: inline-block;
     text-align: right;
-    width: 120px;
+    width: 105px;
 }
 
 input, textarea {

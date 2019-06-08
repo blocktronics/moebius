@@ -268,16 +268,16 @@ const application_menu = electron.Menu.buildFromTemplate([{
     ]
 }, {
     label: "Network", submenu: [
-        {label: "Connect to Server…", id: "connect_to_server", click(item) {connect_to_server();}},
+        {label: "Connect to Server…", id: "connect_to_server", click(item) {connect_to_server();}, enabled: false},
     ]
 }, {
     label: "Window", submenu: [{role: "minimize"}, {role: "zoom"}, {type: "separator"}, {role: "front"}]
 }, {
     label: "Debug",
     submenu: [
-        {label: "Open Dev Tools", id: "open_dev_tools", click(item) {open_dev_tools({win});}},
-        {label: "Connect to Test Server", id: "connect_to_test_server", accelerator: "CmdOrCtrl+Alt+1", click(item) {connect_to_server({ip: "74.207.246.247", port: 8000, nick: "andyh", pass: "secret"});}},
-        {label: "Connect to Local Server", id: "connect_to_local_server", accelerator: "CmdOrCtrl+Alt+2", click(item) {connect_to_server({ip: "localhost", port: 8000, nick: "andyh", pass: "secret"});}
+        {label: "Open Dev Tools", id: "open_dev_tools", click(item) {open_dev_tools({win});}, enabled: false},
+        {label: "Connect to Test Server", id: "connect_to_test_server", accelerator: "CmdOrCtrl+Alt+1", click(item) {connect_to_server({ip: "74.207.246.247", port: 8000, nick: "andyh", pass: "secret"});}, enabled: false},
+        {label: "Connect to Local Server", id: "connect_to_local_server", accelerator: "CmdOrCtrl+Alt+2", click(item) {connect_to_server({ip: "localhost", port: 8000, nick: "andyh", pass: "secret"});}, enabled: false
     }]
 }, {
     label: "Help", role: "help", submenu: []
@@ -328,35 +328,35 @@ function document_menu(win) {
         ]}, {
             label: "File",
             submenu: [
-                {label: "New", id: "new_document", accelerator: "CmdOrCtrl+N", click(item) {new_document();}},
+                {label: "New", id: "new_document", accelerator: "Cmd+N", click(item) {new_document();}},
                 {type: "separator"},
-                {label: "Open\u2026", id: "open", accelerator: "CmdOrCtrl+O", click(item) {open(win);}},
+                {label: "Open\u2026", id: "open", accelerator: "Cmd+O", click(item) {open(win);}},
                 {role: "recentDocuments", submenu: [
                     {label: "Clear Menu", id: "clear_recent_documents", click(item) {electron.app.clearRecentDocuments();}},
                 ]},
                 {type: "separator"},
-                {label: "Edit Sauce Info\u2026", id: "edit_sauce_info", accelerator: "CmdOrCtrl+I", click(item) {win.send("get_sauce_info");}},
+                {label: "Edit Sauce Info\u2026", id: "edit_sauce_info", accelerator: "Cmd+I", click(item) {win.send("get_sauce_info");}},
                 {type: "separator"},
-                {label: "Save", id: "save", accelerator: "CmdOrCtrl+S", click(item) {save({win});}},
-                {label: "Save As\u2026", id: "save_as", accelerator: "CmdOrCtrl+Shift+S", click(item) {save_as({win});}},
+                {label: "Save", id: "save", accelerator: "Cmd+S", click(item) {save({win});}},
+                {label: "Save As\u2026", id: "save_as", accelerator: "Cmd+Shift+S", click(item) {save_as({win});}},
                 {type: "separator"},
-                {label: "Export As PNG\u2026", id: "export_as_png", accelerator: "CmdOrCtrl+Shift+E", click(item) {export_as_png({win});}},
+                {label: "Export As PNG\u2026", id: "export_as_png", accelerator: "Cmd+Shift+E", click(item) {export_as_png({win});}},
                 {type: "separator"},
                 {role: "close"}
             ]
         }, {
             label: "Edit",
             submenu: [
-                {label: "Undo", id: "undo", accelerator: "CmdOrCtrl+Z", click(item) {win.send("undo");}, enabled: false},
-                {label: "Redo", id: "redo", accelerator: darwin ? "CmdOrCtrl+Shift+Z" : "CmdOrCtrl+Y", click(item) {win.send("redo");}, enabled: false},
+                {label: "Undo", id: "undo", accelerator: "Cmd+Z", click(item) {win.send("undo");}, enabled: false},
+                {label: "Redo", id: "redo", accelerator: darwin ? "Cmd+Shift+Z" : "Cmd+Y", click(item) {win.send("redo");}, enabled: false},
                 {label: "Toggle Insert Mode", id: "toggle_insert_mode", click(item) {win.send("insert_mode", item.checked);}, type: "checkbox", checked: false},
                 {type: "separator"},
-                {label: "Cut", id: "cut", accelerator: "CmdOrCtrl+X", click(item) {win.send("cut");}, enabled: false},
-                {label: "Copy", id: "copy", accelerator: "CmdOrCtrl+C", click(item) {win.send("copy");}, enabled: false},
-                {label: "Paste", id: "paste", accelerator: "CmdOrCtrl+V", click(item) {win.send("paste");}},
-                {label: "Delete", id: "delete_selection", accelerator: "CmdOrCtrl+Backspace", click(item) {win.send("delete_selection");}, enabled: false},
+                {label: "Cut", id: "cut", accelerator: "Cmd+X", click(item) {win.send("cut");}, enabled: false},
+                {label: "Copy", id: "copy", accelerator: "Cmd+C", click(item) {win.send("copy");}, enabled: false},
+                {label: "Paste", id: "paste", accelerator: "Cmd+V", click(item) {win.send("paste");}},
+                {label: "Delete", id: "delete_selection", accelerator: "Cmd+Backspace", click(item) {win.send("delete_selection");}, enabled: false},
                 {type: "separator"},
-                {label: "Select All", id: "select_all", accelerator: "CmdOrCtrl+A", click(item) {win.send("select_all");}},
+                {label: "Select All", id: "select_all", accelerator: "Cmd+A", click(item) {win.send("select_all");}},
                 {label: "Deselect", id: "deselect", accelerator: "Escape", click(item) {win.send("deselect");}, enabled: false},
                 {type: "separator"},
                 {label: "Move Block", id: "move_block", accelerator: "M", click(item) {win.send("move_block");}, enabled: false},
@@ -368,7 +368,7 @@ function document_menu(win) {
                 {label: "Flip Y", id: "flip_y", accelerator: "Y", click(item) {win.send("flip_y");}, enabled: false},
                 {label: "Center", id: "center", accelerator: "=", click(item) {win.send("center");}, enabled: false},
                 {type: "separator"},
-                {label: "Set Canvas Size\u2026", id: "set_canvas_size", accelerator: "CmdOrCtrl+Alt+C", click(item) {win.send("get_canvas_size");}},
+                {label: "Set Canvas Size\u2026", id: "set_canvas_size", accelerator: "Cmd+Alt+C", click(item) {win.send("get_canvas_size");}},
                 {type: "separator"},
                 {label: "Previous Foreground Color", id: "previous_foreground_color", accelerator: "Alt+Up", click(item) {win.send("previous_foreground_color");}},
                 {label: "Next Foreground Color", id: "next_foreground_color", accelerator: "Alt+Down", click(item) {win.send("next_foreground_color");}},
@@ -377,26 +377,26 @@ function document_menu(win) {
                 {label: "Next Background Color", id: "next_background_color", accelerator: "Alt+Right", click(item) {win.send("next_background_color");}},
                 {type: "separator"},
                 {label: "Use Attribute Under Cursor", id: "use_attribute_under_cursor", accelerator: "Alt+U", click(item) {win.send("use_attribute_under_cursor");}},
-                {label: "Default Color", id: "default_color", accelerator: "CmdOrCtrl+D", click(item) {win.send("default_color");}},
-                {label: "Switch Foreground / Background", id: "switch_foreground_background", accelerator: "Shift+CmdOrCtrl+X", click(item) {win.send("switch_foreground_background");}}
+                {label: "Default Color", id: "default_color", accelerator: "Cmd+D", click(item) {win.send("default_color");}},
+                {label: "Switch Foreground / Background", id: "switch_foreground_background", accelerator: "Shift+Cmd+X", click(item) {win.send("switch_foreground_background");}}
             ]
         }, {
             label: "View",
             submenu: [
-                {label: "Show Status Bar", id: "show_status_bar", accelerator: "CmdOrCtrl+/", click(item) {win.send("show_statusbar", item.checked);}, type: "checkbox", checked: true},
-                {label: "Show Tool Bar", id: "show_tool_bar", accelerator: "CmdOrCtrl+T", click(item) {win.send("show_toolbar", item.checked);}, type: "checkbox", checked: true},
-                {label: "Show Preview", id: "show_preview", accelerator: "CmdOrCtrl+Alt+P", click(item) {win.send("show_preview", item.checked);}, type: "checkbox", checked: true},
+                {label: "Show Status Bar", id: "show_status_bar", accelerator: "Cmd+/", click(item) {win.send("show_statusbar", item.checked);}, type: "checkbox", checked: true},
+                {label: "Show Tool Bar", id: "show_tool_bar", accelerator: "Cmd+T", click(item) {win.send("show_toolbar", item.checked);}, type: "checkbox", checked: true},
+                {label: "Show Preview", id: "show_preview", accelerator: "Cmd+Alt+P", click(item) {win.send("show_preview", item.checked);}, type: "checkbox", checked: true},
                 {type: "separator"},
-                {label: "Selection Mode", id: "change_to_select_mode", accelerator: "CmdOrCtrl+1", click(item) {win.send("change_to_select_mode");}, type: "checkbox", chacked: false},
-                {label: "Brush Mode", id: "change_to_brush_mode", accelerator: "CmdOrCtrl+2", click(item) {win.send("change_to_brush_mode");}, type: "checkbox", chacked: false},
-                {label: "Sample Mode", id: "change_to_sample_mode", accelerator: "CmdOrCtrl+3", click(item) {win.send("change_to_sample_mode");}, type: "checkbox", chacked: false},
+                {label: "Selection Mode", id: "change_to_select_mode", accelerator: "Cmd+1", click(item) {win.send("change_to_select_mode");}, type: "checkbox", chacked: false},
+                {label: "Brush Mode", id: "change_to_brush_mode", accelerator: "Cmd+2", click(item) {win.send("change_to_brush_mode");}, type: "checkbox", chacked: false},
+                {label: "Sample Mode", id: "change_to_sample_mode", accelerator: "Cmd+3", click(item) {win.send("change_to_sample_mode");}, type: "checkbox", chacked: false},
                 {type: "separator"},
                 {label: "Use 9px Font", id: "use_9px_font", click(item) {win.send("use_9px_font", item.checked);}, type: "checkbox", checked: false},
                 {label: "Use iCE Colors", id: "ice_colors", click(item) {win.send("ice_colors", item.checked);}, type: "checkbox", checked: false},
                 {type: "separator"},
-                {label: "Actual Size", id: "actual_size", accelerator: "CmdOrCtrl+0", click(item) {win.send("actual_size");}, type: "checkbox", checked: false},
-                {label: "Zoom In", id: "zoom_in", accelerator: "CmdOrCtrl+=", click(item) {win.send("zoom_in");}},
-                {label: "Zoom Out", id: "zoom_out", accelerator: "CmdOrCtrl+-", click(item) {win.send("zoom_out");}},
+                {label: "Actual Size", id: "actual_size", accelerator: "Cmd+0", click(item) {win.send("actual_size");}, type: "checkbox", checked: false},
+                {label: "Zoom In", id: "zoom_in", accelerator: "Cmd+=", click(item) {win.send("zoom_in");}},
+                {label: "Zoom Out", id: "zoom_out", accelerator: "Cmd+-", click(item) {win.send("zoom_out");}},
                 {type: "separator"},
                 {label: "Change Font", submenu: [
                     {label: "Amiga", submenu: [
@@ -506,8 +506,8 @@ function document_menu(win) {
             ]
         }, {
             label: "Network", submenu: [
-                {label: "Start Server…", id: "start_server", click(item) {start_server({item, win});}},
-                {label: "Connect to Server…", id: "connect_to_server", click(item) {connect_to_server();}},
+                {label: "Start Server…", id: "start_server", click(item) {start_server({item, win});}, enabled: false},
+                {label: "Connect to Server…", id: "connect_to_server", click(item) {connect_to_server();}, enabled: false},
                 {type: "separator"},
                 {label: "Disconnect", id: "disconnect", click(item) {disconnect({item, win});}, enabled: false},
             ]
@@ -517,8 +517,8 @@ function document_menu(win) {
             label: "Debug",
             submenu: [
                 {label: "Open Dev Tools", id: "open_dev_tools", click(item) {open_dev_tools({item, win});}},
-                {label: "Connect to Test Server", id: "connect_to_test_server", accelerator: "CmdOrCtrl+Alt+1", click(item) {connect_to_server({ip: "74.207.246.247", port: 8000, nick: "andyh", pass: "secret"});}},
-                {label: "Connect to Local Server", id: "connect_to_local_server", accelerator: "CmdOrCtrl+Alt+2", click(item) {connect_to_server({ip: "localhost", port: 8000, nick: "andyh", pass: "secret"});}},
+                {label: "Connect to Test Server", id: "connect_to_test_server", accelerator: "Cmd+Alt+1", click(item) {connect_to_server({ip: "74.207.246.247", port: 8000, nick: "andyh", pass: "secret"});}, enabled: false},
+                {label: "Connect to Local Server", id: "connect_to_local_server", accelerator: "Cmd+Alt+2", click(item) {connect_to_server({ip: "localhost", port: 8000, nick: "andyh", pass: "secret"});}, enabled: false},
             ]
         }, {label: "Help", role: "help", submenu: []}
         ]);
@@ -526,32 +526,32 @@ function document_menu(win) {
         return electron.Menu.buildFromTemplate([{
             label: "File",
             submenu: [
-                {label: "New", id: "new_document", accelerator: "CmdOrCtrl+N", click(item) {new_document();}},
+                {label: "New", id: "new_document", accelerator: "Ctrl+N", click(item) {new_document();}},
                 {type: "separator"},
-                {label: "Open\u2026", id: "open", accelerator: "CmdOrCtrl+O", click(item) {open(win);}},
+                {label: "Open\u2026", id: "open", accelerator: "Ctrl+O", click(item) {open(win);}},
                 {type: "separator"},
-                {label: "Edit Sauce Info\u2026", id: "edit_sauce_info", accelerator: "CmdOrCtrl+I", click(item) {win.send("get_sauce_info");}},
+                {label: "Edit Sauce Info\u2026", id: "edit_sauce_info", accelerator: "Ctrl+I", click(item) {win.send("get_sauce_info");}},
                 {type: "separator"},
-                {label: "Save", id: "save", accelerator: "CmdOrCtrl+S", click(item) {save({win});}},
-                {label: "Save As\u2026", id: "save_as", accelerator: "CmdOrCtrl+Shift+S", click(item) {save_as({win});}},
+                {label: "Save", id: "save", accelerator: "Ctrl+S", click(item) {save({win});}},
+                {label: "Save As\u2026", id: "save_as", accelerator: "Ctrl+Shift+S", click(item) {save_as({win});}},
                 {type: "separator"},
-                {label: "Export As PNG\u2026", id: "export_as_png", accelerator: "CmdOrCtrl+Shift+E", click(item) {export_as_png({win});}},
+                {label: "Export As PNG\u2026", id: "export_as_png", accelerator: "Ctrl+Shift+E", click(item) {export_as_png({win});}},
                 {type: "separator"},
                 {role: "close"}
             ]
         }, {
             label: "Edit",
             submenu: [
-                {label: "Undo", id: "undo", accelerator: "CmdOrCtrl+Z", click(item) {win.send("undo");}, enabled: false},
-                {label: "Redo", id: "redo", accelerator: darwin ? "CmdOrCtrl+Shift+Z" : "CmdOrCtrl+Y", click(item) {win.send("redo");}, enabled: false},
+                {label: "Undo", id: "undo", accelerator: "Ctrl+Z", click(item) {win.send("undo");}, enabled: false},
+                {label: "Redo", id: "redo", accelerator: darwin ? "Ctrl+Shift+Z" : "Ctrl+Y", click(item) {win.send("redo");}, enabled: false},
                 {label: "Toggle Insert Mode", id: "toggle_insert_mode", click(item) {win.send("insert_mode", item.checked);}, type: "checkbox", checked: false},
                 {type: "separator"},
-                {label: "Cut", id: "cut", accelerator: "CmdOrCtrl+X", click(item) {win.send("cut");}, enabled: false},
-                {label: "Copy", id: "copy", accelerator: "CmdOrCtrl+C", click(item) {win.send("copy");}, enabled: false},
-                {label: "Paste", id: "paste", accelerator: "CmdOrCtrl+V", click(item) {win.send("paste");}},
-                {label: "Delete", id: "delete_selection", accelerator: "CmdOrCtrl+Backspace", click(item) {win.send("delete_selection");}, enabled: false},
+                {label: "Cut", id: "cut", accelerator: "Ctrl+X", click(item) {win.send("cut");}, enabled: false},
+                {label: "Copy", id: "copy", accelerator: "Ctrl+C", click(item) {win.send("copy");}, enabled: false},
+                {label: "Paste", id: "paste", accelerator: "Ctrl+V", click(item) {win.send("paste");}},
+                {label: "Delete", id: "delete_selection", accelerator: "Ctrl+Backspace", click(item) {win.send("delete_selection");}, enabled: false},
                 {type: "separator"},
-                {label: "Select All", id: "select_all", accelerator: "CmdOrCtrl+A", click(item) {win.send("select_all");}},
+                {label: "Select All", id: "select_all", accelerator: "Ctrl+A", click(item) {win.send("select_all");}},
                 {label: "Deselect", id: "deselect", accelerator: "Escape", click(item) {win.send("deselect");}, enabled: false},
                 {type: "separator"},
                 {label: "Move Block", id: "move_block", accelerator: "M", click(item) {win.send("move_block");}, enabled: false},
@@ -563,7 +563,7 @@ function document_menu(win) {
                 {label: "Flip Y", id: "flip_y", accelerator: "Y", click(item) {win.send("flip_y");}, enabled: false},
                 {label: "Center", id: "center", accelerator: "=", click(item) {win.send("center");}, enabled: false},
                 {type: "separator"},
-                {label: "Set Canvas Size\u2026", id: "set_canvas_size", accelerator: "CmdOrCtrl+Alt+C", click(item) {win.send("get_canvas_size");}},
+                {label: "Set Canvas Size\u2026", id: "set_canvas_size", accelerator: "Ctrl+Alt+C", click(item) {win.send("get_canvas_size");}},
                 {type: "separator"},
                 {label: "Previous Foreground Color", id: "previous_foreground_color", accelerator: "Alt+Up", click(item) {win.send("previous_foreground_color");}},
                 {label: "Next Foreground Color", id: "next_foreground_color", accelerator: "Alt+Down", click(item) {win.send("next_foreground_color");}},
@@ -572,26 +572,26 @@ function document_menu(win) {
                 {label: "Next Background Color", id: "next_background_color", accelerator: "Alt+Right", click(item) {win.send("next_background_color");}},
                 {type: "separator"},
                 {label: "Use Attribute Under Cursor", id: "use_attribute_under_cursor", accelerator: "Alt+U", click(item) {win.send("use_attribute_under_cursor");}},
-                {label: "Default Color", id: "default_color", accelerator: "CmdOrCtrl+D", click(item) {win.send("default_color");}},
-                {label: "Switch Foreground / Background", id: "switch_foreground_background", accelerator: "Shift+CmdOrCtrl+X", click(item) {win.send("switch_foreground_background");}}
+                {label: "Default Color", id: "default_color", accelerator: "Ctrl+D", click(item) {win.send("default_color");}},
+                {label: "Switch Foreground / Background", id: "switch_foreground_background", accelerator: "Shift+Ctrl+X", click(item) {win.send("switch_foreground_background");}}
             ]
         }, {
             label: "View",
             submenu: [
-                {label: "Show Status Bar", id: "show_status_bar", accelerator: "CmdOrCtrl+/", click(item) {win.send("show_statusbar", item.checked);}, type: "checkbox", checked: true},
-                {label: "Show Tool Bar", id: "show_tool_bar", accelerator: "CmdOrCtrl+T", click(item) {win.send("show_toolbar", item.checked);}, type: "checkbox", checked: true},
-                {label: "Show Preview", id: "show_preview", accelerator: "CmdOrCtrl+Alt+P", click(item) {win.send("show_preview", item.checked);}, type: "checkbox", checked: true},
+                {label: "Show Status Bar", id: "show_status_bar", accelerator: "Ctrl+/", click(item) {win.send("show_statusbar", item.checked);}, type: "checkbox", checked: true},
+                {label: "Show Tool Bar", id: "show_tool_bar", accelerator: "Ctrl+T", click(item) {win.send("show_toolbar", item.checked);}, type: "checkbox", checked: true},
+                {label: "Show Preview", id: "show_preview", accelerator: "Ctrl+Alt+P", click(item) {win.send("show_preview", item.checked);}, type: "checkbox", checked: true},
                 {type: "separator"},
-                {label: "Selection Mode", id: "change_to_select_mode", accelerator: "CmdOrCtrl+1", click(item) {win.send("change_to_select_mode");}, type: "checkbox", chacked: false},
-                {label: "Brush Mode", id: "change_to_brush_mode", accelerator: "CmdOrCtrl+2", click(item) {win.send("change_to_brush_mode");}, type: "checkbox", chacked: false},
-                {label: "Sample Mode", id: "change_to_sample_mode", accelerator: "CmdOrCtrl+3", click(item) {win.send("change_to_sample_mode");}, type: "checkbox", chacked: false},
+                {label: "Selection Mode", id: "change_to_select_mode", click(item) {win.send("change_to_select_mode");}, type: "checkbox", chacked: false},
+                {label: "Brush Mode", id: "change_to_brush_mode", click(item) {win.send("change_to_brush_mode");}, type: "checkbox", chacked: false},
+                {label: "Sample Mode", id: "change_to_sample_mode", click(item) {win.send("change_to_sample_mode");}, type: "checkbox", chacked: false},
                 {type: "separator"},
                 {label: "Use 9px Font", id: "use_9px_font", click(item) {win.send("use_9px_font", item.checked);}, type: "checkbox", checked: false},
                 {label: "Use iCE Colors", id: "ice_colors", click(item) {win.send("ice_colors", item.checked);}, type: "checkbox", checked: false},
                 {type: "separator"},
-                {label: "Actual Size", id: "actual_size", accelerator: "CmdOrCtrl+0", click(item) {win.send("actual_size");}, type: "checkbox", checked: false},
-                {label: "Zoom In", id: "zoom_in", accelerator: "CmdOrCtrl+=", click(item) {win.send("zoom_in");}},
-                {label: "Zoom Out", id: "zoom_out", accelerator: "CmdOrCtrl+-", click(item) {win.send("zoom_out");}},
+                {label: "Actual Size", id: "actual_size", click(item) {win.send("actual_size");}, type: "checkbox", checked: false},
+                {label: "Zoom In", id: "zoom_in", accelerator: "Ctrl+=", click(item) {win.send("zoom_in");}},
+                {label: "Zoom Out", id: "zoom_out", accelerator: "Ctrl+-", click(item) {win.send("zoom_out");}},
                 {type: "separator"},
                 {label: "Change Font", submenu: [
                     {label: "Amiga", submenu: [
@@ -701,8 +701,8 @@ function document_menu(win) {
             ]
         }, {
             label: "Network", submenu: [
-                {label: "Start Server…", id: "start_server", click(item) {start_server({item, win});}},
-                {label: "Connect to Server…", id: "connect_to_server", click(item) {connect_to_server();}},
+                {label: "Start Server…", id: "start_server", click(item) {start_server({item, win});}, enabled: false},
+                {label: "Connect to Server…", id: "connect_to_server", click(item) {connect_to_server();}, enabled: false},
                 {type: "separator"},
                 {label: "Disconnect", id: "disconnect", click(item) {disconnect({item, win});}, enabled: false},
             ]
@@ -710,8 +710,8 @@ function document_menu(win) {
             label: "Debug",
             submenu: [
                 {label: "Open Dev Tools", id: "open_dev_tools", click(item) {open_dev_tools({item, win});}},
-                {label: "Connect to Test Server", id: "connect_to_test_server", accelerator: "CmdOrCtrl+Alt+1", click(item) {connect_to_server({ip: "74.207.246.247", port: 8000, nick: "andyh", pass: "secret"});}},
-                {label: "Connect to Local Server", id: "connect_to_local_server", accelerator: "CmdOrCtrl+Alt+2", click(item) {connect_to_server({ip: "localhost", port: 8000, nick: "andyh", pass: "secret"});}},
+                {label: "Connect to Test Server", id: "connect_to_test_server", click(item) {connect_to_server({ip: "74.207.246.247", port: 8000, nick: "andyh", pass: "secret"});}, enabled: false},
+                {label: "Connect to Local Server", id: "connect_to_local_server", click(item) {connect_to_server({ip: "localhost", port: 8000, nick: "andyh", pass: "secret"});}, enabled: false},
             ]
         }]);
     }
@@ -721,7 +721,8 @@ function show_splash_screen() {
     if (splash_screen_win && !splash_screen_win.isDestroyed()) {
         splash_screen_win.focus();
     } else {
-        splash_screen_win = new electron.BrowserWindow({width: 720, height: 544, show: false, backgroundColor: "#000000", titleBarStyle: "hiddenInset", maximizable: false, resizable: false, frame: false, fullscreenable: false, useContentSize: true, webPreferences: {nodeIntegration: true}});
+        splash_screen_win = new electron.BrowserWindow({width: 720, height: 544, show: false, backgroundColor: "#000000", titleBarStyle: "hiddenInset", maximizable: false, resizable: false, useContentSize: true, frame: darwin ? false : true, fullscreenable: false, webPreferences: {nodeIntegration: true}});
+        if (!darwin) splash_screen_win.setMenu(null);
         splash_screen_win.on("focus", (event) => set_application_menu());
         splash_screen_win.on("ready-to-show", (event) => splash_screen_win.show());
         splash_screen_win.loadFile("app/html/splash_screen.html");
@@ -871,7 +872,7 @@ function show_operation_touchbar(id) {
 }
 
 async function get_canvas_size({id, columns, rows}) {
-    docs[id].modal = await new_modal_window({width: 300, height: 172, file: "app/html/resize.html", parent: docs[id].win});
+    docs[id].modal = await new_modal_window({width: 300, height: 190, file: "app/html/resize.html", parent: docs[id].win});
     docs[id].modal.setTouchBar(docs[id].touch_bars.resize);
     docs[id].modal.send("set_canvas_size", {columns, rows});
     if (darwin) electron.Menu.setApplicationMenu(docs[id].modal_menu);

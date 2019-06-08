@@ -333,20 +333,24 @@ function place() {
 }
 
 document.addEventListener("keydown", (event) => {
+    if (event.key == "a" && event.ctrlKey && !event.altKey && !event.metaKey && !event.shiftKey) {
+        select_all();
+        event.preventDefault();
+    }
     switch (mode) {
         case editor_modes.SELECT:
             if (cursor.mode == canvas.cursor_modes.EDITING) {
                 switch (event.code) {
-                    case "F1": f_key(0); break;
-                    case "F2": f_key(1); break;
-                    case "F3": f_key(2); break;
-                    case "F4": f_key(3); break;
-                    case "F5": f_key(4); break;
-                    case "F6": f_key(5); break;
-                    case "F7": f_key(6); break;
-                    case "F8": f_key(7); break;
-                    case "F9": f_key(8); break;
-                    case "F10": f_key(9);  break;
+                    case "F1": if (!event.altKey) f_key(0); break;
+                    case "F2": if (!event.altKey) f_key(1); break;
+                    case "F3": if (!event.altKey) f_key(2); break;
+                    case "F4": if (!event.altKey) f_key(3); break;
+                    case "F5": if (!event.altKey) f_key(4); break;
+                    case "F6": if (!event.altKey) f_key(5); break;
+                    case "F7": if (!event.altKey) f_key(6); break;
+                    case "F8": if (!event.altKey) f_key(7); break;
+                    case "F9": if (!event.altKey) f_key(8); break;
+                    case "F10": if (!event.altKey) f_key(9);  break;
                     case "Backspace": backspace(); break;
                     case "Delete": delete_key(); break;
                     case "Enter":
@@ -361,18 +365,15 @@ document.addEventListener("keydown", (event) => {
                                     // event.preventDefault();
                                 }
                             }
-                        } else if (event.ctrlKey && !event.altKey && !event.metaKey && !event.shiftKey) {
-                            switch (event.key) {
-                                case "a": select_all(); event.preventDefault(); break;
-                                case "v": paste(); event.preventDefault(); break;
-                            }
+                        } else if (event.key == "v" && event.ctrlKey && !event.altKey && !event.metaKey && !event.shiftKey) {
+                            paste();
+                            event.preventDefault();
                         }
                 }
             } else if (cursor.mode == canvas.cursor_modes.SELECTION && event.ctrlKey && !event.altKey && !event.metaKey && !event.shiftKey) {
                 switch (event.key) {
                     case "x": cut(); event.preventDefault(); break;
                     case "c": copy(); event.preventDefault(); break;
-                    case "a": select_all(); event.preventDefault(); break;
                 }
             } else if (cursor.mode == canvas.cursor_modes.OPERATION && event.code == "Enter") {
                 place();
@@ -381,7 +382,7 @@ document.addEventListener("keydown", (event) => {
                 case "ArrowLeft":
                     if (!event.altKey) {
                         if (event.shiftKey && cursor.mode != canvas.cursor_modes.SELECTION) cursor.start_selection_mode();
-                        if (event.metaKey) {
+                        if (event.metaKey || event.ctrlKey) {
                             cursor.start_of_row();
                         } else {
                             cursor.left();
@@ -392,7 +393,7 @@ document.addEventListener("keydown", (event) => {
                 case "ArrowUp":
                     if (!event.altKey) {
                         if (event.shiftKey && cursor.mode != canvas.cursor_modes.SELECTION) cursor.start_selection_mode();
-                        if (event.metaKey) {
+                        if (event.metaKey || event.ctrlKey) {
                             cursor.page_up();
                         } else {
                             cursor.up();
@@ -403,7 +404,7 @@ document.addEventListener("keydown", (event) => {
                 case "ArrowRight":
                     if (!event.altKey) {
                         if (event.shiftKey && cursor.mode != canvas.cursor_modes.SELECTION) cursor.start_selection_mode();
-                        if (event.metaKey) {
+                        if (event.metaKey || event.ctrlKey) {
                             cursor.end_of_row();
                         } else {
                             cursor.right();
@@ -414,7 +415,7 @@ document.addEventListener("keydown", (event) => {
                 case "ArrowDown":
                     if (!event.altKey) {
                         if (event.shiftKey && cursor.mode != canvas.cursor_modes.SELECTION) cursor.start_selection_mode();
-                        if (event.metaKey) {
+                        if (event.metaKey || event.ctrlKey) {
                             cursor.page_down();
                         } else {
                             cursor.down();
