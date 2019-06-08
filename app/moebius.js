@@ -535,7 +535,7 @@ function document_menu(win) {
         ]);
     } else {
         return electron.Menu.buildFromTemplate([{
-            label: "File",
+            label: "&File",
             submenu: [
                 {label: "New", id: "new_document", accelerator: "Ctrl+N", click(item) {new_document();}},
                 {type: "separator"},
@@ -551,7 +551,7 @@ function document_menu(win) {
                 {role: "close"}
             ]
         }, {
-            label: "Edit",
+            label: "&Edit",
             submenu: [
                 {label: "Undo", id: "undo", accelerator: "Ctrl+Z", click(item) {win.send("undo");}, enabled: false},
                 {label: "Redo", id: "redo", accelerator: darwin ? "Ctrl+Shift+Z" : "Ctrl+Y", click(item) {win.send("redo");}, enabled: false},
@@ -587,7 +587,7 @@ function document_menu(win) {
                 {label: "Switch Foreground / Background", id: "switch_foreground_background", accelerator: "Shift+Ctrl+X", click(item) {win.send("switch_foreground_background");}}
             ]
         }, {
-            label: "View",
+            label: "&View",
             submenu: [
                 {label: "Show Status Bar", id: "show_status_bar", accelerator: "Ctrl+/", click(item) {win.send("show_statusbar", item.checked);}, type: "checkbox", checked: true},
                 {label: "Show Tool Bar", id: "show_tool_bar", accelerator: "Ctrl+T", click(item) {win.send("show_toolbar", item.checked);}, type: "checkbox", checked: true},
@@ -711,14 +711,14 @@ function document_menu(win) {
                 {role: "togglefullscreen"}
             ]
         }, {
-            label: "Network", submenu: [
+            label: "&Network", submenu: [
                 {label: "Start Server…", id: "start_server", click(item) {start_server({item, win});}, enabled: false},
                 {label: "Connect to Server…", id: "connect_to_server", click(item) {connect_to_server();}, enabled: false},
                 {type: "separator"},
                 {label: "Disconnect", id: "disconnect", click(item) {disconnect({item, win});}, enabled: false},
             ]
         }, {
-            label: "Debug",
+            label: "&Debug",
             submenu: [
                 {label: "Open Dev Tools", id: "open_dev_tools", click(item) {open_dev_tools({item, win});}},
                 {label: "Connect to Test Server", id: "connect_to_test_server", click(item) {connect_to_server({ip: "74.207.246.247", port: 8000, nick: "andyh", pass: "secret"});}, enabled: false},
