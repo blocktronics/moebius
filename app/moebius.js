@@ -1,7 +1,7 @@
 const electron = require("electron");
 const path = require("path");
 const docs = {};
-let splash_screen_win, cheatsheet_win, preferences_win;
+let splash_screen_win, cheatsheet_win, acknowledgements_win, preferences_win;
 let last_document_xy_position;
 const NEW_DOCUMENT_WIDTH = 1280;
 const NEW_DOCUMENT_HEIGHT = 800;
@@ -292,7 +292,9 @@ const application_menu = electron.Menu.buildFromTemplate([{
     }]
 }, {
     label: "Help", role: "help", submenu: [
-        {label: "Show Cheatsheat", id: "show_cheatsheet", click(item) {show_cheatsheet();}},
+        {label: "Cheatsheet", id: "show_cheatsheet", click(item) {show_cheatsheet();}},
+        {type: "separator"},
+        {label: "Acknowledgements", id: "show_cheatsheet", click(item) {show_acknowledgements();}},
     ]
 }]);
 
@@ -535,7 +537,9 @@ function document_menu(win) {
             ]
         }, {
             label: "Help", role: "help", submenu: [
-                {label: "Show Cheatsheat", id: "show_cheatsheet", click(item) {show_cheatsheet();}},
+                {label: "Cheatsheet", id: "show_cheatsheet", click(item) {show_cheatsheet();}},
+                {type: "separator"},
+                {label: "Acknowledgements", id: "show_cheatsheet", click(item) {show_acknowledgements();}},
             ]
         }]);
     } else {
@@ -731,7 +735,9 @@ function document_menu(win) {
             ]
         }, {
             label: "Help", role: "help", submenu: [
-                {label: "Show Cheatsheat", id: "show_cheatsheet", click(item) {show_cheatsheet();}},
+                {label: "Cheatsheet", id: "show_cheatsheet", click(item) {show_cheatsheet();}},
+                {type: "separator"},
+                {label: "Acknowledgements", id: "show_cheatsheet", click(item) {show_acknowledgements();}},
             ]
         }]);
     }
@@ -774,7 +780,7 @@ function show_cheatsheet() {
     if (cheatsheet_win && !cheatsheet_win.isDestroyed()) {
         cheatsheet_win.focus();
     } else {
-        cheatsheet_win = new electron.BrowserWindow({width: 640, height: 808, show: false, backgroundColor: "#000000", titleBarStyle: "hiddenInset", maximizable: false, resizable: false, useContentSize: true, frame: darwin ? false : true, fullscreenable: false, webPreferences: {nodeIntegration: true}});
+        cheatsheet_win = new electron.BrowserWindow({width: 640, height: 816, show: false, backgroundColor: "#000000", titleBarStyle: "hiddenInset", maximizable: false, resizable: false, useContentSize: true, frame: darwin ? false : true, fullscreenable: false, webPreferences: {nodeIntegration: true}});
         if (!darwin) cheatsheet_win.setMenu(null);
         cheatsheet_win.on("focus", (event) => {
             set_application_menu();
@@ -782,6 +788,21 @@ function show_cheatsheet() {
         });
         cheatsheet_win.on("ready-to-show", (event) => cheatsheet_win.show());
         cheatsheet_win.loadFile("app/html/cheatsheet.html");
+    }
+}
+
+function show_acknowledgements() {
+    if (acknowledgements_win && !acknowledgements_win.isDestroyed()) {
+        acknowledgements_win.focus();
+    } else {
+        acknowledgements_win = new electron.BrowserWindow({width: 640, height: 400, show: false, backgroundColor: "#000000", titleBarStyle: "hiddenInset", maximizable: false, resizable: false, useContentSize: true, frame: darwin ? false : true, fullscreenable: false, webPreferences: {nodeIntegration: true}});
+        if (!darwin) acknowledgements_win.setMenu(null);
+        acknowledgements_win.on("focus", (event) => {
+            set_application_menu();
+            discord_rpc.set_details("Admiring the acknowledgements");
+        });
+        acknowledgements_win.on("ready-to-show", (event) => acknowledgements_win.show());
+        acknowledgements_win.loadFile("app/html/acknowledgements.html");
     }
 }
 
