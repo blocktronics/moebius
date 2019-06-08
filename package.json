@@ -16,7 +16,7 @@
     "register-scheme": "0.0.2"
   },
   "dependencies": {
-    "discord-rpc": "^3.0.2",
+    "discord-rich-presence": "0.0.8",
     "ws": "^7.0.0"
   }
 }
