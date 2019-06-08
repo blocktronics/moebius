@@ -366,7 +366,7 @@ document.addEventListener("keydown", (event) => {
                                 const code = event.key.charCodeAt(0);
                                 if (code >= 32 && code <= 126) {
                                     key_typed(code);
-                                    // event.preventDefault();
+                                    event.preventDefault();
                                 }
                             }
                         } else if (event.key == "v" && event.ctrlKey && !event.altKey && !event.metaKey && !event.shiftKey) {
@@ -383,6 +383,14 @@ document.addEventListener("keydown", (event) => {
                 place();
             }
             switch (event.code) {
+                case "Home":
+                    cursor.start_of_row();
+                    event.preventDefault();
+                    break;
+                case "End":
+                    cursor.end_of_row();
+                    event.preventDefault();
+                    break;
                 case "ArrowLeft":
                     if (!event.altKey) {
                         if (event.shiftKey && cursor.mode != canvas.cursor_modes.SELECTION) cursor.start_selection_mode();
