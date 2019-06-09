@@ -1180,7 +1180,7 @@ function change_to_line_mode() {
         document.getElementById("line_mode").classList.add("selected");
         mode = editor_modes.LINE;
         send("show_brush_touchbar");
-        send("change_to_brush_mode");
+        send("change_to_line_mode");
     }
 }
 
@@ -1200,7 +1200,7 @@ function change_to_rectangle_mode() {
         document.getElementById("rectangle_mode").classList.add("selected");
         mode = editor_modes.RECTANGLE;
         send("show_brush_touchbar");
-        send("change_to_brush_mode");
+        send("change_to_rectangle_mode");
     }
 }
 
@@ -1271,6 +1271,8 @@ electron.ipcRenderer.on("set_sauce_info", (event, opts) => set_sauce_info(opts))
 electron.ipcRenderer.on("new_document", (event, opts) => new_document(opts));
 electron.ipcRenderer.on("change_to_select_mode", (event, opts) => change_to_select_mode(opts));
 electron.ipcRenderer.on("change_to_brush_mode", (event, opts) => change_to_brush_mode(opts));
+electron.ipcRenderer.on("change_to_line_mode", (event, opts) => change_to_line_mode(opts));
+electron.ipcRenderer.on("change_to_rectangle_mode", (event, opts) => change_to_rectangle_mode(opts));
 electron.ipcRenderer.on("change_to_sample_mode", (event, opts) => change_to_sample_mode(opts));
 electron.ipcRenderer.on("connect_to_server", (event, opts) => connect_to_server(opts));
 

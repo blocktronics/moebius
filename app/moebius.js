@@ -404,7 +404,9 @@ function document_menu(win) {
                 {type: "separator"},
                 {label: "Selection Mode", id: "change_to_select_mode", accelerator: "Cmd+1", click(item) {win.send("change_to_select_mode");}, type: "checkbox", chacked: false},
                 {label: "Brush Mode", id: "change_to_brush_mode", accelerator: "Cmd+2", click(item) {win.send("change_to_brush_mode");}, type: "checkbox", chacked: false},
-                {label: "Sample Mode", id: "change_to_sample_mode", accelerator: "Cmd+3", click(item) {win.send("change_to_sample_mode");}, type: "checkbox", chacked: false},
+                {label: "Line Mode", id: "change_to_line_mode", accelerator: "Cmd+3", click(item) {win.send("change_to_line_mode");}, type: "checkbox", chacked: false},
+                {label: "Rectangle Mode", id: "change_to_rectangle_mode", accelerator: "Cmd+4", click(item) {win.send("change_to_rectangle_mode");}, type: "checkbox", chacked: false},
+                {label: "Sample Mode", id: "change_to_sample_mode", accelerator: "Cmd+5", click(item) {win.send("change_to_sample_mode");}, type: "checkbox", chacked: false},
                 {type: "separator"},
                 {label: "Use 9px Font", id: "use_9px_font", click(item) {win.send("use_9px_font", item.checked);}, type: "checkbox", checked: false, enabled: true},
                 {label: "Use iCE Colors", id: "ice_colors", click(item) {win.send("ice_colors", item.checked);}, type: "checkbox", checked: false, enabled: true},
@@ -604,6 +606,8 @@ function document_menu(win) {
                 {type: "separator"},
                 {label: "Selection Mode", id: "change_to_select_mode", click(item) {win.send("change_to_select_mode");}, type: "checkbox", chacked: false},
                 {label: "Brush Mode", id: "change_to_brush_mode", click(item) {win.send("change_to_brush_mode");}, type: "checkbox", chacked: false},
+                {label: "Line Mode", id: "change_to_line_mode", click(item) {win.send("change_to_line_mode");}, type: "checkbox", chacked: false},
+                {label: "Rectangle Mode", id: "change_to_rectangle_mode", click(item) {win.send("change_to_rectangle_mode");}, type: "checkbox", chacked: false},
                 {label: "Sample Mode", id: "change_to_sample_mode", click(item) {win.send("change_to_sample_mode");}, type: "checkbox", chacked: false},
                 {type: "separator"},
                 {label: "Use 9px Font", id: "use_9px_font", click(item) {win.send("use_9px_font", item.checked);}, type: "checkbox", checked: false, enabled: true},
@@ -981,18 +985,40 @@ function change_to_select_mode(id) {
     docs[id].menu.getMenuItemById("change_to_select_mode").checked = true;
     docs[id].menu.getMenuItemById("change_to_brush_mode").checked = false;
     docs[id].menu.getMenuItemById("change_to_sample_mode").checked = false;
+    docs[id].menu.getMenuItemById("change_to_line_mode").checked = false;
+    docs[id].menu.getMenuItemById("change_to_rectangle_mode").checked = false;
 }
 
 function change_to_brush_mode(id) {
     docs[id].menu.getMenuItemById("change_to_select_mode").checked = false;
     docs[id].menu.getMenuItemById("change_to_brush_mode").checked = true;
     docs[id].menu.getMenuItemById("change_to_sample_mode").checked = false;
+    docs[id].menu.getMenuItemById("change_to_line_mode").checked = false;
+    docs[id].menu.getMenuItemById("change_to_rectangle_mode").checked = false;
+}
+
+function change_to_line_mode(id) {
+    docs[id].menu.getMenuItemById("change_to_select_mode").checked = false;
+    docs[id].menu.getMenuItemById("change_to_brush_mode").checked = false;
+    docs[id].menu.getMenuItemById("change_to_sample_mode").checked = false;
+    docs[id].menu.getMenuItemById("change_to_line_mode").checked = true;
+    docs[id].menu.getMenuItemById("change_to_rectangle_mode").checked = false;
+}
+
+function change_to_rectangle_mode(id) {
+    docs[id].menu.getMenuItemById("change_to_select_mode").checked = false;
+    docs[id].menu.getMenuItemById("change_to_brush_mode").checked = false;
+    docs[id].menu.getMenuItemById("change_to_sample_mode").checked = false;
+    docs[id].menu.getMenuItemById("change_to_line_mode").checked = false;
+    docs[id].menu.getMenuItemById("change_to_rectangle_mode").checked = true;
 }
 
 function change_to_sample_mode(id) {
     docs[id].menu.getMenuItemById("change_to_select_mode").checked = false;
     docs[id].menu.getMenuItemById("change_to_brush_mode").checked = false;
     docs[id].menu.getMenuItemById("change_to_sample_mode").checked = true;
+    docs[id].menu.getMenuItemById("change_to_line_mode").checked = false;
+    docs[id].menu.getMenuItemById("change_to_rectangle_mode").checked = false;
 }
 
 function change_to_network_mode(id) {
@@ -1036,6 +1062,8 @@ electron.ipcMain.on("show_brush_touchbar", (event, {id}) => show_brush_touchbar(
 electron.ipcMain.on("disable_clear_reference_image", (event, {id}) => disable_clear_reference_image(id));
 electron.ipcMain.on("change_to_select_mode", (event, {id}) => change_to_select_mode(id));
 electron.ipcMain.on("change_to_brush_mode", (event, {id}) => change_to_brush_mode(id));
+electron.ipcMain.on("change_to_line_mode", (event, {id}) => change_to_line_mode(id));
+electron.ipcMain.on("change_to_rectangle_mode", (event, {id}) => change_to_rectangle_mode(id));
 electron.ipcMain.on("change_to_sample_mode", (event, {id}) => change_to_sample_mode(id));
 electron.ipcMain.on("connect_to_test_server", (event, opts) => connect_to_test_server(opts));
 
