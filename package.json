@@ -5,17 +5,16 @@
   "main": "app.js",
   "scripts": {
     "start": "electron .",
-    "build": "node_modules/.bin/build"
+    "build": "node_modules/.bin/build",
+    "build-win": "node_modules/.bin/build -w"
   },
   "author": "Andy Herbert",
   "license": "Apache-2.0",
   "devDependencies": {
     "electron": "^5.0.3",
-    "electron-builder": "^20.43.0",
-    "register-scheme": "0.0.2"
+    "electron-builder": "^20.43.0"
   },
   "dependencies": {
-    "discord-rich-presence": "0.0.8",
     "ws": "^7.0.0"
   }
 }
