@@ -14,8 +14,10 @@ let undo_buffer = [];
 let redo_buffer = [];
 const mouse_button_types = {NONE: 0, LEFT: 1, RIGHT: 2};
 let mouse_button = mouse_button_types.NONE;
+let start_mouse_x, start_mouse_y;
+let preview_canvas;
 let mouse_x, mouse_y;
-const editor_modes = {SELECT: 0, BRUSH: 1, SAMPLE: 2};
+const editor_modes = {SELECT: 0, BRUSH: 1, LINE: 2, RECTANGLE: 3, SAMPLE: 4};
 let mode;
 let previous_mode;
 let connection;
@@ -701,8 +703,8 @@ function line(x0, y0, x1, y1) {
     return coords;
 }
 
-function half_block_brush(x, y, col) {
-    const coords = line(mouse_x, mouse_y, x, y);
+function draw_half_block_line(sx, sy, dx, dy, col) {
+    const coords = line(sx, sy, dx, dy);
     for (const coord of coords) {
         const block_y = Math.floor(coord.y / 2);
         const block = doc.data[block_y * doc.columns + coord.x];
@@ -750,6 +752,10 @@ function half_block_brush(x, y, col) {
         }
         optimize_block(coord.x, block_y);
     }
+}
+
+function half_block_brush(x, y, col) {
+    draw_half_block_line(mouse_x, mouse_y, x, y, col);
     mouse_x = x;
     mouse_y = y;
 }
@@ -764,9 +770,16 @@ function colorize_brush(x, y) {
     mouse_y = y;
 }
 
-function clear_brush(x, y) {
+function clear_block_brush(x, y) {
     const coords = line(mouse_x, mouse_y, x, y);
     for (const coord of coords) change_data({x: coord.x, y: coord.y, code: 32, fg: 7, bg: 0});
+    mouse_x = x;
+    mouse_y = y;
+}
+
+function full_block_brush(x, y, col) {
+    const coords = line(mouse_x, mouse_y, x, y);
+    for (const coord of coords) change_data({x: coord.x, y: coord.y, code: 219, fg: col, bg: 0});
     mouse_x = x;
     mouse_y = y;
 }
@@ -778,6 +791,28 @@ function get_canvas_xy(event) {
     const y = Math.min(Math.max(Math.floor((event.clientY - canvas_container_rect.top) / render.font.height), 0), doc.rows - 1);
     const half_y = Math.min(Math.max(Math.floor((event.clientY - canvas_container_rect.top) / (render.font.height / 2)), 0), doc.rows * 2 - 1);
     return {x, y, half_y};
+}
+
+function create_tool_preview() {
+    preview_canvas = document.createElement("canvas");
+    document.getElementById("editing_layer").appendChild(preview_canvas);
+    preview_canvas.style.opacity = 0.6;
+}
+
+function destroy_tool_preview() {
+    if (preview_canvas) {
+        document.getElementById("editing_layer").removeChild(preview_canvas);
+        preview_canvas = undefined;
+    }
+}
+
+function update_tool_preview(x, y, width, height) {
+    preview_canvas.width = width;
+    preview_canvas.style.width = `${width}px`;
+    preview_canvas.height = height;
+    preview_canvas.style.height = `${height}px`;
+    preview_canvas.style.left = `${x}px`;
+    preview_canvas.style.top = `${y}px`;
 }
 
 function mouse_down(event) {
@@ -810,20 +845,114 @@ function mouse_down(event) {
             if (toolbar.is_in_half_block_mode()) {
                 mouse_x = x; mouse_y = half_y;
                 half_block_brush(x, half_y, (mouse_button == mouse_button_types.LEFT) ? fg : bg);
+            } else if (event.shiftKey || toolbar.is_in_clear_block_mode()) {
+                mouse_x = x; mouse_y = y;
+                clear_block_brush(x, y);
+            } else if (toolbar.is_in_full_block_mode()) {
+                mouse_x = x; mouse_y = y;
+                full_block_brush(x, y, (mouse_button == mouse_button_types.LEFT) ? fg : bg);
             } else if (toolbar.is_in_colorize_mode()) {
                 mouse_x = x; mouse_y = y;
                 colorize_brush(x, y);
             }
         break;
+        case editor_modes.LINE:
+        case editor_modes.RECTANGLE:
+            mouse_x = x; mouse_y = toolbar.is_in_half_block_mode() ? half_y : y;
+            start_mouse_x = mouse_x; start_mouse_y = mouse_y;
+            create_tool_preview();
+            break;
         case editor_modes.SAMPLE:
             const block = doc.data[doc.columns * y + x];
             set_fg(block.fg);
             set_bg(block.bg);
+            mouse_button = mouse_button_types.NONE;
             switch (previous_mode) {
                 case editor_modes.SELECT: change_to_select_mode(); break;
                 case editor_modes.BRUSH: change_to_brush_mode(); break;
+                case editor_modes.LINE: change_to_line_mode(); break;
+                case editor_modes.RECTANGLE: change_to_rectangle_mode(); break;
             }
         break;
+    }
+}
+
+function draw_line_preview(x, y, col) {
+    if (x != mouse_x || y != mouse_y) {
+        const [sx, dx] = (start_mouse_x < x) ? [start_mouse_x, x] : [x, start_mouse_x];
+        const [sy, dy] = (start_mouse_y < y) ? [start_mouse_y, y] : [y, start_mouse_y];
+        if (toolbar.is_in_half_block_mode()) {
+            update_tool_preview(sx * render.font.width, Math.floor(sy * render.font.height / 2), (dx - sx + 1) * render.font.width, Math.ceil((dy - sy + 1) * render.font.height / 2));
+        } else {
+            update_tool_preview(sx * render.font.width, sy * render.font.height, (dx - sx + 1) * render.font.width, (dy - sy + 1) * render.font.height);
+        }
+        const ctx = preview_canvas.getContext("2d");
+        ctx.fillStyle = libtextmode.convert_ega_to_style(render.font.palette[col]);
+        const coords = line(start_mouse_x, start_mouse_y, x, y);
+        if (toolbar.is_in_half_block_mode()) {
+            for (const coord of coords) {
+                const odd_y = (coord.y % 2);
+                ctx.fillRect((coord.x - sx) * render.font.width, Math.floor((coord.y - sy) * render.font.height / 2) - (odd_y ? 1 : 0), render.font.width, Math.floor(render.font.height / 2) + (odd_y ? 1 : -1));
+            }
+        } else {
+            for (const coord of coords) ctx.fillRect((coord.x - sx) * render.font.width, (coord.y - sy) * render.font.height, render.font.width, render.font.height);
+        }
+    }
+}
+
+function draw_line(x, y, col) {
+    start_undo_chunk();
+    if (toolbar.is_in_half_block_mode()) {
+        draw_half_block_line(mouse_x, mouse_y, x, y, col);
+    } else if (toolbar.is_in_full_block_mode()) {
+        full_block_brush(x, y, col);
+    } else if (toolbar.is_in_clear_block_mode()) {
+        clear_block_brush(x, y);
+    } else if (toolbar.is_in_colorize_mode()) {
+        colorize_brush(x, y);
+    }
+}
+
+function draw_rectangle_preview(x, y, col) {
+    if (x != mouse_x || y != mouse_y) {
+        const [sx, dx] = (start_mouse_x < x) ? [start_mouse_x, x] : [x, start_mouse_x];
+        const [sy, dy] = (start_mouse_y < y) ? [start_mouse_y, y] : [y, start_mouse_y];
+        if (toolbar.is_in_half_block_mode()) {
+            update_tool_preview(sx * render.font.width, Math.floor(sy * render.font.height / 2), (dx - sx + 1) * render.font.width, Math.ceil((dy - sy + 1) * render.font.height / 2));
+        } else {
+            update_tool_preview(sx * render.font.width, sy * render.font.height, (dx - sx + 1) * render.font.width, (dy - sy + 1) * render.font.height);
+        }
+        preview_canvas.style.backgroundColor = libtextmode.convert_ega_to_style(render.font.palette[col]);
+    }
+}
+
+function draw_rectangle(x, y, col) {
+    const [sx, dx] = (start_mouse_x < x) ? [start_mouse_x, x] : [x, start_mouse_x];
+    const [sy, dy] = (start_mouse_y < y) ? [start_mouse_y, y] : [y, start_mouse_y];
+    start_undo_chunk();
+    if (toolbar.is_in_half_block_mode()) {
+        for (let y = sy; y <= dy; y++) {
+            draw_half_block_line(sx, y, dx, y, col);
+        }
+    } else if (toolbar.is_in_full_block_mode()) {
+        for (let y = sy; y <= dy; y++) {
+            for (let x = sx; x <= dx; x++) {
+                change_data({x, y, code: 219, fg: col, bg: 0});
+            }
+        }
+    } else if (toolbar.is_in_clear_block_mode()) {
+        for (let y = sy; y <= dy; y++) {
+            for (let x = sx; x <= dx; x++) {
+                change_data({x, y, code: 0, fg: 7, bg: 0});
+            }
+        }
+    } else if (toolbar.is_in_colorize_mode()) {
+        for (let y = sy; y <= dy; y++) {
+            for (let x = sx; x <= dx; x++) {
+                const block = doc.data[doc.columns * y + x];
+                change_data({x, y, code: block.code, fg: toolbar.is_in_colorize_fg_mode() ? fg : block.fg, bg: toolbar.is_in_colorize_bg_mode() ? bg : block.bg});
+            }
+        }
     }
 }
 
@@ -847,20 +976,69 @@ function mouse_move(event) {
         break;
         case editor_modes.BRUSH:
             if (mouse_button) {
-                if (event.shiftKey) {
-                    clear_brush(x, y);
-                } else if (toolbar.is_in_half_block_mode()) {
+                if (toolbar.is_in_half_block_mode()) {
                     half_block_brush(x, half_y, mouse_button == mouse_button_types.LEFT ? fg : bg);
+                } else if (event.shiftKey || toolbar.is_in_clear_block_mode()) {
+                    clear_block_brush(x, y);
+                } else if (toolbar.is_in_full_block_mode()) {
+                    full_block_brush(x, y, (mouse_button == mouse_button_types.LEFT) ? fg : bg);
                 } else if (toolbar.is_in_colorize_mode()) {
                     colorize_brush(x, y);
                 }
             }
         break;
+        case editor_modes.LINE:
+            if (mouse_button) {
+                if (toolbar.is_in_half_block_mode()) {
+                    draw_line_preview(x, half_y, (mouse_button == mouse_button_types.LEFT) ? fg : bg);
+                } else if (toolbar.is_in_clear_block_mode()) {
+                    draw_line_preview(x, y, 0);
+                } else {
+                    draw_line_preview(x, y, (mouse_button == mouse_button_types.LEFT) ? fg : bg);
+                }
+            }
+            break;
+        case editor_modes.RECTANGLE:
+            if (mouse_button) {
+                if (toolbar.is_in_half_block_mode()) {
+                    draw_rectangle_preview(x, half_y, (mouse_button == mouse_button_types.LEFT) ? fg : bg);
+                } else if (toolbar.is_in_clear_block_mode()) {
+                    draw_rectangle_preview(x, y, 0);
+                } else {
+                    draw_rectangle_preview(x, y, (mouse_button == mouse_button_types.LEFT) ? fg : bg);
+                }
+            }
+            break;
     }
     toolbar.set_sample(doc.data[doc.columns * y + x]);
 }
 
 function mouse_up(event) {
+    const {x, y, half_y} = get_canvas_xy(event);
+    switch (mode) {
+        case editor_modes.LINE:
+            if (mouse_button) {
+                draw_line(x, toolbar.is_in_half_block_mode() ? half_y : y, (mouse_button == mouse_button_types.LEFT) ? fg : bg);
+                destroy_tool_preview();
+            }
+            break;
+        case editor_modes.RECTANGLE:
+            if (mouse_button) {
+                draw_rectangle(x, toolbar.is_in_half_block_mode() ? half_y : y, (mouse_button == mouse_button_types.LEFT) ? fg : bg);
+                destroy_tool_preview();
+            }
+            break;
+    }
+    mouse_button = mouse_button_types.NONE;
+}
+
+function mouse_out(event) {
+    switch (mode) {
+        case editor_modes.LINE:
+        case editor_modes.RECTANGLE:
+            destroy_tool_preview();
+            break;
+    }
     mouse_button = mouse_button_types.NONE;
 }
 
@@ -951,6 +1129,8 @@ async function new_document({columns, rows}) {
 function change_to_select_mode() {
     switch (mode) {
         case editor_modes.BRUSH: document.getElementById("brush_mode").classList.remove("selected"); break;
+        case editor_modes.LINE: document.getElementById("line_mode").classList.remove("selected"); break;
+        case editor_modes.RECTANGLE: document.getElementById("rectangle_mode").classList.remove("selected"); break;
         case editor_modes.SAMPLE: document.getElementById("sample_mode").classList.remove("selected"); break;
     }
     if (mode != editor_modes.SELECT) {
@@ -971,12 +1151,54 @@ function change_to_brush_mode() {
             cursor.hide();
             send("disable_editing_shortcuts");
             break;
+        case editor_modes.LINE: document.getElementById("line_mode").classList.remove("selected"); break;
+        case editor_modes.RECTANGLE: document.getElementById("rectangle_mode").classList.remove("selected"); break;
         case editor_modes.SAMPLE: document.getElementById("sample_mode").classList.remove("selected"); break;
     }
     if (mode != editor_modes.BRUSH) {
         toolbar.show_brush();
         document.getElementById("brush_mode").classList.add("selected");
         mode = editor_modes.BRUSH;
+        send("show_brush_touchbar");
+        send("change_to_brush_mode");
+    }
+}
+
+function change_to_line_mode() {
+    switch (mode) {
+        case editor_modes.SELECT:
+            document.getElementById("select_mode").classList.remove("selected");
+            cursor.hide();
+            send("disable_editing_shortcuts");
+            break;
+        case editor_modes.BRUSH: document.getElementById("brush_mode").classList.remove("selected"); break;
+        case editor_modes.RECTANGLE: document.getElementById("rectangle_mode").classList.remove("selected"); break;
+        case editor_modes.SAMPLE: document.getElementById("sample_mode").classList.remove("selected"); break;
+        }
+    if (mode != editor_modes.LINE) {
+        toolbar.show_brush();
+        document.getElementById("line_mode").classList.add("selected");
+        mode = editor_modes.LINE;
+        send("show_brush_touchbar");
+        send("change_to_brush_mode");
+    }
+}
+
+function change_to_rectangle_mode() {
+    switch (mode) {
+        case editor_modes.SELECT:
+            document.getElementById("select_mode").classList.remove("selected");
+            cursor.hide();
+            send("disable_editing_shortcuts");
+            break;
+        case editor_modes.BRUSH: document.getElementById("brush_mode").classList.remove("selected"); break;
+        case editor_modes.LINE: document.getElementById("line_mode").classList.remove("selected"); break;
+        case editor_modes.SAMPLE: document.getElementById("sample_mode").classList.remove("selected"); break;
+        }
+    if (mode != editor_modes.RECTANGLE) {
+        toolbar.show_brush();
+        document.getElementById("rectangle_mode").classList.add("selected");
+        mode = editor_modes.RECTANGLE;
         send("show_brush_touchbar");
         send("change_to_brush_mode");
     }
@@ -989,9 +1211,9 @@ function change_to_sample_mode() {
             cursor.hide();
             send("disable_editing_shortcuts");
         break;
-        case editor_modes.BRUSH:
-            document.getElementById("brush_mode").classList.remove("selected");
-        break;
+        case editor_modes.LINE: document.getElementById("line_mode").classList.remove("selected"); break;
+        case editor_modes.RECTANGLE: document.getElementById("rectangle_mode").classList.remove("selected"); break;
+        case editor_modes.BRUSH: document.getElementById("brush_mode").classList.remove("selected");break;
     }
     if (mode != editor_modes.SAMPLE) {
         toolbar.show_sample();
@@ -1060,8 +1282,10 @@ document.addEventListener("DOMContentLoaded", (event) => {
     canvas_container.addEventListener("mousedown", mouse_down, true);
     canvas_container.addEventListener("mousemove", mouse_move, true);
     canvas_container.addEventListener("mouseup", mouse_up, true);
-    canvas_container.addEventListener("mouseout", mouse_up, true);
+    canvas_container.addEventListener("mouseout", mouse_out, true);
     document.getElementById("select_mode").addEventListener("mousedown", (event) => change_to_select_mode(), true);
     document.getElementById("brush_mode").addEventListener("mousedown", (event) => change_to_brush_mode(), true);
+    document.getElementById("line_mode").addEventListener("mousedown", (event) => change_to_line_mode(), true);
+    document.getElementById("rectangle_mode").addEventListener("mousedown", (event) => change_to_rectangle_mode(), true);
     document.getElementById("sample_mode").addEventListener("mousedown", (event) => change_to_sample_mode(), true);
 }, true);

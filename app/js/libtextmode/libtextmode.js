@@ -3,7 +3,7 @@ const {create_canvas, join_canvases} = require("./canvas");
 const {Ansi, encode_as_ansi} = require("./ansi");
 const {BinaryText, encode_as_bin} = require("./binary_text");
 const {XBin, encode_as_xbin} = require("./xbin");
-const {ega, convert_ega_to_vga} = require("./palette");
+const {ega, convert_ega_to_style} = require("./palette");
 const path = require("path");
 const {current_date, resize_canvas} = require("./textmode");
 const fs = require("fs");
@@ -480,4 +480,4 @@ function get_data_url(canvases) {
     return join_canvases(canvases).toDataURL("image/png");
 }
 
-module.exports = {read_file, write_file, animate, render, render_split, render_at, new_document, resize_canvas, cp437_to_unicode, render_blocks, flip_x, flip_y, rotate, get_data_url, convert_ega_to_vga};
+module.exports = {read_file, write_file, animate, render, render_split, render_at, new_document, resize_canvas, cp437_to_unicode, render_blocks, flip_x, flip_y, rotate, get_data_url, convert_ega_to_style};

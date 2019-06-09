@@ -5,7 +5,8 @@
   "main": "app.js",
   "scripts": {
     "start": "electron .",
-    "build": "node_modules/.bin/build",
+    "build": "node_modules/.bin/build -mw",
+    "build-mac": "node_modules/.bin/build -m",
     "build-win": "node_modules/.bin/build -w"
   },
   "author": "Andy Herbert",

@@ -20,8 +20,7 @@ function add({palette, set_fg, set_bg}) {
     if (divs) for (const div of divs) swatches.removeChild(div);
     divs = palette.map((rgb, i) => {
         const div = document.createElement("div");
-        const vga = libtextmode.convert_ega_to_vga(rgb);
-        div.style.backgroundColor = div.style.backgroundColor = `rgb(${vga.r}, ${vga.g}, ${vga.b})`;
+        div.style.backgroundColor = libtextmode.convert_ega_to_style(rgb);
         div.addEventListener("mousedown", (event) => {
             if (event.button == 0) {
                 set_fg(i);

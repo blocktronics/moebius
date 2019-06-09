@@ -44,6 +44,12 @@ body.dark .tool.selected {
 #brush_mode {
     background-image: url("../img/brush.png");
 }
+#line_mode {
+    background-image: url("../img/line.png");
+}
+#rectangle_mode {
+    background-image: url("../img/rectangle.png");
+}
 #sample_mode {
     background-image: url("../img/sample.png");
 }

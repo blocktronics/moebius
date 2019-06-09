@@ -33,4 +33,12 @@ function convert_ega_to_vga(rgb) {
     };
 }
 
-module.exports = {white, bright_white, ega, get_rgba, convert_ega_to_vga};
+function convert_rgb_to_style(rgb) {
+    return `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+}
+
+function convert_ega_to_style(rgb) {
+    return convert_rgb_to_style(convert_ega_to_vga(rgb));
+}
+
+module.exports = {white, bright_white, ega, get_rgba, convert_ega_to_vga, convert_ega_to_style};
