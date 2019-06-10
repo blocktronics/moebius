@@ -910,7 +910,12 @@ function mouse_down(event) {
             create_tool_preview();
             break;
         case editor_modes.FILL:
-            fill(x, half_y, (mouse_button == mouse_button_types.LEFT) ? fg : bg);
+            if (connection) {
+                const choice = electron.remote.dialog.showMessageBox(electron.remote.getCurrentWindow(), {type: "question", message: "Fill", detail: "Using fill whilst connected to a server is a potentially destructive operation. Are you sure?", buttons: ["Perform Fill", "Cancel"], defaultId: 1, cancelId: 1});
+                if (choice == 0) fill(x, half_y, (mouse_button == mouse_button_types.LEFT) ? fg : bg);
+            } else {
+                fill(x, half_y, (mouse_button == mouse_button_types.LEFT) ? fg : bg);
+            }
             break;
         case editor_modes.SAMPLE:
             const block = doc.data[doc.columns * y + x];
