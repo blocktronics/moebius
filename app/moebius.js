@@ -76,16 +76,10 @@ function set_application_menu() {
     if (darwin) electron.Menu.setApplicationMenu(application_menu);
 }
 
-function change_appearance(win) {
-    if (!win.isDestroyed()) win.send("change_appearance", {is_dark_mode: electron.systemPreferences.isDarkMode()});
-}
-
 async function new_window({width, height, file}) {
     return new Promise((resolve) => {
         const win = new electron.BrowserWindow({width, height, minWidth: 800, minHeight: 500, show: false, webPreferences: {nodeIntegration: true}, backgroundColor: electron.systemPreferences.isDarkMode() ? "#22252B" : "#f6f6f6"});
-        // electron.systemPreferences.subscribeNotification("AppleInterfaceThemeChangedNotification", (event) => change_appearance(win));
         win.on("ready-to-show", (event) => {
-            // change_appearance(win);
             win.show();
             resolve(win);
         });
@@ -96,10 +90,8 @@ async function new_window({width, height, file}) {
 async function new_modal_window({width, height, file, parent}) {
     return new Promise((resolve) => {
         const win = (darwin) ? new electron.BrowserWindow({parent, width, height, show: false, modal: true, useContentSize: true, transparent: true, vibrancy: "dark", webPreferences: {nodeIntegration: true}}) : new electron.BrowserWindow({parent, width, height: height + 20, show: false, modal: true, maximizable: false, resizable: false, useContentSize: true, backgroundColor: "#292c33", webPreferences: {nodeIntegration: true}});
-        // electron.systemPreferences.subscribeNotification("AppleInterfaceThemeChangedNotification", (event) => change_appearance(win));
         if (win32) win.setMenu(null);
         win.on("ready-to-show", (event) => {
-            // change_appearance(win);
             win.show();
             resolve(win);
         });
