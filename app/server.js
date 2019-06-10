@@ -5,6 +5,7 @@ let doc;
 const pass = "secret";
 const action =  {CONNECTED: 0, REFUSED: 1, JOIN: 2, LEAVE: 3, CURSOR: 4, SELECTION: 5, RESIZE_SELECTION: 6, OPERATION: 7, HIDE_CURSOR: 8, DRAW: 9, CHAT: 10};
 const data_store = [];
+let timer;
 
 function send(ws, type, data = {}) {
     ws.send(JSON.stringify({type, data}));
@@ -16,10 +17,6 @@ function send_all(sender, type, data = {}) {
             send(ws, type, data);
         }
     }
-}
-
-function copy({code, fg, bg, fg_rgb, bg_rgb}) {
-    return {code, fg, bg, fg_rgb, bg_rgb};
 }
 
 function message(ws, msg) {
@@ -37,7 +34,7 @@ function message(ws, msg) {
         }
     break;
     case action.DRAW:
-        doc.data[msg.data.y * doc.columns + msg.data.x] = copy(msg.data.block);
+        doc.data[msg.data.y * doc.columns + msg.data.x] = Object.assign(msg.data.block);
         send_all(ws, msg.type, msg.data);
     break;
     default:
@@ -45,7 +42,12 @@ function message(ws, msg) {
     }
 }
 
+function save() {
+    libtextmode.write_file(doc, "./server.ans");
+}
+
 libtextmode.read_file("./server.ans").then((ansi_doc) => {
+    timer = setInterval(save, 5 * 60 * 1000);
     doc = ansi_doc;
     wss.on("connection", (ws) => {
         ws.on("message", msg => message(ws, JSON.parse(msg)));
@@ -63,7 +65,8 @@ libtextmode.read_file("./server.ans").then((ansi_doc) => {
 });
 
 process.on("SIGINT", () => {
+    clearInterval(timer);
     wss.close();
-    libtextmode.write_file(doc, "./server.ans");
+    save();
     console.log("\nProcess ended.");
 });

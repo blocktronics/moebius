@@ -609,7 +609,7 @@ function document_menu(win) {
                 {label: "Brush Mode", id: "change_to_brush_mode", click(item) {win.send("change_to_brush_mode");}, type: "checkbox", checked: false},
                 {label: "Line Mode", id: "change_to_line_mode", click(item) {win.send("change_to_line_mode");}, type: "checkbox", checked: false},
                 {label: "Rectangle Mode", id: "change_to_rectangle_mode", click(item) {win.send("change_to_rectangle_mode");}, type: "checkbox", checked: false},
-                {label: "Fill Mode", id: "change_to_fill_mode", accelerator: "Cmd+5", click(item) {win.send("change_to_fill_mode");}, type: "checkbox", checked: false},
+                {label: "Fill Mode", id: "change_to_fill_mode", click(item) {win.send("change_to_fill_mode");}, type: "checkbox", checked: false},
                 {label: "Sample Mode", id: "change_to_sample_mode", click(item) {win.send("change_to_sample_mode");}, type: "checkbox", checked: false},
                 {type: "separator"},
                 {label: "Use 9px Font", id: "use_9px_font", click(item) {win.send("use_9px_font", item.checked);}, type: "checkbox", checked: false, enabled: true},
