@@ -623,7 +623,7 @@ function document_menu(win) {
                 {label: "Use 9px Font", id: "use_9px_font", click(item) {win.send("use_9px_font", item.checked);}, type: "checkbox", checked: false, enabled: true},
                 {label: "Use iCE Colors", id: "ice_colors", click(item) {win.send("ice_colors", item.checked);}, type: "checkbox", checked: false, enabled: true},
                 {type: "separator"},
-                {label: "Actual Size", id: "actual_size", click(item) {win.send("actual_size");}, type: "checkbox", checked: false},
+                {label: "Actual Size", id: "actual_size", accelerator: "Ctrl+Alt+0", click(item) {win.send("actual_size");}, type: "checkbox", checked: false},
                 {label: "Zoom In", id: "zoom_in", accelerator: "Ctrl+=", click(item) {win.send("zoom_in");}},
                 {label: "Zoom Out", id: "zoom_out", accelerator: "Ctrl+-", click(item) {win.send("zoom_out");}},
                 {type: "separator"},
