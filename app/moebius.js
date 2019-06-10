@@ -95,7 +95,7 @@ async function new_window({width, height, file}) {
 
 async function new_modal_window({width, height, file, parent}) {
     return new Promise((resolve) => {
-        const win = (darwin) ? new electron.BrowserWindow({parent, width, height, show: false, modal: true, useContentSize: true, transparent: true, vibrancy: "dark", webPreferences: {nodeIntegration: true}}) : new electron.BrowserWindow({parent, width, height, show: false, modal: true, maximizable: false, resizable: false, useContentSize: true, backgroundColor: "#292c33", webPreferences: {nodeIntegration: true}});
+        const win = (darwin) ? new electron.BrowserWindow({parent, width, height, show: false, modal: true, useContentSize: true, transparent: true, vibrancy: "dark", webPreferences: {nodeIntegration: true}}) : new electron.BrowserWindow({parent, width, height: height + 20, show: false, modal: true, maximizable: false, resizable: false, useContentSize: true, backgroundColor: "#292c33", webPreferences: {nodeIntegration: true}});
         // electron.systemPreferences.subscribeNotification("AppleInterfaceThemeChangedNotification", (event) => change_appearance(win));
         if (win32) win.setMenu(null);
         win.on("ready-to-show", (event) => {
