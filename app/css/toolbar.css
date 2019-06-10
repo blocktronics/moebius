@@ -2,10 +2,12 @@
     position: absolute;
     top: 0px; left: 0px;
     width: 100%; height: 100%;
+    overflow: hidden;
 }
 
 .panel > div {
     width: fit-content;
+    min-width: max-content;
     margin: 0px auto;
     font-size: 12px;
     line-height: 48px;
