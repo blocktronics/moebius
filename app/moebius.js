@@ -217,9 +217,16 @@ function open_reference_image({win}) {
     electron.dialog.showOpenDialog(win, {filters: [{name: "Images", extensions: ["png", "jpg"]}], properties: ["openFile"]}, (files) => {
         if (files) {
             win.send("open_reference_image", {image: electron.nativeImage.createFromPath(files[0]).toDataURL()});
+            const toggle_reference_image_menu_item = docs[win.id].menu.getMenuItemById("toggle_reference_image");
+            toggle_reference_image_menu_item.enabled = true;
+            toggle_reference_image_menu_item.checked = true;
             docs[win.id].menu.getMenuItemById("clear_reference_image").enabled = true;
         }
     });
+}
+
+function toggle_reference_image(win, is_visible) {
+    win.send("toggle_reference_image", {is_visible});
 }
 
 function preferences() {
@@ -518,6 +525,7 @@ function document_menu(win) {
                 ]},
                 {type: "separator"},
                 {label: "Open Reference Image\u2026", id: "open_reference_image", click(item) {open_reference_image({win});}},
+                {label: "Toggle Reference Image", id: "toggle_reference_image", accelerator: "Cmd+Escape", click(item) {toggle_reference_image(win, item.checked);}, enabled: false, type: "checkbox", checked: true},
                 {label: "Clear", id: "clear_reference_image", click(item) {win.send("clear_reference_image");}, enabled: false},
                 {type: "separator"},
                 {role: "togglefullscreen"}
@@ -721,6 +729,7 @@ function document_menu(win) {
                 ]},
                 {type: "separator"},
                 {label: "Open Reference Image\u2026", id: "open_reference_image", click(item) {open_reference_image({win});}},
+                {label: "Toggle Reference Image", id: "toggle_reference_image", accelerator: "Ctrl+Escape", click(item) {toggle_reference_image(win, item.checked);}, enabled: false, type: "checkbox", checked: true},
                 {label: "Clear", id: "clear_reference_image", click(item) {win.send("clear_reference_image");}, enabled: false},
                 {type: "separator"},
                 {role: "togglefullscreen"}
@@ -980,6 +989,7 @@ function show_brush_touchbar(id) {
 }
 
 function disable_clear_reference_image(id) {
+    docs[id].menu.getMenuItemById("toggle_reference_image").enabled = false;
     docs[id].menu.getMenuItemById("clear_reference_image").enabled = false;
 }
 

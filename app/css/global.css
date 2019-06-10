@@ -34,6 +34,6 @@ canvas {
  }
 
  ::-webkit-scrollbar-thumb {
-    -webkit-border-radius: 2px;
+    border-radius: 2px;
     background: rgba(0, 0, 0, 0.4);
 }

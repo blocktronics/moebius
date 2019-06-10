@@ -1052,6 +1052,11 @@ function mouse_out(event) {
 
 function open_reference_image({image}) {
     document.getElementById("reference_image").style.backgroundImage = `url(${image})`;
+    document.getElementById("reference_image").style.opacity = 0.4;
+}
+
+function toggle_reference_image({is_visible}) {
+    document.getElementById("reference_image").style.opacity = is_visible ? 0.4 : 0.0;
 }
 
 function clear_reference_image() {
@@ -1292,6 +1297,7 @@ electron.ipcRenderer.on("use_attribute_under_cursor", (event, opts) => use_attri
 electron.ipcRenderer.on("default_color", (event, opts) => default_color(opts));
 electron.ipcRenderer.on("switch_foreground_background", (event, opts) => switch_foreground_background(opts));
 electron.ipcRenderer.on("open_reference_image", (event, opts) => open_reference_image(opts));
+electron.ipcRenderer.on("toggle_reference_image", (event, opts) => toggle_reference_image(opts));
 electron.ipcRenderer.on("clear_reference_image", (event, opts) => clear_reference_image(opts));
 electron.ipcRenderer.on("zoom_in", (event, opts) => zoom_in(opts));
 electron.ipcRenderer.on("zoom_out", (event, opts) => zoom_out(opts));
