@@ -23,3 +23,12 @@ canvas {
     image-rendering: pixelated;
     vertical-align: bottom;
 }
+
+::-webkit-scrollbar {
+    width: 8px;
+ }
+
+ ::-webkit-scrollbar-thumb {
+    -webkit-border-radius: 2px;
+    background: rgba(0, 0, 0, 0.4);
+}

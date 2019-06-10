@@ -50,6 +50,9 @@ body.dark .tool.selected {
 #rectangle_mode {
     background-image: url("../img/rectangle.png");
 }
+#fill_mode {
+    background-image: url("../img/fill.png");
+}
 #sample_mode {
     background-image: url("../img/sample.png");
 }

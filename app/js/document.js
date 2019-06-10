@@ -17,7 +17,7 @@ let mouse_button = mouse_button_types.NONE;
 let start_mouse_x, start_mouse_y;
 let preview_canvas;
 let mouse_x, mouse_y;
-const editor_modes = {SELECT: 0, BRUSH: 1, LINE: 2, RECTANGLE: 3, SAMPLE: 4};
+const editor_modes = {SELECT: 0, BRUSH: 1, LINE: 2, RECTANGLE: 3, FILL: 4, SAMPLE: 5};
 let mode;
 let previous_mode;
 let connection;
@@ -815,6 +815,10 @@ function update_tool_preview(x, y, width, height) {
     preview_canvas.style.top = `${y}px`;
 }
 
+function flood_fill(x, y) {
+    console.log(x, y);
+}
+
 function mouse_down(event) {
     const {x, y, half_y} = get_canvas_xy(event);
     if (event.button == 0) {
@@ -862,6 +866,9 @@ function mouse_down(event) {
             start_mouse_x = mouse_x; start_mouse_y = mouse_y;
             create_tool_preview();
             break;
+        case editor_modes.FILL:
+            flood_fill(x, half_y);
+            break;
         case editor_modes.SAMPLE:
             const block = doc.data[doc.columns * y + x];
             set_fg(block.fg);
@@ -871,6 +878,7 @@ function mouse_down(event) {
                 case editor_modes.SELECT: change_to_select_mode(); break;
                 case editor_modes.BRUSH: change_to_brush_mode(); break;
                 case editor_modes.LINE: change_to_line_mode(); break;
+                case editor_modes.FILL: change_to_fill_mode(); break;
                 case editor_modes.RECTANGLE: change_to_rectangle_mode(); break;
             }
         break;
@@ -1153,6 +1161,7 @@ function change_to_brush_mode() {
             break;
         case editor_modes.LINE: document.getElementById("line_mode").classList.remove("selected"); break;
         case editor_modes.RECTANGLE: document.getElementById("rectangle_mode").classList.remove("selected"); break;
+        case editor_modes.FILL: document.getElementById("fill_mode").classList.remove("selected"); break;
         case editor_modes.SAMPLE: document.getElementById("sample_mode").classList.remove("selected"); break;
     }
     if (mode != editor_modes.BRUSH) {
@@ -1173,6 +1182,7 @@ function change_to_line_mode() {
             break;
         case editor_modes.BRUSH: document.getElementById("brush_mode").classList.remove("selected"); break;
         case editor_modes.RECTANGLE: document.getElementById("rectangle_mode").classList.remove("selected"); break;
+        case editor_modes.FILL: document.getElementById("fill_mode").classList.remove("selected"); break;
         case editor_modes.SAMPLE: document.getElementById("sample_mode").classList.remove("selected"); break;
         }
     if (mode != editor_modes.LINE) {
@@ -1193,6 +1203,7 @@ function change_to_rectangle_mode() {
             break;
         case editor_modes.BRUSH: document.getElementById("brush_mode").classList.remove("selected"); break;
         case editor_modes.LINE: document.getElementById("line_mode").classList.remove("selected"); break;
+        case editor_modes.FILL: document.getElementById("fill_mode").classList.remove("selected"); break;
         case editor_modes.SAMPLE: document.getElementById("sample_mode").classList.remove("selected"); break;
         }
     if (mode != editor_modes.RECTANGLE) {
@@ -1201,6 +1212,27 @@ function change_to_rectangle_mode() {
         mode = editor_modes.RECTANGLE;
         send("show_brush_touchbar");
         send("change_to_rectangle_mode");
+    }
+}
+
+function change_to_fill_mode() {
+    switch (mode) {
+        case editor_modes.SELECT:
+            document.getElementById("select_mode").classList.remove("selected");
+            cursor.hide();
+            send("disable_editing_shortcuts");
+            break;
+        case editor_modes.BRUSH: document.getElementById("brush_mode").classList.remove("selected"); break;
+        case editor_modes.LINE: document.getElementById("line_mode").classList.remove("selected"); break;
+        case editor_modes.RECTANGLE: document.getElementById("rectangle_mode").classList.remove("selected"); break;
+        case editor_modes.SAMPLE: document.getElementById("sample_mode").classList.remove("selected"); break;
+        }
+    if (mode != editor_modes.FILL) {
+        toolbar.show_sample();
+        document.getElementById("fill_mode").classList.add("selected");
+        mode = editor_modes.FILL;
+        send("show_brush_touchbar");
+        send("change_to_fill_mode");
     }
 }
 
@@ -1213,6 +1245,7 @@ function change_to_sample_mode() {
         break;
         case editor_modes.LINE: document.getElementById("line_mode").classList.remove("selected"); break;
         case editor_modes.RECTANGLE: document.getElementById("rectangle_mode").classList.remove("selected"); break;
+        case editor_modes.FILL: document.getElementById("fill_mode").classList.remove("selected"); break;
         case editor_modes.BRUSH: document.getElementById("brush_mode").classList.remove("selected");break;
     }
     if (mode != editor_modes.SAMPLE) {
@@ -1273,6 +1306,7 @@ electron.ipcRenderer.on("change_to_select_mode", (event, opts) => change_to_sele
 electron.ipcRenderer.on("change_to_brush_mode", (event, opts) => change_to_brush_mode(opts));
 electron.ipcRenderer.on("change_to_line_mode", (event, opts) => change_to_line_mode(opts));
 electron.ipcRenderer.on("change_to_rectangle_mode", (event, opts) => change_to_rectangle_mode(opts));
+electron.ipcRenderer.on("change_to_fill_mode", (event, opts) => change_to_fill_mode(opts));
 electron.ipcRenderer.on("change_to_sample_mode", (event, opts) => change_to_sample_mode(opts));
 electron.ipcRenderer.on("connect_to_server", (event, opts) => connect_to_server(opts));
 
@@ -1289,5 +1323,6 @@ document.addEventListener("DOMContentLoaded", (event) => {
     document.getElementById("brush_mode").addEventListener("mousedown", (event) => change_to_brush_mode(), true);
     document.getElementById("line_mode").addEventListener("mousedown", (event) => change_to_line_mode(), true);
     document.getElementById("rectangle_mode").addEventListener("mousedown", (event) => change_to_rectangle_mode(), true);
+    document.getElementById("fill_mode").addEventListener("mousedown", (event) => change_to_fill_mode(), true);
     document.getElementById("sample_mode").addEventListener("mousedown", (event) => change_to_sample_mode(), true);
 }, true);
