@@ -1139,6 +1139,7 @@ function change_to_select_mode() {
         case editor_modes.BRUSH: document.getElementById("brush_mode").classList.remove("selected"); break;
         case editor_modes.LINE: document.getElementById("line_mode").classList.remove("selected"); break;
         case editor_modes.RECTANGLE: document.getElementById("rectangle_mode").classList.remove("selected"); break;
+        case editor_modes.FILL: document.getElementById("fill_mode").classList.remove("selected"); break;
         case editor_modes.SAMPLE: document.getElementById("sample_mode").classList.remove("selected"); break;
     }
     if (mode != editor_modes.SELECT) {

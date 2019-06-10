@@ -8,6 +8,7 @@
     float: left;
     width: calc(var(--sidebar-width));
     height: calc(100% - var(--statusbar-height));
+    overflow: hidden;
 }
 #toolbar {
     position: relative;

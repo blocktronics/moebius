@@ -2,6 +2,7 @@ const electron = require("electron");
 const moebius = require("./app/moebius");
 const darwin = (process.platform == "darwin");
 let prevent_splash_screen_at_startup = false;
+const path = require("path");
 
 if (darwin) {
     electron.app.on("will-finish-launching", (event) => {
@@ -21,7 +22,7 @@ if (darwin) {
 }
 
 electron.app.on("ready", (event) => {
-    if (!darwin && process.argv.length > 1) {
+    if (!darwin && process.argv.length > 1 && path.parse(process.argv[0]).name != "electron") {
         for (let i = 1; i < process.argv.length; i++) moebius.open_file(process.argv[i]);
     } else {
         if (!prevent_splash_screen_at_startup) moebius.show_splash_screen();
