@@ -703,55 +703,57 @@ function line(x0, y0, x1, y1) {
     return coords;
 }
 
-function draw_half_block_line(sx, sy, dx, dy, col) {
-    const coords = line(sx, sy, dx, dy);
-    for (const coord of coords) {
-        const block_y = Math.floor(coord.y / 2);
-        const block = doc.data[block_y * doc.columns + coord.x];
-        const is_top = (coord.y % 2) == 0;
-        if (block.code == 219) {
-            if (block.fg != col) {
-                if (is_top) {
-                    change_data({x: coord.x, y: block_y, code: 223, fg: col, bg: block.fg});
-                } else {
-                    change_data({x: coord.x, y: block_y, code: 220, fg: col, bg: block.fg});
-                }
-            }
-        } else if (block.code != 220 && block.code != 223) {
+function draw_half_block(x, y, col) {
+    const block_y = Math.floor(y / 2);
+    const block = doc.data[block_y * doc.columns + x];
+    const is_top = (y % 2 == 0);
+    if (block.code == 219) {
+        if (block.fg != col) {
             if (is_top) {
-                change_data({x: coord.x, y: block_y, code: 223, fg: col, bg: block.bg});
+                change_data({x: x, y: block_y, code: 223, fg: col, bg: block.fg});
             } else {
-                change_data({x: coord.x, y: block_y, code: 220, fg: col, bg: block.bg});
-            }
-        } else {
-            if (is_top) {
-                if (block.code == 223) {
-                    if (block.bg == col) {
-                        change_data({x: coord.x, y: block_y, code: 219, fg: col, bg: 0});
-                    } else {
-                        change_data({x: coord.x, y: block_y, code: 223, fg: col, bg: block.bg});
-                    }
-                } else if (block.fg == col) {
-                    change_data({x: coord.x, y: block_y, code: 219, fg: col, bg: 0});
-                } else {
-                    change_data({x: coord.x, y: block_y, code: 223, fg: col, bg: block.fg});
-                }
-            } else {
-                if (block.code == 220) {
-                    if (block.bg == col) {
-                        change_data({x: coord.x, y: block_y, code: 219, fg: col, bg: 0});
-                    } else {
-                        change_data({x: coord.x, y: block_y, code: 220, fg: col, bg: block.bg});
-                    }
-                } else if (block.fg == col) {
-                    change_data({x: coord.x, y: block_y, code: 219, fg: col, bg: 0});
-                } else {
-                    change_data({x: coord.x, y: block_y, code: 220, fg: col, bg: block.fg});
-                }
+                change_data({x: x, y: block_y, code: 220, fg: col, bg: block.fg});
             }
         }
-        optimize_block(coord.x, block_y);
+    } else if (block.code != 220 && block.code != 223) {
+        if (is_top) {
+            change_data({x: x, y: block_y, code: 223, fg: col, bg: block.bg});
+        } else {
+            change_data({x: x, y: block_y, code: 220, fg: col, bg: block.bg});
+        }
+    } else {
+        if (is_top) {
+            if (block.code == 223) {
+                if (block.bg == col) {
+                    change_data({x: x, y: block_y, code: 219, fg: col, bg: 0});
+                } else {
+                    change_data({x: x, y: block_y, code: 223, fg: col, bg: block.bg});
+                }
+            } else if (block.fg == col) {
+                change_data({x: x, y: block_y, code: 219, fg: col, bg: 0});
+            } else {
+                change_data({x: x, y: block_y, code: 223, fg: col, bg: block.fg});
+            }
+        } else {
+            if (block.code == 220) {
+                if (block.bg == col) {
+                    change_data({x: x, y: block_y, code: 219, fg: col, bg: 0});
+                } else {
+                    change_data({x: x, y: block_y, code: 220, fg: col, bg: block.bg});
+                }
+            } else if (block.fg == col) {
+                change_data({x: x, y: block_y, code: 219, fg: col, bg: 0});
+            } else {
+                change_data({x: x, y: block_y, code: 220, fg: col, bg: block.fg});
+            }
+        }
     }
+    // optimize_block(x, block_y);
+}
+
+function draw_half_block_line(sx, sy, dx, dy, col) {
+    const coords = line(sx, sy, dx, dy);
+    for (const coord of coords) draw_half_block(coord.x, coord.y, col);
 }
 
 function half_block_brush(x, y, col) {
@@ -815,8 +817,49 @@ function update_tool_preview(x, y, width, height) {
     preview_canvas.style.top = `${y}px`;
 }
 
-function flood_fill(x, y) {
-    console.log(x, y);
+
+function get_half_block(x, y) {
+    const text_y = Math.floor(y / 2);
+    const is_top = (y % 2 == 0);
+    const block = doc.data[doc.columns * text_y + x];
+    let upper_block_color = 0;
+    let lower_block_color = 0;
+    let is_blocky = false;
+    switch (block.code) {
+    case 0: case 32: case 255: upper_block_color = block.bg; lower_block_color = block.bg; is_blocky = true; break;
+    case 220: upper_block_color = block.bg; lower_block_color = block.fg; is_blocky = true; break;
+    case 223: upper_block_color = block.fg; lower_block_color = block.bg; is_blocky = true; break;
+    case 219: upper_block_color = block.fg; lower_block_color = block.fg; is_blocky = true; break;
+    default:
+        if (block.fg == block.bg) {
+            is_blocky = true;
+            upper_block_color = block.fg;
+            lower_block_color = block.fg;
+        } else {
+            is_blocky = false;
+        }
+    }
+    return {x, y, text_y, is_blocky, upper_block_color, lower_block_color, is_top};
+}
+
+function fill(x, y, col) {
+    const block = get_half_block(x, y);
+    if (block.is_blocky) {
+        start_undo_chunk();
+        const target_color = block.is_top ? block.upper_block_color : block.lower_block_color;
+        const queue = [{x, y}];
+        while (queue.length) {
+            const coord = queue.pop();
+            const block = get_half_block(coord.x, coord.y);
+            if (block.is_blocky && ((block.is_top && block.upper_block_color == target_color) || (!block.is_top && block.lower_block_color == target_color))) {
+                draw_half_block(coord.x, coord.y, col);
+                if (coord.x > 0) queue.push({x: coord.x - 1, y: coord.y});
+                if (coord.y > 0) queue.push({x: coord.x, y: coord.y - 1});
+                if (coord.x < doc.columns - 1) queue.push({x: coord.x + 1, y: coord.y});
+                if (coord.y < doc.rows * 2 - 1) queue.push({x: coord.x, y: coord.y + 1});
+            }
+        }
+    }
 }
 
 function mouse_down(event) {
@@ -867,7 +910,7 @@ function mouse_down(event) {
             create_tool_preview();
             break;
         case editor_modes.FILL:
-            flood_fill(x, half_y);
+            fill(x, half_y, (mouse_button == mouse_button_types.LEFT) ? fg : bg);
             break;
         case editor_modes.SAMPLE:
             const block = doc.data[doc.columns * y + x];
