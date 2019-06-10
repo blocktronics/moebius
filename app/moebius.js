@@ -525,7 +525,7 @@ function document_menu(win) {
                 ]},
                 {type: "separator"},
                 {label: "Open Reference Image\u2026", id: "open_reference_image", click(item) {open_reference_image({win});}},
-                {label: "Toggle Reference Image", id: "toggle_reference_image", accelerator: "Cmd+Escape", click(item) {toggle_reference_image(win, item.checked);}, enabled: false, type: "checkbox", checked: true},
+                {label: "Toggle Reference Image", id: "toggle_reference_image", accelerator: "Ctrl+Tab", click(item) {toggle_reference_image(win, item.checked);}, enabled: false, type: "checkbox", checked: true},
                 {label: "Clear", id: "clear_reference_image", click(item) {win.send("clear_reference_image");}, enabled: false},
                 {type: "separator"},
                 {role: "togglefullscreen"}
@@ -729,7 +729,7 @@ function document_menu(win) {
                 ]},
                 {type: "separator"},
                 {label: "Open Reference Image\u2026", id: "open_reference_image", click(item) {open_reference_image({win});}},
-                {label: "Toggle Reference Image", id: "toggle_reference_image", accelerator: "Ctrl+Escape", click(item) {toggle_reference_image(win, item.checked);}, enabled: false, type: "checkbox", checked: true},
+                {label: "Toggle Reference Image", id: "toggle_reference_image", accelerator: "Ctrl+Tab", click(item) {toggle_reference_image(win, item.checked);}, enabled: false, type: "checkbox", checked: true},
                 {label: "Clear", id: "clear_reference_image", click(item) {win.send("clear_reference_image");}, enabled: false},
                 {type: "separator"},
                 {role: "togglefullscreen"}
