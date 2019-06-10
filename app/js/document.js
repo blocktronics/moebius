@@ -847,6 +847,7 @@ function fill(x, y, col) {
     if (block.is_blocky) {
         start_undo_chunk();
         const target_color = block.is_top ? block.upper_block_color : block.lower_block_color;
+        if (target_color == col) return;
         const queue = [{x, y}];
         while (queue.length) {
             const coord = queue.pop();
