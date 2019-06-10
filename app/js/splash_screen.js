@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("ip").addEventListener("keydown", key_down, true);
     document.getElementById("pass").addEventListener("keydown", key_down, true);
     libtextmode.animate({file: `${process.resourcesPath}/ans/MB4K.ans`, ctx: document.getElementById("splash_terminal").getContext("2d")});
-    fetch("http://www.andyh.org/moebius/latest.json").then((response) => response.json()).then((json) => {
+    fetch("http://www.andyh.org/moebius/latest.json", {cache: "no-cache"}).then((response) => response.json()).then((json) => {
         if (electron.remote.app.getVersion() != json.version) show_new_version_button();
     });
 });
