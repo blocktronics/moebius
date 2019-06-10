@@ -277,6 +277,13 @@ const application_menu = electron.Menu.buildFromTemplate([{
         {role: "close"},
     ]
 }, {
+    label: "Edit",
+    submenu: [
+        { label: "Cut", accelerator: "Cmd+X", role: "cut" },
+        { label: "Copy", accelerator: "Cmd+C", role: "copy" },
+        { label: "Paste", accelerator: "Cmd+V", role: "paste" },
+        ]
+    }, {
     label: "Network", submenu: [
         {label: "Connect to Server…", id: "connect_to_server", click(item) {connect_to_server();}, enabled: false},
     ]
@@ -762,7 +769,7 @@ function show_splash_screen() {
     if (splash_screen_win && !splash_screen_win.isDestroyed()) {
         splash_screen_win.focus();
     } else {
-        splash_screen_win = new electron.BrowserWindow({width: 720, height: 544, show: false, backgroundColor: "#000000", titleBarStyle: "hiddenInset", maximizable: false, resizable: false, useContentSize: true, frame: darwin ? false : true, fullscreenable: false, webPreferences: {nodeIntegration: true}});
+        splash_screen_win = new electron.BrowserWindow({width: 720, height: 600, show: false, backgroundColor: "#000000", titleBarStyle: "hiddenInset", maximizable: false, resizable: false, useContentSize: true, frame: darwin ? false : true, fullscreenable: false, webPreferences: {nodeIntegration: true}});
         if (!darwin) splash_screen_win.setMenu(null);
         splash_screen_win.on("focus", (event) => {
             set_application_menu();
@@ -1046,13 +1053,14 @@ function change_to_network_mode(id) {
     docs[id].menu.getMenuItemById("ice_colors").enabled = false;
 }
 
-function connect_to_test_server() {
-    connect_to_server({ip: "74.207.246.247", port: 8000, nick: "andyh", pass: "secret"});
+function destroy(id) {
+    docs[id].win.close();
+    cleanup_document(id);
 }
 
 electron.ipcMain.on("new_document", (event) => new_document());
 electron.ipcMain.on("open", (event) => open());
-electron.ipcMain.on("connect_to_server", (event) => connect_to_server());
+electron.ipcMain.on("connect_to_server", (event, {ip, port, nick, pass}) => connect_to_server({ip, port, nick, pass}));
 electron.ipcMain.on("show_rendering_modal", (event, {id}) => show_rendering_modal(event, id));
 electron.ipcMain.on("show_connecting_modal", (event, {id}) => show_connecting_modal(event, id));
 electron.ipcMain.on("close_modal", (event, {id}) => close_modal(id));
@@ -1084,6 +1092,6 @@ electron.ipcMain.on("change_to_line_mode", (event, {id}) => change_to_line_mode(
 electron.ipcMain.on("change_to_rectangle_mode", (event, {id}) => change_to_rectangle_mode(id));
 electron.ipcMain.on("change_to_fill_mode", (event, {id}) => change_to_fill_mode(id));
 electron.ipcMain.on("change_to_sample_mode", (event, {id}) => change_to_sample_mode(id));
-electron.ipcMain.on("connect_to_test_server", (event, opts) => connect_to_test_server(opts));
+electron.ipcMain.on("destroy", (event, {id}) => destroy(id));
 
 module.exports = {show_splash_screen, open_file, set_application_menu, has_document_windows, connect_to_server};

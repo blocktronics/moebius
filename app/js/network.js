@@ -59,11 +59,15 @@ function message(ws, msg, network_handler) {
 }
 
 async function connect(ip, port, nick, pass, network_handler) {
-    const ws = new WebSocket(`ws://${ip}:${port}`);
-    ws.addEventListener("open", () => send(ws, action.CONNECTED, {nick, pass}));
-    ws.addEventListener("error", network_handler.error);
-    ws.addEventListener("close", network_handler.disconnected);
-    ws.addEventListener("message", response => message(ws, JSON.parse(response.data), network_handler));
+    try {
+        const ws = new WebSocket(`ws://${ip}:${port}`);
+        ws.addEventListener("open", () => send(ws, action.CONNECTED, {nick, pass}));
+        ws.addEventListener("error", network_handler.error);
+        ws.addEventListener("close", network_handler.disconnected);
+        ws.addEventListener("message", response => message(ws, JSON.parse(response.data), network_handler));
+    } catch (err) {
+        network_handler.error(err);
+    }
 }
 
 module.exports = {connect};

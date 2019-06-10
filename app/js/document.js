@@ -111,8 +111,16 @@ function connect_to_server({ip, port, nick, pass}) {
                 }
             });
         },
+        error: () => {},
+        disconnected: () => {
+            send("close_modal");
+            electron.remote.dialog.showMessageBox(electron.remote.getCurrentWindow(), {type: "error", message: "Connect to Server", detail: "Cannot connect to server."});
+            send("destroy");
+        },
         refused: () => {
-            console.log("refused!");
+            send("close_modal");
+            electron.remote.dialog.showMessageBox(electron.remote.getCurrentWindow(), {type: "error", message: "Connect to Server", detail: "Wrong password!"});
+            send("destroy");
         },
         join: (id, nick) => {
             connection.users[id] = {id, nick, cursor: new canvas.Cursor()};
