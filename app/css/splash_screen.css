@@ -19,6 +19,9 @@ button {
     outline: none;
     border: 1px solid #AAAAAA;
     -webkit-app-region: none;
+}
+
+.bottom_button {
     animation: slide 0.5s ease-out;
 }
 
@@ -44,6 +47,22 @@ button {
     width: 150px;
     right: 16px;
     bottom: 16px;
+}
+
+#new_version {
+    position: absolute;
+    width: 150px;
+    right: 16px;
+    top: -32px;
+}
+
+.slide_down {
+    animation: slide_down 0.5s ease-out forwards;
+}
+
+@keyframes slide_down {
+    0% {transform: translateY(0px);}
+    100% {transform: translateY(47px);}
 }
 
 button:active {

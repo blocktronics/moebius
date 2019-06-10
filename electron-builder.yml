@@ -27,10 +27,12 @@ fileAssociations:
     role: Editor
     icon: document_icon.icns
 mac:
+  artifactName: Mœbius.dmg
   category: public.app-category.graphics-design
   target: dmg
   darkModeSupport: true
 win:
+  artifactName: Mœbius Setup.exe
   target:
   - target: nsis
     arch: [x64, ia32]
