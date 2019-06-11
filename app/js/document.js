@@ -25,6 +25,7 @@ const editor_modes = {SELECT: 0, BRUSH: 1, LINE: 2, RECTANGLE: 3, FILL: 4, SAMPL
 let mode;
 let previous_mode;
 let connection;
+
 function send_sync(channel, opts) {
     return electron.ipcRenderer.sendSync(channel, {id: electron.remote.getCurrentWindow().id, ...opts});
 }
@@ -1233,7 +1234,7 @@ async function new_document({columns, rows}) {
     cursor.start_editing_mode();
     change_to_select_mode();
     send("enable_chat_window_toggle");
-    chat.show(false);
+    chat.toggle(false);
     chat.join("andyh");
     for (let i = 0; i < 100; i++) {
         chat.chat(nick, "Hi there!");
@@ -1374,12 +1375,8 @@ setInterval((event) => {
     }
 }, 1000 * 60 * 60);
 
-function chat_window_toggle({is_visible}) {
-    if (is_visible) {
-        chat.show();
-    } else {
-        chat.hide();
-    }
+function chat_window_toggle() {
+    chat.toggle();
 }
 
 electron.ipcRenderer.on("open_file", (event, opts) => open_file(opts));
@@ -1455,4 +1452,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
     document.getElementById("rectangle_mode").addEventListener("mousedown", (event) => change_to_rectangle_mode(), true);
     document.getElementById("fill_mode").addEventListener("mousedown", (event) => change_to_fill_mode(), true);
     document.getElementById("sample_mode").addEventListener("mousedown", (event) => change_to_sample_mode(), true);
+    const chat_input = document.getElementById("chat_input");
+    chat_input.addEventListener("focus", (event) => send("chat_input_focus"), true);
+    chat_input.addEventListener("blur", (event) => send("chat_input_blur"), true);
 }, true);

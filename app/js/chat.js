@@ -1,3 +1,9 @@
+let visible = false;
+
+function send(channel, opts) {
+    electron.ipcRenderer.send(channel, {id: electron.remote.getCurrentWindow().id, ...opts});
+}
+
 function set_var(name, value) {
     document.documentElement.style.setProperty(`--${name}`, `${value}px`);
 }
@@ -19,6 +25,15 @@ function show(focus = true) {
 function hide() {
     document.getElementById("chat_input").blur();
     set_var("chat-height", 0);
+}
+
+function toggle(focus) {
+    visible = !visible;
+    if (visible) {
+        show(focus);
+    } else {
+        hide();
+    }
 }
 
 function action(nick, text) {
@@ -55,4 +70,4 @@ function chat(nick, text) {
     if (scroll) scroll_to_bottom();
 }
 
-module.exports = {show, hide, join, leave, chat};
+module.exports = {toggle, join, leave, chat};

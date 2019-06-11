@@ -113,7 +113,7 @@ async function new_document_window() {
         win.setPosition(Math.min(display.workArea.width + display.workArea.x - NEW_DOCUMENT_WIDTH, last_document_xy_position[0] + 30), Math.min(display.workArea.height + display.workArea.y - NEW_DOCUMENT_HEIGHT, last_document_xy_position[1] + 30));
     }
     last_document_xy_position = win.getPosition();
-    docs[win.id] = {win, menu: document_menu(win), modal_menu: modal_menu(), touch_bars: create_touch_bar(win), edited: false};
+    docs[win.id] = {win, menu: document_menu(win), chat_input_menu: chat_input_menu(win), modal_menu: modal_menu(), touch_bars: create_touch_bar(win), edited: false};
     win.send("nick", {value: prefs.get("nick")});
     win.send("use_numpad", {value: prefs.get("use_numpad")});
     win.send("use_backup", {value: prefs.get("use_backup")});
@@ -311,6 +311,52 @@ const application_menu = electron.Menu.buildFromTemplate([{
         {label: "Acknowledgements", id: "show_cheatsheet", click(item) {show_acknowledgements();}},
     ]
 }]);
+
+function chat_input_menu(win) {
+    return electron.Menu.buildFromTemplate([{
+        label: "Mœbius",
+        submenu: [
+            {role: "about", label: "About Mœbius"},
+            {type: "separator"},
+            {label: "Preferences", id: "preferences", accelerator: "Cmd+,", click(item) {preferences();}},
+            {type: "separator"},
+            {role: "services"},
+            {type: "separator"},
+            {role: "hide", label: "Hide Mœbius"},
+            {role: "hideothers"},
+            {role: "unhide"},
+            {type: "separator"},
+            {role: "quit", label: "Quit Mœbius"}
+        ]
+    }, {
+        label: "File",
+        submenu: [
+            {label: "New", id: "new_document", accelerator: "Cmd+N", click(item) {new_document();}},
+            {type: "separator"},
+            {label: "Open\u2026", id: "open", accelerator: "Cmd+O", click(item) {open();}},
+            {role: "recentDocuments", submenu: [{label: "Clear Menu", id: "clear_recent_documents", click(item) {electron.app.clearRecentDocuments();}}]},
+            {type: "separator"},
+            {role: "close"},
+        ]
+    }, {
+        label: "Edit",
+        submenu: [
+            {label: "Undo", accelerator: "Cmd+Z", role: "undo"},
+            {label: "Redo", accelerator: "Cmd+Shift+Z", role: "redo"},
+            {type: "separator"},
+            {label: "Cut", accelerator: "Cmd+X", role: "cut"},
+            {label: "Copy", accelerator: "Cmd+C", role: "copy"},
+            {label: "Paste", accelerator: "Cmd+V", role: "paste"},
+            {label: "Select All", accelerator: "Cmd+A", role: "selectall"}
+        ]
+    }, {
+        label: "Network", submenu: [
+            {label: "Toggle Chat Window", id: "chat_window_toggle", accelerator: "Cmd+[", click(item) {win.send("chat_window_toggle", {is_visible: item.checked});}, type: "checkbox", checked: true}
+        ]
+    }, {
+        label: "Window", submenu: [{role: "minimize"}, {role: "zoom"}, {type: "separator"}, {role: "front"}]
+    }]);
+}
 
 // Displayed when modal window is frontmost.
 function modal_menu(win) {
@@ -548,7 +594,7 @@ function document_menu(win) {
                 {label: "Start Server…", id: "start_server", click(item) {start_server({item, win});}, enabled: false},
                 {label: "Connect to Server…", id: "connect_to_server", click(item) {connect_to_server();}, enabled: false},
                 {type: "separator"},
-                {label: "Toggle Chat Window", id: "chat_window_toggle", accelerator: "Cmd+[", click(item) {win.send("chat_window_toggle", {is_visible: item.checked});}, type: "checkbox", checked: false, enabled: false},
+                {label: "Toggle Chat Window", id: "chat_window_toggle", accelerator: "Cmd+[", click(item) {win.send("chat_window_toggle");}, enabled: false},
                 {type: "separator"},
                 {label: "Disconnect", id: "disconnect", click(item) {disconnect({item, win});}, enabled: false},
             ]
@@ -754,7 +800,7 @@ function document_menu(win) {
                 {label: "Start Server…", id: "start_server", click(item) {start_server({item, win});}, enabled: false},
                 {label: "Connect to Server…", id: "connect_to_server", click(item) {connect_to_server();}, enabled: false},
                 {type: "separator"},
-                {label: "Toggle Chat Window", id: "chat_window_toggle", accelerator: "Ctrl+[", click(item) {win.send("chat_window_toggle", {is_visible: item.checked});}, type: "checkbox", checked: false, enabled: false},
+                {label: "Toggle Chat Window", id: "chat_window_toggle", accelerator: "Ctrl+[", click(item) {win.send("chat_window_toggle");}, enabled: false},
                 {type: "separator"},
                 {label: "Disconnect", id: "disconnect", click(item) {disconnect({item, win});}, enabled: false},
             ]
@@ -1103,6 +1149,14 @@ function enable_chat_window_toggle(id) {
     docs[id].menu.getMenuItemById("chat_window_toggle").checked = true;
 }
 
+function chat_input_focus(id) {
+    if (darwin) electron.Menu.setApplicationMenu(docs[id].chat_input_menu);
+}
+
+function chat_input_blur(id) {
+    if (darwin) electron.Menu.setApplicationMenu(docs[id].modal ? docs[id].modal_menu : docs[id].menu);
+}
+
 electron.ipcMain.on("new_document", (event) => new_document());
 electron.ipcMain.on("open", (event) => open());
 electron.ipcMain.on("connect_to_server", (event, {ip, port, nick, pass}) => connect_to_server({ip, port, nick, pass}));
@@ -1144,5 +1198,7 @@ electron.ipcMain.on("use_backup", (event, {value}) => use_backup(value));
 electron.ipcMain.on("backup_folder", (event, {value}) => backup_folder(value));
 electron.ipcMain.on("preferences", (event) => preferences());
 electron.ipcMain.on("enable_chat_window_toggle", (event, {id}) => enable_chat_window_toggle(id));
+electron.ipcMain.on("chat_input_focus", (event, {id}) => chat_input_focus(id));
+electron.ipcMain.on("chat_input_blur", (event, {id}) => chat_input_blur(id));
 
 module.exports = {show_splash_screen, open_file, set_application_menu, has_document_windows, connect_to_server};
