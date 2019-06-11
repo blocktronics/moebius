@@ -108,12 +108,10 @@ function connect_to_server({ip, port, pass}) {
                 change_to_select_mode();
                 console.log(connection.users);
                 for (const user of connection.users) {
-                    if (user.id != connection.id) {
-                        users[user.id] = {cursor: new canvas.Cursor()};
-                        users[user.id].cursor.resize_to_font();
-                        users[user.id].cursor.appear_ghosted();
-                        users[user.id].cursor.show();
-                    }
+                    users[user.id] = {cursor: new canvas.Cursor()};
+                    users[user.id].cursor.resize_to_font();
+                    users[user.id].cursor.appear_ghosted();
+                    users[user.id].cursor.show();
                 }
                 chat.toggle(false);
                 send("enable_chat_window_toggle");
@@ -133,7 +131,7 @@ function connect_to_server({ip, port, pass}) {
             send("destroy");
         },
         join: (id, nick) => {
-            users[id] = {id, nick, cursor: new canvas.Cursor()};
+            users[id] = {nick, cursor: new canvas.Cursor()};
             users[id].cursor.resize_to_font();
             users[id].cursor.appear_ghosted();
             users[id].cursor.show();
@@ -148,28 +146,28 @@ function connect_to_server({ip, port, pass}) {
         },
         cursor: (id, x, y) => {
             if (users[id]) {
-                if (users[id].hidden) users[id].show();
-                if (users[id].mode != canvas.cursor_modes.EDITING) users[id].stop_using_selection_border();
-                users[id].move_to(x, y, false);
+                if (users[id].cursor.hidden) users[id].cursor.show();
+                if (users[id].cursor.mode != canvas.cursor_modes.EDITING) users[id].cursor.stop_using_selection_border();
+                users[id].cursor.move_to(x, y, false);
             }
         },
         selection: (id, x, y) => {
             if (users[id]) {
-                if (users[id].mode != canvas.cursor_modes.SELECTION) users[id].start_using_selection_border();
-                users[id].move_to(x, y, false);
+                if (users[id].cursor.mode != canvas.cursor_modes.SELECTION) users[id].cursor.start_using_selection_border();
+                users[id].cursor.move_to(x, y, false);
             }
         },
         resize_selection: (id, columns, rows) => {
-            if (users[id]) users[id].resize_selection(columns, rows);
+            if (users[id]) users[id].cursor.resize_selection(columns, rows);
         },
         operation: (id, x, y) => {
             if (users[id]) {
-                if (users[id].mode != canvas.cursor_modes.OPERATION) users[id].mode = canvas.cursor_modes.OPERATION;
-                users[id].move_to(x, y, false);
+                if (users[id].cursor.mode != canvas.cursor_modes.OPERATION) users[id].cursor.mode = canvas.cursor_modes.OPERATION;
+                users[id].cursor.move_to(x, y, false);
             }
         },
         hide_cursor: (id) => {
-            if (users[user.id]) users[user.id].hide();
+            if (users[user.id]) users[user.id].cursor.hide();
         },
         draw: (id, x, y, block) => {
             const i = doc.columns * y + x;
