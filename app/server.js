@@ -18,13 +18,17 @@ function send_all(sender, type, data = {}) {
     }
 }
 
+function connected_users() {
+    return data_store.filter((data) => !data.closed).map((data) => data.user);
+}
+
 function message(ws, msg) {
     switch (msg.type) {
     case action.CONNECTED:
         if (pass == "" || msg.data.pass == pass) {
             const id = data_store.length;
-            data_store.push({user: {nick: msg.data.nick, id: id}, ws: ws});
-            send(ws, action.CONNECTED, {id, doc, users: data_store.map(data => data.user), chat_history});
+            data_store.push({user: {nick: msg.data.nick, id: id}, ws: ws, closed: false});
+            send(ws, action.CONNECTED, {id, doc, users: connected_users(), chat_history});
             send_all(ws, action.JOIN, {id, nick: msg.data.nick});
             console.log(`${msg.data.nick} has joined`);
         } else {
@@ -40,7 +44,7 @@ function message(ws, msg) {
         chat_history.push({nick: msg.data.nick, text: msg.data.text});
         if (chat_history.length > 32) chat_history.shift();
         send_all(ws, msg.type, msg.data);
-        break;
+    break;
     default:
         send_all(ws, msg.type, msg.data);
     }
@@ -61,7 +65,7 @@ libtextmode.read_file("./server.ans").then((ansi) => {
                     const user = data_store[i].user;
                     console.log(`${user.nick} has left`);
                     send_all(ws, action.LEAVE, {id: user.id});
-                    data_store.splice(i, 1);
+                    data_store[i].closed = true;
                 }
             }
         });
