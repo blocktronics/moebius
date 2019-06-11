@@ -166,7 +166,7 @@ function connect_to_server({ip, port, pass}) {
             }
         },
         hide_cursor: (id) => {
-            if (users[user.id]) users[user.id].cursor.hide();
+            if (users[id]) users[id].cursor.hide();
         },
         draw: (id, x, y, block) => {
             const i = doc.columns * y + x;
