@@ -230,7 +230,7 @@ function preferences() {
     if (preferences_win && !preferences_win.isDestroyed()) {
         preferences_win.focus();
     } else {
-        preferences_win = new electron.BrowserWindow({width: 480, height: 220, show: false, backgroundColor: "#000000", maximizable: false, resizable: false, fullscreenable: false, webPreferences: {nodeIntegration: true}});
+        preferences_win = new electron.BrowserWindow({width: 480, height: 225, show: false, backgroundColor: "#000000", maximizable: false, resizable: false, fullscreenable: false, webPreferences: {nodeIntegration: true}});
         if (!darwin) preferences_win.setMenu(null);
         preferences_win.on("focus", (event) => set_application_menu());
         preferences_win.on("ready-to-show", (event) => {
