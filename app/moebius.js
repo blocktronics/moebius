@@ -548,6 +548,8 @@ function document_menu(win) {
                 {label: "Start Server…", id: "start_server", click(item) {start_server({item, win});}, enabled: false},
                 {label: "Connect to Server…", id: "connect_to_server", click(item) {connect_to_server();}, enabled: false},
                 {type: "separator"},
+                {label: "Toggle Chat Window", id: "chat_window_toggle", accelerator: "Cmd+[", click(item) {win.send("chat_window_toggle", {is_visible: item.checked});}, type: "checkbox", checked: false, enabled: false},
+                {type: "separator"},
                 {label: "Disconnect", id: "disconnect", click(item) {disconnect({item, win});}, enabled: false},
             ]
         }, {
@@ -751,6 +753,8 @@ function document_menu(win) {
             label: "&Network", submenu: [
                 {label: "Start Server…", id: "start_server", click(item) {start_server({item, win});}, enabled: false},
                 {label: "Connect to Server…", id: "connect_to_server", click(item) {connect_to_server();}, enabled: false},
+                {type: "separator"},
+                {label: "Toggle Chat Window", id: "chat_window_toggle", accelerator: "Ctrl+[", click(item) {win.send("chat_window_toggle", {is_visible: item.checked});}, type: "checkbox", checked: false, enabled: false},
                 {type: "separator"},
                 {label: "Disconnect", id: "disconnect", click(item) {disconnect({item, win});}, enabled: false},
             ]
@@ -1094,6 +1098,11 @@ function backup_folder(value) {
     send_all("backup_folder", {value});
 }
 
+function enable_chat_window_toggle(id) {
+    docs[id].menu.getMenuItemById("chat_window_toggle").enabled = true;
+    docs[id].menu.getMenuItemById("chat_window_toggle").checked = true;
+}
+
 electron.ipcMain.on("new_document", (event) => new_document());
 electron.ipcMain.on("open", (event) => open());
 electron.ipcMain.on("connect_to_server", (event, {ip, port, nick, pass}) => connect_to_server({ip, port, nick, pass}));
@@ -1134,5 +1143,6 @@ electron.ipcMain.on("use_numpad", (event, {value}) => use_numpad(value));
 electron.ipcMain.on("use_backup", (event, {value}) => use_backup(value));
 electron.ipcMain.on("backup_folder", (event, {value}) => backup_folder(value));
 electron.ipcMain.on("preferences", (event) => preferences());
+electron.ipcMain.on("enable_chat_window_toggle", (event, {id}) => enable_chat_window_toggle(id));
 
 module.exports = {show_splash_screen, open_file, set_application_menu, has_document_windows, connect_to_server};

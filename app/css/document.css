@@ -3,6 +3,7 @@
     --toolbar-height: 48px;
     --statusbar-height: 22px;
     --preview-width: 300px;
+    --chat-height: 0px;
 }
 #sidebar {
     float: left;
@@ -108,11 +109,51 @@ body.dark #current_colors > canvas {
 #viewport {
     float: left;
     width: calc(100% - var(--sidebar-width) -  var(--preview-width) - 1px);
-    height: calc(100% - var(--toolbar-height) - var(--statusbar-height) - 1px);
+    height: calc(100% - var(--toolbar-height) - var(--statusbar-height) - var(--chat-height) - 1px);
     border-top: 1px solid var(--border-color);
     border-left: 1px solid var(--border-color);
     background-color: var(--view-color);
     overflow: auto;
+}
+#chat {
+    float: left;
+    width: calc(100% - var(--sidebar-width) -  var(--preview-width));
+    height: calc(var(--chat-height) - 1px);
+    border-top: 1px solid var(--dark-border-color);
+    overflow: hidden;
+}
+#messages {
+    background-color: var(--dark-mid-color);
+    width: calc(100% - 1px);
+    overflow-y: scroll;
+    height: calc(100% - 28px);
+    border-left: 1px solid var(--dark-border-color);
+}
+#chat_input {
+    background-color: var(--dark-mid-color);
+    color: white;
+    font-size: 12px;
+    border: none;
+    padding: 0px 8px;
+    width: calc(100% - 1px);
+    height: 27px;
+    outline: none;
+    border-top: 1px solid var(--dark-border-color);
+    border-left: 1px solid var(--dark-border-color);
+}
+#messages > div {
+    font-size: 12px;
+    margin: 4px 6px;
+}
+#messages > div > div.nick {
+    display: inline-block;
+    color: #aaaaaa;
+}
+#messages > div > div.text {
+    display: inline-block;
+    color: white;
+    padding-left: 4px;
+    word-wrap: break-word;
 }
 body.dark #viewport {
     border-color: var(--dark-border-color);

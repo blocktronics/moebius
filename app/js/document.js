@@ -3,6 +3,7 @@ const libtextmode = require("../js/libtextmode/libtextmode");
 const canvas = require("../js/canvas.js");
 const palette = require("../js/palette");
 const toolbar = require("../js/toolbar");
+const chat = require("../js/chat");
 const network = require("../js/network");
 const path = require("path");
 let file = "Untitled";
@@ -335,6 +336,7 @@ function f_key(value) {
 }
 
 function stamp(single_undo = false) {
+    if (document.activeElement == document.getElementById("chat_input")) return;
     if (!single_undo) start_undo_chunk();
     for (let y = 0; y + cursor.y < doc.rows && y < stored_blocks.rows; y++) {
         for (let x = 0; x + cursor.x < doc.columns && x < stored_blocks.columns; x++) {
@@ -350,6 +352,13 @@ function place() {
 }
 
 document.addEventListener("keydown", (event) => {
+    const chat_input = document.getElementById("chat_input");
+    if (chat_input == document.activeElement) {
+        if (event.code == "Enter" || event.code == "NumpadEnter") {
+            chat_input.value = "";
+        }
+        return;
+    }
     if (event.key == "a" && event.ctrlKey && !event.altKey && !event.metaKey && !event.shiftKey) {
         select_all();
         event.preventDefault();
@@ -518,6 +527,7 @@ function save({file: file_name, close_on_save}) {
 }
 
 function deselect() {
+    if (document.activeElement == document.getElementById("chat_input")) return;
     if (cursor.mode != canvas.cursor_modes.EDITING) {
         if (cursor.mode == canvas.cursor_modes.OPERATION) {
             if (cursor.is_move_operation) undo();
@@ -543,6 +553,7 @@ function delete_selection() {
 }
 
 function select_all() {
+    if (document.activeElement == document.getElementById("chat_input")) return;
     if (mode != editor_modes.SELECT) {
         change_to_select_mode();
     }
@@ -553,12 +564,14 @@ function select_all() {
 }
 
 function copy_block() {
+    if (document.activeElement == document.getElementById("chat_input")) return;
     if (cursor.mode == canvas.cursor_modes.SELECTION) {
         stored_blocks = cursor.start_operation_mode(doc.data);
     }
 }
 
 function move_block() {
+    if (document.activeElement == document.getElementById("chat_input")) return;
     if (cursor.mode == canvas.cursor_modes.SELECTION) {
         const selection = cursor.reorientate_selection();
         stored_blocks = cursor.start_operation_mode(doc.data, true);
@@ -567,6 +580,7 @@ function move_block() {
 }
 
 function copy() {
+    if (document.activeElement == document.getElementById("chat_input")) return;
     if (cursor.mode == canvas.cursor_modes.SELECTION) {
         stored_blocks = cursor.get_blocks_in_selection(doc.data);
         const text = [];
@@ -582,6 +596,7 @@ function copy() {
 }
 
 function cut() {
+    if (document.activeElement == document.getElementById("chat_input")) return;
     if (cursor.mode == canvas.cursor_modes.SELECTION) {
         const selection = cursor.reorientate_selection();
         copy();
@@ -590,6 +605,7 @@ function cut() {
 }
 
 function paste() {
+    if (document.activeElement == document.getElementById("chat_input")) return;
     try {
         const blocks = JSON.parse(electron.clipboard.readHTML().replace("<meta charset='utf-8'>", ""));
         if (blocks.columns && blocks.rows && (blocks.data.length == blocks.columns * blocks.rows)) {
@@ -1140,18 +1156,22 @@ function clear_reference_image() {
 }
 
 function rotate() {
+    if (document.activeElement == document.getElementById("chat_input")) return;
     cursor.update_cursor_with_blocks(libtextmode.rotate(stored_blocks));
 }
 
 function flip_x() {
+    if (document.activeElement == document.getElementById("chat_input")) return;
     cursor.update_cursor_with_blocks(libtextmode.flip_x(stored_blocks));
 }
 
 function flip_y() {
+    if (document.activeElement == document.getElementById("chat_input")) return;
     cursor.update_cursor_with_blocks(libtextmode.flip_y(stored_blocks));
 }
 
 function center() {
+    if (document.activeElement == document.getElementById("chat_input")) return;
     cursor.move_to(Math.max(Math.floor((doc.columns - stored_blocks.columns) / 2), 0), cursor.y);
 }
 
@@ -1212,6 +1232,12 @@ async function new_document({columns, rows}) {
     await start_render();
     cursor.start_editing_mode();
     change_to_select_mode();
+    send("enable_chat_window_toggle");
+    chat.show(false);
+    chat.join("andyh");
+    for (let i = 0; i < 100; i++) {
+        chat.chat(nick, "Hi there!");
+    }
 }
 
 function change_to_select_mode() {
@@ -1348,6 +1374,14 @@ setInterval((event) => {
     }
 }, 1000 * 60 * 60);
 
+function chat_window_toggle({is_visible}) {
+    if (is_visible) {
+        chat.show();
+    } else {
+        chat.hide();
+    }
+}
+
 electron.ipcRenderer.on("open_file", (event, opts) => open_file(opts));
 electron.ipcRenderer.on("save", (event, opts) => save(opts));
 electron.ipcRenderer.on("show_statusbar", (event, opts) => show_statusbar(opts));
@@ -1404,6 +1438,7 @@ electron.ipcRenderer.on("nick", (event, {value}) => nick = value);
 electron.ipcRenderer.on("use_numpad", (event, {value}) => use_numpad = value);
 electron.ipcRenderer.on("use_backup", (event, {value}) => use_backup = value);
 electron.ipcRenderer.on("backup_folder", (event, {value}) => backup_folder = value);
+electron.ipcRenderer.on("chat_window_toggle", (event, opts) => chat_window_toggle(opts));
 
 document.addEventListener("DOMContentLoaded", (event) => {
     document.getElementById("ice_colors_toggle").addEventListener("mousedown", (event) => ice_colors(!doc.ice_colors), true);
