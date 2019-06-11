@@ -106,7 +106,6 @@ function connect_to_server({ip, port, pass}) {
                 send("close_modal");
                 cursor.start_editing_mode();
                 change_to_select_mode();
-                console.log(connection.users);
                 for (const user of connection.users) {
                     users[user.id] = {cursor: new canvas.Cursor()};
                     users[user.id].cursor.resize_to_font();
@@ -139,7 +138,7 @@ function connect_to_server({ip, port, pass}) {
         },
         leave: (id) => {
             if (users[id]) {
-                if (users[id].cursor) users[id].cursor.hide();
+                users[id].cursor.hide();
                 delete users[id];
                 chat.leave(nick);
             }
