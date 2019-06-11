@@ -2,9 +2,10 @@ const ws = require("ws");
 const wss = new ws.Server({port: 8000});
 const libtextmode = require("./js/libtextmode/libtextmode");
 let doc;
-const pass = "secret";
+const pass = "";
 const action =  {CONNECTED: 0, REFUSED: 1, JOIN: 2, LEAVE: 3, CURSOR: 4, SELECTION: 5, RESIZE_SELECTION: 6, OPERATION: 7, HIDE_CURSOR: 8, DRAW: 9, CHAT: 10};
 const data_store = [];
+const chat_history = [];
 let timer;
 
 function send(ws, type, data = {}) {
@@ -20,10 +21,10 @@ function send_all(sender, type, data = {}) {
 function message(ws, msg) {
     switch (msg.type) {
     case action.CONNECTED:
-        if (!pass || msg.data.pass == pass) {
+        if (pass == "" || msg.data.pass == pass) {
             const id = data_store.length;
             data_store.push({user: {nick: msg.data.nick, id: id}, ws: ws});
-            send(ws, action.CONNECTED, {id, doc, users: data_store.map(data => data.user)});
+            send(ws, action.CONNECTED, {id, doc, users: data_store.map(data => data.user), chat_history});
             send_all(ws, action.JOIN, {id, nick: msg.data.nick});
             console.log(`${msg.data.nick} has joined`);
         } else {
@@ -35,6 +36,11 @@ function message(ws, msg) {
         doc.data[msg.data.y * doc.columns + msg.data.x] = Object.assign(msg.data.block);
         send_all(ws, msg.type, msg.data);
     break;
+    case action.CHAT:
+        chat_history.push({nick: msg.data.nick, text: msg.data.text});
+        if (chat_history.length > 32) chat_history.shift();
+        send_all(ws, msg.type, msg.data);
+        break;
     default:
         send_all(ws, msg.type, msg.data);
     }

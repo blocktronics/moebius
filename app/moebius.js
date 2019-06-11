@@ -1150,11 +1150,17 @@ function enable_chat_window_toggle(id) {
 }
 
 function chat_input_focus(id) {
-    if (darwin) electron.Menu.setApplicationMenu(docs[id].chat_input_menu);
+    electron.Menu.setApplicationMenu(docs[id].chat_input_menu);
 }
 
 function chat_input_blur(id) {
-    if (darwin) electron.Menu.setApplicationMenu(docs[id].modal ? docs[id].modal_menu : docs[id].menu);
+    if (darwin) {
+        if (docs[id] && docs[id].modal && !docs[id].modal.isDestroyed()) {
+            electron.Menu.setApplicationMenu(docs[id].modal_menu);
+        } else {
+            electron.Menu.setApplicationMenu(docs[id].menu);
+        }
+    }
 }
 
 electron.ipcMain.on("new_document", (event) => new_document());

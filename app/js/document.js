@@ -97,7 +97,7 @@ async function start_render() {
 function connect_to_server({ip, port, pass}) {
     send_sync("show_connecting_modal");
     network.connect(ip, port, nick, pass, {
-        connected: (new_connection, new_doc) => {
+        connected: (new_connection, new_doc, chat_history) => {
             connection = new_connection;
             cursor.connection = connection;
             doc = new_doc;
@@ -113,6 +113,10 @@ function connect_to_server({ip, port, pass}) {
                         connection.users[user.id].cursor.show();
                     }
                 }
+                chat.toggle(false);
+                send("enable_chat_window_toggle");
+                for (const line of chat_history) chat.chat(line.nick, line.text);
+                chat.join(nick);
             });
         },
         error: () => {},
@@ -131,11 +135,13 @@ function connect_to_server({ip, port, pass}) {
             connection.users[id].cursor.resize_to_font();
             connection.users[id].cursor.appear_ghosted();
             connection.users[id].cursor.show();
+            chat.join(nick);
         },
         leave: (id) => {
             if (connection.users[id]) {
                 if (connection.users[id].cursor) connection.users[id].cursor.hide();
                 delete connection.users[id];
+                chat.leave(nick);
             }
         },
         cursor: (id, x, y) => {
@@ -168,8 +174,8 @@ function connect_to_server({ip, port, pass}) {
             doc.data[i] = Object.assign(block);
             render_at(x, y);
         },
-        chat: () => {
-
+        chat: (nick, text) => {
+            chat.chat(nick, text);
         }
     });
 }
@@ -356,7 +362,11 @@ document.addEventListener("keydown", (event) => {
     const chat_input = document.getElementById("chat_input");
     if (chat_input == document.activeElement) {
         if (event.code == "Enter" || event.code == "NumpadEnter") {
-            chat_input.value = "";
+            if (chat_input.value != "" && connection) {
+                chat.chat(nick, chat_input.value);
+                connection.chat(nick, chat_input.value);
+                chat_input.value = "";
+            }
         }
         return;
     }
@@ -1233,12 +1243,6 @@ async function new_document({columns, rows}) {
     await start_render();
     cursor.start_editing_mode();
     change_to_select_mode();
-    send("enable_chat_window_toggle");
-    chat.toggle(false);
-    chat.join("andyh");
-    for (let i = 0; i < 100; i++) {
-        chat.chat(nick, "Hi there!");
-    }
 }
 
 function change_to_select_mode() {

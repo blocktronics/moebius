@@ -18,10 +18,11 @@ function message(ws, msg, network_handler) {
             selection: (x, y) => send(ws, action.SELECTION, {id, x, y}),
             resize_selection: (columns, rows) => send(ws, action.RESIZE_SELECTION, {id, columns, rows}),
             operation: (x, y) => send(ws, action.OPERATION, {id, x, y}),
+            chat: (nick, text) => send(ws, action.CHAT, {id, nick, text}),
             hide_cursor: () => send(ws, action.HIDE_CURSOR, {id}),
             close: () => ws.close(),
             users: msg.data.users
-        }, msg.data.doc);
+        }, msg.data.doc, msg.data.chat_history);
         break;
     case action.REFUSED:
         network_handler.refused();
@@ -51,7 +52,7 @@ function message(ws, msg, network_handler) {
         network_handler.draw(msg.data.id, msg.data.x, msg.data.y, msg.data.block);
         break;
     case action.CHAT:
-        network_handler.chat(msg.data.id, msg.data.text);
+        network_handler.chat(msg.data.nick, msg.data.text);
         break;
     default:
         break;

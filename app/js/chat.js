@@ -37,12 +37,16 @@ function toggle(focus) {
 }
 
 function action(nick, text) {
+    const messages = document.getElementById("messages");
+    const rect = messages.getBoundingClientRect();
+    const scroll = (rect.height > messages.scrollHeight) || (messages.scrollTop == messages.scrollHeight - rect.height);
     const nick_div = document.createElement("div");
     nick_div.classList.add("nick");
     nick_div.innerText = `${nick} ${text}`;
     const container = document.createElement("div");
     container.appendChild(nick_div);
     document.getElementById("messages").appendChild(container);
+    if (scroll) scroll_to_bottom();
 }
 
 function join(nick) {
