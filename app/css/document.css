@@ -119,10 +119,10 @@ body.dark #current_colors > canvas {
     float: left;
     width: calc(100% - var(--sidebar-width) -  var(--preview-width));
     height: calc(var(--chat-height) - 1px);
-    border-top: 1px solid var(--dark-border-color);
     overflow: hidden;
 }
 #messages {
+    border-top: 1px solid var(--dark-border-color);
     background-color: var(--dark-mid-color);
     width: calc(100% - 1px);
     overflow-y: scroll;
