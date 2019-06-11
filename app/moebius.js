@@ -1150,7 +1150,7 @@ function enable_chat_window_toggle(id) {
 }
 
 function chat_input_focus(id) {
-    electron.Menu.setApplicationMenu(docs[id].chat_input_menu);
+    if (darwin) electron.Menu.setApplicationMenu(docs[id].chat_input_menu);
 }
 
 function chat_input_blur(id) {
