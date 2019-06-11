@@ -11,7 +11,7 @@ form {
 }
 
 form > div {
-    margin: 4px 0px;
+    margin: 2px 0px;
 }
 
 form > div:first-child {
@@ -57,10 +57,9 @@ input[type="checkbox"] {
 
 #timestamp_box {
     margin-top: 8px;
-    opacity: 0.5;
 }
 
-#folder_text {
+#backup_folder {
     height: 24px;
     line-height: 24px;
     float: left;

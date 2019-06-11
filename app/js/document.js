@@ -4,6 +4,7 @@ const canvas = require("../js/canvas.js");
 const palette = require("../js/palette");
 const toolbar = require("../js/toolbar");
 const network = require("../js/network");
+let nick, use_numpad, use_backup, backup_folder;
 let doc, render;
 let insert_mode = false;
 let fg = 7;
@@ -90,7 +91,7 @@ async function start_render() {
     cursor.show();
 }
 
-function connect_to_server({ip, port, nick, pass}) {
+function connect_to_server({ip, port, pass}) {
     send_sync("show_connecting_modal");
     network.connect(ip, port, nick, pass, {
         connected: (new_connection, new_doc) => {
@@ -354,6 +355,20 @@ document.addEventListener("keydown", (event) => {
     switch (mode) {
         case editor_modes.SELECT:
             if (cursor.mode == canvas.cursor_modes.EDITING) {
+                if (use_numpad) {
+                    switch (event.code) {
+                        case "Numpad1": if (!event.altKey) f_key(0); break;
+                        case "Numpad2": if (!event.altKey) f_key(1); break;
+                        case "Numpad3": if (!event.altKey) f_key(2); break;
+                        case "Numpad4": if (!event.altKey) f_key(3); break;
+                        case "Numpad5": if (!event.altKey) f_key(4); break;
+                        case "Numpad6": if (!event.altKey) f_key(5); break;
+                        case "Numpad7": if (!event.altKey) f_key(6); break;
+                        case "Numpad8": if (!event.altKey) f_key(7); break;
+                        case "Numpad9": if (!event.altKey) f_key(8); break;
+                        case "Numpad0": if (!event.altKey) f_key(9);  break;
+                    }
+                }
                 switch (event.code) {
                     case "F1": if (!event.altKey) f_key(0); break;
                     case "F2": if (!event.altKey) f_key(1); break;
@@ -1373,6 +1388,10 @@ electron.ipcRenderer.on("change_to_rectangle_mode", (event, opts) => change_to_r
 electron.ipcRenderer.on("change_to_fill_mode", (event, opts) => change_to_fill_mode(opts));
 electron.ipcRenderer.on("change_to_sample_mode", (event, opts) => change_to_sample_mode(opts));
 electron.ipcRenderer.on("connect_to_server", (event, opts) => connect_to_server(opts));
+electron.ipcRenderer.on("nick", (event, {value}) => nick = value);
+electron.ipcRenderer.on("use_numpad", (event, {value}) => use_numpad = value);
+electron.ipcRenderer.on("use_backup", (event, {value}) => use_backup = value);
+electron.ipcRenderer.on("backup_folder", (event, {value}) => backup_folder = value);
 
 document.addEventListener("DOMContentLoaded", (event) => {
     document.getElementById("ice_colors_toggle").addEventListener("mousedown", (event) => ice_colors(!doc.ice_colors), true);

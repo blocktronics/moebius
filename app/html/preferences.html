@@ -10,15 +10,15 @@
 <body>
     <form>
         <div>
-            <label class="text_box" for="nick">Nickname:</label><input type="text" name="nick" id="nick" value="Anon">
+            <label class="text_box" for="nick">Nickname:</label><input type="text" name="nick" id="nick" value="Anon" autofocus>
         </div>
         <div>
-            <label for="use_numpad_keys_as_function_keys">Use Numpad Keys as Function Keys:</label><input type="checkbox" name="use_numpad_keys_as_function_keys" id="use_numpad_keys_as_function_keys">
+            <label for="use_numpad">Use Numpad Keys as Function Keys:</label><input type="checkbox" name="use_numpad" id="use_numpad">
         </div>
         <div>
-            <label for="save_backup">Save Timestamp Backups:</label><input type="checkbox" name="save_backup" id="save_backup">
+            <label for="use_backup">Save Hourly Timestamped Backups:</label><input type="checkbox" name="use_backup" id="use_backup">
             <div id="timestamp_box">
-                <div id="folder_text">None set</div>
+                <div id="backup_folder"></div>
                 <button id="backup_choose">Choose…</button>
             </div>
         </div>

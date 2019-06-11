@@ -1,3 +1,4 @@
+const prefs = require("./prefs.js");
 const electron = require("electron");
 const path = require("path");
 const docs = {};
@@ -113,6 +114,10 @@ async function new_document_window() {
     }
     last_document_xy_position = win.getPosition();
     docs[win.id] = {win, menu: document_menu(win), modal_menu: modal_menu(), touch_bars: create_touch_bar(win), edited: false};
+    win.send("nick", {value: prefs.get("nick")});
+    win.send("use_numpad", {value: prefs.get("use_numpad")});
+    win.send("use_backup", {value: prefs.get("use_backup")});
+    win.send("backup_folder", {value: prefs.get("backup_folder")});
     win.on("focus", (event) => {
         if (darwin) {
             if (docs[win.id] && docs[win.id].modal && !docs[win.id].modal.isDestroyed()) {
@@ -228,7 +233,10 @@ function preferences() {
         preferences_win = new electron.BrowserWindow({width: 480, height: 190, show: false, backgroundColor: "#000000", maximizable: false, resizable: false, fullscreenable: false, webPreferences: {nodeIntegration: true}});
         if (!darwin) preferences_win.setMenu(null);
         preferences_win.on("focus", (event) => set_application_menu());
-        preferences_win.on("ready-to-show", (event) => preferences_win.show());
+        preferences_win.on("ready-to-show", (event) => {
+            preferences_win.send("prefs", prefs.get_all());
+            preferences_win.show();
+        });
         preferences_win.loadFile("app/html/preferences.html");
     }
 }
@@ -1062,6 +1070,30 @@ function destroy(id) {
     cleanup_document(id);
 }
 
+function send_all(channel, opts) {
+    for (const id of Object.keys(docs)) docs[id].win.send(channel, opts);
+}
+
+function nick(value) {
+    prefs.set("nick", value);
+    send_all("nick", {value});
+}
+
+function use_numpad(value) {
+    prefs.set("use_numpad", value);
+    send_all("use_numpad", {value});
+}
+
+function use_backup(value) {
+    prefs.set("use_backup", value);
+    send_all("use_backup", {value});
+}
+
+function backup_folder(value) {
+    prefs.set("backup_folder", value);
+    send_all("backup_folder", {value});
+}
+
 electron.ipcMain.on("new_document", (event) => new_document());
 electron.ipcMain.on("open", (event) => open());
 electron.ipcMain.on("connect_to_server", (event, {ip, port, nick, pass}) => connect_to_server({ip, port, nick, pass}));
@@ -1097,5 +1129,9 @@ electron.ipcMain.on("change_to_rectangle_mode", (event, {id}) => change_to_recta
 electron.ipcMain.on("change_to_fill_mode", (event, {id}) => change_to_fill_mode(id));
 electron.ipcMain.on("change_to_sample_mode", (event, {id}) => change_to_sample_mode(id));
 electron.ipcMain.on("destroy", (event, {id}) => destroy(id));
+electron.ipcMain.on("nick", (event, {value}) => nick(value));
+electron.ipcMain.on("use_numpad", (event, {value}) => use_numpad(value));
+electron.ipcMain.on("use_backup", (event, {value}) => use_backup(value));
+electron.ipcMain.on("backup_folder", (event, {value}) => backup_folder(value));
 
 module.exports = {show_splash_screen, open_file, set_application_menu, has_document_windows, connect_to_server};
