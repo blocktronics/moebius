@@ -1133,5 +1133,6 @@ electron.ipcMain.on("nick", (event, {value}) => nick(value));
 electron.ipcMain.on("use_numpad", (event, {value}) => use_numpad(value));
 electron.ipcMain.on("use_backup", (event, {value}) => use_backup(value));
 electron.ipcMain.on("backup_folder", (event, {value}) => backup_folder(value));
+electron.ipcMain.on("preferences", (event) => preferences());
 
 module.exports = {show_splash_screen, open_file, set_application_menu, has_document_windows, connect_to_server};

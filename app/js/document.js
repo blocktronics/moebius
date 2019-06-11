@@ -4,6 +4,8 @@ const canvas = require("../js/canvas.js");
 const palette = require("../js/palette");
 const toolbar = require("../js/toolbar");
 const network = require("../js/network");
+const path = require("path");
+let file = "Untitled";
 let nick, use_numpad, use_backup, backup_folder;
 let doc, render;
 let insert_mode = false;
@@ -22,7 +24,6 @@ const editor_modes = {SELECT: 0, BRUSH: 1, LINE: 2, RECTANGLE: 3, FILL: 4, SAMPL
 let mode;
 let previous_mode;
 let connection;
-
 function send_sync(channel, opts) {
     return electron.ipcRenderer.sendSync(channel, {id: electron.remote.getCurrentWindow().id, ...opts});
 }
@@ -171,7 +172,8 @@ function connect_to_server({ip, port, pass}) {
     });
 }
 
-async function open_file({file}) {
+async function open_file({file: file_name}) {
+    file = file_name;
     reset_undo_buffer();
     doc = await libtextmode.read_file(file);
     await start_render();
@@ -509,7 +511,8 @@ document.addEventListener("keydown", (event) => {
     }
 }, true);
 
-function save({file, close_on_save}) {
+function save({file: file_name, close_on_save}) {
+    file = file_name;
     libtextmode.write_file(doc, file);
     if (close_on_save) electron.remote.getCurrentWindow().close();
 }
@@ -1335,6 +1338,14 @@ function change_to_sample_mode() {
         send("change_to_sample_mode");
     }
 }
+
+setInterval((event) => {
+    if (!connection && use_backup && backup_folder != "") {
+        const date = new Date();
+        const backup_file = path.join(backup_folder, `${path.parse(file).name} ${date.toDateString()}-${date.toLocaleTimeString()}.ans`);
+        libtextmode.write_file(doc, backup_file);
+    }
+}, 60 * 60 * 1000);
 
 electron.ipcRenderer.on("open_file", (event, opts) => open_file(opts));
 electron.ipcRenderer.on("save", (event, opts) => save(opts));

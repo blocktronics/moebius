@@ -18,8 +18,11 @@ function key_down(params) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+    const preferences = document.getElementById("preferences");
+    if (process.platform != "darwin") preferences.innerText = "Settings";
     document.getElementById("new_document").addEventListener("click", (event) => electron.ipcRenderer.send("new_document"));
     document.getElementById("open").addEventListener("click", (event) => electron.ipcRenderer.send("open"));
+    preferences.addEventListener("click", (event) => electron.ipcRenderer.send("preferences"));
     document.getElementById("connect").addEventListener("click", connect, true);
     document.getElementById("ip").addEventListener("keydown", key_down, true);
     document.getElementById("pass").addEventListener("keydown", key_down, true);

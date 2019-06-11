@@ -42,6 +42,12 @@ button {
     bottom: 16px;
 }
 
+#preferences {
+    position: absolute;
+    left: 248px;
+    bottom: 16px;
+}
+
 #connect {
     position: absolute;
     width: 150px;
