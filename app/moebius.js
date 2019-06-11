@@ -115,6 +115,7 @@ async function new_document_window() {
     last_document_xy_position = win.getPosition();
     docs[win.id] = {win, menu: document_menu(win), chat_input_menu: chat_input_menu(win), modal_menu: modal_menu(), touch_bars: create_touch_bar(win), edited: false};
     win.send("nick", {value: prefs.get("nick")});
+    win.send("group", {value: prefs.get("group")});
     win.send("use_numpad", {value: prefs.get("use_numpad")});
     win.send("use_backup", {value: prefs.get("use_backup")});
     win.send("backup_folder", {value: prefs.get("backup_folder")});
@@ -1131,6 +1132,7 @@ function nick(value) {
 
 function group(value) {
     prefs.set("group", value);
+    send_all("group", {value});
 }
 
 function use_numpad(value) {

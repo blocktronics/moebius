@@ -7,7 +7,7 @@ const chat = require("../js/chat");
 const network = require("../js/network");
 const path = require("path");
 let file = "Untitled";
-let nick, use_numpad, use_backup, backup_folder;
+let nick, group, use_numpad, use_backup, backup_folder;
 let doc, render;
 let insert_mode = false;
 let fg = 7;
@@ -96,7 +96,7 @@ async function start_render() {
 
 function connect_to_server({ip, port, pass}) {
     send_sync("show_connecting_modal");
-    network.connect(ip, port, nick, pass, {
+    network.connect(ip, port, (nick == "") ? "Anonymous" : nick, pass, {
         connected: (new_connection, new_doc, chat_history) => {
             connection = new_connection;
             cursor.connection = connection;
@@ -363,8 +363,12 @@ document.addEventListener("keydown", (event) => {
     if (chat_input == document.activeElement) {
         if (event.code == "Enter" || event.code == "NumpadEnter") {
             if (chat_input.value != "" && connection) {
-                chat.chat(nick, chat_input.value);
-                connection.chat(nick, chat_input.value);
+                let chat_nick = (nick == "") ? "Anonymous": nick;
+                if (group == "") {
+                    connection.chat(chat_nick, chat_input.value);
+                } else {
+                    connection.chat(`${chat_nick} <${group}>`, chat_input.value);
+                }
                 chat_input.value = "";
             }
         }
@@ -1436,6 +1440,7 @@ electron.ipcRenderer.on("change_to_fill_mode", (event, opts) => change_to_fill_m
 electron.ipcRenderer.on("change_to_sample_mode", (event, opts) => change_to_sample_mode(opts));
 electron.ipcRenderer.on("connect_to_server", (event, opts) => connect_to_server(opts));
 electron.ipcRenderer.on("nick", (event, {value}) => nick = value);
+electron.ipcRenderer.on("group", (event, {value}) => group = value);
 electron.ipcRenderer.on("use_numpad", (event, {value}) => use_numpad = value);
 electron.ipcRenderer.on("use_backup", (event, {value}) => use_backup = value);
 electron.ipcRenderer.on("backup_folder", (event, {value}) => backup_folder = value);

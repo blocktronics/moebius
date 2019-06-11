@@ -18,7 +18,10 @@ function message(ws, msg, network_handler) {
             selection: (x, y) => send(ws, action.SELECTION, {id, x, y}),
             resize_selection: (columns, rows) => send(ws, action.RESIZE_SELECTION, {id, columns, rows}),
             operation: (x, y) => send(ws, action.OPERATION, {id, x, y}),
-            chat: (nick, text) => send(ws, action.CHAT, {id, nick, text}),
+            chat: (nick, text) => {
+                send(ws, action.CHAT, {id, nick, text});
+                network_handler.chat(nick, text);
+            },
             hide_cursor: () => send(ws, action.HIDE_CURSOR, {id}),
             close: () => ws.close(),
             users: msg.data.users
