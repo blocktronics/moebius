@@ -1,7 +1,8 @@
 const electron = require("electron");
 
-function prefs({nick, use_numpad, use_backup, backup_folder}) {
+function prefs({nick, group, use_numpad, use_backup, backup_folder}) {
     document.getElementById("nick").value = nick;
+    document.getElementById("group").value = group;
     document.getElementById("use_numpad").checked = use_numpad;
     document.getElementById("use_backup").checked = use_backup;
     document.getElementById("backup_folder").innerText = (backup_folder == "") ? "No Backup Folder Set" : backup_folder;
