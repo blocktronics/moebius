@@ -10,6 +10,14 @@ form {
     margin: 0px auto;
 }
 
+form > div {
+    margin: 4px 0px;
+}
+
+form > div:first-child {
+    margin-top: 16px;
+}
+
 label {
     display: inline-block;
     width: 300px;
@@ -24,35 +32,25 @@ label.text_box {
 }
 
 input[type="text"] {
-    position: relative;
-    top: 12px;
-    left: 4px;
-    height: 24px;
-    padding: 3px;
-    color: white;
-    max-width: 150px;
+    padding: none;
     margin-left: 4px;
+    width: 190px;
+    height: 24px;
+    padding: 3px 6px;
+    color: white;
     display: inline-block;
     border: 1px solid white;
     background: none;
+    font-family: BlinkMacSystemFont, "Segoe UI";
+    font-size: 14px;
+    outline: none;
 }
 
 input[type="checkbox"] {
     position: relative;
-    top: 2px;
+    top: 4px;
     width: 16px;
     height: 16px;
-}
-
-input[type="text"] {
-    font-family: BlinkMacSystemFont;
-    font-size: 14px;
-    outline: none;
-    margin: 16px 0px;
-    width: 300px;
-    height: 16px;
-    padding: none;
-    vertical-align: bottom;
 }
 
 #timestamp_box {
