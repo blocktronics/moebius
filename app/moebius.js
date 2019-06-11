@@ -250,7 +250,7 @@ async function connect_to_server({ip, port, nick, pass}) {
     const win = await new_document_window();
     change_to_network_mode(win.id);
     docs[win.id].network = true;
-    win.setTitle(`${ip}:${port}`);
+    win.setTitle(ip);
     win.send("connect_to_server", {ip, port, nick, pass});
 }
 

@@ -11,7 +11,7 @@ function set_var(name, value) {
 function scroll_to_bottom() {
     const messages = document.getElementById("messages");
     const rect = messages.getBoundingClientRect();
-    messages.scrollTop = messages.scrollHeight - rect.height;
+    messages.scrollTop = messages.scrollHeight - rect.height + 1;
 }
 
 function show(focus = true) {
@@ -39,7 +39,7 @@ function toggle(focus) {
 function action(nick, text) {
     const messages = document.getElementById("messages");
     const rect = messages.getBoundingClientRect();
-    const scroll = (rect.height > messages.scrollHeight) || (messages.scrollTop == messages.scrollHeight - rect.height);
+    const scroll = (rect.height > messages.scrollHeight) || (messages.scrollTop == messages.scrollHeight - rect.height + 1);
     const nick_div = document.createElement("div");
     nick_div.classList.add("nick");
     nick_div.innerText = `${nick} ${text}`;
@@ -60,7 +60,7 @@ function leave(nick) {
 function chat(nick, text) {
     const messages = document.getElementById("messages");
     const rect = messages.getBoundingClientRect();
-    const scroll = (rect.height > messages.scrollHeight) || (messages.scrollTop == messages.scrollHeight - rect.height);
+    const scroll = (rect.height > messages.scrollHeight) || (messages.scrollTop == messages.scrollHeight - rect.height + 1);
     const nick_div = document.createElement("div");
     nick_div.classList.add("nick");
     nick_div.innerText = `${nick}:`;
