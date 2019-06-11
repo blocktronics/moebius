@@ -13,9 +13,7 @@ function send(ws, type, data = {}) {
 
 function send_all(sender, type, data = {}) {
     for (const ws of wss.clients) {
-        if (ws != sender) {
-            send(ws, type, data);
-        }
+        if (ws != sender) send(ws, type, data);
     }
 }
 
@@ -46,9 +44,9 @@ function save() {
     libtextmode.write_file(doc, "./server.ans");
 }
 
-libtextmode.read_file("./server.ans").then((ansi_doc) => {
+libtextmode.read_file("./server.ans").then((ansi) => {
     timer = setInterval(save, 5 * 60 * 1000);
-    doc = ansi_doc;
+    doc = ansi;
     wss.on("connection", (ws) => {
         ws.on("message", msg => message(ws, JSON.parse(msg)));
         ws.on("close", () => {
@@ -64,9 +62,12 @@ libtextmode.read_file("./server.ans").then((ansi_doc) => {
     });
 });
 
+wss.on("listening", () => console.log(`Server started on port ${wss.address().port}`));
+
+wss.on("close", () => console.log("Server ended"));
+
 process.on("SIGINT", () => {
     clearInterval(timer);
     wss.close();
     save();
-    console.log("\nProcess ended.");
 });

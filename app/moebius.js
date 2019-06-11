@@ -89,7 +89,7 @@ async function new_window({width, height, file}) {
 
 async function new_modal_window({width, height, file, parent}) {
     return new Promise((resolve) => {
-        const win = (darwin) ? new electron.BrowserWindow({parent, width, height, show: false, modal: true, useContentSize: true, transparent: true, vibrancy: "dark", webPreferences: {nodeIntegration: true}}) : new electron.BrowserWindow({parent, width, height: height + 20, show: false, modal: true, maximizable: false, resizable: false, useContentSize: true, backgroundColor: "#292c33", webPreferences: {nodeIntegration: true}});
+        const win = (darwin) ? new electron.BrowserWindow({parent, width, height, show: false, modal: true, useContentSize: true, transparent: true, vibrancy: "dark", webPreferences: {nodeIntegration: true}}) : new electron.BrowserWindow({parent, width, height: height + 32, show: false, modal: true, maximizable: false, resizable: false, useContentSize: true, backgroundColor: "#292c33", webPreferences: {nodeIntegration: true}});
         if (win32) win.setMenu(null);
         win.on("ready-to-show", (event) => {
             win.show();
@@ -279,11 +279,15 @@ const application_menu = electron.Menu.buildFromTemplate([{
 }, {
     label: "Edit",
     submenu: [
-        { label: "Cut", accelerator: "Cmd+X", role: "cut" },
-        { label: "Copy", accelerator: "Cmd+C", role: "copy" },
-        { label: "Paste", accelerator: "Cmd+V", role: "paste" },
-        ]
-    }, {
+        {label: "Undo", accelerator: "Cmd+Z", role: "undo"},
+        {label: "Redo", accelerator: "Cmd+Shift+Z", role: "redo"},
+        {type: "separator"},
+        {label: "Cut", accelerator: "Cmd+X", role: "cut"},
+        {label: "Copy", accelerator: "Cmd+C", role: "copy"},
+        {label: "Paste", accelerator: "Cmd+V", role: "paste"},
+        {label: "Select All", accelerator: "Cmd+A", role: "selectall"}
+    ]
+}, {
     label: "Network", submenu: [
         {label: "Connect to Server…", id: "connect_to_server", click(item) {connect_to_server();}, enabled: false},
     ]
@@ -294,8 +298,8 @@ const application_menu = electron.Menu.buildFromTemplate([{
     submenu: [
         {label: "Open Dev Tools", id: "open_dev_tools", click(item) {open_dev_tools();}, enabled: false},
         {label: "Connect to Test Server", id: "connect_to_test_server", accelerator: "Cmd+Alt+1", click(item) {connect_to_server({ip: "74.207.246.247", port: 8000, nick: "andyh", pass: "secret"});}, enabled: false},
-        {label: "Connect to Local Server", id: "connect_to_local_server", accelerator: "Cmd+Alt+2", click(item) {connect_to_server({ip: "localhost", port: 8000, nick: "andyh", pass: "secret"});}, enabled: false
-    }]
+        {label: "Connect to Local Server", id: "connect_to_local_server", accelerator: "Cmd+Alt+2", click(item) {connect_to_server({ip: "localhost", port: 8000, nick: "andyh", pass: "secret"});}, enabled: false}
+    ]
 }, {
     label: "Help", role: "help", submenu: [
         {label: "Cheatsheet", id: "show_cheatsheet", click(item) {show_cheatsheet();}},
@@ -311,8 +315,6 @@ function modal_menu(win) {
         submenu: [
             {role: "about", label: "About Mœbius"},
             {type: "separator"},
-            // {label: "Preferences", id: "preferences", accelerator: "Cmd+,", click(item) {preferences();}},
-            // {type: "separator"},
             {role: "services"},
             {type: "separator"},
             {role: "hide", label: "Hide Mœbius"},
@@ -322,7 +324,18 @@ function modal_menu(win) {
             {role: "quit", label: "Quit Mœbius"}
         ]
     }, {
-        label: "Window", submenu: [{role: "minimize"}, {role: "zoom"}, {type: "separator"}, {role: "front"}]
+        label: "Edit",
+        submenu: [
+            {label: "Undo", accelerator: "Cmd+Z", role: "undo"},
+            {label: "Redo", accelerator: "Cmd+Shift+Z", role: "redo"},
+            {type: "separator"},
+            {label: "Cut", accelerator: "Cmd+X", role: "cut"},
+            {label: "Copy", accelerator: "Cmd+C", role: "copy"},
+            {label: "Paste", accelerator: "Cmd+V", role: "paste"},
+            {label: "Select All", accelerator: "Cmd+A", role: "selectall"}
+        ]
+    }, {
+            label: "Window", submenu: [{role: "minimize"}, {role: "zoom"}, {type: "separator"}, {role: "front"}]
     }, {
         label: "Debug",
         submenu: [{label: "Open Dev Tools", id: "open_dev_tools", click(item) {open_dev_tools({win});}}]
@@ -953,7 +966,7 @@ function show_operation_touchbar(id) {
 }
 
 async function get_canvas_size({id, columns, rows}) {
-    docs[id].modal = await new_modal_window({width: 300, height: 190, file: "app/html/resize.html", parent: docs[id].win});
+    docs[id].modal = await new_modal_window({width: 300, height: 164, file: "app/html/resize.html", parent: docs[id].win});
     docs[id].modal.setTouchBar(docs[id].touch_bars.resize);
     docs[id].modal.send("set_canvas_size", {columns, rows});
     if (darwin) electron.Menu.setApplicationMenu(docs[id].modal_menu);
@@ -965,7 +978,7 @@ function set_canvas_size({id, columns, rows}) {
 }
 
 async function get_sauce_info({id, title, author, group, comments}) {
-    docs[id].modal = await new_modal_window({width: 350, height: 340, file: "app/html/sauce.html", parent: docs[id].win});
+    docs[id].modal = await new_modal_window({width: 350, height: 330, file: "app/html/sauce.html", parent: docs[id].win});
     docs[id].modal.send("set_sauce_info", {title, author, group, comments});
     docs[id].modal.setTouchBar(docs[id].touch_bars.sauce);
     if (darwin) electron.Menu.setApplicationMenu(docs[id].modal_menu);
