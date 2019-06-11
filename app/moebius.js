@@ -225,7 +225,7 @@ function preferences() {
     if (preferences_win && !preferences_win.isDestroyed()) {
         preferences_win.focus();
     } else {
-        preferences_win = new electron.BrowserWindow({width: 512, height: 145, show: false, backgroundColor: "#000000", maximizable: false, resizable: false, fullscreenable: false, webPreferences: {nodeIntegration: true}});
+        preferences_win = new electron.BrowserWindow({width: 480, height: 190, show: false, backgroundColor: "#000000", maximizable: false, resizable: false, fullscreenable: false, webPreferences: {nodeIntegration: true}});
         preferences_win.on("focus", (event) => set_application_menu());
         preferences_win.on("ready-to-show", (event) => preferences_win.show());
         preferences_win.loadFile("app/html/preferences.html");
@@ -257,6 +257,8 @@ const application_menu = electron.Menu.buildFromTemplate([{
     label: "Mœbius",
     submenu: [
         {role: "about", label: "About Mœbius"},
+        {type: "separator"},
+        {label: "Preferences", id: "preferences", accelerator: "Cmd+,", click(item) {preferences();}},
         {type: "separator"},
         {role: "services"},
         {type: "separator"},
@@ -294,13 +296,6 @@ const application_menu = electron.Menu.buildFromTemplate([{
 }, {
     label: "Window", submenu: [{role: "minimize"}, {role: "zoom"}, {type: "separator"}, {role: "front"}]
 }, {
-    label: "Debug",
-    submenu: [
-        {label: "Open Dev Tools", id: "open_dev_tools", click(item) {open_dev_tools();}, enabled: false},
-        {label: "Connect to Test Server", id: "connect_to_test_server", accelerator: "Cmd+Alt+1", click(item) {connect_to_server({ip: "74.207.246.247", port: 8000, nick: "andyh", pass: "secret"});}, enabled: false},
-        {label: "Connect to Local Server", id: "connect_to_local_server", accelerator: "Cmd+Alt+2", click(item) {connect_to_server({ip: "localhost", port: 8000, nick: "andyh", pass: "secret"});}, enabled: false}
-    ]
-}, {
     label: "Help", role: "help", submenu: [
         {label: "Cheatsheet", id: "show_cheatsheet", click(item) {show_cheatsheet();}},
         {type: "separator"},
@@ -337,9 +332,6 @@ function modal_menu(win) {
     }, {
             label: "Window", submenu: [{role: "minimize"}, {role: "zoom"}, {type: "separator"}, {role: "front"}]
     }, {
-        label: "Debug",
-        submenu: [{label: "Open Dev Tools", id: "open_dev_tools", click(item) {open_dev_tools({win});}}]
-    }, {
         label: "Help", role: "help", submenu: []
     }]);
 }
@@ -350,8 +342,8 @@ function document_menu(win) {
             label: "Mœbius",
             submenu: [{role: "about", label: "About Mœbius"},
             {type: "separator"},
-            // {label: "Preferences", id: "preferences", accelerator: "Cmd+,", click(item) {preferences();}},
-            // {type: "separator"},
+            {label: "Preferences", id: "preferences", accelerator: "Cmd+,", click(item) {preferences();}},
+            {type: "separator"},
             {role: "services"},
             {type: "separator"},
             {role: "hide", label: "Hide Mœbius"},
@@ -554,9 +546,7 @@ function document_menu(win) {
         }, {
             label: "Debug",
             submenu: [
-                {label: "Open Dev Tools", id: "open_dev_tools", click(item) {open_dev_tools({item, win});}},
-                {label: "Connect to Test Server", id: "connect_to_test_server", accelerator: "Cmd+Alt+1", click(item) {connect_to_server({ip: "74.207.246.247", port: 8000, nick: "andyh", pass: "secret"});}, enabled: false},
-                {label: "Connect to Local Server", id: "connect_to_local_server", accelerator: "Cmd+Alt+2", click(item) {connect_to_server({ip: "localhost", port: 8000, nick: "andyh", pass: "secret"});}, enabled: false},
+                {label: "Open Dev Tools", id: "open_dev_tools", click(item) {open_dev_tools({item, win});}}
             ]
         }, {
             label: "Help", role: "help", submenu: [
@@ -580,7 +570,9 @@ function document_menu(win) {
                 {type: "separator"},
                 {label: "Export As PNG\u2026", id: "export_as_png", accelerator: "Ctrl+Shift+E", click(item) {export_as_png({win});}},
                 {type: "separator"},
-                {role: "close"}
+                {label: "Settings", id: "preferences", click(item) {preferences();}},
+                {type: "separator"},
+                {label: "Close", accelerator: "Alt+F4", id: "preferences", click(item) {preferences();}, role: "close"}
             ]
         }, {
             label: "&Edit",
@@ -756,9 +748,7 @@ function document_menu(win) {
         }, {
             label: "&Debug",
             submenu: [
-                {label: "Open Dev Tools", id: "open_dev_tools", click(item) {open_dev_tools({item, win});}},
-                {label: "Connect to Test Server", id: "connect_to_test_server", click(item) {connect_to_server({ip: "74.207.246.247", port: 8000, nick: "andyh", pass: "secret"});}, enabled: false},
-                {label: "Connect to Local Server", id: "connect_to_local_server", click(item) {connect_to_server({ip: "localhost", port: 8000, nick: "andyh", pass: "secret"});}, enabled: false},
+                {label: "Open Dev Tools", id: "open_dev_tools", click(item) {open_dev_tools({item, win});}}
             ]
         }, {
             label: "Help", role: "help", submenu: [

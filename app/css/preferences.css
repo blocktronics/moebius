@@ -1,6 +1,6 @@
 body {
     font-size: 14px;
-    color: white;
+    color: #aaaaaa;
     background-color: var(--dark-mid-color);
     overflow: hidden;
 }
@@ -10,21 +10,36 @@ form {
     margin: 0px auto;
 }
 
-form > div:first-child {
-    margin-top: 16px;
-}
-
-form > div {
-    /* margin: 16px 0px; */
-}
-
 label {
     display: inline-block;
     width: 300px;
     text-align: right;
+    height: 24px;
+}
+
+label.text_box {
+    width: 150px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+input[type="text"] {
+    position: relative;
+    top: 12px;
+    left: 4px;
+    height: 24px;
+    padding: 3px;
+    color: white;
+    max-width: 150px;
+    margin-left: 4px;
+    display: inline-block;
+    border: 1px solid white;
+    background: none;
 }
 
 input[type="checkbox"] {
+    position: relative;
+    top: 2px;
     width: 16px;
     height: 16px;
 }
@@ -40,9 +55,33 @@ input[type="text"] {
     vertical-align: bottom;
 }
 
+#timestamp_box {
+    margin-top: 8px;
+    opacity: 0.5;
+}
+
+#folder_text {
+    height: 24px;
+    line-height: 24px;
+    float: left;
+    display: block;
+    width: calc(100% - 84px);
+    text-align: right;
+}
+
 button {
+    float: right;
+    color: #aaaaaa;
+    border-radius: 4px;
     margin-left: 8px;
-    display: inline;
     width: 70px;
     height: 24px;
+    background: none;
+    border: 1px solid #aaaaaa;
+    outline: none;
+}
+
+button:active {
+    color: white;
+    border-color: white;
 }

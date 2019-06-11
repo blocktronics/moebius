@@ -5,16 +5,22 @@
     <title>Preferences</title>
     <link rel="stylesheet" href="../css/global.css">
     <link rel="stylesheet" href="../css/preferences.css">
+    <script src="../js/preferences.js"></script>
 </head>
 <body>
     <form>
+        <div>
+            <label class="text_box" for="nick">Nickname:</label><input type="text" name="nick" id="nick" value="Anon">
+        </div>
         <div>
             <label for="use_numpad_keys_as_function_keys">Use Numpad Keys as Function Keys:</label><input type="checkbox" name="use_numpad_keys_as_function_keys" id="use_numpad_keys_as_function_keys">
         </div>
         <div>
             <label for="save_backup">Save Timestamp Backups:</label><input type="checkbox" name="save_backup" id="save_backup">
-            <div id="folder_text">None set</div>
-            <button id="backup_choose">Choose…</button>
+            <div id="timestamp_box">
+                <div id="folder_text">None set</div>
+                <button id="backup_choose">Choose…</button>
+            </div>
         </div>
     </form>
 </body>
