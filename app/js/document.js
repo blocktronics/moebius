@@ -1237,9 +1237,9 @@ function set_sauce_info({title, author, group, comments}) {
     doc.comments = comments;
 }
 
-async function new_document({columns, rows}) {
+async function new_document({columns, rows, author, group}) {
     reset_undo_buffer();
-    doc = libtextmode.new_document({columns, rows});
+    doc = libtextmode.new_document({columns, rows, author, group});
     await start_render();
     cursor.start_editing_mode();
     change_to_select_mode();

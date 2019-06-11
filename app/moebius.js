@@ -159,7 +159,7 @@ async function new_document_window() {
 
 async function new_document({columns = 80, rows = 24} = {}) {
     const win = await new_document_window();
-    win.send("new_document", {columns, rows});
+    win.send("new_document", {columns, rows, author: prefs.get("nick"), group: prefs.get("group")});
 }
 
 function open(win) {
@@ -230,7 +230,7 @@ function preferences() {
     if (preferences_win && !preferences_win.isDestroyed()) {
         preferences_win.focus();
     } else {
-        preferences_win = new electron.BrowserWindow({width: 480, height: 190, show: false, backgroundColor: "#000000", maximizable: false, resizable: false, fullscreenable: false, webPreferences: {nodeIntegration: true}});
+        preferences_win = new electron.BrowserWindow({width: 480, height: 220, show: false, backgroundColor: "#000000", maximizable: false, resizable: false, fullscreenable: false, webPreferences: {nodeIntegration: true}});
         if (!darwin) preferences_win.setMenu(null);
         preferences_win.on("focus", (event) => set_application_menu());
         preferences_win.on("ready-to-show", (event) => {
@@ -1129,6 +1129,10 @@ function nick(value) {
     send_all("nick", {value});
 }
 
+function group(value) {
+    prefs.set("group", value);
+}
+
 function use_numpad(value) {
     prefs.set("use_numpad", value);
     send_all("use_numpad", {value});
@@ -1199,6 +1203,7 @@ electron.ipcMain.on("change_to_fill_mode", (event, {id}) => change_to_fill_mode(
 electron.ipcMain.on("change_to_sample_mode", (event, {id}) => change_to_sample_mode(id));
 electron.ipcMain.on("destroy", (event, {id}) => destroy(id));
 electron.ipcMain.on("nick", (event, {value}) => nick(value));
+electron.ipcMain.on("group", (event, {value}) => group(value));
 electron.ipcMain.on("use_numpad", (event, {value}) => use_numpad(value));
 electron.ipcMain.on("use_backup", (event, {value}) => use_backup(value));
 electron.ipcMain.on("backup_folder", (event, {value}) => backup_folder(value));

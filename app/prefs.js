@@ -4,7 +4,7 @@ const path = require("path");
 const file = path.join(electron.app.getPath("userData"), "preferences.json");
 if(!fs.existsSync(file)) fs.writeFileSync(file, JSON.stringify({}));
 const prefs = JSON.parse(fs.readFileSync(file, "utf-8"));
-const default_values = {nick: "Anon", use_numpad: false, use_backup: false, backup_folder: ""};
+const default_values = {nick: "Anon", group: "", use_numpad: false, use_backup: false, backup_folder: ""};
 
 function set(key, value) {
     prefs[key] = value;

@@ -35,17 +35,21 @@ label.text_box {
 input[type="text"] {
     vertical-align: top;
     padding: none;
-    margin-left: 4px;
+    margin: 4px;
     width: 190px;
-    height: 24px;
+    height: 16px;
     padding: 3px 6px;
     color: white;
     display: inline-block;
-    border: 1px solid white;
+    border: 1px solid #aaaaaa;
     background: none;
     font-family: BlinkMacSystemFont, "Segoe UI";
     font-size: 14px;
     outline: none;
+}
+
+input[type="text"]:focus {
+    border-color: white;
 }
 
 input[type="checkbox"] {

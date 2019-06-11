@@ -299,8 +299,8 @@ function rotate(blocks) {
     return blocks;
 }
 
-function new_document({columns = 80, rows = 24} = {}) {
-    const doc = {columns, rows, title: "", author: "", group: "", date: current_date(), ice_colors: false, use_9px_font: false, font_name: "IBM VGA", comments: []};
+function new_document({columns = 80, rows = 24, author = "", group = ""} = {}) {
+    const doc = {columns, rows, title: "", author, group, date: current_date(), ice_colors: false, use_9px_font: false, font_name: "IBM VGA", comments: []};
     doc.data = new Array(columns * rows);
     for (let i = 0; i < doc.data.length; i++) {
         doc.data[i] = {fg: 7, bg: 0, code: 32};

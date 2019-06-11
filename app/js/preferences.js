@@ -11,6 +11,10 @@ function nick() {
     electron.ipcRenderer.send("nick", {value: document.getElementById("nick").value});
 }
 
+function group() {
+    electron.ipcRenderer.send("group", {value: document.getElementById("group").value});
+}
+
 function use_numpad() {
     electron.ipcRenderer.send("use_numpad", {value: document.getElementById("use_numpad").checked});
 }
@@ -36,6 +40,8 @@ function override_submit(event) {
 document.addEventListener("DOMContentLoaded", (event) => {
     document.getElementById("nick").addEventListener("keydown", override_submit, true);
     document.getElementById("nick").addEventListener("keyup", (event) => nick(), true);
+    document.getElementById("group").addEventListener("keydown", override_submit, true);
+    document.getElementById("group").addEventListener("keyup", (event) => group(), true);
     document.getElementById("use_numpad").addEventListener("change", (event) => use_numpad(), true);
     document.getElementById("backup_choose").addEventListener("click", (event) => {
         choose_folder();
