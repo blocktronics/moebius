@@ -1342,10 +1342,11 @@ function change_to_sample_mode() {
 setInterval((event) => {
     if (!connection && use_backup && backup_folder != "") {
         const date = new Date();
-        const backup_file = path.join(backup_folder, `${path.parse(file).name} ${date.toDateString()}-${date.toLocaleTimeString()}.ans`);
+        const hours = date.getHours();
+        const backup_file = path.join(backup_folder, `${path.parse(file).name} ${date.toDateString()} ${hours > 12 ? hours - 12 : hours}${hours > 12 ? "pm" : "am"}.ans`);
         libtextmode.write_file(doc, backup_file);
     }
-}, 60 * 60 * 1000);
+}, 1000 * 60 * 60);
 
 electron.ipcRenderer.on("open_file", (event, opts) => open_file(opts));
 electron.ipcRenderer.on("save", (event, opts) => save(opts));
