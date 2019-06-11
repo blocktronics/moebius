@@ -357,16 +357,16 @@ document.addEventListener("keydown", (event) => {
             if (cursor.mode == canvas.cursor_modes.EDITING) {
                 if (use_numpad) {
                     switch (event.code) {
-                        case "Numpad1": if (!event.altKey) f_key(0); break;
-                        case "Numpad2": if (!event.altKey) f_key(1); break;
-                        case "Numpad3": if (!event.altKey) f_key(2); break;
-                        case "Numpad4": if (!event.altKey) f_key(3); break;
-                        case "Numpad5": if (!event.altKey) f_key(4); break;
-                        case "Numpad6": if (!event.altKey) f_key(5); break;
-                        case "Numpad7": if (!event.altKey) f_key(6); break;
-                        case "Numpad8": if (!event.altKey) f_key(7); break;
-                        case "Numpad9": if (!event.altKey) f_key(8); break;
-                        case "Numpad0": if (!event.altKey) f_key(9);  break;
+                        case "Numpad1": if (!event.altKey) f_key(0); return;
+                        case "Numpad2": if (!event.altKey) f_key(1); return;
+                        case "Numpad3": if (!event.altKey) f_key(2); return;
+                        case "Numpad4": if (!event.altKey) f_key(3); return;
+                        case "Numpad5": if (!event.altKey) f_key(4); return;
+                        case "Numpad6": if (!event.altKey) f_key(5); return;
+                        case "Numpad7": if (!event.altKey) f_key(6); return;
+                        case "Numpad8": if (!event.altKey) f_key(7); return;
+                        case "Numpad9": if (!event.altKey) f_key(8); return;
+                        case "Numpad0": if (!event.altKey) f_key(9);  return;
                     }
                 }
                 switch (event.code) {
