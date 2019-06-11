@@ -27,7 +27,7 @@ function message(ws, msg) {
     case action.CONNECTED:
         if (pass == "" || msg.data.pass == pass) {
             const id = data_store.length;
-            const users = connected_users()
+            const users = connected_users();
             data_store.push({user: {nick: msg.data.nick, id: id}, ws: ws, closed: false});
             send(ws, action.CONNECTED, {id, doc, users, chat_history});
             send_all(ws, action.JOIN, {id, nick: msg.data.nick});
