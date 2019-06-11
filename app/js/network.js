@@ -13,7 +13,9 @@ function message(ws, msg, network_handler) {
         const id = msg.data.id;
         network_handler.connected({
             id,
-            draw: (x, y, block) => send(ws, action.DRAW, {id, x, y, block}),
+            draw: (x, y, block) => {
+                send(ws, action.DRAW, {id, x, y, block});
+            },
             cursor: (x, y) => send(ws, action.CURSOR, {id, x, y}),
             selection: (x, y) => send(ws, action.SELECTION, {id, x, y}),
             resize_selection: (columns, rows) => send(ws, action.RESIZE_SELECTION, {id, columns, rows}),

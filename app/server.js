@@ -19,7 +19,10 @@ function send_all(sender, type, data = {}) {
 }
 
 function connected_users() {
-    return data_store.filter((data) => !data.closed).map((data) => data.user);
+    const filtered_data = data_store.filter((data) => !data.closed).map((data) => data.user);
+    const users = [];
+    for (const data of filtered_data) users[data.id] = data.nick;
+    return users;
 }
 
 function message(ws, msg) {
