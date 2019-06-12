@@ -8,9 +8,16 @@ function send(channel, opts) {
     electron.ipcRenderer.send(channel, {id: electron.remote.getCurrentWindow().id, ...opts});
 }
 
-function update_status_bar_cursor_pos() {
-    document.getElementById("cursor_x").textContent = `${cursor.x + 1}`;
-    document.getElementById("cursor_y").textContent = `${cursor.y + 1}`;
+function update_status_bar_cursor_pos(x, y) {
+    document.getElementById("cursor_x").textContent = `${x + 1}`;
+    document.getElementById("cursor_y").textContent = `${y + 1}`;
+}
+
+function update_columns_and_rows(columns, rows) {
+    document.getElementById("columns").textContent = `${columns}`;
+    document.getElementById("rows").textContent = `${rows}`;
+    document.getElementById("columns_s").textContent = (columns > 1) ? "s" : "";
+    document.getElementById("rows_s").textContent = (rows > 1) ? "s" : "";
 }
 
 class Cursor {
@@ -50,7 +57,7 @@ class Cursor {
 
     move_to(x, y, scroll_view = false) {
         this.x = x; this.y = y;
-        update_status_bar_cursor_pos();
+        if (this.user) update_status_bar_cursor_pos(this.x, this.y);
         switch (this.mode) {
             case cursor_modes.EDITING:
                 this.canvas.style.left = `${x * render.font.width}px`;
@@ -68,6 +75,7 @@ class Cursor {
                 this.canvas.style.width = `${(dx - sx + 1) * render.font.width}px`;
                 this.canvas.style.height = `${(dy - sy + 1) * render.font.height}px`;
                 if (this.connection) this.connection.selection(x, y);
+                if (this.user) update_columns_and_rows(dx - sx + 1, dy - sy + 1);
                 break;
             case cursor_modes.OPERATION:
                 this.canvas.style.left = `${x * render.font.width}px`;
@@ -153,6 +161,7 @@ class Cursor {
             document.getElementById("editing_layer").removeChild(this.canvas);
             this.hidden = true;
             if (this.connection) this.connection.hide_cursor();
+            if (this.user && this.mode != cursor_modes.EDITING) update_columns_and_rows(render.columns, render.rows);
         }
     }
 
@@ -184,6 +193,7 @@ class Cursor {
                 send("disable_selection_menu_items");
                 this.stop_using_selection_border();
                 send("show_editing_touchbar");
+                if (this.user) update_columns_and_rows(render.columns, render.rows);
                 break;
             case cursor_modes.OPERATION:
                 send("disable_selection_menu_items");
@@ -192,6 +202,7 @@ class Cursor {
                 this.canvas.classList.remove("selection");
                 this.resize_to_font();
                 send("show_editing_touchbar");
+                if (this.user) update_columns_and_rows(render.columns, render.rows);
                 break;
         }
     }
@@ -213,6 +224,7 @@ class Cursor {
         this.canvas.width = columns * render.font.width - 2; this.canvas.height = rows * render.font.height - 2;
         this.canvas.style.width = `${this.canvas.width + 2}px`; this.canvas.style.height = `${this.canvas.height + 2}px`;
         if (this.connection) this.connection.resize_selection(columns, rows);
+        if (this.user) update_columns_and_rows(columns, rows);
     }
 
     update_cursor_with_blocks(blocks) {
@@ -244,7 +256,8 @@ class Cursor {
         this.canvas.classList.add("ghosted");
     }
 
-    constructor() {
+    constructor(user = true) {
+        this.user = user;
         this.canvas = document.createElement("canvas");
         this.x = 0; this.y = 0;
         this.mode = cursor_modes.EDITING;

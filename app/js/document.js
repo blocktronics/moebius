@@ -107,7 +107,7 @@ function connect_to_server({ip, port, pass}) {
                 cursor.start_editing_mode();
                 change_to_select_mode();
                 for (const user of connection.users) {
-                    users[user.id] = {cursor: new canvas.Cursor()};
+                    users[user.id] = {cursor: new canvas.Cursor(false)};
                     users[user.id].cursor.resize_to_font();
                     users[user.id].cursor.appear_ghosted();
                     users[user.id].cursor.show();
@@ -130,7 +130,7 @@ function connect_to_server({ip, port, pass}) {
             send("destroy");
         },
         join: (id, nick) => {
-            users[id] = {nick, cursor: new canvas.Cursor()};
+            users[id] = {nick, cursor: new canvas.Cursor(false)};
             users[id].cursor.resize_to_font();
             users[id].cursor.appear_ghosted();
             users[id].cursor.show();
