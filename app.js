@@ -28,3 +28,12 @@ electron.app.on("ready", (event) => {
         if (!prevent_splash_screen_at_startup) moebius.show_splash_screen();
     }
 });
+
+electron.app.on("open-url", (event, url) => {
+    if (electron.app.isReady()) {
+        moebius.open_url(url);
+    } else {
+        prevent_splash_screen_at_startup = true;
+        electron.app.whenReady().then(() => moebius.open_url(url));
+    }
+});

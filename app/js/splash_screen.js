@@ -10,7 +10,7 @@ function show_new_version_button() {
 function connect(event) {
     const ip = document.getElementById("ip").value;
     const pass = document.getElementById("pass").value;
-    if (ip != "") electron.ipcRenderer.send("connect_to_server", {ip, pass, port: 8000, nick: "andyh"});
+    if (ip != "") electron.ipcRenderer.send("connect_to_server", {ip, pass});
 }
 
 function key_down(params) {

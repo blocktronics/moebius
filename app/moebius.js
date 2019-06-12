@@ -248,12 +248,17 @@ function start_server({item, win}) {
     // TODO
 }
 
-async function connect_to_server({ip, port, nick, pass}) {
+async function connect_to_server({ip, pass} = {}) {
     const win = await new_document_window();
     change_to_network_mode(win.id);
     docs[win.id].network = true;
     win.setTitle(ip);
-    win.send("connect_to_server", {ip, port, nick, pass});
+    win.send("connect_to_server", {ip, pass});
+}
+
+function open_url(url) {
+    const match = url.match(/moebius:\/\/(?:(.*?)@)?([^\/]+)/i);
+    if (match) connect_to_server({ip: match[2], pass: match[1]});
 }
 
 function disconnect({item, win}) {
@@ -1180,7 +1185,7 @@ function chat_input_blur(id) {
 
 electron.ipcMain.on("new_document", (event, opts) => new_document(opts));
 electron.ipcMain.on("open", (event) => open());
-electron.ipcMain.on("connect_to_server", (event, {ip, port, nick, pass}) => connect_to_server({ip, port, nick, pass}));
+electron.ipcMain.on("connect_to_server", (event, {ip, pass}) => connect_to_server({ip, pass}));
 electron.ipcMain.on("show_rendering_modal", (event, {id}) => show_rendering_modal(event, id));
 electron.ipcMain.on("show_connecting_modal", (event, {id}) => show_connecting_modal(event, id));
 electron.ipcMain.on("close_modal", (event, {id}) => close_modal(id));
@@ -1223,4 +1228,4 @@ electron.ipcMain.on("enable_chat_window_toggle", (event, {id}) => enable_chat_wi
 electron.ipcMain.on("chat_input_focus", (event, {id}) => chat_input_focus(id));
 electron.ipcMain.on("chat_input_blur", (event, {id}) => chat_input_blur(id));
 
-module.exports = {show_splash_screen, open_file, set_application_menu, has_document_windows, connect_to_server};
+module.exports = {show_splash_screen, open_file, set_application_menu, has_document_windows, connect_to_server, open_url};

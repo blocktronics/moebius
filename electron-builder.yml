@@ -26,6 +26,9 @@ fileAssociations:
     name: Description in Zip File
     role: Editor
     icon: document_icon.icns
+protocols:
+  - name: Mœbius
+    schemes: [moebius]
 mac:
   artifactName: Mœbius.dmg
   category: public.app-category.graphics-design

@@ -64,9 +64,9 @@ function message(ws, msg, network_handler) {
     }
 }
 
-async function connect(ip, port, nick, pass, network_handler) {
+async function connect(ip, nick, pass, network_handler) {
     try {
-        const ws = new WebSocket(`ws://${ip}:${port}`);
+        const ws = new WebSocket(`ws://${ip}:8000/`);
         ws.addEventListener("open", () => send(ws, action.CONNECTED, {nick, pass}));
         ws.addEventListener("error", network_handler.error);
         ws.addEventListener("close", network_handler.disconnected);

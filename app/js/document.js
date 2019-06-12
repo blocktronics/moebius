@@ -95,9 +95,9 @@ async function start_render() {
     cursor.show();
 }
 
-function connect_to_server({ip, port, pass}) {
+function connect_to_server({ip, pass = ""} = {}) {
     send_sync("show_connecting_modal");
-    network.connect(ip, port, (nick == "") ? "Anonymous" : nick, pass, {
+    network.connect(ip, (nick == "") ? "Anonymous" : nick, pass, {
         connected: (new_connection, new_doc, chat_history) => {
             connection = new_connection;
             cursor.connection = connection;
