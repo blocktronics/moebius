@@ -340,12 +340,17 @@ function add(new_render) {
     update_frame();
 }
 
-function update_with_client_y(client_y) {
+function update_with_mouse_pos(client_x, client_y) {
     const preview = document.getElementById("preview");
     const viewport = document.getElementById("viewport");
-    const y = client_y - preview.getBoundingClientRect().top + preview.scrollTop;
+    const preview_rect = preview.getBoundingClientRect();
+    const viewport_rect = viewport.getBoundingClientRect();
+    const x = client_x - preview_rect.left - 20 + preview.scrollLeft;
+    const y = client_y - preview_rect.top + preview.scrollTop;
     const scale_factor = render.width / 260;
-    const half_view_height = viewport.getBoundingClientRect().height / scale_factor / 2;
+    const half_view_width = viewport_rect.width / scale_factor / 2;
+    const half_view_height = viewport_rect.height / scale_factor / 2;
+    viewport.scrollLeft = Math.floor((x - half_view_width) * scale_factor);
     viewport.scrollTop = Math.floor((y - half_view_height) * scale_factor);
     update_frame();
 }
@@ -353,12 +358,12 @@ function update_with_client_y(client_y) {
 function mouse_down(event) {
     if (event.button == 0) {
         mouse_button = true;
-        update_with_client_y(event.clientY);
+        update_with_mouse_pos(event.clientX, event.clientY);
     }
 }
 
 function mouse_move(event) {
-    if (mouse_button) update_with_client_y(event.clientY);
+    if (mouse_button) update_with_mouse_pos(event.clientX, event.clientY);
 }
 
 function unregister_button(event) {
