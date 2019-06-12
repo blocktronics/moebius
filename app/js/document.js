@@ -1240,9 +1240,9 @@ function set_sauce_info({title, author, group, comments}) {
     doc.comments = comments;
 }
 
-async function new_document({columns, rows, author, group}) {
+async function new_document({columns, rows, title, author, group, date, palette, font_name, use_9px_font, ice_colors, comments, data}) {
     reset_undo_buffer();
-    doc = libtextmode.new_document({columns, rows, author, group});
+    doc = libtextmode.new_document({columns, rows, title, author, group, date, palette, font_name, use_9px_font, ice_colors, comments, data});
     await start_render();
     cursor.start_editing_mode();
     change_to_select_mode();
@@ -1386,6 +1386,12 @@ function chat_window_toggle() {
     chat.toggle();
 }
 
+function crop() {
+    const blocks = (cursor.mode == canvas.cursor_modes.SELECTION) ? cursor.get_blocks_in_selection(doc.data) : stored_blocks;
+    send("new_document", {title: doc.title, author: doc.author, group: doc.group, date: doc.date, palette: doc.palette, font_name: doc.font_name, use_9px_font: doc.use_9px_font, ice_colors: doc.ice_colors, ...blocks});
+    deselect();
+}
+
 electron.ipcRenderer.on("open_file", (event, opts) => open_file(opts));
 electron.ipcRenderer.on("save", (event, opts) => save(opts));
 electron.ipcRenderer.on("show_statusbar", (event, opts) => show_statusbar(opts));
@@ -1444,6 +1450,7 @@ electron.ipcRenderer.on("use_numpad", (event, {value}) => use_numpad = value);
 electron.ipcRenderer.on("use_backup", (event, {value}) => use_backup = value);
 electron.ipcRenderer.on("backup_folder", (event, {value}) => backup_folder = value);
 electron.ipcRenderer.on("chat_window_toggle", (event, opts) => chat_window_toggle(opts));
+electron.ipcRenderer.on("crop", (event, opts) => crop(opts));
 
 document.addEventListener("DOMContentLoaded", (event) => {
     document.getElementById("ice_colors_toggle").addEventListener("mousedown", (event) => ice_colors(!doc.ice_colors), true);

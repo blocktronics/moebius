@@ -158,9 +158,11 @@ async function new_document_window() {
     return win;
 }
 
-async function new_document({columns = 80, rows = 24} = {}) {
+async function new_document({columns, rows, title, author, group, date, palette, font_name, use_9px_font, ice_colors, comments, data} = {}) {
     const win = await new_document_window();
-    win.send("new_document", {columns, rows, author: prefs.get("nick"), group: prefs.get("group")});
+    if (!author) author = prefs.get("nick");
+    if (!group) group = prefs.get("group");
+    win.send("new_document", {columns, rows, title, author, group, date, palette, font_name, use_9px_font, ice_colors, comments, data});
 }
 
 function open(win) {
@@ -452,6 +454,8 @@ function document_menu(win) {
                 {type: "separator"},
                 {label: "Set Canvas Size\u2026", id: "set_canvas_size", accelerator: "Cmd+Alt+C", click(item) {win.send("get_canvas_size");}, enabled: true},
                 {type: "separator"},
+                {label: "Crop", id: "crop", accelerator: "Cmd+K", click(item) {win.send("crop");}, enabled: false},
+                {type: "separator"},
                 {label: "Previous Foreground Color", id: "previous_foreground_color", accelerator: "Alt+Up", click(item) {win.send("previous_foreground_color");}},
                 {label: "Next Foreground Color", id: "next_foreground_color", accelerator: "Alt+Down", click(item) {win.send("next_foreground_color");}},
                 {type: "separator"},
@@ -657,6 +661,8 @@ function document_menu(win) {
                 {label: "Center", id: "center", accelerator: "=", click(item) {win.send("center");}, enabled: false},
                 {type: "separator"},
                 {label: "Set Canvas Size\u2026", id: "set_canvas_size", accelerator: "Ctrl+Alt+C", click(item) {win.send("get_canvas_size");}, enabled: true},
+                {type: "separator"},
+                {label: "Crop", id: "crop", accelerator: "Ctrl+K", click(item) {win.send("crop");}, enabled: false},
                 {type: "separator"},
                 {label: "Previous Foreground Color", id: "previous_foreground_color", accelerator: "Alt+Up", click(item) {win.send("previous_foreground_color");}},
                 {label: "Next Foreground Color", id: "next_foreground_color", accelerator: "Alt+Down", click(item) {win.send("next_foreground_color");}},
@@ -959,11 +965,13 @@ function disable_selection_menu_items(id) {
     docs[id].menu.getMenuItemById("deselect").enabled = false;
     docs[id].menu.getMenuItemById("move_block").enabled = false;
     docs[id].menu.getMenuItemById("copy_block").enabled = false;
+    docs[id].menu.getMenuItemById("crop").enabled = false;
 }
 
-function disable_selection_menu_items_except_deselect(id) {
+function disable_selection_menu_items_except_deselect_and_crop(id) {
     disable_selection_menu_items(id);
     docs[id].menu.getMenuItemById("deselect").enabled = true;
+    docs[id].menu.getMenuItemById("crop").enabled = true;
 }
 
 function enable_selection_menu_items(id) {
@@ -973,6 +981,7 @@ function enable_selection_menu_items(id) {
     docs[id].menu.getMenuItemById("deselect").enabled = true;
     docs[id].menu.getMenuItemById("move_block").enabled = true;
     docs[id].menu.getMenuItemById("copy_block").enabled = true;
+    docs[id].menu.getMenuItemById("crop").enabled = true;
 }
 
 function enable_operation_menu_items(id) {
@@ -1169,7 +1178,7 @@ function chat_input_blur(id) {
     }
 }
 
-electron.ipcMain.on("new_document", (event) => new_document());
+electron.ipcMain.on("new_document", (event, opts) => new_document(opts));
 electron.ipcMain.on("open", (event) => open());
 electron.ipcMain.on("connect_to_server", (event, {ip, port, nick, pass}) => connect_to_server({ip, port, nick, pass}));
 electron.ipcMain.on("show_rendering_modal", (event, {id}) => show_rendering_modal(event, id));
@@ -1181,7 +1190,7 @@ electron.ipcMain.on("disable_undo", (event, {id}) => disable_undo(id));
 electron.ipcMain.on("enable_redo", (event, {id}) => enable_redo(id));
 electron.ipcMain.on("disable_redo", (event, {id}) => disable_redo(id));
 electron.ipcMain.on("disable_selection_menu_items", (event, {id}) => disable_selection_menu_items(id));
-electron.ipcMain.on("disable_selection_menu_items_except_deselect", (event, {id}) => disable_selection_menu_items_except_deselect(id));
+electron.ipcMain.on("disable_selection_menu_items_except_deselect_and_crop", (event, {id}) => disable_selection_menu_items_except_deselect_and_crop(id));
 electron.ipcMain.on("enable_selection_menu_items", (event, {id}) => enable_selection_menu_items(id));
 electron.ipcMain.on("enable_operation_menu_items", (event, {id}) => enable_operation_menu_items(id));
 electron.ipcMain.on("disable_operation_menu_items", (event, {id}) => disable_operation_menu_items(id));

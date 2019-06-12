@@ -235,7 +235,7 @@ class Cursor {
 
     start_operation_mode(data, is_move_operation = false) {
         if (this.mode == cursor_modes.SELECTION) {
-            send("disable_selection_menu_items_except_deselect");
+            send("disable_selection_menu_items_except_deselect_and_crop");
             send("enable_operation_menu_items");
             const blocks = this.get_blocks_in_selection(data);
             this.update_cursor_with_blocks(blocks);
