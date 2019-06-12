@@ -140,7 +140,7 @@ function connect_to_server({ip, pass = ""} = {}) {
             if (users[id]) {
                 users[id].cursor.hide();
                 delete users[id];
-                chat.leave(nick);
+                chat.leave(users[id].nick);
             }
         },
         cursor: (id, x, y) => {
