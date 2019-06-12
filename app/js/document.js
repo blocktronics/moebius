@@ -138,9 +138,9 @@ function connect_to_server({ip, pass = ""} = {}) {
         },
         leave: (id) => {
             if (users[id]) {
+                chat.leave(users[id].nick);
                 users[id].cursor.hide();
                 delete users[id];
-                chat.leave(users[id].nick);
             }
         },
         cursor: (id, x, y) => {
