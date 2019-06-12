@@ -1,10 +1,12 @@
 const electron = require("electron");
+let backup_folder_value;
 
 function prefs({nick, group, use_numpad, use_backup, backup_folder}) {
     document.getElementById("nick").value = nick;
     document.getElementById("group").value = group;
     document.getElementById("use_numpad").checked = use_numpad;
     document.getElementById("use_backup").checked = use_backup;
+    backup_folder_value = backup_folder;
     document.getElementById("backup_folder").innerText = (backup_folder == "") ? "No Backup Folder Set" : backup_folder;
 }
 
@@ -25,7 +27,8 @@ function use_backup() {
 }
 
 function choose_folder() {
-    electron.remote.dialog.showOpenDialog(electron.remote.getCurrentWindow(), {properties: ["openDirectory", "createDirectory"]}, (files) => {
+    const defaultPath = (backup_folder_value && backup_folder_value != "") ? backup_folder_value : electron.remote.app.getPath("documents");
+    electron.remote.dialog.showOpenDialog(electron.remote.getCurrentWindow(), {defaultPath, properties: ["openDirectory", "createDirectory"]}, (files) => {
         if (files) {
             const folder = files[0];
             document.getElementById("backup_folder").innerText = folder;
