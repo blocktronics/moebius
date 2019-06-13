@@ -96,8 +96,8 @@ async function start_render() {
 }
 
 function connect_to_server({ip, pass = ""} = {}) {
-    send_sync("show_connecting_modal");
-    network.connect(ip, (nick == "") ? "Anonymous" : nick, pass, {
+    // send_sync("show_connecting_modal");
+    network.connect(ip, (nick == "") ? "Anonymous" : nick, group, pass, {
         connected: (new_connection, new_doc, chat_history) => {
             connection = new_connection;
             cursor.connection = connection;
@@ -107,15 +107,16 @@ function connect_to_server({ip, pass = ""} = {}) {
                 cursor.start_editing_mode();
                 change_to_select_mode();
                 for (const user of connection.users) {
-                    users[user.id] = {cursor: new canvas.Cursor(false)};
+                    users[user.id] = {cursor: new canvas.Cursor(false), nick: user.nick};
                     users[user.id].cursor.resize_to_font();
                     users[user.id].cursor.appear_ghosted();
                     users[user.id].cursor.show();
+                    chat.join(user.id, user.nick, user.group, false);
                 }
                 chat.toggle(false);
                 send("enable_chat_window_toggle");
-                for (const line of chat_history) chat.chat(line.nick, line.text);
-                chat.join(nick);
+                for (const line of chat_history) chat.chat(line.id, line.nick, line.group, line.text);
+                chat.join(connection.id, nick, group);
             });
         },
         error: () => {},
@@ -134,11 +135,11 @@ function connect_to_server({ip, pass = ""} = {}) {
             users[id].cursor.resize_to_font();
             users[id].cursor.appear_ghosted();
             users[id].cursor.show();
-            chat.join(nick);
+            chat.join(id, users[id].nick);
         },
         leave: (id) => {
             if (users[id]) {
-                chat.leave(users[id].nick);
+                chat.leave(id);
                 users[id].cursor.hide();
                 delete users[id];
             }
@@ -173,8 +174,8 @@ function connect_to_server({ip, pass = ""} = {}) {
             doc.data[i] = Object.assign(block);
             render_at(x, y);
         },
-        chat: (nick, text) => {
-            chat.chat(nick, text);
+        chat: (id, nick, group, text) => {
+            chat.chat(id, nick, group, text);
         }
     });
 }
@@ -362,12 +363,7 @@ document.addEventListener("keydown", (event) => {
     if (chat_input == document.activeElement) {
         if (event.code == "Enter" || event.code == "NumpadEnter") {
             if (chat_input.value != "" && connection) {
-                let chat_nick = (nick == "") ? "Anonymous": nick;
-                if (group == "") {
-                    connection.chat(chat_nick, chat_input.value);
-                } else {
-                    connection.chat(`${chat_nick} <${group}>`, chat_input.value);
-                }
+                connection.chat(nick, group, chat_input.value);
                 chat_input.value = "";
             }
         }

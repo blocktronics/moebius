@@ -28,7 +28,7 @@ function message(ws, msg) {
         if (pass == "" || msg.data.pass == pass) {
             const id = data_store.length;
             const users = connected_users();
-            data_store.push({user: {nick: msg.data.nick, id: id}, ws: ws, closed: false});
+            data_store.push({user: {nick: msg.data.nick, group: msg.data.group, id: id}, ws: ws, closed: false});
             send(ws, action.CONNECTED, {id, doc, users, chat_history});
             send_all(ws, action.JOIN, {id, nick: msg.data.nick});
             console.log(`${msg.data.nick} has joined`);
@@ -42,7 +42,7 @@ function message(ws, msg) {
         send_all(ws, msg.type, msg.data);
     break;
     case action.CHAT:
-        chat_history.push({nick: msg.data.nick, text: msg.data.text});
+        chat_history.push({id: msg.data.id, nick: msg.data.nick, group: msg.data.group, text: msg.data.text});
         if (chat_history.length > 32) chat_history.shift();
         send_all(ws, msg.type, msg.data);
     break;

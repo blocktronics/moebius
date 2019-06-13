@@ -1,8 +1,5 @@
 let visible = false;
-
-function send(channel, opts) {
-    electron.ipcRenderer.send(channel, {id: electron.remote.getCurrentWindow().id, ...opts});
-}
+let users = [];
 
 function set_var(name, value) {
     document.documentElement.style.setProperty(`--${name}`, `${value}px`);
@@ -49,21 +46,36 @@ function action(nick, text) {
     if (scroll) scroll_to_bottom();
 }
 
-function join(nick) {
-    action(nick, "has joined");
+function join(id, nick, group, show_join = true) {
+    if (show_join) action(nick, "has joined");
+    users[id] = {nick, group, div: document.createElement("div")};
+    if (group == "") {
+        users[id].div.innerText = nick;
+    } else {
+        users[id].div.innerText = `${nick} <${group}>`;
+    }
+    document.getElementById("user_list").appendChild(users[id].div);
 }
 
-function leave(nick) {
-    action(nick, "has left");
+function leave(id) {
+    if (users[id]) {
+        action(users[id].nick, "has left");
+        document.getElementById("user_list").removeChild(users[id].div);
+        delete users[id];
+    }
 }
 
-function chat(nick, text) {
+function chat(id, nick, group, text) {
     const messages = document.getElementById("messages");
     const rect = messages.getBoundingClientRect();
     const scroll = (rect.height > messages.scrollHeight) || (messages.scrollTop == messages.scrollHeight - rect.height + 1);
     const nick_div = document.createElement("div");
     nick_div.classList.add("nick");
-    nick_div.innerText = `${nick}:`;
+    if (group == "") {
+        nick_div.innerText = `${nick}:`;
+    } else {
+        nick_div.innerText = `${nick} <${group}>:`;
+    }
     const text_div = document.createElement("div");
     text_div.classList.add("text");
     text_div.innerText = text;
@@ -71,6 +83,15 @@ function chat(nick, text) {
     container.appendChild(nick_div);
     container.appendChild(text_div);
     messages.appendChild(container);
+    if (users[id] && (users[id].nick != nick || users[id].group != group)) {
+        users[id].nick = nick;
+        users[id].group = group;
+        if (group == "") {
+            users[id].div.innerText = nick;
+        } else {
+            users[id].div.innerText = `${nick} <${group}>`;
+        }
+    }
     if (scroll) scroll_to_bottom();
 }
 

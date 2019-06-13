@@ -20,9 +20,9 @@ function message(ws, msg, network_handler) {
             selection: (x, y) => send(ws, action.SELECTION, {id, x, y}),
             resize_selection: (columns, rows) => send(ws, action.RESIZE_SELECTION, {id, columns, rows}),
             operation: (x, y) => send(ws, action.OPERATION, {id, x, y}),
-            chat: (nick, text) => {
-                send(ws, action.CHAT, {id, nick, text});
-                network_handler.chat(nick, text);
+            chat: (nick, group, text) => {
+                send(ws, action.CHAT, {id, nick, group, text});
+                network_handler.chat(id, nick, group, text);
             },
             hide_cursor: () => send(ws, action.HIDE_CURSOR, {id}),
             close: () => ws.close(),
@@ -33,7 +33,7 @@ function message(ws, msg, network_handler) {
         network_handler.refused();
         break;
     case action.JOIN:
-        network_handler.join(msg.data.id, msg.data.nick);
+        network_handler.join(msg.data.id, msg.data.nick, msg.data.group);
         break;
     case action.LEAVE:
         network_handler.leave(msg.data.id);
@@ -57,17 +57,17 @@ function message(ws, msg, network_handler) {
         network_handler.draw(msg.data.id, msg.data.x, msg.data.y, msg.data.block);
         break;
     case action.CHAT:
-        network_handler.chat(msg.data.nick, msg.data.text);
+        network_handler.chat(msg.data.id, msg.data.nick, msg.data.group, msg.data.text);
         break;
     default:
         break;
     }
 }
 
-async function connect(ip, nick, pass, network_handler) {
+async function connect(ip, nick, group, pass, network_handler) {
     try {
         const ws = new WebSocket(`ws://${ip}:8000/`);
-        ws.addEventListener("open", () => send(ws, action.CONNECTED, {nick, pass}));
+        ws.addEventListener("open", () => send(ws, action.CONNECTED, {nick, group, pass}));
         ws.addEventListener("error", network_handler.error);
         ws.addEventListener("close", network_handler.disconnected);
         ws.addEventListener("message", response => message(ws, JSON.parse(response.data), network_handler));

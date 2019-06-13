@@ -121,10 +121,27 @@ body.dark #current_colors > canvas {
     height: calc(var(--chat-height) - 1px);
     overflow: hidden;
 }
+#user_list {
+    float: left;
+    background-color: var(--dark-mid-color);
+    border-top: 1px solid var(--dark-border-color);
+    border-left: 1px solid var(--dark-border-color);
+    height: calc(100% - 1px);
+    width: calc(150px - 1px);
+    overflow-y: hidden;
+    overflow-y: scroll;
+}
+#user_list > div {
+    white-space: nowrap;
+    color: #aaaaaa;
+    font-size: 12px;
+    margin: 4px 6px;
+}
 #messages {
+    float: left;
     border-top: 1px solid var(--dark-border-color);
     background-color: var(--dark-mid-color);
-    width: calc(100% - 1px);
+    width: calc(100% - 1px - 150px);
     overflow-y: scroll;
     height: calc(100% - 28px);
     border-left: 1px solid var(--dark-border-color);
@@ -135,7 +152,7 @@ body.dark #current_colors > canvas {
     font-size: 12px;
     border: none;
     padding: 0px 8px;
-    width: calc(100% - 1px);
+    width: calc(100% - 16px - 1px - 150px);
     height: 27px;
     outline: none;
     border-top: 1px solid var(--dark-border-color);
