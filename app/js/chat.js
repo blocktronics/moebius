@@ -1,5 +1,6 @@
 let visible = false;
 let users = [];
+const status_types = {ACTIVE: 0, IDLE: 1, AWAY: 2};
 
 function set_var(name, value) {
     document.documentElement.style.setProperty(`--${name}`, `${value}px`);
@@ -46,15 +47,27 @@ function action(nick, text) {
     if (scroll) scroll_to_bottom();
 }
 
-function join(id, nick, group, show_join = true) {
+function set_status(id, status) {
+    if (users[id]) {
+        users[id].status = status;
+        switch (status) {
+            case status_types.ACTIVE: users[id].div.style.backgroundImage = "url(\"../img/active_indicator.png\")"; break;
+            case status_types.IDLE: users[id].div.style.backgroundImage = "url(\"../img/idle_indicator.png\")"; break;
+            case status_types.AWAY: users[id].div.style.backgroundImage = "url(\"../img/away_indicator.png\")"; break;
+        }
+    }
+}
+
+function join(id, nick, group, status, show_join = true) {
     if (show_join) action(nick, "has joined");
-    users[id] = {nick, group, div: document.createElement("div")};
+    users[id] = {nick, group, div: document.createElement("div"), status};
     if (group == "") {
         users[id].div.innerText = nick;
     } else {
         users[id].div.innerText = `${nick} <${group}>`;
     }
     document.getElementById("user_list").appendChild(users[id].div);
+    set_status(id, status);
 }
 
 function leave(id) {
@@ -95,4 +108,4 @@ function chat(id, nick, group, text) {
     if (scroll) scroll_to_bottom();
 }
 
-module.exports = {toggle, join, leave, chat};
+module.exports = {toggle, join, leave, chat, status: set_status};

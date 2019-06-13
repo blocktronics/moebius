@@ -98,7 +98,7 @@ async function start_render() {
 function connect_to_server({ip, pass = ""} = {}) {
     send_sync("show_connecting_modal");
     network.connect(ip, (nick == "") ? "Anonymous" : nick, group, pass, {
-        connected: (new_connection, new_doc, chat_history) => {
+        connected: (new_connection, new_doc, chat_history, status) => {
             connection = new_connection;
             cursor.connection = connection;
             doc = new_doc;
@@ -111,12 +111,12 @@ function connect_to_server({ip, pass = ""} = {}) {
                     users[user.id].cursor.resize_to_font();
                     users[user.id].cursor.appear_ghosted();
                     users[user.id].cursor.show();
-                    chat.join(user.id, user.nick, user.group, false);
+                    chat.join(user.id, user.nick, user.group, user.status, false);
                 }
                 chat.toggle(false);
                 send("enable_chat_window_toggle");
                 for (const line of chat_history) chat.chat(line.id, line.nick, line.group, line.text);
-                chat.join(connection.id, nick, group);
+                chat.join(connection.id, nick, group, status);
             });
         },
         error: () => {},
@@ -130,12 +130,12 @@ function connect_to_server({ip, pass = ""} = {}) {
             electron.remote.dialog.showMessageBox(electron.remote.getCurrentWindow(), {type: "error", message: "Connect to Server", detail: "Wrong password!"});
             send("destroy");
         },
-        join: (id, nick, group) => {
-            users[id] = {nick, group, cursor: new canvas.Cursor(false)};
+        join: (id, nick, group, status) => {
+            users[id] = {nick, group, status, cursor: new canvas.Cursor(false)};
             users[id].cursor.resize_to_font();
             users[id].cursor.appear_ghosted();
             users[id].cursor.show();
-            chat.join(id, users[id].nick, users[id].group);
+            chat.join(id, users[id].nick, users[id].group, users[id].status);
         },
         leave: (id) => {
             if (users[id]) {
@@ -176,6 +176,9 @@ function connect_to_server({ip, pass = ""} = {}) {
         },
         chat: (id, nick, group, text) => {
             chat.chat(id, nick, group, text);
+        },
+        status: (id, status) => {
+            chat.status(id, status);
         }
     });
 }

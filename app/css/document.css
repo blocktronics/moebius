@@ -135,7 +135,11 @@ body.dark #current_colors > canvas {
     white-space: nowrap;
     color: #aaaaaa;
     font-size: 12px;
-    margin: 4px 6px;
+    margin: 4px 6px 4px 2px;
+    padding-left: 13px;
+    background-position: 0px 2px;
+    background-size: 12px 12px;
+    background-repeat: no-repeat;
 }
 #messages {
     float: left;
