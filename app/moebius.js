@@ -187,11 +187,13 @@ function open(win) {
 function save_as({win, close_on_save = false}) {
     electron.dialog.showSaveDialog(win, {filters: [{name: "ANSI Art", extensions: ["ans"]}, {name: "XBin", extensions: ["xb"]}, {name: "Binary Text", extensions: ["bin"]}], defaultPath: `${docs[win.id].file ? path.parse(docs[win.id].file).name : "Untitled"}.ans`}, (file) => {
         if (file) {
-            docs[win.id].file = file;
-            docs[win.id].edited = false;
-            win.setRepresentedFilename(file);
-            win.setTitle(path.basename(file));
-            win.setDocumentEdited(false);
+            if (!docs[win.id].network) {
+                docs[win.id].file = file;
+                docs[win.id].edited = false;
+                win.setRepresentedFilename(file);
+                win.setTitle(path.basename(file));
+                win.setDocumentEdited(false);
+            }
             electron.app.addRecentDocument(file);
             win.send("save", {file, close_on_save});
         }
