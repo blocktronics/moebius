@@ -183,21 +183,19 @@ class Screen {
         this.y += 1;
     }
 
+    fill(extra_rows) {
+        const more_data = new Array(this.columns * extra_rows);
+        more_data.fill({fg: 7, bg: 0, code: ascii.SPACE});
+        this.data = this.data.concat(more_data);
+    }
+
     put({fg = 7, bg = 0, code = ascii.SPACE, fg_rgb, bg_rgb} = {}) {
         const i = this.y * this.columns + this.x;
-        if (i >= this.data.length) {
-            const more_data = new Array(this.columns * 1000);
-            more_data.fill({fg: 7, bg: 0, code: ascii.SPACE});
-            this.data = this.data.concat(more_data);
-        }
+        if (i >= this.data.length) this.fill(1000);
         this.data[i] = {code, fg: ansi_to_bin_color(fg), bg: ansi_to_bin_color(bg), fg_rgb, bg_rgb};
         this.x += 1;
-        if (this.x == this.columns) {
-            this.new_line();
-        }
-        if (this.y + 1 > this.rows) {
-            this.rows += 1;
-        }
+        if (this.x == this.columns) this.new_line();
+        if (this.y + 1 > this.rows) this.rows += 1;
         this.adjust_screen();
     }
 
@@ -413,6 +411,9 @@ class Ansi extends Textmode {
         }
         if (!this.rows) {
             this.rows = screen.rows;
+        } else if (this.rows > screen.rows) {
+            screen.fill(this.rows - screen.rows);
+            screen.rows = this.rows;
         } else if (this.rows < screen.rows) {
             screen.rows = this.rows;
         }

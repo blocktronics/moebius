@@ -170,6 +170,7 @@ body.dark #viewport {
     overflow-x: hidden;
 }
 #preview > canvas {
+    display: block;
     width: calc(var(--preview-width) - 40px);
     margin: 0px 20px;
     image-rendering: -webkit-optimize-contrast;
