@@ -30,7 +30,7 @@ function message(ws, msg) {
             const users = connected_users();
             data_store.push({user: {nick: msg.data.nick, group: msg.data.group, id: id}, ws: ws, closed: false});
             send(ws, action.CONNECTED, {id, doc: libtextmode.compress(doc), users, chat_history});
-            send_all(ws, action.JOIN, {id, nick: msg.data.nick});
+            send_all(ws, action.JOIN, {id, nick: msg.data.nick, group: msg.data.group});
             console.log(`${msg.data.nick} has joined`);
         } else {
             send(ws, action.REFUSED);

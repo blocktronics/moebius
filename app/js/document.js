@@ -130,12 +130,12 @@ function connect_to_server({ip, pass = ""} = {}) {
             electron.remote.dialog.showMessageBox(electron.remote.getCurrentWindow(), {type: "error", message: "Connect to Server", detail: "Wrong password!"});
             send("destroy");
         },
-        join: (id, nick) => {
-            users[id] = {nick, cursor: new canvas.Cursor(false)};
+        join: (id, nick, group) => {
+            users[id] = {nick, group, cursor: new canvas.Cursor(false)};
             users[id].cursor.resize_to_font();
             users[id].cursor.appear_ghosted();
             users[id].cursor.show();
-            chat.join(id, users[id].nick);
+            chat.join(id, users[id].nick, users[id].group);
         },
         leave: (id) => {
             if (users[id]) {
