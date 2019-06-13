@@ -26,6 +26,14 @@ fileAssociations:
     name: Description in Zip File
     role: Editor
     icon: document_icon.icns
+  - ext: .asc
+    name: ASCII Art
+    role: Editor
+    icon: document_icon.icns
+  - ext: .txt
+    name: Text Art
+    role: Editor
+    icon: document_icon.icns
 protocols:
   - name: Mœbius
     schemes: [moebius]

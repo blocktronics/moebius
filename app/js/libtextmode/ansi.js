@@ -332,9 +332,7 @@ class Ansi extends Textmode {
     constructor(bytes) {
         super(bytes);
         const tokens = tokenize_file({bytes: this.bytes, filesize: this.filesize});
-        if (this.columns == undefined) {
-            this.columns = 80;
-        }
+        if (!this.columns) this.columns = 80;
         let screen = new Screen(this.columns);
         for (const token of tokens) {
             if (token.type == token_type.LITERAL) {
