@@ -259,6 +259,14 @@ body.dark #statusbar > div > div {
 #editing_layer > canvas {
     position: absolute;
 }
+#editing_layer > canvas.flashing {
+    box-sizing: border-box;
+    border: 1px solid white;
+    animation: blink 1s steps(1, end) infinite;
+}
+@keyframes blink {
+    0% {border-color: white;} 50% {border-color: black;}
+}
 #editing_layer > canvas.selection {
     border: 1px solid;
     border-image: url("../img/selection_border.gif") 1 repeat;

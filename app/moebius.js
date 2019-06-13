@@ -117,6 +117,7 @@ async function new_document_window() {
     win.send("nick", {value: prefs.get("nick")});
     win.send("group", {value: prefs.get("group")});
     win.send("use_numpad", {value: prefs.get("use_numpad")});
+    win.send("use_flashing_cursor", {value: prefs.get("use_flashing_cursor")});
     win.send("use_backup", {value: prefs.get("use_backup")});
     win.send("backup_folder", {value: prefs.get("backup_folder")});
     win.on("focus", (event) => {
@@ -233,7 +234,7 @@ function preferences() {
     if (preferences_win && !preferences_win.isDestroyed()) {
         preferences_win.focus();
     } else {
-        preferences_win = new electron.BrowserWindow({width: 480, height: 225, show: false, backgroundColor: "#000000", maximizable: false, resizable: false, fullscreenable: false, webPreferences: {nodeIntegration: true}});
+        preferences_win = new electron.BrowserWindow({width: 480, height: 265, show: false, backgroundColor: "#000000", maximizable: false, resizable: false, fullscreenable: false, webPreferences: {nodeIntegration: true}});
         if (!darwin) preferences_win.setMenu(null);
         preferences_win.on("focus", (event) => set_application_menu());
         preferences_win.on("ready-to-show", (event) => {
@@ -1154,6 +1155,11 @@ function use_numpad(value) {
     send_all("use_numpad", {value});
 }
 
+function use_flashing_cursor(value) {
+    prefs.set("use_flashing_cursor", value);
+    send_all("use_flashing_cursor", {value});
+}
+
 function use_backup(value) {
     prefs.set("use_backup", value);
     send_all("use_backup", {value});
@@ -1221,6 +1227,7 @@ electron.ipcMain.on("destroy", (event, {id}) => destroy(id));
 electron.ipcMain.on("nick", (event, {value}) => nick(value));
 electron.ipcMain.on("group", (event, {value}) => group(value));
 electron.ipcMain.on("use_numpad", (event, {value}) => use_numpad(value));
+electron.ipcMain.on("use_flashing_cursor", (event, {value}) => use_flashing_cursor(value));
 electron.ipcMain.on("use_backup", (event, {value}) => use_backup(value));
 electron.ipcMain.on("backup_folder", (event, {value}) => backup_folder(value));
 electron.ipcMain.on("preferences", (event) => preferences());

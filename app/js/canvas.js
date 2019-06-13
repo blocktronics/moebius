@@ -25,10 +25,12 @@ class Cursor {
         const ctx = this.canvas.getContext("2d");
         switch (this.mode) {
             case cursor_modes.EDITING:
-                ctx.globalCompositeOperation = "source-over";
-                ctx.drawImage(render.ice_color_collection[Math.floor(this.y / render.maximum_rows)], this.x * render.font.width, (this.y % render.maximum_rows) * render.font.height, render.font.width, render.font.height, 0, 0, render.font.width, render.font.height);
-                ctx.globalCompositeOperation = "difference";
-                render.font.draw_cursor(ctx, 0, render.font.height - 2);
+                if (!this.flashing) {
+                    ctx.globalCompositeOperation = "source-over";
+                    ctx.drawImage(render.ice_color_collection[Math.floor(this.y / render.maximum_rows)], this.x * render.font.width, (this.y % render.maximum_rows) * render.font.height, render.font.width, render.font.height, 0, 0, render.font.width, render.font.height);
+                    ctx.globalCompositeOperation = "difference";
+                    render.font.draw_cursor(ctx, 0, render.font.height - 2);
+                }
             break;
             case cursor_modes.SELECTION:
                 ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -262,6 +264,20 @@ class Cursor {
         this.x = 0; this.y = 0;
         this.mode = cursor_modes.EDITING;
         this.hidden = true;
+        this.flashing = false;
+    }
+
+    set_flashing(value) {
+        if (this.flashing != value) {
+            this.flashing = value;
+            if (this.flashing) {
+                this.canvas.getContext("2d").clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.canvas.classList.add("flashing");
+            } else {
+                this.canvas.classList.remove("flashing");
+            }
+            this.draw();
+        }
     }
 }
 

@@ -1446,6 +1446,7 @@ electron.ipcRenderer.on("change_to_sample_mode", (event, opts) => change_to_samp
 electron.ipcRenderer.on("connect_to_server", (event, opts) => connect_to_server(opts));
 electron.ipcRenderer.on("nick", (event, {value}) => nick = value);
 electron.ipcRenderer.on("group", (event, {value}) => group = value);
+electron.ipcRenderer.on("use_flashing_cursor", (event, {value}) => cursor.set_flashing(value));
 electron.ipcRenderer.on("use_numpad", (event, {value}) => use_numpad = value);
 electron.ipcRenderer.on("use_backup", (event, {value}) => use_backup = value);
 electron.ipcRenderer.on("backup_folder", (event, {value}) => backup_folder = value);
