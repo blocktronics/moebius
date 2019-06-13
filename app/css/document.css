@@ -118,8 +118,9 @@ body.dark #current_colors > canvas {
 #chat {
     float: left;
     width: calc(100% - var(--sidebar-width) -  var(--preview-width));
-    height: calc(var(--chat-height) - 1px);
+    height: var(--chat-height);
     overflow: hidden;
+    background-color: var(--dark-mid-color);
 }
 #user_list {
     float: left;
