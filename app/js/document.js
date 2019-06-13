@@ -726,6 +726,16 @@ function optimize_block(x, y) {
         case 223: change_data({x, y, code: 220, fg: block.bg, bg: block.fg}); break;
         }
     }
+    if (block.fg == 0) {
+        if (block.bg == 0 || block.code == 219) {
+            change_data({x, y, code: 32, fg: 7, bg: 0});
+        } else {
+            switch (block.code) {
+                case 220: change_data({x, y, code: 223, fg: block.bg, bg: block.fg}); break;
+                case 223: change_data({x, y, code: 220, fg: block.bg, bg: block.fg}); break;
+            }
+        }
+    }
 }
 
 function line(x0, y0, x1, y1) {
@@ -800,7 +810,7 @@ function draw_half_block(x, y, col) {
             }
         }
     }
-    // optimize_block(x, block_y);
+    optimize_block(x, block_y);
 }
 
 function draw_half_block_line(sx, sy, dx, dy, col) {
@@ -944,7 +954,11 @@ function mouse_down(event) {
             start_undo_chunk();
             if (toolbar.is_in_half_block_mode()) {
                 mouse_x = x; mouse_y = half_y;
-                half_block_brush(x, half_y, (mouse_button == mouse_button_types.LEFT) ? fg : bg);
+                if (event.shiftKey) {
+                    half_block_brush(x, half_y, 0);
+                } else {
+                    half_block_brush(x, half_y, (mouse_button == mouse_button_types.LEFT) ? fg : bg);
+                }
             } else if (event.shiftKey || toolbar.is_in_clear_block_mode()) {
                 mouse_x = x; mouse_y = y;
                 clear_block_brush(x, y);
@@ -1086,7 +1100,11 @@ function mouse_move(event) {
         case editor_modes.BRUSH:
             if (mouse_button) {
                 if (toolbar.is_in_half_block_mode()) {
-                    half_block_brush(x, half_y, mouse_button == mouse_button_types.LEFT ? fg : bg);
+                    if (event.shiftKey) {
+                        half_block_brush(x, half_y, 0);
+                    } else {
+                        half_block_brush(x, half_y, (mouse_button == mouse_button_types.LEFT) ? fg : bg);
+                    }
                 } else if (event.shiftKey || toolbar.is_in_clear_block_mode()) {
                     clear_block_brush(x, y);
                 } else if (toolbar.is_in_full_block_mode()) {
