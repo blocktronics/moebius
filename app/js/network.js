@@ -1,4 +1,5 @@
 const action =  {CONNECTED: 0, REFUSED: 1, JOIN: 2, LEAVE: 3, CURSOR: 4, SELECTION: 5, RESIZE_SELECTION: 6, OPERATION: 7, HIDE_CURSOR: 8, DRAW: 9, CHAT: 10};
+const libtextmode = require("../js/libtextmode/libtextmode");
 let byte_count = 0;
 
 function send(ws, type, data = {}) {
@@ -27,7 +28,7 @@ function message(ws, msg, network_handler) {
             hide_cursor: () => send(ws, action.HIDE_CURSOR, {id}),
             close: () => ws.close(),
             users: msg.data.users
-        }, msg.data.doc, msg.data.chat_history);
+        }, libtextmode.uncompress(msg.data.doc), msg.data.chat_history);
         break;
     case action.REFUSED:
         network_handler.refused();

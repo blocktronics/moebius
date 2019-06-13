@@ -481,4 +481,58 @@ function get_data_url(canvases) {
     return join_canvases(canvases).toDataURL("image/png");
 }
 
-module.exports = {read_file, write_file, animate, render, render_split, render_at, new_document, resize_canvas, cp437_to_unicode, render_blocks, flip_x, flip_y, rotate, get_data_url, convert_ega_to_style};
+function compress(doc) {
+    const compressed_data = {code: [], fg: [], bg: []};
+    for (let i = 0, code_repeat = 0, fg_repeat = 0, bg_repeat = 0; i < doc.data.length; i++) {
+        const block = doc.data[i];
+        if (i + 1 == doc.data.length) {
+            compressed_data.code.push([block.code, code_repeat]);
+            compressed_data.fg.push([block.fg, fg_repeat]);
+            compressed_data.bg.push([block.bg, bg_repeat]);
+        } else {
+            const next_block = doc.data[i + 1];
+            if (block.code != next_block.code) {
+                compressed_data.code.push([block.code, code_repeat]);
+                code_repeat = 0;
+            } else {
+                code_repeat += 1;
+            }
+            if (block.fg != next_block.fg) {
+                compressed_data.fg.push([block.fg, fg_repeat]);
+                fg_repeat = 0;
+            } else {
+                fg_repeat += 1;
+            }
+            if (block.bg != next_block.bg) {
+                compressed_data.bg.push([block.bg, bg_repeat]);
+                bg_repeat = 0;
+            } else {
+                bg_repeat += 1;
+            }
+        }
+    }
+    return {columns: doc.columns, rows: doc.rows, title: doc.title, author: doc.author, group: doc.group, date: doc.date, palette: doc.palette, font_name: doc.font_name, ice_colors: doc.ice_colors, use_9px_font: doc.use_9px_font, comments: doc.comments, compressed_data};
+}
+
+function uncompress(doc) {
+    if (doc.compressed_data) {
+        const codes = [];
+        const fgs = [];
+        const bgs = [];
+        for (const code of doc.compressed_data.code) {
+            for (let i = 0; i <= code[1]; i++) codes.push(code[0]);
+        }
+        for (const fg of doc.compressed_data.fg) {
+            for (let i = 0; i <= fg[1]; i++) fgs.push(fg[0]);
+        }
+        for (const bg of doc.compressed_data.bg) {
+            for (let i = 0; i <= bg[1]; i++) bgs.push(bg[0]);
+        }
+        doc.data = new Array(codes.length);
+        for (let i = 0; i < doc.data.length; i++) doc.data[i] = {code: codes[i], fg: fgs[i], bg: bgs[i]};
+        delete doc.compressed_data;
+    }
+    return doc;
+}
+
+module.exports = {read_file, write_file, animate, render, render_split, render_at, new_document, resize_canvas, cp437_to_unicode, render_blocks, flip_x, flip_y, rotate, get_data_url, convert_ega_to_style, compress, uncompress};

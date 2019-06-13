@@ -96,14 +96,14 @@ async function start_render() {
 }
 
 function connect_to_server({ip, pass = ""} = {}) {
-    // send_sync("show_connecting_modal");
+    send_sync("show_connecting_modal");
     network.connect(ip, (nick == "") ? "Anonymous" : nick, group, pass, {
         connected: (new_connection, new_doc, chat_history) => {
             connection = new_connection;
             cursor.connection = connection;
             doc = new_doc;
+            send("close_modal");
             start_render().then(() => {
-                send("close_modal");
                 cursor.start_editing_mode();
                 change_to_select_mode();
                 for (const user of connection.users) {
