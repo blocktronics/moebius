@@ -372,7 +372,7 @@ document.addEventListener("keydown", (event) => {
         }
         return;
     }
-    if (event.key == "a" && event.ctrlKey && !event.altKey && !event.metaKey && !event.shiftKey) {
+    if ((event.key == "a" || event.key == "A") && event.ctrlKey && !event.altKey && !event.metaKey && !event.shiftKey) {
         select_all();
         event.preventDefault();
     }
@@ -418,15 +418,15 @@ document.addEventListener("keydown", (event) => {
                                     event.preventDefault();
                                 }
                             }
-                        } else if (event.key == "v" && event.ctrlKey && !event.altKey && !event.metaKey && !event.shiftKey) {
+                        } else if ((event.key == "v" || event.key == "V") && event.ctrlKey && !event.altKey && !event.metaKey && !event.shiftKey) {
                             paste();
                             event.preventDefault();
                         }
                 }
             } else if (cursor.mode == canvas.cursor_modes.SELECTION && event.ctrlKey && !event.altKey && !event.metaKey && !event.shiftKey) {
                 switch (event.key) {
-                    case "x": cut(); event.preventDefault(); break;
-                    case "c": copy(); event.preventDefault(); break;
+                    case "x": case "X": cut(); event.preventDefault(); break;
+                    case "c": case "C": copy(); event.preventDefault(); break;
                 }
             } else if (cursor.mode == canvas.cursor_modes.OPERATION && event.code == "Enter") {
                 place();
