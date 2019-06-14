@@ -1,14 +1,18 @@
 const electron = require("electron");
 const fs = require("fs");
 const path = require("path");
-const file = path.join(electron.app.getPath("userData"), "preferences.json");
-if(!fs.existsSync(file)) fs.writeFileSync(file, JSON.stringify({}));
-const prefs = JSON.parse(fs.readFileSync(file, "utf-8"));
+let prefs;
 const default_values = {nick: "Anonymous", group: "", use_flashing_cursor: false, use_numpad: false, use_backup: false, backup_folder: ""};
+
+electron.app.on("ready", (event) => {
+    const file = path.join(electron.app.getPath("userData"), "preferences.json");
+    if(!fs.existsSync(file)) fs.writeFileSync(file, JSON.stringify({}));
+    prefs = JSON.parse(fs.readFileSync(file, "utf-8"));
+});
 
 function set(key, value) {
     prefs[key] = value;
-    fs.writeFileSync(file, JSON.stringify(prefs));
+    fs.writeFileSync(path.join(electron.app.getPath("userData"), "preferences.json"), JSON.stringify(prefs));
 }
 
 function assign_default(key) {
