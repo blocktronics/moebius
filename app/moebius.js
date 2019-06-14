@@ -264,10 +264,6 @@ function open_url(url) {
     if (match) connect_to_server({ip: match[2], pass: match[1]});
 }
 
-function disconnect({item, win}) {
-    // TODO
-}
-
 function open_dev_tools({win}) {
     if (win && !win.isDestroyed()) win.webContents.openDevTools({activate: false, mode: "detach"});
 }
@@ -608,8 +604,6 @@ function document_menu(win) {
                 {label: "Connect to Server…", id: "connect_to_server", click(item) {connect_to_server();}, enabled: false},
                 {type: "separator"},
                 {label: "Toggle Chat Window", id: "chat_window_toggle", accelerator: "Cmd+[", click(item) {win.send("chat_window_toggle");}, enabled: false},
-                {type: "separator"},
-                {label: "Disconnect", id: "disconnect", click(item) {disconnect({item, win});}, enabled: false},
             ]
         }, {
             label: "Window", submenu: [{role: "minimize"}, {role: "zoom"}, {type: "separator"}, {role: "front"}]
@@ -816,8 +810,6 @@ function document_menu(win) {
                 {label: "Connect to Server…", id: "connect_to_server", click(item) {connect_to_server();}, enabled: false},
                 {type: "separator"},
                 {label: "Toggle Chat Window", id: "chat_window_toggle", accelerator: "Ctrl+[", click(item) {win.send("chat_window_toggle");}, enabled: false},
-                {type: "separator"},
-                {label: "Disconnect", id: "disconnect", click(item) {disconnect({item, win});}, enabled: false},
             ]
         }, {
             label: "&Debug",
