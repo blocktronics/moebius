@@ -642,7 +642,7 @@ function paste() {
             if (lines.length) {
                 for (let y = cursor.y, line_y = 0; y < doc.rows && line_y < lines.length; y++, line_y++) {
                     for (let x = cursor.x, line_x = 0; x < doc.columns && line_x < lines[line_y].length; x++, line_x++) {
-                        change_data({x, y, code: lines[line_y].charCodeAt(line_x), fg, bg});
+                        change_data({x, y, code: libtextmode.unicode_to_cp437(lines[line_y].charCodeAt(line_x)), fg, bg});
                     }
                 }
             }
