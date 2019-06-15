@@ -81,19 +81,16 @@ function leave(id) {
     }
 }
 
-function add_link_events(element, goto_line) {
-    const links = element.getElementsByTagName("a");
-    for (const link of links) {
-        link.addEventListener("click", (event) =>{
-            const match = link.href.match(/^goto:\/\/#(\d+)/);
-            if (match) {
-                goto_line(match[1]);
-            } else {
-                electron.shell.openExternal(link.href);
-            }
-            event.preventDefault();
-        }, true);
-    }
+function add_click_event(link, goto_line) {
+    return (event) => {
+        const match = link.href.match(/^goto:\/\/#(\d+)/);
+        if (match) {
+            goto_line(match[1]);
+        } else {
+            electron.shell.openExternal(link.href);
+        }
+        event.preventDefault();
+    };
 }
 
 function chat(id, nick, group, text, goto_line) {
@@ -110,7 +107,8 @@ function chat(id, nick, group, text, goto_line) {
     const text_div = document.createElement("div");
     text_div.classList.add("text");
     text_div.innerHTML = linkify_string(text, {className: "", formatHref: {ticket: (line_no) => `goto://${line_no}`}});
-    add_link_events(text_div, goto_line);
+    const links = text_div.getElementsByTagName("a");
+    for (const link of links) link.addEventListener("click", add_click_event(link, goto_line), true);
     const container = document.createElement("div");
     container.appendChild(nick_div);
     container.appendChild(text_div);

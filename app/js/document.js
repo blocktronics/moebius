@@ -26,6 +26,7 @@ let mode;
 let previous_mode;
 let connection;
 const users = [];
+const darwin = (process.platform == "darwin");
 
 function send_sync(channel, opts) {
     return electron.ipcRenderer.sendSync(channel, {id: electron.remote.getCurrentWindow().id, ...opts});
@@ -96,7 +97,7 @@ async function start_render() {
 }
 
 function goto_line(line_no) {
-    if (line_no > 0 && line_no < doc.rows + 1) cursor.move_to(0, line_no - 1, true);
+    if (line_no > 0 && line_no < doc.rows + 1) cursor.move_to(cursor.x, line_no - 1, true);
 }
 
 function connect_to_server({ip, pass = ""} = {}) {
@@ -141,6 +142,7 @@ function connect_to_server({ip, pass = ""} = {}) {
             users[id].cursor.appear_ghosted();
             users[id].cursor.show();
             chat.join(id, users[id].nick, users[id].group, users[id].status);
+            if (darwin) electron.remote.app.dock.bounce("informational");
         },
         leave: (id) => {
             if (users[id]) {
