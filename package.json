@@ -1,6 +1,6 @@
 {
   "name": "moebius",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "ANSI Art Editor",
   "main": "app.js",
   "scripts": {
@@ -16,6 +16,7 @@
     "electron-builder": "^20.43.0"
   },
   "dependencies": {
+    "linkifyjs": "^2.1.8",
     "ws": "^7.0.0"
   }
 }

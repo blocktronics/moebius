@@ -95,6 +95,10 @@ async function start_render() {
     cursor.show();
 }
 
+function goto_line(line_no) {
+    if (line_no > 0 && line_no < doc.rows + 1) cursor.move_to(0, line_no - 1, true);
+}
+
 function connect_to_server({ip, pass = ""} = {}) {
     send_sync("show_connecting_modal");
     network.connect(ip, (nick == "") ? "Anonymous" : nick, group, pass, {
@@ -115,8 +119,9 @@ function connect_to_server({ip, pass = ""} = {}) {
                 }
                 chat.toggle(false);
                 send("enable_chat_window_toggle");
-                for (const line of chat_history) chat.chat(line.id, line.nick, line.group, line.text);
+                for (const line of chat_history) chat.chat(line.id, line.nick, line.group, line.text, goto_line);
                 chat.join(connection.id, nick, group, status);
+                network.ready_to_receive_events();
             });
         },
         error: () => {},
@@ -175,7 +180,7 @@ function connect_to_server({ip, pass = ""} = {}) {
             render_at(x, y);
         },
         chat: (id, nick, group, text) => {
-            chat.chat(id, nick, group, text);
+            chat.chat(id, nick, group, text, goto_line);
         },
         status: (id, status) => {
             chat.status(id, status);
@@ -381,16 +386,19 @@ document.addEventListener("keydown", (event) => {
             if (cursor.mode == canvas.cursor_modes.EDITING) {
                 if (use_numpad) {
                     switch (event.code) {
-                        case "Numpad1": if (!event.altKey) f_key(0); return;
-                        case "Numpad2": if (!event.altKey) f_key(1); return;
-                        case "Numpad3": if (!event.altKey) f_key(2); return;
-                        case "Numpad4": if (!event.altKey) f_key(3); return;
-                        case "Numpad5": if (!event.altKey) f_key(4); return;
-                        case "Numpad6": if (!event.altKey) f_key(5); return;
-                        case "Numpad7": if (!event.altKey) f_key(6); return;
-                        case "Numpad8": if (!event.altKey) f_key(7); return;
-                        case "Numpad9": if (!event.altKey) f_key(8); return;
-                        case "Numpad0": if (!event.altKey) f_key(9);  return;
+                        case "Numpad1": if (!event.altKey) f_key(1); return;
+                        case "Numpad2": if (!event.altKey) f_key(5); return;
+                        case "Numpad3": if (!event.altKey) f_key(1); return;
+                        case "Numpad4": if (!event.altKey) f_key(6); return;
+                        case "Numpad5": if (!event.altKey) f_key(3); return;
+                        case "Numpad6": if (!event.altKey) f_key(7); return;
+                        case "Numpad7": if (!event.altKey) f_key(2); return;
+                        case "Numpad8": if (!event.altKey) f_key(4); return;
+                        case "Numpad9": if (!event.altKey) f_key(2); return;
+                        case "Numpad0": if (!event.altKey) f_key(0); return;
+                        case "NumpadAdd": if (!event.altKey) f_key(0); return;
+                        case "NumpadDecimal": if (!event.altKey) key_typed(32); return;
+                        case "NumpadEnter": if (!event.altKey) cursor.new_line(); return;
                     }
                 }
                 switch (event.code) {
@@ -889,12 +897,17 @@ function get_half_block(x, y) {
     const block = doc.data[doc.columns * text_y + x];
     let upper_block_color = 0;
     let lower_block_color = 0;
+    let left_block_color = 0;
+    let right_block_color = 0;
     let is_blocky = false;
+    let is_vertically_blocky = false;
     switch (block.code) {
     case 0: case 32: case 255: upper_block_color = block.bg; lower_block_color = block.bg; is_blocky = true; break;
     case 220: upper_block_color = block.bg; lower_block_color = block.fg; is_blocky = true; break;
     case 223: upper_block_color = block.fg; lower_block_color = block.bg; is_blocky = true; break;
     case 219: upper_block_color = block.fg; lower_block_color = block.fg; is_blocky = true; break;
+    case 221: left_block_color = block.fg; right_block_color = block.bg; is_vertically_blocky = true; break;
+    case 222: left_block_color = block.bg; right_block_color = block.fg; is_vertically_blocky = true; break;
     default:
         if (block.fg == block.bg) {
             is_blocky = true;
@@ -904,7 +917,7 @@ function get_half_block(x, y) {
             is_blocky = false;
         }
     }
-    return {x, y, text_y, is_blocky, upper_block_color, lower_block_color, is_top};
+    return {x, y, text_y, is_blocky, is_vertically_blocky, upper_block_color, lower_block_color, left_block_color, right_block_color, is_top};
 }
 
 function fill(x, y, col) {
@@ -913,16 +926,30 @@ function fill(x, y, col) {
         const target_color = block.is_top ? block.upper_block_color : block.lower_block_color;
         if (target_color == col) return;
         start_undo_chunk();
-        const queue = [{x, y}];
+        const queue = [{to: {x, y}, from: {x, y}}];
         while (queue.length) {
             const coord = queue.pop();
-            const block = get_half_block(coord.x, coord.y);
+            const block = get_half_block(coord.to.x, coord.to.y);
             if (block.is_blocky && ((block.is_top && block.upper_block_color == target_color) || (!block.is_top && block.lower_block_color == target_color))) {
-                draw_half_block(coord.x, coord.y, col);
-                if (coord.x > 0) queue.push({x: coord.x - 1, y: coord.y});
-                if (coord.y > 0) queue.push({x: coord.x, y: coord.y - 1});
-                if (coord.x < doc.columns - 1) queue.push({x: coord.x + 1, y: coord.y});
-                if (coord.y < doc.rows * 2 - 1) queue.push({x: coord.x, y: coord.y + 1});
+                draw_half_block(coord.to.x, coord.to.y, col);
+                if (coord.to.x > 0) queue.push({to: {x: coord.to.x - 1, y: coord.to.y}, from: Object.assign(coord.to)});
+                if (coord.to.y > 0) queue.push({to: {x: coord.to.x, y: coord.to.y - 1}, from: Object.assign(coord.to)});
+                if (coord.to.x < doc.columns - 1) queue.push({to: {x: coord.to.x + 1, y: coord.to.y}, from: Object.assign(coord.to)});
+                if (coord.to.y < doc.rows * 2 - 1) queue.push({to: {x: coord.to.x, y: coord.to.y + 1}, from: Object.assign(coord.to)});
+            } else if (block.is_vertically_blocky) {
+                if (coord.from.y == coord.to.y - 1 && block.left_block_color == target_color) {
+                    change_data({x: coord.to.x, y: block.text_y, code: 221, fg: col, bg: block.right_block_color});
+                } else if (coord.from.y == coord.to.y - 1 && block.right_block_color == target_color) {
+                    change_data({x: coord.to.x, y: block.text_y, code: 222, fg: col, bg: block.left_block_color});
+                } else if (coord.from.y == coord.to.y + 1 && block.right_block_color == target_color) {
+                    change_data({x: coord.to.x, y: block.text_y, code: 222, fg: col, bg: block.left_block_color});
+                } else if (coord.from.y == coord.to.y + 1 && block.left_block_color == target_color) {
+                    change_data({x: coord.to.x, y: block.text_y, code: 221, fg: col, bg: block.right_block_color});
+                } else if (coord.from.x == coord.to.x - 1 && block.left_block_color == target_color) {
+                    change_data({x: coord.to.x, y: block.text_y, code: 221, fg: col, bg: block.right_block_color});
+                } else if (coord.from.x == coord.to.x + 1 && block.right_block_color == target_color) {
+                    change_data({x: coord.to.x, y: block.text_y, code: 222, fg: col, bg: block.left_block_color});
+                }
             }
         }
     }

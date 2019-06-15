@@ -2,7 +2,7 @@ const prefs = require("./prefs.js");
 const electron = require("electron");
 const path = require("path");
 const docs = {};
-let splash_screen_win, cheatsheet_win, acknowledgements_win, preferences_win;
+let splash_screen_win, cheatsheet_win, acknowledgements_win, numpad_mappings_win, preferences_win;
 let last_document_xy_position;
 const NEW_DOCUMENT_WIDTH = 1280;
 const NEW_DOCUMENT_HEIGHT = 800;
@@ -167,9 +167,9 @@ async function new_document({columns, rows, title, author, group, date, palette,
 }
 
 function open(win) {
-    electron.dialog.showOpenDialog(win, {filters: [{name: "TextArt", extensions: ["ans", "xb", "bin", "diz", "asc", "txt"]}, {name: "All Files", extensions: ["*"]}], properties: ["openFile", "multiSelections"]}, (files) => {
+    electron.dialog.showOpenDialog(win, {filters: [{name: "TextArt", extensions: ["ans", "xb", "bin", "diz", "asc", "txt", "nfo"]}, {name: "All Files", extensions: ["*"]}], properties: ["openFile", "multiSelections"]}, (files) => {
         if (files) {
-            if (win && !docs[win.id].file && !docs[win.id].edited) {
+            if (win && !docs[win.id].network && !docs[win.id].file && !docs[win.id].edited) {
                 docs[win.id].file = files[0];
                 electron.app.addRecentDocument(files[0]);
                 win.setRepresentedFilename(files[0]);
@@ -615,6 +615,7 @@ function document_menu(win) {
         }, {
             label: "Help", role: "help", submenu: [
                 {label: "Cheatsheet", id: "show_cheatsheet", click(item) {show_cheatsheet();}},
+                {label: "Show Numpad Mappings", id: "show_numpad_mappings", click(item) {show_numpad_mappings();}},
                 {type: "separator"},
                 {label: "Acknowledgements", id: "show_cheatsheet", click(item) {show_acknowledgements();}},
             ]
@@ -819,6 +820,7 @@ function document_menu(win) {
         }, {
             label: "Help", role: "help", submenu: [
                 {label: "Cheatsheet", id: "show_cheatsheet", click(item) {show_cheatsheet();}},
+                {label: "Show Numpad Mappings", id: "show_numpad_mappings", click(item) {show_numpad_mappings();}},
                 {type: "separator"},
                 {label: "Acknowledgements", id: "show_cheatsheet", click(item) {show_acknowledgements();}},
             ]
@@ -886,6 +888,21 @@ function show_acknowledgements() {
         });
         acknowledgements_win.on("ready-to-show", (event) => acknowledgements_win.show());
         acknowledgements_win.loadFile("app/html/acknowledgements.html");
+    }
+}
+
+function show_numpad_mappings() {
+    if (numpad_mappings_win && !numpad_mappings_win.isDestroyed()) {
+        numpad_mappings_win.focus();
+    } else {
+        numpad_mappings_win = new electron.BrowserWindow({width: 640, height: 400, show: false, backgroundColor: "#000000", titleBarStyle: "hiddenInset", maximizable: false, resizable: false, useContentSize: true, frame: darwin ? false : true, fullscreenable: false, webPreferences: {nodeIntegration: true}});
+        if (!darwin) numpad_mappings_win.setMenu(null);
+        numpad_mappings_win.on("focus", (event) => {
+            set_application_menu();
+            discord_rpc.set_details("Admiring the Numpad Mappings");
+        });
+        numpad_mappings_win.on("ready-to-show", (event) => numpad_mappings_win.show());
+        numpad_mappings_win.loadFile("app/html/numpad_mappings.html");
     }
 }
 

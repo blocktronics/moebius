@@ -3,6 +3,8 @@ const status_types = {ACTIVE: 0, IDLE: 1, AWAY: 2};
 const libtextmode = require("../js/libtextmode/libtextmode");
 let byte_count = 0;
 let idle_timer, away_timer, status;
+let ready = false;
+const queued_events = [];
 
 function set_status(ws, id, new_status) {
     status = new_status;
@@ -18,6 +20,14 @@ function send(ws, type, data = {}) {
         set_status(ws, data.id, status_types.IDLE);
         away_timer = setTimeout(() => set_status(ws, data.id, status_types.AWAY), 4 * 60 * 1000);
     }, 1 * 60 * 1000);
+}
+
+function queue(name, opts, network_handler) {
+    if (ready) {
+        network_handler[name](...opts);
+    } else {
+        queued_events.push({name, opts, network_handler});
+    }
 }
 
 function message(ws, msg, network_handler) {
@@ -50,34 +60,34 @@ function message(ws, msg, network_handler) {
         network_handler.refused();
         break;
     case action.JOIN:
-        network_handler.join(msg.data.id, msg.data.nick, msg.data.group, msg.data.status);
+        queue("join", [msg.data.id, msg.data.nick, msg.data.group, msg.data.status], network_handler);
         break;
     case action.LEAVE:
-        network_handler.leave(msg.data.id);
+        queue("leave", [msg.data.id], network_handler);
         break;
     case action.CURSOR:
-        network_handler.cursor(msg.data.id, msg.data.x, msg.data.y);
+        queue("cursor", [msg.data.id, msg.data.x, msg.data.y], network_handler);
         break;
     case action.SELECTION:
-        network_handler.selection(msg.data.id, msg.data.x, msg.data.y);
+        queue("selection", [msg.data.id, msg.data.x, msg.data.y], network_handler);
         break;
     case action.RESIZE_SELECTION:
-        network_handler.resize_selection(msg.data.id, msg.data.columns, msg.data.rows);
+        queue("resize_selection", [msg.data.id, msg.data.columns, msg.data.rows], network_handler);
         break;
     case action.OPERATION:
-        network_handler.operation(msg.data.id, msg.data.x, msg.data.y);
+        queue("operation", [msg.data.id, msg.data.x, msg.data.y], network_handler);
         break;
     case action.HIDE_CURSOR:
-        network_handler.hide_cursor(msg.data.id);
+        queue("hide_cursor", [msg.data.id], network_handler);
         break;
     case action.DRAW:
-        network_handler.draw(msg.data.id, msg.data.x, msg.data.y, msg.data.block);
+        queue("draw", [msg.data.id, msg.data.x, msg.data.y, msg.data.block], network_handler);
         break;
     case action.CHAT:
-        network_handler.chat(msg.data.id, msg.data.nick, msg.data.group, msg.data.text);
+        queue("chat", [msg.data.id, msg.data.nick, msg.data.group, msg.data.text], network_handler);
         break;
     case action.STATUS:
-        network_handler.status(msg.data.id, msg.data.status);
+        queue("status", [msg.data.id, msg.data.status], network_handler);
         break;
     default:
         break;
@@ -96,4 +106,9 @@ async function connect(ip, nick, group, pass, network_handler) {
     }
 }
 
-module.exports = {connect};
+function ready_to_receive_events() {
+    for (const event of queued_events) event.network_handler[event.name](...event.opts);
+    ready = true;
+}
+
+module.exports = {connect, ready_to_receive_events};

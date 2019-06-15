@@ -1,0 +1,13 @@
+body {
+    background-color: black;
+    overflow: hidden;
+    -webkit-app-region: drag;
+}
+
+body div:first-child {
+    margin: 0px auto;
+    width: 640px;
+    height: 384px;
+    position: fixed;
+    bottom: 0px;
+}

@@ -26,6 +26,10 @@ fileAssociations:
     name: Description in Zip File
     role: Editor
     icon: document_icon.icns
+  - ext: .nfo
+    name: Release Information
+    role: Editor
+    icon: document_icon.icns
   - ext: .asc
     name: ASCII Art
     role: Editor

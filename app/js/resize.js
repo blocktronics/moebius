@@ -7,7 +7,7 @@ function send(channel, opts) {
 function ok() {
     const columns = parseInt(document.getElementById("columns").value, 10);
     const rows = parseInt(document.getElementById("rows").value, 10);
-    if (columns && columns > 0 && columns <= 3000 && rows && rows > 0 && rows <= 3000) send("set_canvas_size", {columns, rows});
+    if (columns && columns > 0 && columns <= 3000 && rows && rows > 0 && rows <= 10000) send("set_canvas_size", {columns, rows});
 }
 
 function cancel() {

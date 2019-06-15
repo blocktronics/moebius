@@ -1,6 +1,9 @@
 let visible = false;
 let users = [];
 const status_types = {ACTIVE: 0, IDLE: 1, AWAY: 2};
+const linkify = require("linkifyjs");
+const linkify_string = require("linkifyjs/string");
+require("linkifyjs/plugins/ticket")(linkify);
 
 function set_var(name, value) {
     document.documentElement.style.setProperty(`--${name}`, `${value}px`);
@@ -78,7 +81,22 @@ function leave(id) {
     }
 }
 
-function chat(id, nick, group, text) {
+function add_link_events(element, goto_line) {
+    const links = element.getElementsByTagName("a");
+    for (const link of links) {
+        link.addEventListener("click", (event) =>{
+            const match = link.href.match(/^goto:\/\/#(\d+)/);
+            if (match) {
+                goto_line(match[1]);
+            } else {
+                electron.shell.openExternal(link.href);
+            }
+            event.preventDefault();
+        }, true);
+    }
+}
+
+function chat(id, nick, group, text, goto_line) {
     const messages = document.getElementById("messages");
     const rect = messages.getBoundingClientRect();
     const scroll = (rect.height > messages.scrollHeight) || (messages.scrollTop == messages.scrollHeight - rect.height + 1);
@@ -91,7 +109,8 @@ function chat(id, nick, group, text) {
     }
     const text_div = document.createElement("div");
     text_div.classList.add("text");
-    text_div.innerText = text;
+    text_div.innerHTML = linkify_string(text, {className: "", formatHref: {ticket: (line_no) => `goto://${line_no}`}});
+    add_link_events(text_div, goto_line);
     const container = document.createElement("div");
     container.appendChild(nick_div);
     container.appendChild(text_div);

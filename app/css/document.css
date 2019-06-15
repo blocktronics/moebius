@@ -151,6 +151,9 @@ body.dark #current_colors > canvas {
     height: calc(100% - 28px);
     border-left: 1px solid var(--dark-border-color);
 }
+#messages a {
+    color: #aaaaaa;
+}
 #chat_input {
     background-color: var(--dark-mid-color);
     color: white;
