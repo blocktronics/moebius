@@ -314,6 +314,7 @@ const application_menu = electron.Menu.buildFromTemplate([{
 }, {
     label: "Help", role: "help", submenu: [
         {label: "Cheatsheet", id: "show_cheatsheet", click(item) {show_cheatsheet();}},
+        {label: "Show Numpad Mappings", id: "show_numpad_mappings", click(item) {show_numpad_mappings();}},
         {type: "separator"},
         {label: "Acknowledgements", id: "show_cheatsheet", click(item) {show_acknowledgements();}},
     ]
