@@ -1,5 +1,5 @@
 const {ega} = require("./palette");
-const {bytes_to_string, bytes_to_blocks, Textmode, add_sauce_for_xbin} = require("./textmode");
+const {bytes_to_utf8, bytes_to_blocks, Textmode, add_sauce_for_xbin} = require("./textmode");
 const repeating = {NONE: 0, CHARACTERS: 1, ATTRIBUTES: 2, BOTH_CHARACTERS_AND_ATTRIBUTES: 3};
 const {encode_as_bin} = require("./binary_text");
 
@@ -37,7 +37,7 @@ function uncompress({bytes, columns, rows}) {
 class XBin extends Textmode {
     constructor(bytes) {
         super(bytes);
-        if (bytes_to_string(this.bytes, 0, 4) != "XBIN" | this.bytes[4] != 0x1A) {
+        if (bytes_to_utf8(this.bytes, 0, 4) != "XBIN" | this.bytes[4] != 0x1A) {
             throw("Error whilst attempting to load XBin file: Unexpected header.");
         }
         this.columns = (this.bytes[6] << 8) + this.bytes[5];

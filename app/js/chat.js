@@ -37,6 +37,27 @@ function toggle(focus) {
     }
 }
 
+function add_click_event(link, goto_line) {
+    return (event) => {
+        const match = link.href.match(/^goto:\/\/#(\d+)/);
+        if (match) {
+            goto_line(match[1]);
+        } else {
+            electron.shell.openExternal(link.href);
+        }
+        event.preventDefault();
+    };
+}
+
+function create_links(element, text, goto_line) {
+    element.innerHTML = linkify_string(text, {className: "", formatHref: {ticket: (line_no) => `goto://${line_no}`}});
+    const links = element.getElementsByTagName("a");
+    for (const link of links) {
+        link.setAttribute("tabIndex", -1);
+        link.addEventListener("click", add_click_event(link, goto_line), true);
+    }
+}
+
 function action(nick, text) {
     const messages = document.getElementById("messages");
     const rect = messages.getBoundingClientRect();
@@ -48,6 +69,13 @@ function action(nick, text) {
     container.appendChild(nick_div);
     document.getElementById("messages").appendChild(container);
     if (scroll) scroll_to_bottom();
+}
+
+function welcome(text, goto_line) {
+    const welcome_div = document.createElement("div");
+    welcome_div.classList.add("welcome");
+    create_links(welcome_div, text, goto_line);
+    document.getElementById("messages").appendChild(welcome_div);
 }
 
 function set_status(id, status) {
@@ -81,16 +109,8 @@ function leave(id) {
     }
 }
 
-function add_click_event(link, goto_line) {
-    return (event) => {
-        const match = link.href.match(/^goto:\/\/#(\d+)/);
-        if (match) {
-            goto_line(match[1]);
-        } else {
-            electron.shell.openExternal(link.href);
-        }
-        event.preventDefault();
-    };
+function updated_sauce(id) {
+    if (users[id]) action(users[id].nick, "has edited the SAUCE record");
 }
 
 function chat(id, nick, group, text, goto_line) {
@@ -106,9 +126,7 @@ function chat(id, nick, group, text, goto_line) {
     }
     const text_div = document.createElement("div");
     text_div.classList.add("text");
-    text_div.innerHTML = linkify_string(text, {className: "", formatHref: {ticket: (line_no) => `goto://${line_no}`}});
-    const links = text_div.getElementsByTagName("a");
-    for (const link of links) link.addEventListener("click", add_click_event(link, goto_line), true);
+    create_links(text_div, text, goto_line);
     const container = document.createElement("div");
     container.appendChild(nick_div);
     container.appendChild(text_div);
@@ -125,4 +143,4 @@ function chat(id, nick, group, text, goto_line) {
     if (scroll) scroll_to_bottom();
 }
 
-module.exports = {toggle, join, leave, chat, status: set_status};
+module.exports = {toggle, join, leave, chat, welcome, updated_sauce, status: set_status};

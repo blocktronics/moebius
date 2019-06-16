@@ -100,9 +100,9 @@ function goto_line(line_no) {
     if (line_no > 0 && line_no < doc.rows + 1) cursor.move_to(cursor.x, line_no - 1, true);
 }
 
-function connect_to_server({ip, pass = ""} = {}) {
+function connect_to_server({server, pass = ""} = {}) {
     send_sync("show_connecting_modal");
-    network.connect(ip, (nick == "") ? "Anonymous" : nick, group, pass, {
+    network.connect(server, (nick == "") ? "Anonymous" : nick, group, pass, {
         connected: (new_connection, new_doc, chat_history, status) => {
             connection = new_connection;
             cursor.connection = connection;
@@ -120,6 +120,7 @@ function connect_to_server({ip, pass = ""} = {}) {
                 }
                 chat.toggle(false);
                 send("enable_chat_window_toggle");
+                if (doc.comments) chat.welcome(doc.comments.split("\n")[0].replace(/ +$/, ""), goto_line);
                 for (const line of chat_history) chat.chat(line.id, line.nick, line.group, line.text, goto_line);
                 chat.join(connection.id, nick, group, status);
                 network.ready_to_receive_events();
@@ -186,6 +187,14 @@ function connect_to_server({ip, pass = ""} = {}) {
         },
         status: (id, status) => {
             chat.status(id, status);
+        },
+        sauce: (id, title, author, group, comments) => {
+            doc.title = title;
+            doc.author = author;
+            doc.group = group;
+            doc.comments = comments;
+            send("update_sauce", {title, author, group, comments});
+            chat.updated_sauce(id);
         }
     });
 }
@@ -1284,6 +1293,10 @@ function set_sauce_info({title, author, group, comments}) {
     doc.author = author;
     doc.group = group;
     doc.comments = comments;
+    if (connection) {
+        connection.sauce(title, author, group, comments);
+        chat.updated_sauce(connection.id);
+    }
 }
 
 async function new_document({columns, rows, title, author, group, date, palette, font_name, use_9px_font, ice_colors, comments, data}) {

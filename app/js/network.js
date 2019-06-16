@@ -1,4 +1,4 @@
-const action =  {CONNECTED: 0, REFUSED: 1, JOIN: 2, LEAVE: 3, CURSOR: 4, SELECTION: 5, RESIZE_SELECTION: 6, OPERATION: 7, HIDE_CURSOR: 8, DRAW: 9, CHAT: 10, STATUS: 11};
+const action =  {CONNECTED: 0, REFUSED: 1, JOIN: 2, LEAVE: 3, CURSOR: 4, SELECTION: 5, RESIZE_SELECTION: 6, OPERATION: 7, HIDE_CURSOR: 8, DRAW: 9, CHAT: 10, STATUS: 11, SAUCE: 12};
 const status_types = {ACTIVE: 0, IDLE: 1, AWAY: 2};
 const libtextmode = require("../js/libtextmode/libtextmode");
 let byte_count = 0;
@@ -51,6 +51,7 @@ function message(ws, msg, network_handler) {
                 network_handler.chat(id, nick, group, text);
             },
             status: (status) => send(ws, action.STATUS, {id, status}),
+            sauce: (title, author, group, comments) => send(ws, action.SAUCE, {id, title, author, group, comments}),
             hide_cursor: () => send(ws, action.HIDE_CURSOR, {id}),
             close: () => ws.close(),
             users: msg.data.users
@@ -89,14 +90,17 @@ function message(ws, msg, network_handler) {
     case action.STATUS:
         queue("status", [msg.data.id, msg.data.status], network_handler);
         break;
+    case action.SAUCE:
+        queue("sauce", [msg.data.id, msg.data.title, msg.data.author, msg.data.group, msg.data.comments], network_handler);
+        break;
     default:
         break;
     }
 }
 
-async function connect(ip, nick, group, pass, network_handler) {
+async function connect(server, nick, group, pass, network_handler) {
     try {
-        const ws = new WebSocket(`ws://${ip}:8000/`);
+        const ws = new WebSocket(`ws://${server}:8000/`);
         ws.addEventListener("open", () => send(ws, action.CONNECTED, {nick, group, pass}));
         ws.addEventListener("error", network_handler.error);
         ws.addEventListener("close", network_handler.disconnected);

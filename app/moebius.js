@@ -2,7 +2,7 @@ const prefs = require("./prefs.js");
 const electron = require("electron");
 const path = require("path");
 const docs = {};
-let splash_screen_win, cheatsheet_win, acknowledgements_win, numpad_mappings_win, preferences_win;
+let splash_screen_win, new_connection_win, cheatsheet_win, acknowledgements_win, numpad_mappings_win, preferences_win;
 let last_document_xy_position;
 const NEW_DOCUMENT_WIDTH = 1280;
 const NEW_DOCUMENT_HEIGHT = 800;
@@ -251,17 +251,30 @@ function start_server({item, win}) {
     // TODO
 }
 
-async function connect_to_server({ip, pass} = {}) {
+function show_new_connection_window() {
+    if (new_connection_win && !new_connection_win.isDestroyed()) {
+        new_connection_win.focus();
+    } else {
+        new_connection_win = new electron.BrowserWindow({width: 400, height: 210, show: false, backgroundColor: "#000000", maximizable: false, resizable: false, fullscreenable: false, webPreferences: {nodeIntegration: true}});
+        new_connection_win.setTouchBar(new electron.TouchBar({items: [new electron.TouchBar.TouchBarButton({label: "Connect", click() {new_connection_win.send("ok");}})], escapeItem: new electron.TouchBar.TouchBarButton({label: "Cancel", click() {new_connection_win.send("cancel");}})}));
+        if (!darwin) new_connection_win.setMenu(null);
+        new_connection_win.on("focus", (event) => set_application_menu());
+        new_connection_win.on("ready-to-show", (event) => new_connection_win.show());
+        new_connection_win.loadFile("app/html/new_connection.html");
+    }
+}
+
+async function connect_to_server({server, pass} = {}) {
     const win = await new_document_window();
     change_to_network_mode(win.id);
     docs[win.id].network = true;
-    win.setTitle(ip);
-    win.send("connect_to_server", {ip, pass});
+    win.setTitle(server);
+    win.send("connect_to_server", {server, pass});
 }
 
 function open_url(url) {
     const match = url.match(/moebius:\/\/(?:(.*?)@)?([^\/]+)/i);
-    if (match) connect_to_server({ip: match[2], pass: match[1]});
+    if (match) connect_to_server({server: match[2], pass: match[1]});
 }
 
 function open_dev_tools({win}) {
@@ -307,7 +320,7 @@ const application_menu = electron.Menu.buildFromTemplate([{
     ]
 }, {
     label: "Network", submenu: [
-        {label: "Connect to Server…", id: "connect_to_server", click(item) {connect_to_server();}, enabled: false},
+        {label: "Connect to Server…", accelerator: "Cmd+Alt+S", id: "connect_to_server", click(item) {show_new_connection_window();}},
     ]
 }, {
     label: "Window", submenu: [{role: "minimize"}, {role: "zoom"}, {type: "separator"}, {role: "front"}]
@@ -340,6 +353,8 @@ function chat_input_menu(win) {
         label: "File",
         submenu: [
             {label: "New", id: "new_document", accelerator: "Cmd+N", click(item) {new_document();}},
+            {type: "separator"},
+            {label: "Edit Sauce Info\u2026", id: "edit_sauce_info", accelerator: "Cmd+I", click(item) {win.send("get_sauce_info");}},
             {type: "separator"},
             {label: "Open\u2026", id: "open", accelerator: "Cmd+O", click(item) {open();}},
             {role: "recentDocuments", submenu: [{label: "Clear Menu", id: "clear_recent_documents", click(item) {electron.app.clearRecentDocuments();}}]},
@@ -424,7 +439,7 @@ function document_menu(win) {
                     {label: "Clear Menu", id: "clear_recent_documents", click(item) {electron.app.clearRecentDocuments();}},
                 ]},
                 {type: "separator"},
-                {label: "Edit Sauce Info\u2026", id: "edit_sauce_info", accelerator: "Cmd+I", click(item) {win.send("get_sauce_info");}, enabled: true},
+                {label: "Edit Sauce Info\u2026", id: "edit_sauce_info", accelerator: "Cmd+I", click(item) {win.send("get_sauce_info");}},
                 {type: "separator"},
                 {label: "Save", id: "save", accelerator: "Cmd+S", click(item) {save({win});}},
                 {label: "Save As\u2026", id: "save_as", accelerator: "Cmd+Shift+S", click(item) {save_as({win});}},
@@ -602,7 +617,7 @@ function document_menu(win) {
         }, {
             label: "Network", submenu: [
                 {label: "Start Server…", id: "start_server", click(item) {start_server({item, win});}, enabled: false},
-                {label: "Connect to Server…", id: "connect_to_server", click(item) {connect_to_server();}, enabled: false},
+                {label: "Connect to Server…", id: "connect_to_server", accelerator: "Cmd+Alt+S", click(item) {show_new_connection_window();}},
                 {type: "separator"},
                 {label: "Toggle Chat Window", id: "chat_window_toggle", accelerator: "Cmd+[", click(item) {win.send("chat_window_toggle");}, enabled: false},
             ]
@@ -629,7 +644,7 @@ function document_menu(win) {
                 {type: "separator"},
                 {label: "Open\u2026", id: "open", accelerator: "Ctrl+O", click(item) {open(win);}},
                 {type: "separator"},
-                {label: "Edit Sauce Info\u2026", id: "edit_sauce_info", accelerator: "Ctrl+I", click(item) {win.send("get_sauce_info");}, enabled: true},
+                {label: "Edit Sauce Info\u2026", id: "edit_sauce_info", accelerator: "Ctrl+I", click(item) {win.send("get_sauce_info");}},
                 {type: "separator"},
                 {label: "Save", id: "save", accelerator: "Ctrl+S", click(item) {save({win});}},
                 {label: "Save As\u2026", id: "save_as", accelerator: "Ctrl+Shift+S", click(item) {save_as({win});}},
@@ -809,7 +824,7 @@ function document_menu(win) {
         }, {
             label: "&Network", submenu: [
                 {label: "Start Server…", id: "start_server", click(item) {start_server({item, win});}, enabled: false},
-                {label: "Connect to Server…", id: "connect_to_server", click(item) {connect_to_server();}, enabled: false},
+                {label: "Connect to Server…", id: "connect_to_server", accelerator: "Ctrl+Alt+S", click(item) {show_new_connection_window();}},
                 {type: "separator"},
                 {label: "Toggle Chat Window", id: "chat_window_toggle", accelerator: "Ctrl+[", click(item) {win.send("chat_window_toggle");}, enabled: false},
             ]
@@ -851,11 +866,8 @@ function show_splash_screen() {
         splash_screen_win.loadFile("app/html/splash_screen.html");
         splash_screen_win.setTouchBar(new electron.TouchBar({
             items: [
-                new electron.TouchBar.TouchBarSpacer({size: "flexible"}),
                 new electron.TouchBar.TouchBarButton({label: "New", click() {new_document();}}),
                 new electron.TouchBar.TouchBarButton({label: "Open", click() {open();}}),
-                new electron.TouchBar.TouchBarSpacer({size: "flexible"}),
-                new electron.TouchBar.TouchBarButton({label: "Connect to Server", click() {connect_to_server();}}),
                 new electron.TouchBar.TouchBarSpacer({size: "flexible"}),
             ], escapeItem: new electron.TouchBar.TouchBarLabel({label: "Mœbius", textColor: "#939393"})
         }));
@@ -1137,7 +1149,6 @@ function change_to_sample_mode(id) {
 }
 
 function change_to_network_mode(id) {
-    docs[id].menu.getMenuItemById("edit_sauce_info").enabled = false;
     docs[id].menu.getMenuItemById("set_canvas_size").enabled = false;
     docs[id].menu.getMenuItemById("use_9px_font").enabled = false;
     docs[id].menu.getMenuItemById("ice_colors").enabled = false;
@@ -1201,9 +1212,13 @@ function chat_input_blur(id) {
     }
 }
 
+function update_sauce({id, title, author, group, comments}) {
+    if (docs[id] && docs[id].modal && !docs[id].modal.isDestroyed()) docs[id].modal.send("set_sauce_info", {title, author, group, comments});
+}
+
 electron.ipcMain.on("new_document", (event, opts) => new_document(opts));
 electron.ipcMain.on("open", (event) => open());
-electron.ipcMain.on("connect_to_server", (event, {ip, pass}) => connect_to_server({ip, pass}));
+electron.ipcMain.on("connect_to_server", (event, {server, pass}) => connect_to_server({server, pass}));
 electron.ipcMain.on("show_rendering_modal", (event, {id}) => show_rendering_modal(event, id));
 electron.ipcMain.on("show_connecting_modal", (event, {id}) => show_connecting_modal(event, id));
 electron.ipcMain.on("close_modal", (event, {id}) => close_modal(id));
@@ -1246,5 +1261,6 @@ electron.ipcMain.on("preferences", (event) => preferences());
 electron.ipcMain.on("enable_chat_window_toggle", (event, {id}) => enable_chat_window_toggle(id));
 electron.ipcMain.on("chat_input_focus", (event, {id}) => chat_input_focus(id));
 electron.ipcMain.on("chat_input_blur", (event, {id}) => chat_input_blur(id));
+electron.ipcMain.on("update_sauce", (event, {id, title, author, group, comments}) => update_sauce({id, title, author, group, comments}));
 
 module.exports = {show_splash_screen, open_file, set_application_menu, has_document_windows, connect_to_server, open_url};

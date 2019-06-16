@@ -1,13 +1,19 @@
+const argv = require("minimist")(process.argv, {default: {pass: "", file: "./server.ans", quiet: false}});
 const ws = require("ws");
 const wss = new ws.Server({port: 8000});
 const libtextmode = require("./js/libtextmode/libtextmode");
 let doc;
-const pass = "";
-const action =  {CONNECTED: 0, REFUSED: 1, JOIN: 2, LEAVE: 3, CURSOR: 4, SELECTION: 5, RESIZE_SELECTION: 6, OPERATION: 7, HIDE_CURSOR: 8, DRAW: 9, CHAT: 10, STATUS: 11};
+const pass = argv.pass;
+const action =  {CONNECTED: 0, REFUSED: 1, JOIN: 2, LEAVE: 3, CURSOR: 4, SELECTION: 5, RESIZE_SELECTION: 6, OPERATION: 7, HIDE_CURSOR: 8, DRAW: 9, CHAT: 10, STATUS: 11, SAUCE: 12};
 const status_types = {ACTIVE: 0, IDLE: 1, AWAY: 2};
 const data_store = [];
 const chat_history = [];
 let timer;
+
+
+function log(text) {
+    if (!argv.quiet) console.log(text);
+}
 
 function send(ws, type, data = {}) {
     ws.send(JSON.stringify({type, data}));
@@ -36,10 +42,10 @@ function message(ws, msg) {
             data_store.push({user: {nick: msg.data.nick, group: msg.data.group, id: id, status: status_types.ACTIVE}, ws: ws, closed: false});
             send(ws, action.CONNECTED, {id, doc: libtextmode.compress(doc), users, chat_history, status: status_types.ACTIVE});
             send_all(ws, action.JOIN, {id, nick: msg.data.nick, group: msg.data.group, status: status_types.ACTIVE});
-            console.log(`${msg.data.nick} has joined`);
+            log(`${msg.data.nick} has joined`);
         } else {
             send(ws, action.REFUSED);
-            console.log(`${msg.data.nick} was refused`);
+            log(`${msg.data.nick} was refused`);
         }
     break;
     case action.DRAW:
@@ -57,16 +63,23 @@ function message(ws, msg) {
         data_store[msg.data.id].user.status = msg.data.status;
         send_all_including_self(msg.type, msg.data);
         break;
+    case action.SAUCE:
+        doc.title = msg.data.title;
+        doc.author = msg.data.author;
+        doc.group = msg.data.group;
+        doc.comments = msg.data.comments;
+        send_all(ws, msg.type, msg.data);
+        break;
     default:
         send_all(ws, msg.type, msg.data);
     }
 }
 
 function save() {
-    libtextmode.write_file(doc, "./server.ans");
+    libtextmode.write_file(doc, argv.file);
 }
 
-libtextmode.read_file("./server.ans").then((ansi) => {
+libtextmode.read_file(argv.file).then((ansi) => {
     timer = setInterval(save, 5 * 60 * 1000);
     doc = ansi;
     wss.on("connection", (ws) => {
@@ -75,7 +88,7 @@ libtextmode.read_file("./server.ans").then((ansi) => {
             for (let id = 0; id < data_store.length; id++) {
                 if (data_store[id].ws == ws) {
                     const user = data_store[id].user;
-                    console.log(`${user.nick} has left`);
+                    log(`${user.nick} has left`);
                     send_all(ws, action.LEAVE, {id: user.id});
                     data_store[id].closed = true;
                 }
@@ -84,9 +97,9 @@ libtextmode.read_file("./server.ans").then((ansi) => {
     });
 });
 
-wss.on("listening", () => console.log(`Server started on port ${wss.address().port}`));
+wss.on("listening", () => log(`Server started on port ${wss.address().port}`));
 
-wss.on("close", () => console.log("Server ended"));
+wss.on("close", () => log("Server ended"));
 
 process.on("SIGINT", () => {
     clearInterval(timer);

@@ -8,9 +8,9 @@ function show_new_version_button() {
 }
 
 function connect(event) {
-    const ip = document.getElementById("ip").value;
+    const server = document.getElementById("server").value;
     const pass = document.getElementById("pass").value;
-    if (ip != "") electron.ipcRenderer.send("connect_to_server", {ip, pass});
+    if (server != "") electron.ipcRenderer.send("connect_to_server", {server, pass});
 }
 
 function key_down(params) {
@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("open").addEventListener("click", (event) => electron.ipcRenderer.send("open"));
     preferences.addEventListener("click", (event) => electron.ipcRenderer.send("preferences"));
     document.getElementById("connect").addEventListener("click", connect, true);
-    document.getElementById("ip").addEventListener("keydown", key_down, true);
+    document.getElementById("server").addEventListener("keydown", key_down, true);
     document.getElementById("pass").addEventListener("keydown", key_down, true);
     libtextmode.animate({file: `${process.resourcesPath}/ans/MB4K.ans`, ctx: document.getElementById("splash_terminal").getContext("2d")});
     fetch("http://www.andyh.org/moebius/latest.json", {cache: "no-cache"}).then((response) => response.json()).then((json) => {

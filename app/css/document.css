@@ -153,6 +153,10 @@ body.dark #current_colors > canvas {
 }
 #messages a {
     color: #aaaaaa;
+    outline: none;
+}
+#messages > div.welcome {
+    text-align: center;
 }
 #chat_input {
     background-color: var(--dark-mid-color);

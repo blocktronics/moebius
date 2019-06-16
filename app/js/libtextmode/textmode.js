@@ -7,7 +7,7 @@ function bytes_to_blocks({columns, rows, bytes}) {
 }
 
 class Sauce {
-    constructor({columns, rows, title = "", author = "", group = "", date, filesize = 0, ice_colors = false, use_9px_font = false, font_name = "IBM VGA", comments = []} = {}) {
+    constructor({columns, rows, title = "", author = "", group = "", date, filesize = 0, ice_colors = false, use_9px_font = false, font_name = "IBM VGA", comments = ""} = {}) {
         this.columns = columns;
         this.rows = rows;
         this.title = title;
@@ -44,12 +44,11 @@ const data_type_types = {CHARACTER: 1, BIN: 5, XBIN: 6};
 const file_type_types = {NONE: 0, ANS_FILETYPE: 1};
 
 function add_comments_bytes(comments, sauce_bytes) {
-    const bytes = new Uint8Array(5 + comments.length * 64);
-    add_text(bytes, 0, "COMNT", 5);
-    for (let i = 0; i < comments.length; i++) {
-        add_text(bytes, i * 64 + 5, comments[i], 64);
-    }
-    const merged_bytes = new Int8Array(bytes.length + sauce_bytes.length);
+    const comment_bytes = Buffer.from(comments, "utf-8");
+    const bytes = new Uint8Array(5 + comment_bytes.length);
+    bytes.set(Buffer.from("COMNT", "utf-8"), 0);
+    bytes.set(comment_bytes, 5);
+    const merged_bytes = new Uint8Array(bytes.length + sauce_bytes.length);
     merged_bytes.set(bytes, 0);
     merged_bytes.set(sauce_bytes, bytes.length);
     return merged_bytes;
@@ -58,9 +57,9 @@ function add_comments_bytes(comments, sauce_bytes) {
 function add_sauce_bytes({doc, data_type, file_type, bytes: file_bytes}) {
     let bytes = new Uint8Array(128);
     add_text(bytes, 0, "SAUCE00", 7);
-    add_text(bytes, 7, doc.title, 35);
-    add_text(bytes, 42, doc.author, 20);
-    add_text(bytes, 62, doc.group, 20);
+    bytes.set(Buffer.from(doc.title, "utf-8"), 7);
+    bytes.set(Buffer.from(doc.author, "utf-8"), 42);
+    bytes.set(Buffer.from(doc.group, "utf-8"), 62);
     add_text(bytes, 82, current_date(), 8);
     bytes[90] = file_bytes.length & 0xff;
     bytes[91] = (file_bytes.length >> 8) & 0xff;
@@ -76,7 +75,7 @@ function add_sauce_bytes({doc, data_type, file_type, bytes: file_bytes}) {
         bytes[98] = doc.rows & 0xff;
         bytes[99] = doc.rows >> 8;
     }
-    bytes[104] = doc.comments.length;
+    bytes[104] = doc.comments.length / 64;
     if (data_type != data_type_types.XBIN) {
         if (doc.ice_colors) {
             bytes[105] = 1;
@@ -86,13 +85,9 @@ function add_sauce_bytes({doc, data_type, file_type, bytes: file_bytes}) {
         } else {
             bytes[105] += 1 << 1;
         }
-        if (doc.font_name) {
-            add_text(bytes, 106, doc.font_name, doc.font_name.length);
-        }
+        if (doc.font_name) add_text(bytes, 106, doc.font_name, doc.font_name.length);
     }
-    if (doc.comments.length) {
-        bytes = add_comments_bytes(doc.comments, bytes);
-    }
+    if (doc.comments.length) bytes = add_comments_bytes(doc.comments, bytes);
     const merged_bytes = new Int8Array(file_bytes.length + 1 + bytes.length);
     merged_bytes.set(file_bytes, 0);
     merged_bytes[file_bytes.length] = 27;
@@ -112,18 +107,18 @@ function add_sauce_for_xbin({doc, bytes}) {
     return add_sauce_bytes({doc, data_type: data_type_types.XBIN, file_type: file_type_types.NONE, bytes});
 }
 
-function bytes_to_string(bytes, offset, size) {
-    return String.fromCharCode.apply(null, bytes.subarray(offset, offset + size)).trim();
+function bytes_to_utf8(bytes, offset, size) {
+    return bytes.subarray(offset, offset + size).toString("utf8");
 }
 
 function get_sauce(bytes) {
     if (bytes.length >= 128) {
         const sauce_bytes = bytes.slice(-128);
-        if (bytes_to_string(sauce_bytes, 0, 5) == "SAUCE" && bytes_to_string(sauce_bytes, 5, 2) == "00") {
-            const title = bytes_to_string(sauce_bytes, 7, 35);
-            const author = bytes_to_string(sauce_bytes, 42, 20);
-            const group = bytes_to_string(sauce_bytes, 62, 20);
-            const date = bytes_to_string(sauce_bytes, 82, 8);
+        if (bytes_to_utf8(sauce_bytes, 0, 5) == "SAUCE" && bytes_to_utf8(sauce_bytes, 5, 2) == "00") {
+            const title = bytes_to_utf8(sauce_bytes, 7, 35);
+            const author = bytes_to_utf8(sauce_bytes, 42, 20);
+            const group = bytes_to_utf8(sauce_bytes, 62, 20);
+            const date = bytes_to_utf8(sauce_bytes, 82, 8);
             let filesize = (sauce_bytes[93] << 24) + (sauce_bytes[92] << 16) + (sauce_bytes[91] << 8) + sauce_bytes[90];
             const datatype = sauce_bytes[94];
             let columns, rows;
@@ -135,29 +130,15 @@ function get_sauce(bytes) {
                 rows = (sauce_bytes[99] << 8) + sauce_bytes[98];
             }
             const number_of_comments = sauce_bytes[104];
-            const comments = new Array(number_of_comments);
-            if (number_of_comments) {
-                const comments_bytes = bytes.subarray(bytes.length - (number_of_comments * 64 + 5) - 128, bytes.length - 128);
-                if (bytes_to_string(comments_bytes, 0, 5) == "COMNT") {
-                    for (let i = 0; i < number_of_comments; i++) {
-                        comments[i] = bytes_to_string(comments_bytes, 5 + i * 64, 64);
-                    }
-                } else {
-                    raise("Error parsing SAUCE file: missing comments.");
-                }
-            }
+            const comments = bytes.subarray(bytes.length - (number_of_comments * 64) - 128, bytes.length - 128).toString("utf-8");
             const flags = sauce_bytes[105];
             const ice_colors = (flags & 0x01) == 1;
             const use_9px_font = (flags >> 1 & 0x02) == 2;
-            let font_name = bytes_to_string(sauce_bytes, 106, 22).replace(/\0/g, "");
-            if (font_name == "") {
-                font_name = "IBM VGA";
-            }
+            let font_name = bytes_to_utf8(sauce_bytes, 106, 22).replace(/\0/g, "");
+            if (font_name == "") font_name = "IBM VGA";
             if (filesize == 0) {
                 filesize = bytes.length = 128;
-                if (number_of_comments) {
-                    filesize -= number_of_comments * 64 + 5;
-                }
+                if (number_of_comments) filesize -= number_of_comments * 64 + 5;
             }
             return new Sauce({columns, rows, title, author, group, date, filesize, ice_colors, use_9px_font, font_name, comments});
         }
@@ -202,4 +183,4 @@ function resize_canvas(doc, columns, rows) {
     doc.rows = rows;
 }
 
-module.exports = {bytes_to_blocks, bytes_to_string, current_date, Textmode, add_sauce_for_ans, add_sauce_for_bin, add_sauce_for_xbin, resize_canvas};
+module.exports = {bytes_to_blocks, bytes_to_utf8, current_date, Textmode, add_sauce_for_ans, add_sauce_for_bin, add_sauce_for_xbin, resize_canvas};

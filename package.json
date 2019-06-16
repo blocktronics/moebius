@@ -1,6 +1,6 @@
 {
   "name": "moebius",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "ANSI Art Editor",
   "main": "app.js",
   "scripts": {
@@ -12,11 +12,12 @@
   "author": "Andy Herbert",
   "license": "Apache-2.0",
   "devDependencies": {
-    "electron": "^5.0.3",
+    "electron": "^5.0.4",
     "electron-builder": "^20.43.0"
   },
   "dependencies": {
     "linkifyjs": "^2.1.8",
+    "minimist": "^1.2.0",
     "ws": "^7.0.0"
   }
 }

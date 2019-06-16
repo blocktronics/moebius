@@ -1,0 +1,51 @@
+body {
+    user-select: none;
+    color: white;
+}
+
+body > form {
+    margin-top: 32px;
+}
+
+body > form > div {
+    width: fit-content;
+    margin: 8px auto;
+}
+
+label {
+    display: inline-block;
+    font-size: 12px;
+    text-align: right;
+    width: 60px;
+    margin-right: 8px;
+    text-shadow: 0px 1px 6px black;
+}
+
+input {
+    display: inline-block;
+    color: white;
+    width: 142px;
+    height: 20px;
+    outline: none;
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid #AAAAAA;
+    padding: 3px;
+}
+
+button {
+    width: 100px;
+    height: 32px;
+    border-radius: 3px;
+    background: none;
+    color: white;
+    outline: none;
+    border: 1px solid #AAAAAA;
+    -webkit-app-region: none;
+}
+
+#connect {
+    color: white;
+    right: 16px;
+    bottom: 16px;
+    position: fixed;
+}

@@ -299,7 +299,7 @@ function rotate(blocks) {
     return blocks;
 }
 
-function new_document({columns = 80, rows = 24, title = "", author = "", group = "", date = "", palette = ega, font_name = "IBM VGA", ice_colors = false, use_9px_font = false, comments = [], data} = {}) {
+function new_document({columns = 80, rows = 24, title = "", author = "", group = "", date = "", palette = ega, font_name = "IBM VGA", ice_colors = false, use_9px_font = false, comments = "", data} = {}) {
     const doc = {columns, rows, title, author, group, date: (date != "") ? date : current_date(), palette, font_name, ice_colors, use_9px_font, comments};
     if (!data || data.length != columns * rows) {
         doc.data = new Array(columns * rows);
