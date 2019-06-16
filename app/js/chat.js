@@ -76,6 +76,7 @@ function welcome(text, goto_line) {
     welcome_div.classList.add("welcome");
     create_links(welcome_div, text, goto_line);
     document.getElementById("messages").appendChild(welcome_div);
+    scroll_to_bottom();
 }
 
 function set_status(id, status) {
@@ -143,4 +144,18 @@ function chat(id, nick, group, text, goto_line) {
     if (scroll) scroll_to_bottom();
 }
 
-module.exports = {toggle, join, leave, chat, welcome, updated_sauce, status: set_status};
+function show_chat() {
+    if (!visible) toggle(false);
+}
+
+function clear(element_name) {
+    const element = document.getElementById(element_name);
+    while (element.firstChild) element.removeChild(element.firstChild);
+}
+
+function clear_all() {
+    clear("messages");
+    clear("user_list");
+}
+
+module.exports = {toggle, join, leave, chat, welcome, updated_sauce, status: set_status, show: show_chat, clear: clear_all};

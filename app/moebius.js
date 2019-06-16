@@ -255,7 +255,7 @@ function show_new_connection_window() {
     if (new_connection_win && !new_connection_win.isDestroyed()) {
         new_connection_win.focus();
     } else {
-        new_connection_win = new electron.BrowserWindow({width: 400, height: 210, show: false, backgroundColor: "#000000", maximizable: false, resizable: false, fullscreenable: false, webPreferences: {nodeIntegration: true}});
+        new_connection_win = new electron.BrowserWindow({width: 480, height: 180, show: false, backgroundColor: "#000000", maximizable: false, resizable: false, fullscreenable: false, webPreferences: {nodeIntegration: true}});
         new_connection_win.setTouchBar(new electron.TouchBar({items: [new electron.TouchBar.TouchBarButton({label: "Connect", click() {new_connection_win.send("ok");}})], escapeItem: new electron.TouchBar.TouchBarButton({label: "Cancel", click() {new_connection_win.send("cancel");}})}));
         if (!darwin) new_connection_win.setMenu(null);
         new_connection_win.on("focus", (event) => set_application_menu());

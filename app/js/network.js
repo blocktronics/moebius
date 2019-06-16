@@ -30,7 +30,7 @@ function queue(name, opts, network_handler) {
     }
 }
 
-function message(ws, msg, network_handler) {
+function message(server, pass, ws, msg, network_handler) {
     byte_count += JSON.stringify(msg).length;
     // console.log(`${byte_count / 1024}kb received.`, msg.data);
     switch (msg.type) {
@@ -38,7 +38,7 @@ function message(ws, msg, network_handler) {
         const id = msg.data.id;
         status = msg.data.status;
         network_handler.connected({
-            id,
+            server, pass, id,
             draw: (x, y, block) => {
                 send(ws, action.DRAW, {id, x, y, block});
             },
@@ -104,7 +104,7 @@ async function connect(server, nick, group, pass, network_handler) {
         ws.addEventListener("open", () => send(ws, action.CONNECTED, {nick, group, pass}));
         ws.addEventListener("error", network_handler.error);
         ws.addEventListener("close", network_handler.disconnected);
-        ws.addEventListener("message", response => message(ws, JSON.parse(response.data), network_handler));
+        ws.addEventListener("message", response => message(server, pass, ws, JSON.parse(response.data), network_handler));
     } catch (err) {
         network_handler.error(err);
     }

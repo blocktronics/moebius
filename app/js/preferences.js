@@ -58,7 +58,9 @@ document.addEventListener("DOMContentLoaded", (event) => {
         event.preventDefault();
     }, true);
     document.getElementById("use_backup").addEventListener("change", (event) => use_backup(), true);
-
+    document.body.addEventListener("keydown", (event) => {
+        if (event.code == "Escape") electron.remote.getCurrentWindow().close()
+    }, true);
 }, true);
 
 electron.ipcRenderer.on("prefs", (event, opts) => prefs(opts));

@@ -1,51 +1,75 @@
 body {
     user-select: none;
-    color: white;
+    font-size: 14px;
+    color: #aaaaaa;
+    background-color: var(--dark-mid-color);
+    overflow: hidden;
 }
 
-body > form {
-    margin-top: 32px;
+form {
+    width: 400px;
+    margin: 0px auto;
 }
 
-body > form > div {
-    width: fit-content;
-    margin: 8px auto;
+form > div {
+    margin: 2px 0px;
+}
+
+form > div:first-child {
+    margin-top: 20px;
 }
 
 label {
     display: inline-block;
-    font-size: 12px;
+    width: 300px;
     text-align: right;
-    width: 60px;
-    margin-right: 8px;
-    text-shadow: 0px 1px 6px black;
+    height: 32px;
+    line-height: 32px;
 }
 
-input {
+label.text_box {
+    width: 150px;
     display: inline-block;
+    vertical-align: middle;
+}
+
+input[type="text"], input[type="password"] {
+    vertical-align: top;
+    padding: none;
+    margin: 4px;
+    width: 190px;
+    height: 16px;
+    padding: 3px 6px;
     color: white;
-    width: 142px;
-    height: 20px;
+    display: inline-block;
+    border: 1px solid #aaaaaa;
+    background: none;
+    font-family: BlinkMacSystemFont, "Segoe UI";
+    font-size: 14px;
     outline: none;
-    background: rgba(0, 0, 0, 0.7);
-    border: 1px solid #AAAAAA;
-    padding: 3px;
+}
+
+input[type="text"]:focus {
+    border-color: white;
 }
 
 button {
-    width: 100px;
-    height: 32px;
-    border-radius: 3px;
+    float: right;
+    color: #aaaaaa;
+    border-radius: 4px;
+    margin-left: 8px;
+    width: 70px;
+    height: 24px;
     background: none;
-    color: white;
+    border: 1px solid #aaaaaa;
     outline: none;
-    border: 1px solid #AAAAAA;
-    -webkit-app-region: none;
+}
+
+button:active {
+    color: white;
+    border-color: white;
 }
 
 #connect {
-    color: white;
-    right: 16px;
-    bottom: 16px;
-    position: fixed;
+    margin-top: 24px;
 }

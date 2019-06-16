@@ -118,7 +118,7 @@ function connect_to_server({server, pass = ""} = {}) {
                     users[user.id].cursor.show();
                     chat.join(user.id, user.nick, user.group, user.status, false);
                 }
-                chat.toggle(false);
+                chat.show();
                 send("enable_chat_window_toggle");
                 for (const line of chat_history) chat.chat(line.id, line.nick, line.group, line.text, goto_line);
                 chat.join(connection.id, nick, group, status);
@@ -129,8 +129,13 @@ function connect_to_server({server, pass = ""} = {}) {
         error: () => {},
         disconnected: () => {
             send("close_modal");
-            electron.remote.dialog.showMessageBox(electron.remote.getCurrentWindow(), {type: "error", message: "Connect to Server", detail: "Cannot connect to server."});
-            send("destroy");
+            const choice = electron.remote.dialog.showMessageBox(electron.remote.getCurrentWindow(), {message: "Connect to Server", detail: "Cannot connect to server.", buttons: ["Retry", "Cancel"], defaultId: 0, cancelId: 1});
+            if (choice == 0) {
+                chat.clear();
+                connect_to_server({server, pass});
+            } else {
+                send("destroy");
+            }
         },
         refused: () => {
             send("close_modal");

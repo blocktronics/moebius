@@ -26,10 +26,15 @@ function override_submit(event) {
     }
 }
 
+function click(event) {
+    ok();
+    event.preventDefault();
+}
+
 document.addEventListener("DOMContentLoaded", (event) => {
     document.getElementById("server").addEventListener("keydown", override_submit, true);
     document.getElementById("pass").addEventListener("keydown", override_submit, true);
-
+    document.getElementById("connect").addEventListener("click", click, true);
 }, true);
 
 electron.ipcRenderer.on("ok", (event) => ok());
