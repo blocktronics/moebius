@@ -120,10 +120,10 @@ function connect_to_server({server, pass = ""} = {}) {
                 }
                 chat.toggle(false);
                 send("enable_chat_window_toggle");
-                if (doc.comments) chat.welcome(doc.comments.split("\n")[0].replace(/ +$/, ""), goto_line);
                 for (const line of chat_history) chat.chat(line.id, line.nick, line.group, line.text, goto_line);
                 chat.join(connection.id, nick, group, status);
                 network.ready_to_receive_events();
+                if (doc.comments) chat.welcome(doc.comments.split("\n")[0].replace(/ +$/, ""), goto_line);
             });
         },
         error: () => {},
