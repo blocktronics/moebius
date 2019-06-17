@@ -7,7 +7,9 @@ const http = require("http");
 const url = require("url");
 const server = http.createServer();
 const joints = {};
-const {parse: path_parse} = require("path");
+const path = require("path");
+const crypto = require("crypto");
+const fs = require("fs");
 
 function send(ws, type, data = {}) {
     ws.send(JSON.stringify({type, data}));
@@ -106,8 +108,26 @@ class Joint {
     }
 
     save() {
-        this.log("saved");
-        libtextmode.write_file(this.doc, this.file);
+        const date = new Date();
+        const hours = date.getHours();
+        const parsed_file = path.parse(this.file);
+        const hour = `${hours > 12 ? hours - 12 : hours}${hours > 12 ? "pm" : "am"}`;
+        const file = path.join(parsed_file.dir, `${parsed_file.name} - ${date.toDateString()} ${hour}${parsed_file.ext}`);
+        libtextmode.write_file(this.doc, file);
+        if (this.last_file == undefined || this.last_file == file) {
+            this.log(`${hour}: saved ${file}`);
+            this.last_file = file;
+        } else {
+            const sha1_old = crypto.createHash("sha1").update(fs.readFileSync(this.last_file)).digest("hex");
+            const sha1_new = crypto.createHash("sha1").update(fs.readFileSync(file)).digest("hex");
+            if (sha1_old == sha1_new) {
+                this.log(`${hour}: no changes, file not saved`);
+                fs.unlinkSync(file);
+            } else {
+                this.log(`${hour}: saved ${file}`);
+                this.last_file = file;
+            }
+        }
     }
 
     constructor({path, file, pass, quiet = false}) {
@@ -140,7 +160,7 @@ class Joint {
     async start() {
         this.hostname = os.hostname();
         this.doc = await libtextmode.read_file(this.file);
-        this.timer = setInterval(() => this.save(), 5 * 60 * 1000);
+        this.timer = setInterval(() => this.save(), 60 * 60 * 1000);
         this.wss = new ws.Server({noServer: true});
         this.log(`started`);
     }
@@ -155,15 +175,15 @@ class Joint {
     }
 }
 
-async function start_joint({path, file, pass = "", quiet = false} = {}) {
-    path = (path != undefined) ? path : path_parse(file).base;
-    path = `/${path.toLowerCase()}`;
+async function start_joint({path: server_path, file, pass = "", quiet = false} = {}) {
+    server_path = (server_path != undefined) ? server_path : path.parse(file).base;
+    server_path = `/${server_path.toLowerCase()}`;
     if (!server.address()) server.listen(8000);
-    if (joints[path]) throw "Path already in use.";
-    path = path.toLowerCase();
-    joints[path] = new Joint({path, file, pass, quiet});
-    await joints[path].start();
-    return path;
+    if (joints[server_path]) throw "Path already in use.";
+    server_path = server_path.toLowerCase();
+    joints[server_path] = new Joint({path: server_path, file, pass, quiet});
+    await joints[server_path].start();
+    return server_path;
 }
 
 function end_joint(path) {
