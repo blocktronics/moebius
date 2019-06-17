@@ -8,17 +8,21 @@ const path = require("path");
 const {current_date, resize_canvas} = require("./textmode");
 const fs = require("fs");
 
+function read_bytes(bytes, file) {
+    switch (path.extname(file).toLowerCase()) {
+        case ".bin": return new BinaryText(bytes);
+        case ".xb": return new XBin(bytes);
+        case ".ans":
+        default:
+        return new Ansi(bytes);
+    }
+}
+
 async function read_file(file) {
     return new Promise((resolve) => {
         fs.readFile(file, (err, bytes) => {
             if (err) throw(`Error: ${file} not found!`);
-            switch (path.extname(file).toLowerCase()) {
-                case ".bin": resolve(new BinaryText(bytes)); break;
-                case ".xb": resolve (new XBin(bytes)); break;
-                case ".ans":
-                default:
-                return resolve(new Ansi(bytes));
-            }
+            resolve(read_bytes(bytes, file));
         });
     });
 }
@@ -703,4 +707,4 @@ function uncompress(doc) {
     return doc;
 }
 
-module.exports = {read_file, write_file, animate, render, render_split, render_at, new_document, resize_canvas, cp437_to_unicode, unicode_to_cp437, render_blocks, flip_x, flip_y, rotate, get_data_url, convert_ega_to_style, compress, uncompress};
+module.exports = {read_bytes, read_file, write_file, animate, render, render_split, render_at, new_document, resize_canvas, cp437_to_unicode, unicode_to_cp437, render_blocks, flip_x, flip_y, rotate, get_data_url, convert_ega_to_style, compress, uncompress};

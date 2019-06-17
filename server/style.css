@@ -1,0 +1,85 @@
+html, body {
+    width: 100%;
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+}
+body {
+    margin: 0px;
+    background-color: rgb(34, 37, 43);
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+}
+#viewport {
+    float: left;
+    width: calc(100% - 300px);
+    height: 100%;
+    overflow: auto;
+}
+#preview {
+    float: right;
+    width: 300px;
+    height: 100%;
+    position: relative;
+    overflow-y: auto;
+}
+#view_frame {
+    box-sizing: border-box;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    position: absolute;
+    pointer-events: none;
+}
+canvas {
+    display: block;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    pointer-events: none;
+}
+#preview > canvas {
+    width: 260px;
+    margin-left: 20px;
+}
+#canvas_container {
+    width: calc(fit-content);
+    margin: 0pc auto;
+    position: relative;
+}
+#ice_color_container, #blink_off_container, #blink_on_container {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+}
+#sauce {
+    opacity: 0.6;
+    background-color: black;
+    border-radius: 6px;
+    position: fixed;
+    bottom: 16px;
+    left: 16px;
+    width: 380px;
+    height: fit-content;
+    max-height: calc(100% - 32px);
+    overflow-y: auto;
+}
+#sauce > div:first-child {
+    margin-top: 16px;
+}
+#sauce > div:last-child {
+    margin-bottom: 16px;
+}
+#sauce > div {
+    font-size: 12px;
+    line-height: 14px;
+    width: calc(100% - 32px);
+    min-height: 16px;
+    margin: 4px 16px;
+}
+#title {
+    color: white;
+}
+#author, #group, #comments {
+    color: #aaaaaa;
+}
+#sauce > div > a {
+    color: #aaaaaa;
+}

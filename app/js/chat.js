@@ -1,6 +1,6 @@
 let visible = false;
 let users = [];
-const status_types = {ACTIVE: 0, IDLE: 1, AWAY: 2};
+const status_types = {ACTIVE: 0, IDLE: 1, AWAY: 2, WEB: 3};
 const linkify = require("linkifyjs");
 const linkify_string = require("linkifyjs/string");
 require("linkifyjs/plugins/ticket")(linkify);
@@ -86,6 +86,7 @@ function set_status(id, status) {
             case status_types.ACTIVE: users[id].div.style.backgroundImage = "url(\"../img/active_indicator.png\")"; break;
             case status_types.IDLE: users[id].div.style.backgroundImage = "url(\"../img/idle_indicator.png\")"; break;
             case status_types.AWAY: users[id].div.style.backgroundImage = "url(\"../img/away_indicator.png\")"; break;
+            case status_types.WEB: users[id].div.style.backgroundImage = "url(\"../img/web_indicator.png\")"; break;
         }
     }
 }
@@ -102,9 +103,9 @@ function join(id, nick, group, status, show_join = true) {
     set_status(id, status);
 }
 
-function leave(id) {
+function leave(id, show_leave) {
     if (users[id]) {
-        action(users[id].nick, "has left");
+        if (show_leave) action(users[id].nick, "has left");
         document.getElementById("user_list").removeChild(users[id].div);
         delete users[id];
     }

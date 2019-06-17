@@ -1,10 +1,11 @@
 {
   "name": "moebius",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "ANSI Art Editor",
   "main": "app.js",
   "scripts": {
     "start": "electron .",
+    "build-script": "browserify build/script.js -o server/script.js",
     "build": "node_modules/.bin/build -mw",
     "build-mac": "node_modules/.bin/build -m",
     "build-win": "node_modules/.bin/build -w"
@@ -12,8 +13,10 @@
   "author": "Andy Herbert",
   "license": "Apache-2.0",
   "devDependencies": {
+    "browserify": "^16.2.3",
     "electron": "^5.0.4",
-    "electron-builder": "^20.43.0"
+    "electron-builder": "^20.43.0",
+    "express": "^4.17.1"
   },
   "dependencies": {
     "linkifyjs": "^2.1.8",

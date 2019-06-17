@@ -90,7 +90,7 @@ function add_sauce_bytes({doc, data_type, file_type, bytes: file_bytes}) {
     if (doc.comments.length) bytes = add_comments_bytes(doc.comments, bytes);
     const merged_bytes = new Int8Array(file_bytes.length + 1 + bytes.length);
     merged_bytes.set(file_bytes, 0);
-    merged_bytes[file_bytes.length] = 27;
+    merged_bytes[file_bytes.length] = 26;
     merged_bytes.set(bytes, file_bytes.length + 1);
     return merged_bytes;
 }

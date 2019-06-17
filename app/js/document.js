@@ -112,11 +112,16 @@ function connect_to_server({server, pass = ""} = {}) {
                 cursor.start_editing_mode();
                 change_to_select_mode();
                 for (const user of connection.users) {
-                    users[user.id] = {cursor: new canvas.Cursor(false), nick: user.nick};
-                    users[user.id].cursor.resize_to_font();
-                    users[user.id].cursor.appear_ghosted();
-                    users[user.id].cursor.show();
-                    chat.join(user.id, user.nick, user.group, user.status, false);
+                    users[user.id] = {nick: user.nick, group: user.group};
+                    if (user.nick == undefined) {
+                        chat.join(user.id, "Guest", "", user.status, false);
+                    } else {
+                        users[user.id].cursor = new canvas.Cursor(false);
+                        users[user.id].cursor.resize_to_font();
+                        users[user.id].cursor.appear_ghosted();
+                        users[user.id].cursor.show();
+                        chat.join(user.id, user.nick, user.group, user.status, false);
+                    }
                 }
                 chat.show();
                 send("enable_chat_window_toggle");
@@ -143,17 +148,22 @@ function connect_to_server({server, pass = ""} = {}) {
             send("destroy");
         },
         join: (id, nick, group, status) => {
-            users[id] = {nick, group, status, cursor: new canvas.Cursor(false)};
-            users[id].cursor.resize_to_font();
-            users[id].cursor.appear_ghosted();
-            users[id].cursor.show();
-            chat.join(id, users[id].nick, users[id].group, users[id].status);
-            if (darwin) electron.remote.app.dock.bounce("informational");
+            users[id] = {nick, group, status};
+            if (nick != undefined) {
+                users[id].cursor = new canvas.Cursor(false);
+                users[id].cursor.resize_to_font();
+                users[id].cursor.appear_ghosted();
+                users[id].cursor.show();
+                chat.join(id, users[id].nick, users[id].group, users[id].status);
+                if (darwin) electron.remote.app.dock.bounce("informational");
+            } else {
+                chat.join(id, "Guest", "", users[id].status, false);
+            }
         },
         leave: (id) => {
             if (users[id]) {
-                chat.leave(id);
-                users[id].cursor.hide();
+                if (users[id].nick != undefined) users[id].cursor.hide();
+                chat.leave(id, users[id].nick != undefined);
                 delete users[id];
             }
         },
@@ -305,7 +315,7 @@ function render_at(x, y) {
     if (cursor.x == x && cursor.y == y) cursor.draw();
     if (connection) {
         for (const id of Object.keys(users)) {
-            if (id != connection.id) {
+            if (id != connection.id && users[id].nick != undefined) {
                 if (users[id].cursor.x == x && users[id].cursor.y == y) users[id].cursor.draw();
             }
         }

@@ -7,19 +7,23 @@ let ready = false;
 const queued_events = [];
 
 function set_status(ws, id, new_status) {
-    status = new_status;
-    ws.send(JSON.stringify({type: action.STATUS, data: {id, status}}));
+    if (status != new_status) {
+        status = new_status;
+        ws.send(JSON.stringify({type: action.STATUS, data: {id, status}}));
+    }
 }
 
-function send(ws, type, data = {}) {
+function send(ws, type, is_viewing, data = {}) {
     ws.send(JSON.stringify({type, data}));
-    if (status) set_status(ws, data.id, status_types.ACTIVE);
+    if (!is_viewing && type != action.CONNECTED) set_status(ws, data.id, status_types.ACTIVE);
     if (idle_timer) clearTimeout(idle_timer);
     if (away_timer) clearTimeout(away_timer);
-    idle_timer = setTimeout(() => {
-        set_status(ws, data.id, status_types.IDLE);
-        away_timer = setTimeout(() => set_status(ws, data.id, status_types.AWAY), 4 * 60 * 1000);
-    }, 1 * 60 * 1000);
+    if (!is_viewing) {
+        idle_timer = setTimeout(() => {
+            set_status(ws, data.id, status_types.IDLE);
+            away_timer = setTimeout(() => set_status(ws, data.id, status_types.AWAY), 4 * 60 * 1000);
+        }, 1 * 60 * 1000);
+    }
 }
 
 function queue(name, opts, network_handler) {
@@ -30,7 +34,7 @@ function queue(name, opts, network_handler) {
     }
 }
 
-function message(server, pass, ws, msg, network_handler) {
+function message(is_viewing, server, pass, ws, msg, network_handler) {
     byte_count += JSON.stringify(msg).length;
     // console.log(`${byte_count / 1024}kb received.`, msg.data);
     switch (msg.type) {
@@ -40,19 +44,19 @@ function message(server, pass, ws, msg, network_handler) {
         network_handler.connected({
             server, pass, id,
             draw: (x, y, block) => {
-                send(ws, action.DRAW, {id, x, y, block});
+                send(ws, action.DRAW, is_viewing, {id, x, y, block});
             },
-            cursor: (x, y) => send(ws, action.CURSOR, {id, x, y}),
-            selection: (x, y) => send(ws, action.SELECTION, {id, x, y}),
-            resize_selection: (columns, rows) => send(ws, action.RESIZE_SELECTION, {id, columns, rows}),
-            operation: (x, y) => send(ws, action.OPERATION, {id, x, y}),
+            cursor: (x, y) => send(ws, action.CURSOR, is_viewing, {id, x, y}),
+            selection: (x, y) => send(ws, action.SELECTION, is_viewing, {id, x, y}),
+            resize_selection: (columns, rows) => send(ws, action.RESIZE_SELECTION, is_viewing, {id, columns, rows}),
+            operation: (x, y) => send(ws, action.OPERATION, is_viewing, {id, x, y}),
             chat: (nick, group, text) => {
-                send(ws, action.CHAT, {id, nick, group, text});
+                send(ws, action.CHAT, is_viewing, {id, nick, group, text});
                 network_handler.chat(id, nick, group, text);
             },
-            status: (status) => send(ws, action.STATUS, {id, status}),
-            sauce: (title, author, group, comments) => send(ws, action.SAUCE, {id, title, author, group, comments}),
-            hide_cursor: () => send(ws, action.HIDE_CURSOR, {id}),
+            status: (status) => send(ws, action.STATUS, is_viewing, {id, status}),
+            sauce: (title, author, group, comments) => send(ws, action.SAUCE, is_viewing, {id, title, author, group, comments}),
+            hide_cursor: () => send(ws, action.HIDE_CURSOR, is_viewing, {id}),
             close: () => ws.close(),
             users: msg.data.users
         }, libtextmode.uncompress(msg.data.doc), msg.data.chat_history, msg.data.status);
@@ -100,11 +104,13 @@ function message(server, pass, ws, msg, network_handler) {
 
 async function connect(server, nick, group, pass, network_handler) {
     try {
-        const ws = new WebSocket(`ws://${server}:8000/`);
-        ws.addEventListener("open", () => send(ws, action.CONNECTED, {nick, group, pass}));
+        const match = server.match(/([^\/]+)\/?([^\/]*)\/?/);
+        const ws = new WebSocket(`ws://${encodeURI(match[1])}:8000/${encodeURI(match[2])}`);
+        const is_viewing = (nick == undefined);
+        ws.addEventListener("open", () => send(ws, action.CONNECTED, is_viewing, {nick, group, pass}));
         ws.addEventListener("error", network_handler.error);
         ws.addEventListener("close", network_handler.disconnected);
-        ws.addEventListener("message", response => message(server, pass, ws, JSON.parse(response.data), network_handler));
+        ws.addEventListener("message", response => message(is_viewing, server, pass, ws, JSON.parse(response.data), network_handler));
     } catch (err) {
         network_handler.error(err);
     }
