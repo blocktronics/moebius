@@ -96,7 +96,7 @@ async function render(doc) {
             }
         }
     }
-    return canvas;
+    return {canvas, font};
 }
 
 function render_blocks(blocks, font) {

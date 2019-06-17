@@ -1,4 +1,4 @@
-const action =  {CONNECTED: 0, REFUSED: 1, JOIN: 2, LEAVE: 3, CURSOR: 4, SELECTION: 5, RESIZE_SELECTION: 6, OPERATION: 7, HIDE_CURSOR: 8, DRAW: 9, CHAT: 10, STATUS: 11, SAUCE: 12};
+const action =  {CONNECTED: 0, REFUSED: 1, JOIN: 2, LEAVE: 3, CURSOR: 4, SELECTION: 5, RESIZE_SELECTION: 6, OPERATION: 7, HIDE_CURSOR: 8, DRAW: 9, CHAT: 10, STATUS: 11, SAUCE: 12, ICE_COLORS: 13, USE_9PX_FONT: 14, CHANGE_FONT: 15, SET_CANVAS_SIZE: 16};
 const status_types = {ACTIVE: 0, IDLE: 1, AWAY: 2};
 const libtextmode = require("../js/libtextmode/libtextmode");
 let byte_count = 0;
@@ -56,6 +56,10 @@ function message(is_viewing, server, pass, ws, msg, network_handler) {
             },
             status: (status) => send(ws, action.STATUS, is_viewing, {id, status}),
             sauce: (title, author, group, comments) => send(ws, action.SAUCE, is_viewing, {id, title, author, group, comments}),
+            ice_colors: (value) => send(ws, action.ICE_COLORS, is_viewing, {id, value}),
+            use_9px_font: (value) => send(ws, action.USE_9PX_FONT, is_viewing, {id, value}),
+            change_font: (font_name) => send(ws, action.CHANGE_FONT, is_viewing, {id, font_name}),
+            set_canvas_size: (columns, rows) => send(ws, action.SET_CANVAS_SIZE, is_viewing, {id, columns, rows}),
             hide_cursor: () => send(ws, action.HIDE_CURSOR, is_viewing, {id}),
             close: () => ws.close(),
             users: msg.data.users
@@ -96,6 +100,18 @@ function message(is_viewing, server, pass, ws, msg, network_handler) {
         break;
     case action.SAUCE:
         queue("sauce", [msg.data.id, msg.data.title, msg.data.author, msg.data.group, msg.data.comments], network_handler);
+        break;
+    case action.ICE_COLORS:
+        queue("ice_colors", [msg.data.id, msg.data.value], network_handler);
+        break;
+    case action.USE_9PX_FONT:
+        queue("use_9px_font", [msg.data.id, msg.data.value], network_handler);
+        break;
+    case action.CHANGE_FONT:
+        queue("change_font", [msg.data.id, msg.data.font_name], network_handler);
+        break;
+    case action.SET_CANVAS_SIZE:
+        queue("set_canvas_size", [msg.data.id, msg.data.columns, msg.data.rows], network_handler);
         break;
     default:
         break;

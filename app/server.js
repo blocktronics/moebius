@@ -1,6 +1,6 @@
 const ws = require("ws");
 const libtextmode = require("./js/libtextmode/libtextmode");
-const action =  {CONNECTED: 0, REFUSED: 1, JOIN: 2, LEAVE: 3, CURSOR: 4, SELECTION: 5, RESIZE_SELECTION: 6, OPERATION: 7, HIDE_CURSOR: 8, DRAW: 9, CHAT: 10, STATUS: 11, SAUCE: 12};
+const action =  {CONNECTED: 0, REFUSED: 1, JOIN: 2, LEAVE: 3, CURSOR: 4, SELECTION: 5, RESIZE_SELECTION: 6, OPERATION: 7, HIDE_CURSOR: 8, DRAW: 9, CHAT: 10, STATUS: 11, SAUCE: 12, ICE_COLORS: 13, USE_9PX_FONT: 14, CHANGE_FONT: 15, SET_CANVAS_SIZE: 16};
 const status_types = {ACTIVE: 0, IDLE: 1, AWAY: 2, WEB: 3};
 const os = require("os");
 const http = require("http");
@@ -61,8 +61,10 @@ class Joint {
             }
         break;
         case action.DRAW:
-            this.doc.data[msg.data.y * this.doc.columns + msg.data.x] = Object.assign(msg.data.block);
-            this.send_all_including_guests(ws, msg.type, msg.data);
+            if ((msg.data.x < this.doc.columns - 1) && (msg.data.y < this.doc.rows - 1)) {
+                this.doc.data[msg.data.y * this.doc.columns + msg.data.x] = Object.assign(msg.data.block);
+                this.send_all_including_guests(ws, msg.type, msg.data);
+            }
         break;
         case action.CHAT:
             if (this.data_store[msg.data.id].user.nick != msg.data.nick) this.data_store[msg.data.id].user.nick = msg.data.nick;
@@ -80,6 +82,22 @@ class Joint {
             this.doc.author = msg.data.author;
             this.doc.group = msg.data.group;
             this.doc.comments = msg.data.comments;
+            this.send_all_including_guests(ws, msg.type, msg.data);
+            break;
+        case action.ICE_COLORS:
+            this.doc.ice_colors = msg.data.value;
+            this.send_all_including_guests(ws, msg.type, msg.data);
+            break;
+        case action.USE_9PX_FONT:
+            this.doc.use_9px_font = msg.data.value;
+            this.send_all_including_guests(ws, msg.type, msg.data);
+            break;
+        case action.CHANGE_FONT:
+            this.doc.font_name = msg.data.font_name;
+            this.send_all_including_guests(ws, msg.type, msg.data);
+            break;
+        case action.SET_CANVAS_SIZE:
+            libtextmode.resize_canvas(this.doc, msg.data.columns, msg.data.rows);
             this.send_all_including_guests(ws, msg.type, msg.data);
             break;
         default:

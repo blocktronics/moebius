@@ -9,6 +9,9 @@ body {
     -webkit-user-select: none;
     -moz-user-select: none;
     user-select: none;
+    scrollbar-color: rgba(0, 0, 0, 0.4) rgb(34, 37, 43);
+    scrollbar-width: thin;
+    cursor: default;
 }
 #viewport {
     float: left;
@@ -16,12 +19,21 @@ body {
     height: 100%;
     overflow: auto;
 }
+body.mobile #viewport {
+    width: 100%;
+}
 #preview {
     float: right;
     width: 300px;
     height: 100%;
     position: relative;
     overflow-y: auto;
+}
+body.mobile #preview {
+    width: 0px;
+}
+body.mobile #view_frame {
+    display: none;
 }
 #view_frame {
     box-sizing: border-box;
@@ -40,7 +52,7 @@ canvas {
     margin-left: 20px;
 }
 #canvas_container {
-    width: calc(fit-content);
+    width: fit-content;
     margin: 0pc auto;
     position: relative;
 }
@@ -74,6 +86,9 @@ canvas {
     min-height: 16px;
     margin: 4px 16px;
 }
+body.mobile #sauce {
+    display: none;
+}
 #title {
     color: white;
 }
@@ -82,4 +97,17 @@ canvas {
 }
 #sauce > div > a {
     color: #aaaaaa;
+    cursor: pointer;
+}
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+ }
+::-webkit-scrollbar-corner {
+     background: var(--dark-view-color);
+ }
+
+::-webkit-scrollbar-thumb {
+    border-radius: 2px;
+    background: rgba(0, 0, 0, 0.4);
 }

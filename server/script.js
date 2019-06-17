@@ -1371,7 +1371,7 @@ async function render(doc) {
             }
         }
     }
-    return canvas;
+    return {canvas, font};
 }
 
 function render_blocks(blocks, font) {
@@ -2331,7 +2331,7 @@ function encode_as_xbin(doc) {
 module.exports = {XBin, encode_as_xbin};
 
 },{"./binary_text":3,"./palette":7,"./textmode":8}],10:[function(require,module,exports){
-const action =  {CONNECTED: 0, REFUSED: 1, JOIN: 2, LEAVE: 3, CURSOR: 4, SELECTION: 5, RESIZE_SELECTION: 6, OPERATION: 7, HIDE_CURSOR: 8, DRAW: 9, CHAT: 10, STATUS: 11, SAUCE: 12};
+const action =  {CONNECTED: 0, REFUSED: 1, JOIN: 2, LEAVE: 3, CURSOR: 4, SELECTION: 5, RESIZE_SELECTION: 6, OPERATION: 7, HIDE_CURSOR: 8, DRAW: 9, CHAT: 10, STATUS: 11, SAUCE: 12, ICE_COLORS: 13, USE_9PX_FONT: 14, CHANGE_FONT: 15, SET_CANVAS_SIZE: 16};
 const status_types = {ACTIVE: 0, IDLE: 1, AWAY: 2};
 const libtextmode = require("../js/libtextmode/libtextmode");
 let byte_count = 0;
@@ -2389,6 +2389,10 @@ function message(is_viewing, server, pass, ws, msg, network_handler) {
             },
             status: (status) => send(ws, action.STATUS, is_viewing, {id, status}),
             sauce: (title, author, group, comments) => send(ws, action.SAUCE, is_viewing, {id, title, author, group, comments}),
+            ice_colors: (value) => send(ws, action.ICE_COLORS, is_viewing, {id, value}),
+            use_9px_font: (value) => send(ws, action.USE_9PX_FONT, is_viewing, {id, value}),
+            change_font: (font_name) => send(ws, action.CHANGE_FONT, is_viewing, {id, font_name}),
+            set_canvas_size: (columns, rows) => send(ws, action.SET_CANVAS_SIZE, is_viewing, {id, columns, rows}),
             hide_cursor: () => send(ws, action.HIDE_CURSOR, is_viewing, {id}),
             close: () => ws.close(),
             users: msg.data.users
@@ -2430,6 +2434,18 @@ function message(is_viewing, server, pass, ws, msg, network_handler) {
     case action.SAUCE:
         queue("sauce", [msg.data.id, msg.data.title, msg.data.author, msg.data.group, msg.data.comments], network_handler);
         break;
+    case action.ICE_COLORS:
+        queue("ice_colors", [msg.data.id, msg.data.value], network_handler);
+        break;
+    case action.USE_9PX_FONT:
+        queue("use_9px_font", [msg.data.id, msg.data.value], network_handler);
+        break;
+    case action.CHANGE_FONT:
+        queue("change_font", [msg.data.id, msg.data.font_name], network_handler);
+        break;
+    case action.SET_CANVAS_SIZE:
+        queue("set_canvas_size", [msg.data.id, msg.data.columns, msg.data.rows], network_handler);
+        break;
     default:
         break;
     }
@@ -2461,6 +2477,7 @@ const libtextmode = require("../app/js/libtextmode/libtextmode");
 const network = require("../app/js/network");
 const canvas = require("../app/js/canvas");
 const linkify = require("linkifyjs/string");
+const mobile = (navigator.userAgent.match(/Android/i) || navigator.userAgent.match(/webOS/i) || navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPad/i) || navigator.userAgent.match(/iPod/i) || navigator.userAgent.match(/BlackBerry/i) || navigator.userAgent.match(/Windows Phone/i));
 
 let connection, doc, render;
 function update_sauce() {
@@ -2468,13 +2485,16 @@ function update_sauce() {
     document.getElementById("title").innerText = doc.title;
     document.getElementById("author").innerText = doc.author;
     document.getElementById("group").innerText = doc.group;
-    document.getElementById("comments").innerHTML = linkify(doc.comments, {className: ""});
+    document.getElementById("comments").innerHTML = linkify(doc.comments, {className: "", nl2br: true});
 }
-function connected(new_connection, new_doc) {
+async function connected(new_connection, new_doc) {
     connection = new_connection;
     doc = new_doc;
-    libtextmode.render_split(doc).then((new_render) => {
-        render = new_render;
+    if (mobile) {
+        render = await libtextmode.render(doc);
+        document.getElementById("canvas_container").appendChild(render.canvas);
+    } else {
+        render = await libtextmode.render_split(doc);
         canvas.add(render);
         if (doc.ice_colors) {
             canvas.stop_blinking();
@@ -2482,8 +2502,8 @@ function connected(new_connection, new_doc) {
             canvas.start_blinking();
         }
         update_sauce();
-        network.ready_to_receive_events();
-    });
+    }
+    network.ready_to_receive_events();
 }
 function error() {
     // todo
@@ -2496,7 +2516,11 @@ function refused() {
 }
 function draw(id, x, y, block) {
     doc.data[doc.columns * y + x] = Object.assign(block);
-    canvas.render_at(x, y, block);
+    if (mobile) {
+        render.font.draw(render.canvas.getContext("2d"), block, x * render.font.width, y * render.font.height);
+    } else {
+        canvas.render_at(x, y, block);
+    }
 }
 function sauce(id, title, author, group, comments) {
     doc.title = title;
@@ -2505,11 +2529,47 @@ function sauce(id, title, author, group, comments) {
     doc.comments = comments;
     update_sauce();
 }
+function ice_colors(id, value) {
+    doc.ice_colors = value;
+    if (!mobile) {
+        if (doc.ice_colors) {
+            canvas.stop_blinking();
+        } else {
+            canvas.start_blinking();
+        }
+    }
+}
+async function update_renders() {
+    if (mobile) {
+        const canvas_container = document.getElementById("canvas_container");
+        canvas_container.removeChild(render.canvas);
+        render = await libtextmode.render(doc);
+        canvas_container.appendChild(render.canvas);
+    } else {
+        render = await libtextmode.render_split(doc);
+        canvas.add(render);
+    }
+}
+async function use_9px_font(id, value) {
+    doc.use_9px_font = value;
+    update_renders();
+}
+async function change_font(id, font_name) {
+    doc.font_name = font_name;
+    update_renders();
+}
+function set_canvas_size(id, columns, rows) {
+    libtextmode.resize_canvas(doc, columns, rows);
+    update_renders();
+}
 function connect_to_server({server, pass = ""} = {}) {
-    network.connect(server, undefined, undefined, pass, {connected, error, disconnected, refused, draw, sauce});
+    network.connect(server, undefined, undefined, pass, {connected, error, disconnected, refused, draw, sauce, ice_colors, use_9px_font, change_font, set_canvas_size});
 }
 
-document.addEventListener("DOMContentLoaded", (event) => connect_to_server({server: `${window.location.hostname}${window.location.pathname}`}), true);
+document.addEventListener("DOMContentLoaded", (event) => {
+    connect_to_server({server: `${window.location.hostname}${window.location.pathname}`});
+    if (mobile) document.body.classList.add("mobile");
+}, true);
 
 },{"../app/js/canvas":1,"../app/js/libtextmode/libtextmode":6,"../app/js/network":10,"linkifyjs/string":26}],12:[function(require,module,exports){
 'use strict'

@@ -93,7 +93,6 @@ async function start_render() {
         canvas.start_blinking();
     }
     cursor.resize_to_font();
-    cursor.show();
 }
 
 function goto_line(line_no) {
@@ -193,9 +192,11 @@ function connect_to_server({server, pass = ""} = {}) {
             if (users[id]) users[id].cursor.hide();
         },
         draw: (id, x, y, block) => {
-            const i = doc.columns * y + x;
-            doc.data[i] = Object.assign(block);
-            render_at(x, y);
+            if ((x < doc.columns - 1) && (y < doc.rows - 1)) {
+                const i = doc.columns * y + x;
+                doc.data[i] = Object.assign(block);
+                render_at(x, y);
+            }
         },
         chat: (id, nick, group, text) => {
             chat.chat(id, nick, group, text, goto_line);
@@ -210,6 +211,34 @@ function connect_to_server({server, pass = ""} = {}) {
             doc.comments = comments;
             send("update_sauce", {title, author, group, comments});
             chat.updated_sauce(id);
+        },
+        ice_colors: (id, value) => {
+            doc.ice_colors = value;
+            if (doc.ice_colors) {
+                canvas.stop_blinking();
+            } else {
+                canvas.start_blinking();
+            }
+            update_status_bar();
+            update_menu_checkboxes();
+            chat.changed_ice_colors(id, doc.ice_colors);
+        },
+        use_9px_font: (id, value) => {
+            doc.use_9px_font = value;
+            start_render();
+            chat.changed_use_9px_font(id, doc.use_9px_font);
+        },
+        change_font: (id, font_name) => {
+            doc.font_name = font_name;
+            start_render();
+            chat.changed_font(id, doc.font_name);
+        },
+        set_canvas_size: (id, columns, rows) => {
+            reset_undo_buffer();
+            libtextmode.resize_canvas(doc, columns, rows);
+            cursor.move_to(Math.min(cursor.x, columns - 1), Math.min(cursor.y, rows - 1), true);
+            start_render();
+            chat.set_canvas_size(id, columns, rows);
         }
     });
 }
@@ -224,23 +253,21 @@ async function open_file({file: file_name}) {
 }
 
 function ice_colors(value) {
-    if (!connection) {
-        doc.ice_colors = value;
-        if (value) {
-            canvas.stop_blinking();
-        } else {
-            canvas.start_blinking();
-        }
-        update_status_bar();
-        update_menu_checkboxes();
+    doc.ice_colors = value;
+    if (connection) connection.ice_colors(doc.ice_colors);
+    if (value) {
+        canvas.stop_blinking();
+    } else {
+        canvas.start_blinking();
     }
+    update_status_bar();
+    update_menu_checkboxes();
 }
 
 function use_9px_font(value) {
-    if (!connection) {
-        doc.use_9px_font = value;
-        start_render();
-    }
+    if (connection) connection.use_9px_font(value);
+    doc.use_9px_font = value;
+    start_render();
 }
 
 function set_var(name, value) {
@@ -264,6 +291,7 @@ function show_toolbar(visible) {
 }
 
 function change_font(font_name) {
+    if (connection) connection.change_font(font_name);
     doc.font_name = font_name;
     if (doc.font_bytes) delete doc.font_bytes;
     start_render();
@@ -1287,11 +1315,12 @@ function actual_size() {
 }
 
 function get_canvas_size() {
-    if (!connection) send("get_canvas_size", {columns: doc.columns, rows: doc.rows});
+    send("get_canvas_size", {columns: doc.columns, rows: doc.rows});
 }
 
 function set_canvas_size({columns, rows}) {
     if (columns != doc.columns | rows != doc.rows) {
+        if (connection) connection.set_canvas_size(columns, rows);
         reset_undo_buffer();
         libtextmode.resize_canvas(doc, columns, rows);
         cursor.move_to(Math.min(cursor.x, columns - 1), Math.min(cursor.y, rows - 1), true);

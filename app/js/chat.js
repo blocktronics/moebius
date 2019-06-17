@@ -115,6 +115,30 @@ function updated_sauce(id) {
     if (users[id]) action(users[id].nick, "has edited the SAUCE record");
 }
 
+function changed_ice_colors(id, value) {
+    if (users[id]) {
+        action(users[id].nick, `has turned iCE colors ${value ? "on" : "off"}`);
+    }
+}
+
+function changed_use_9px_font(id, value) {
+    if (users[id]) {
+        action(users[id].nick, `has turned letter spacing ${value ? "on" : "off"}`);
+    }
+}
+
+function changed_font(id, font_name) {
+    if (users[id]) {
+        action(users[id].nick, `changed the font to ${font_name}`);
+    }
+}
+
+function set_canvas_size(id, columns, rows) {
+    if (users[id]) {
+        action(users[id].nick, `changed the size of the canvas to ${columns} columns × ${rows} rows`);
+    }
+}
+
 function chat(id, nick, group, text, goto_line) {
     const messages = document.getElementById("messages");
     const rect = messages.getBoundingClientRect();
@@ -159,4 +183,4 @@ function clear_all() {
     clear("user_list");
 }
 
-module.exports = {toggle, join, leave, chat, welcome, updated_sauce, status: set_status, show: show_chat, clear: clear_all};
+module.exports = {toggle, join, leave, chat, welcome, updated_sauce, changed_ice_colors, changed_use_9px_font, changed_font, set_canvas_size, status: set_status, show: show_chat, clear: clear_all};

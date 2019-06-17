@@ -266,7 +266,6 @@ function show_new_connection_window() {
 
 async function connect_to_server({server, pass} = {}) {
     const win = await new_document_window();
-    change_to_network_mode(win.id);
     docs[win.id].network = true;
     win.setTitle(server);
     win.send("connect_to_server", {server, pass});
@@ -281,7 +280,6 @@ function open_dev_tools({win}) {
     if (win && !win.isDestroyed()) win.webContents.openDevTools({activate: false, mode: "detach"});
 }
 
-// Displayed when anything other than a document is frontmost.
 const application_menu = electron.Menu.buildFromTemplate([{
     label: "Mœbius",
     submenu: [
@@ -381,7 +379,6 @@ function chat_input_menu(win) {
     }]);
 }
 
-// Displayed when modal window is frontmost.
 function modal_menu(win) {
     return electron.Menu.buildFromTemplate([{
         label: "Mœbius",
@@ -500,8 +497,8 @@ function document_menu(win) {
                 {label: "Fill Mode", id: "change_to_fill_mode", accelerator: "Cmd+5", click(item) {win.send("change_to_fill_mode");}, type: "checkbox", checked: false},
                 {label: "Sample Mode", id: "change_to_sample_mode", accelerator: "Cmd+6", click(item) {win.send("change_to_sample_mode");}, type: "checkbox", checked: false},
                 {type: "separator"},
-                {label: "Use 9px Font", id: "use_9px_font", click(item) {win.send("use_9px_font", item.checked);}, type: "checkbox", checked: false, enabled: true},
-                {label: "Use iCE Colors", id: "ice_colors", click(item) {win.send("ice_colors", item.checked);}, type: "checkbox", checked: false, enabled: true},
+                {label: "Use 9px Font", id: "use_9px_font", click(item) {win.send("use_9px_font", item.checked);}, type: "checkbox", checked: false},
+                {label: "Use iCE Colors", id: "ice_colors", click(item) {win.send("ice_colors", item.checked);}, type: "checkbox", checked: false},
                 {type: "separator"},
                 {label: "Actual Size", id: "actual_size", accelerator: "Cmd+0", click(item) {win.send("actual_size");}, type: "checkbox", checked: false},
                 {label: "Zoom In", id: "zoom_in", accelerator: "Cmd+=", click(item) {win.send("zoom_in");}},
@@ -509,102 +506,102 @@ function document_menu(win) {
                 {type: "separator"},
                 {label: "Change Font", submenu: [
                     {label: "Amiga", submenu: [
-                        {label: "Amiga Topaz 1 (8×16)", id: "Amiga Topaz 1", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "Amiga Topaz 1+ (8×16)", id: "Amiga Topaz 1+", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "Amiga Topaz 2 (8×16)", id: "Amiga Topaz 2", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "Amiga Topaz 2+ (8×16)", id: "Amiga Topaz 2+", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "Amiga P0T-NOoDLE (8×16)", id: "Amiga P0T-NOoDLE", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "Amiga MicroKnight (8×16)", id: "Amiga MicroKnight", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "Amiga MicroKnight+ (8×16)", id: "Amiga MicroKnight+", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "Amiga mOsOul (8×16)", id: "Amiga mOsOul", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
+                        {label: "Amiga Topaz 1 (8×16)", id: "Amiga Topaz 1", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "Amiga Topaz 1+ (8×16)", id: "Amiga Topaz 1+", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "Amiga Topaz 2 (8×16)", id: "Amiga Topaz 2", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "Amiga Topaz 2+ (8×16)", id: "Amiga Topaz 2+", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "Amiga P0T-NOoDLE (8×16)", id: "Amiga P0T-NOoDLE", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "Amiga MicroKnight (8×16)", id: "Amiga MicroKnight", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "Amiga MicroKnight+ (8×16)", id: "Amiga MicroKnight+", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "Amiga mOsOul (8×16)", id: "Amiga mOsOul", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "Arabic", submenu: [
-                        {label: "IBM VGA50 864 (8×8)", id: "IBM VGA50 864", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 864 (8×14)", id: "IBM EGA 864", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 864 (8×16)", id: "IBM VGA 864", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 864 (8×8)", id: "IBM VGA50 864", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 864 (8×14)", id: "IBM EGA 864", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 864 (8×16)", id: "IBM VGA 864", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "Baltic Rim", submenu: [
-                        {label: "IBM VGA50 775 (8×8)", id: "IBM VGA50 775", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 775 (8×14)", id: "IBM EGA 775", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 775 (8×16)", id: "IBM VGA 775", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 775 (8×8)", id: "IBM VGA50 775", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 775 (8×14)", id: "IBM EGA 775", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 775 (8×16)", id: "IBM VGA 775", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "Cyrillic", submenu: [
-                        {label: "IBM VGA50 866 (8×8)", id: "IBM VGA50 866", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 866 (8×14)", id: "IBM EGA 866", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 866 (8×16)", id: "IBM VGA 866", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA50 855 (8×8)", id: "IBM VGA50 855", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 855 (8×14)", id: "IBM EGA 855", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 855 (8×16)", id: "IBM VGA 855", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 866 (8×8)", id: "IBM VGA50 866", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 866 (8×14)", id: "IBM EGA 866", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 866 (8×16)", id: "IBM VGA 866", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 855 (8×8)", id: "IBM VGA50 855", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 855 (8×14)", id: "IBM EGA 855", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 855 (8×16)", id: "IBM VGA 855", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "French Canadian", submenu: [
-                        {label: "IBM VGA50 863 (8×8)", id: "IBM VGA50 863", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 863 (8×14)", id: "IBM EGA 863", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 863 (8×16)", id: "IBM VGA 863", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA25G 863 (8×19)", id: "IBM VGA25G 863", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 863 (8×8)", id: "IBM VGA50 863", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 863 (8×14)", id: "IBM EGA 863", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 863 (8×16)", id: "IBM VGA 863", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 863 (8×19)", id: "IBM VGA25G 863", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "Greek", submenu: [
-                        {label: "IBM VGA50 737 (8×8)", id: "IBM VGA50 737", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 737 (8×14)", id: "IBM EGA 737", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 737 (8×16)", id: "IBM VGA 737", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA50 869 (8×8)", id: "IBM VGA50 869", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 869 (8×14)", id: "IBM EGA 869", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 869 (8×16)", id: "IBM VGA 869", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA50 851 (8×8)", id: "IBM VGA50 851", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 851 (8×14)", id: "IBM EGA 851", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 851 (8×16)", id: "IBM VGA 851", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA25G 851 (8×19)", id: "IBM VGA25G 851", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 737 (8×8)", id: "IBM VGA50 737", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 737 (8×14)", id: "IBM EGA 737", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 737 (8×16)", id: "IBM VGA 737", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 869 (8×8)", id: "IBM VGA50 869", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 869 (8×14)", id: "IBM EGA 869", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 869 (8×16)", id: "IBM VGA 869", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 851 (8×8)", id: "IBM VGA50 851", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 851 (8×14)", id: "IBM EGA 851", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 851 (8×16)", id: "IBM VGA 851", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 851 (8×19)", id: "IBM VGA25G 851", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "Hebrew", submenu: [
-                        {label: "IBM VGA50 862 (8×8)", id: "IBM VGA50 862", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 862 (8×14)", id: "IBM EGA 862", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 862 (8×16)", id: "IBM VGA 862", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 862 (8×8)", id: "IBM VGA50 862", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 862 (8×14)", id: "IBM EGA 862", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 862 (8×16)", id: "IBM VGA 862", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "IBM PC", submenu: [
-                        {label: "IBM VGA50 (8×8)",  id: "IBM VGA50", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA (8×14)", id: "IBM EGA", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA (8×16)", id: "IBM VGA", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA25G (8×19 (8×19)", id: "IBM VGA25G", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 (8×8)",  id: "IBM VGA50", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA (8×14)", id: "IBM EGA", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA (8×16)", id: "IBM VGA", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G (8×19 (8×19)", id: "IBM VGA25G", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "Icelandic", submenu: [
-                        {label: "IBM VGA50 861 (8×8)", id: "IBM VGA50 861", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 861 (8×14)", id: "IBM EGA 861", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 861 (8×16)", id: "IBM VGA 861", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA25G 861 (8×19)", id: "IBM VGA25G 861", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 861 (8×8)", id: "IBM VGA50 861", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 861 (8×14)", id: "IBM EGA 861", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 861 (8×16)", id: "IBM VGA 861", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 861 (8×19)", id: "IBM VGA25G 861", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "Latin-1 Western European", submenu: [
-                        {label: "IBM VGA50 850 (8×8)", id: "IBM VGA50 850", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 850 (8×14)", id: "IBM EGA 850", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 850 (8×16)", id: "IBM VGA 850", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA25G 850 (8×19)", id: "IBM VGA25G 850", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 850 (8×8)", id: "IBM VGA50 850", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 850 (8×14)", id: "IBM EGA 850", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 850 (8×16)", id: "IBM VGA 850", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 850 (8×19)", id: "IBM VGA25G 850", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "Latin-1 Central European", submenu: [
-                        {label: "IBM VGA50 852 (8×8)", id: "IBM VGA50 852", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 852 (8×14)", id: "IBM EGA 852", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 852 (8×16)", id: "IBM VGA 852", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA25G 852 (8×19)", id: "IBM VGA25G 852", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 852 (8×8)", id: "IBM VGA50 852", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 852 (8×14)", id: "IBM EGA 852", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 852 (8×16)", id: "IBM VGA 852", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 852 (8×19)", id: "IBM VGA25G 852", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "Latin-1 Multilingual", submenu: [
-                        {label: "IBM VGA50 853 (8×8)", id: "IBM VGA50 853", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 853 (8×14)", id: "IBM EGA 853", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 853 (8×16)", id: "IBM VGA 853", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA25G 853 (8×19)", id: "IBM VGA25G 853", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 853 (8×8)", id: "IBM VGA50 853", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 853 (8×14)", id: "IBM EGA 853", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 853 (8×16)", id: "IBM VGA 853", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 853 (8×19)", id: "IBM VGA25G 853", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "Nordic", submenu: [
-                        {label: "IBM VGA50 865 (8×8)", id: "IBM VGA50 865", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 865 (8×14)", id: "IBM EGA 865", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 865 (8×16)", id: "IBM VGA 865", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA25G 865 (8×19)", id: "IBM VGA25G 865", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 865 (8×8)", id: "IBM VGA50 865", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 865 (8×14)", id: "IBM EGA 865", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 865 (8×16)", id: "IBM VGA 865", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 865 (8×19)", id: "IBM VGA25G 865", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "Portuguese", submenu: [
-                        {label: "IBM VGA50 860 (8×8)", id: "IBM VGA50 860", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 860 (8×14)", id: "IBM EGA 860", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 860 (8×16)", id: "IBM VGA 860", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA25G 860 (8×19)", id: "IBM VGA25G 860", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 860 (8×8)", id: "IBM VGA50 860", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 860 (8×14)", id: "IBM EGA 860", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 860 (8×16)", id: "IBM VGA 860", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 860 (8×19)", id: "IBM VGA25G 860", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "Turkish", submenu: [
-                        {label: "IBM VGA50 857 (8×8)", id: "IBM VGA50 857", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 857 (8×14)", id: "IBM EGA 857", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 857 (8×16)", id: "IBM VGA 857", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 857 (8×8)", id: "IBM VGA50 857", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 857 (8×14)", id: "IBM EGA 857", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 857 (8×16)", id: "IBM VGA 857", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]}
                 ]},
                 {type: "separator"},
@@ -707,8 +704,8 @@ function document_menu(win) {
                 {label: "Fill Mode", id: "change_to_fill_mode", click(item) {win.send("change_to_fill_mode");}, type: "checkbox", checked: false},
                 {label: "Sample Mode", id: "change_to_sample_mode", click(item) {win.send("change_to_sample_mode");}, type: "checkbox", checked: false},
                 {type: "separator"},
-                {label: "Use 9px Font", id: "use_9px_font", click(item) {win.send("use_9px_font", item.checked);}, type: "checkbox", checked: false, enabled: true},
-                {label: "Use iCE Colors", id: "ice_colors", click(item) {win.send("ice_colors", item.checked);}, type: "checkbox", checked: false, enabled: true},
+                {label: "Use 9px Font", id: "use_9px_font", click(item) {win.send("use_9px_font", item.checked);}, type: "checkbox", checked: false},
+                {label: "Use iCE Colors", id: "ice_colors", click(item) {win.send("ice_colors", item.checked);}, type: "checkbox", checked: false},
                 {type: "separator"},
                 {label: "Actual Size", id: "actual_size", accelerator: "Ctrl+Alt+0", click(item) {win.send("actual_size");}, type: "checkbox", checked: false},
                 {label: "Zoom In", id: "zoom_in", accelerator: "Ctrl+=", click(item) {win.send("zoom_in");}},
@@ -716,102 +713,102 @@ function document_menu(win) {
                 {type: "separator"},
                 {label: "Change Font", submenu: [
                     {label: "Amiga", submenu: [
-                        {label: "Amiga Topaz 1 (8×16)", id: "Amiga Topaz 1", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "Amiga Topaz 1+ (8×16)", id: "Amiga Topaz 1+", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "Amiga Topaz 2 (8×16)", id: "Amiga Topaz 2", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "Amiga Topaz 2+ (8×16)", id: "Amiga Topaz 2+", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "Amiga P0T-NOoDLE (8×16)", id: "Amiga P0T-NOoDLE", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "Amiga MicroKnight (8×16)", id: "Amiga MicroKnight", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "Amiga MicroKnight+ (8×16)", id: "Amiga MicroKnight+", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "Amiga mOsOul (8×16)", id: "Amiga mOsOul", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
+                        {label: "Amiga Topaz 1 (8×16)", id: "Amiga Topaz 1", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "Amiga Topaz 1+ (8×16)", id: "Amiga Topaz 1+", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "Amiga Topaz 2 (8×16)", id: "Amiga Topaz 2", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "Amiga Topaz 2+ (8×16)", id: "Amiga Topaz 2+", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "Amiga P0T-NOoDLE (8×16)", id: "Amiga P0T-NOoDLE", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "Amiga MicroKnight (8×16)", id: "Amiga MicroKnight", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "Amiga MicroKnight+ (8×16)", id: "Amiga MicroKnight+", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "Amiga mOsOul (8×16)", id: "Amiga mOsOul", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "Arabic", submenu: [
-                        {label: "IBM VGA50 864 (8×8)", id: "IBM VGA50 864", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 864 (8×14)", id: "IBM EGA 864", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 864 (8×16)", id: "IBM VGA 864", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 864 (8×8)", id: "IBM VGA50 864", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 864 (8×14)", id: "IBM EGA 864", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 864 (8×16)", id: "IBM VGA 864", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "Baltic Rim", submenu: [
-                        {label: "IBM VGA50 775 (8×8)", id: "IBM VGA50 775", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 775 (8×14)", id: "IBM EGA 775", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 775 (8×16)", id: "IBM VGA 775", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 775 (8×8)", id: "IBM VGA50 775", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 775 (8×14)", id: "IBM EGA 775", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 775 (8×16)", id: "IBM VGA 775", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "Cyrillic", submenu: [
-                        {label: "IBM VGA50 866 (8×8)", id: "IBM VGA50 866", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 866 (8×14)", id: "IBM EGA 866", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 866 (8×16)", id: "IBM VGA 866", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA50 855 (8×8)", id: "IBM VGA50 855", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 855 (8×14)", id: "IBM EGA 855", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 855 (8×16)", id: "IBM VGA 855", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 866 (8×8)", id: "IBM VGA50 866", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 866 (8×14)", id: "IBM EGA 866", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 866 (8×16)", id: "IBM VGA 866", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 855 (8×8)", id: "IBM VGA50 855", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 855 (8×14)", id: "IBM EGA 855", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 855 (8×16)", id: "IBM VGA 855", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "French Canadian", submenu: [
-                        {label: "IBM VGA50 863 (8×8)", id: "IBM VGA50 863", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 863 (8×14)", id: "IBM EGA 863", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 863 (8×16)", id: "IBM VGA 863", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA25G 863 (8×19)", id: "IBM VGA25G 863", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 863 (8×8)", id: "IBM VGA50 863", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 863 (8×14)", id: "IBM EGA 863", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 863 (8×16)", id: "IBM VGA 863", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 863 (8×19)", id: "IBM VGA25G 863", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "Greek", submenu: [
-                        {label: "IBM VGA50 737 (8×8)", id: "IBM VGA50 737", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 737 (8×14)", id: "IBM EGA 737", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 737 (8×16)", id: "IBM VGA 737", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA50 869 (8×8)", id: "IBM VGA50 869", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 869 (8×14)", id: "IBM EGA 869", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 869 (8×16)", id: "IBM VGA 869", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA50 851 (8×8)", id: "IBM VGA50 851", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 851 (8×14)", id: "IBM EGA 851", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 851 (8×16)", id: "IBM VGA 851", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA25G 851 (8×19)", id: "IBM VGA25G 851", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 737 (8×8)", id: "IBM VGA50 737", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 737 (8×14)", id: "IBM EGA 737", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 737 (8×16)", id: "IBM VGA 737", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 869 (8×8)", id: "IBM VGA50 869", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 869 (8×14)", id: "IBM EGA 869", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 869 (8×16)", id: "IBM VGA 869", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 851 (8×8)", id: "IBM VGA50 851", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 851 (8×14)", id: "IBM EGA 851", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 851 (8×16)", id: "IBM VGA 851", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 851 (8×19)", id: "IBM VGA25G 851", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "Hebrew", submenu: [
-                        {label: "IBM VGA50 862 (8×8)", id: "IBM VGA50 862", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 862 (8×14)", id: "IBM EGA 862", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 862 (8×16)", id: "IBM VGA 862", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 862 (8×8)", id: "IBM VGA50 862", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 862 (8×14)", id: "IBM EGA 862", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 862 (8×16)", id: "IBM VGA 862", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "IBM PC", submenu: [
-                        {label: "IBM VGA50 (8×8)",  id: "IBM VGA50", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA (8×14)", id: "IBM EGA", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA (8×16)", id: "IBM VGA", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA25G (8×19 (8×19)", id: "IBM VGA25G", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 (8×8)",  id: "IBM VGA50", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA (8×14)", id: "IBM EGA", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA (8×16)", id: "IBM VGA", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G (8×19 (8×19)", id: "IBM VGA25G", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "Icelandic", submenu: [
-                        {label: "IBM VGA50 861 (8×8)", id: "IBM VGA50 861", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 861 (8×14)", id: "IBM EGA 861", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 861 (8×16)", id: "IBM VGA 861", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA25G 861 (8×19)", id: "IBM VGA25G 861", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 861 (8×8)", id: "IBM VGA50 861", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 861 (8×14)", id: "IBM EGA 861", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 861 (8×16)", id: "IBM VGA 861", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 861 (8×19)", id: "IBM VGA25G 861", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "Latin-1 Western European", submenu: [
-                        {label: "IBM VGA50 850 (8×8)", id: "IBM VGA50 850", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 850 (8×14)", id: "IBM EGA 850", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 850 (8×16)", id: "IBM VGA 850", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA25G 850 (8×19)", id: "IBM VGA25G 850", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 850 (8×8)", id: "IBM VGA50 850", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 850 (8×14)", id: "IBM EGA 850", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 850 (8×16)", id: "IBM VGA 850", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 850 (8×19)", id: "IBM VGA25G 850", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "Latin-1 Central European", submenu: [
-                        {label: "IBM VGA50 852 (8×8)", id: "IBM VGA50 852", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 852 (8×14)", id: "IBM EGA 852", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 852 (8×16)", id: "IBM VGA 852", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA25G 852 (8×19)", id: "IBM VGA25G 852", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 852 (8×8)", id: "IBM VGA50 852", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 852 (8×14)", id: "IBM EGA 852", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 852 (8×16)", id: "IBM VGA 852", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 852 (8×19)", id: "IBM VGA25G 852", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "Latin-1 Multilingual", submenu: [
-                        {label: "IBM VGA50 853 (8×8)", id: "IBM VGA50 853", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 853 (8×14)", id: "IBM EGA 853", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 853 (8×16)", id: "IBM VGA 853", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA25G 853 (8×19)", id: "IBM VGA25G 853", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 853 (8×8)", id: "IBM VGA50 853", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 853 (8×14)", id: "IBM EGA 853", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 853 (8×16)", id: "IBM VGA 853", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 853 (8×19)", id: "IBM VGA25G 853", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "Nordic", submenu: [
-                        {label: "IBM VGA50 865 (8×8)", id: "IBM VGA50 865", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 865 (8×14)", id: "IBM EGA 865", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 865 (8×16)", id: "IBM VGA 865", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA25G 865 (8×19)", id: "IBM VGA25G 865", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 865 (8×8)", id: "IBM VGA50 865", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 865 (8×14)", id: "IBM EGA 865", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 865 (8×16)", id: "IBM VGA 865", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 865 (8×19)", id: "IBM VGA25G 865", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "Portuguese", submenu: [
-                        {label: "IBM VGA50 860 (8×8)", id: "IBM VGA50 860", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 860 (8×14)", id: "IBM EGA 860", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 860 (8×16)", id: "IBM VGA 860", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA25G 860 (8×19)", id: "IBM VGA25G 860", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 860 (8×8)", id: "IBM VGA50 860", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 860 (8×14)", id: "IBM EGA 860", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 860 (8×16)", id: "IBM VGA 860", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA25G 860 (8×19)", id: "IBM VGA25G 860", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]},
                     {label: "Turkish", submenu: [
-                        {label: "IBM VGA50 857 (8×8)", id: "IBM VGA50 857", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM EGA 857 (8×14)", id: "IBM EGA 857", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
-                        {label: "IBM VGA 857 (8×16)", id: "IBM VGA 857", click(item) {change_font(win, item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA50 857 (8×8)", id: "IBM VGA50 857", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM EGA 857 (8×14)", id: "IBM EGA 857", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
+                        {label: "IBM VGA 857 (8×16)", id: "IBM VGA 857", click(item) {win.send("change_font", item.id);}, type: "checkbox", checked: false},
                     ]}
                 ]},
                 {type: "separator"},
@@ -841,14 +838,6 @@ function document_menu(win) {
                 {label: "Acknowledgements", id: "show_cheatsheet", click(item) {show_acknowledgements();}},
             ]
         }]);
-    }
-}
-
-function change_font(win, font_name) {
-    if (docs[win.id].network) {
-        electron.dialog.showMessageBox(win, {type: "error", message: "Change Font", detail: "The font cannot be changed when connected to a server."});
-    } else {
-        win.send("change_font", font_name);
     }
 }
 
@@ -1146,12 +1135,6 @@ function change_to_sample_mode(id) {
     docs[id].menu.getMenuItemById("change_to_rectangle_mode").checked = false;
     docs[id].menu.getMenuItemById("change_to_fill_mode").checked = false;
     docs[id].menu.getMenuItemById("change_to_sample_mode").checked = true;
-}
-
-function change_to_network_mode(id) {
-    docs[id].menu.getMenuItemById("set_canvas_size").enabled = false;
-    docs[id].menu.getMenuItemById("use_9px_font").enabled = false;
-    docs[id].menu.getMenuItemById("ice_colors").enabled = false;
 }
 
 function destroy(id) {
