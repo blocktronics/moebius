@@ -497,7 +497,23 @@ function encode_as_ansi(doc) {
                 }
             }
         }
-        output.push(code);
+        if (code == 32 && bg == 0) {
+            for (let j = i; j < doc.data.length; j++) {
+                let {code: look_ahead_code, bg: look_ahead_bg} = doc.data[j];
+                if (look_ahead_code != 32 || look_ahead_bg != 0) {
+                    output.push(code);
+                    break;
+                }
+                if ((j + 1) % doc.columns == 0) {
+                    output.push(13);
+                    output.push(10);
+                    i = j;
+                    break;
+                }
+            }
+        } else {
+            output.push(code);
+        }
     }
     const bytes = new Uint8Array(output);
     return add_sauce_for_ans({doc, bytes});
