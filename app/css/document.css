@@ -119,8 +119,17 @@ body.dark #current_colors > canvas {
     float: left;
     width: calc(100% - var(--sidebar-width) -  var(--preview-width));
     height: var(--chat-height);
+    max-height: calc(100% - var(--toolbar-height) - var(--statusbar-height));
     overflow: hidden;
     background-color: var(--dark-mid-color);
+    position: relative;
+}
+#chat_resizer {
+    position: absolute;
+    top: 0px;
+    width: 100%;
+    height: 8px;
+    cursor: ns-resize;
 }
 #user_list {
     float: left;

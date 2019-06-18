@@ -65,7 +65,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
     }, true);
     document.getElementById("use_backup").addEventListener("change", (event) => use_backup(), true);
     document.body.addEventListener("keydown", (event) => {
-        if (event.code == "Escape") electron.remote.getCurrentWindow().close()
+        if (event.code == "Escape") electron.remote.getCurrentWindow().close();
     }, true);
 }, true);
 

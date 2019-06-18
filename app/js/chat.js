@@ -4,9 +4,16 @@ const status_types = {ACTIVE: 0, IDLE: 1, AWAY: 2, WEB: 3};
 const linkify = require("linkifyjs");
 const linkify_string = require("linkifyjs/string");
 require("linkifyjs/plugins/ticket")(linkify);
+let last_height = 240;
 
 function set_var(name, value) {
     document.documentElement.style.setProperty(`--${name}`, `${value}px`);
+}
+
+function is_at_bottom() {
+    const messages = document.getElementById("messages");
+    const rect = messages.getBoundingClientRect();
+    return (rect.height > messages.scrollHeight) || (messages.scrollTop == messages.scrollHeight - rect.height + 1);
 }
 
 function scroll_to_bottom() {
@@ -17,13 +24,14 @@ function scroll_to_bottom() {
 
 function show(focus = true) {
     const chat_input = document.getElementById("chat_input");
-    set_var("chat-height", 240);
+    set_var("chat-height", last_height);
     chat_input.value = "";
     scroll_to_bottom();
     if (focus) chat_input.focus();
 }
 
 function hide() {
+    last_height = document.getElementById("chat").getBoundingClientRect().height;
     document.getElementById("chat_input").blur();
     set_var("chat-height", 0);
 }
@@ -59,9 +67,7 @@ function create_links(element, text, goto_line) {
 }
 
 function action(nick, text) {
-    const messages = document.getElementById("messages");
-    const rect = messages.getBoundingClientRect();
-    const scroll = (rect.height > messages.scrollHeight) || (messages.scrollTop == messages.scrollHeight - rect.height + 1);
+    const scroll = is_at_bottom();
     const nick_div = document.createElement("div");
     nick_div.classList.add("nick");
     nick_div.innerText = `${nick} ${text}`;
@@ -72,11 +78,12 @@ function action(nick, text) {
 }
 
 function welcome(text, goto_line) {
+    const scroll = is_at_bottom();
     const welcome_div = document.createElement("div");
     welcome_div.classList.add("welcome");
     create_links(welcome_div, text, goto_line);
     document.getElementById("messages").appendChild(welcome_div);
-    scroll_to_bottom();
+    if (scroll) scroll_to_bottom();
 }
 
 function set_status(id, status) {
@@ -140,9 +147,7 @@ function set_canvas_size(id, columns, rows) {
 }
 
 function chat(id, nick, group, text, goto_line) {
-    const messages = document.getElementById("messages");
-    const rect = messages.getBoundingClientRect();
-    const scroll = (rect.height > messages.scrollHeight) || (messages.scrollTop == messages.scrollHeight - rect.height + 1);
+    const scroll = is_at_bottom();
     const nick_div = document.createElement("div");
     nick_div.classList.add("nick");
     if (group == "") {
@@ -156,6 +161,7 @@ function chat(id, nick, group, text, goto_line) {
     const container = document.createElement("div");
     container.appendChild(nick_div);
     container.appendChild(text_div);
+    const messages = document.getElementById("messages");
     messages.appendChild(container);
     if (users[id] && (users[id].nick != nick || users[id].group != group)) {
         users[id].nick = nick;
@@ -183,4 +189,4 @@ function clear_all() {
     clear("user_list");
 }
 
-module.exports = {toggle, join, leave, chat, welcome, updated_sauce, changed_ice_colors, changed_use_9px_font, changed_font, set_canvas_size, status: set_status, show: show_chat, clear: clear_all};
+module.exports = {toggle, is_at_bottom, scroll_to_bottom, join, leave, chat, welcome, updated_sauce, changed_ice_colors, changed_use_9px_font, changed_font, set_canvas_size, status: set_status, show: show_chat, clear: clear_all};

@@ -19,7 +19,7 @@ let undo_buffer = [];
 let redo_buffer = [];
 const mouse_button_types = {NONE: 0, LEFT: 1, RIGHT: 2};
 let preview_canvas;
-const mouse = {x: 0, y: 0, button: mouse_button_types.NONE, start: {x: 0, y: 0}, drawing: false};
+const mouse = {x: 0, y: 0, button: mouse_button_types.NONE, start: {x: 0, y: 0}, drawing: false, chat_resizing: false};
 const editor_modes = {SELECT: 0, BRUSH: 1, LINE: 2, RECTANGLE: 3, FILL: 4, SAMPLE: 5};
 let mode;
 let previous_mode;
@@ -1075,6 +1075,7 @@ function register_mouse(event, x, y, record_start, drawing) {
 function unregester_mouse() {
     mouse.button = mouse_button_types.NONE;
     mouse.drawing = false;
+    mouse.chat_resizing = false;
 }
 
 function mouse_down(event) {
@@ -1243,6 +1244,15 @@ function draw_rectangle(x, y, col) {
 }
 
 function mouse_move(event) {
+    if (mouse.chat_resizing) {
+        const scroll = chat.is_at_bottom();
+        const new_height = document.getElementById("chat").getBoundingClientRect().bottom - event.clientY;
+        set_var("chat-height", Math.max(new_height, 96));
+        mouse.y = event.clientY;
+        if (scroll) chat.scroll_to_bottom();
+        canvas.update_frame();
+        return;
+    }
     if (!render) return;
     const {x, y, half_y} = get_canvas_xy(event);
     if (x == mouse.x && y == mouse.y) return;
@@ -1659,6 +1669,11 @@ electron.ipcRenderer.on("backup_folder", (event, {value}) => backup_folder = val
 electron.ipcRenderer.on("chat_window_toggle", (event, opts) => chat_window_toggle(opts));
 electron.ipcRenderer.on("crop", (event, opts) => crop(opts));
 
+function chat_resizer(event) {
+    register_mouse(event, event.clientX, event.clientY);
+    mouse.chat_resizing = true;
+}
+
 document.addEventListener("DOMContentLoaded", (event) => {
     document.getElementById("ice_colors_toggle").addEventListener("mousedown", (event) => ice_colors(!doc.ice_colors), true);
     document.getElementById("use_9px_font_toggle").addEventListener("mousedown", (event) => use_9px_font(!doc.use_9px_font), true);
@@ -1673,6 +1688,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
     document.getElementById("rectangle_mode").addEventListener("mousedown", (event) => change_to_rectangle_mode(), true);
     document.getElementById("fill_mode").addEventListener("mousedown", (event) => change_to_fill_mode(), true);
     document.getElementById("sample_mode").addEventListener("mousedown", (event) => change_to_sample_mode(), true);
+    document.getElementById("chat_resizer").addEventListener("mousedown", (event) => chat_resizer(event), true);
     const chat_input = document.getElementById("chat_input");
     chat_input.addEventListener("focus", (event) => send("chat_input_focus"), true);
     chat_input.addEventListener("blur", (event) => send("chat_input_blur"), true);

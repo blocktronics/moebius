@@ -404,4 +404,4 @@ function export_as_png({file, ice_colors}) {
     fs.writeFileSync(file, base64_string, "base64");
 }
 
-module.exports = {cursor_modes, Cursor, add, start_blinking, stop_blinking, export_as_png, render_at};
+module.exports = {cursor_modes, Cursor, add, start_blinking, stop_blinking, update_frame, export_as_png, render_at};
