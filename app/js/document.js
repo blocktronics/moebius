@@ -6,8 +6,9 @@ const toolbar = require("../js/toolbar");
 const chat = require("../js/chat");
 const network = require("../js/network");
 const path = require("path");
+const hourly_saver = require("../hourly_saver");
 let file = "Untitled";
-let nick, group, use_numpad, use_backup, backup_folder;
+let nick, group, use_numpad, backup_folder;
 let doc, render;
 let insert_mode = false;
 let fg = 7;
@@ -1481,14 +1482,22 @@ function change_to_sample_mode() {
     }
 }
 
-setInterval((event) => {
-    if (!connection && use_backup && backup_folder != "") {
-        const date = new Date();
-        const hours = date.getHours();
-        const backup_file = path.join(backup_folder, `${path.parse(file).name} ${date.toDateString()} ${hours > 12 ? hours - 12 : hours}${hours > 12 ? "pm" : "am"}.ans`);
+hourly_saver.on("save", () => {
+    if (!connection && backup_folder != "") {
+        const parsed_file = path.parse(file);
+        const backup_file = hourly_saver.filename(path.join(backup_folder, `${parsed_file.base}${parsed_file.ext || ".ans"}`));
         libtextmode.write_file(doc, backup_file);
+        hourly_saver.keep_if_changes(backup_file);
     }
-}, 1000 * 60 * 60);
+});
+
+function use_backup(value) {
+    if (value) {
+        hourly_saver.start();
+    } else {
+        hourly_saver.stop();
+    }
+}
 
 function chat_window_toggle() {
     chat.toggle();
@@ -1557,7 +1566,7 @@ electron.ipcRenderer.on("nick", (event, {value}) => nick = value);
 electron.ipcRenderer.on("group", (event, {value}) => group = value);
 electron.ipcRenderer.on("use_flashing_cursor", (event, {value}) => cursor.set_flashing(value));
 electron.ipcRenderer.on("use_numpad", (event, {value}) => use_numpad = value);
-electron.ipcRenderer.on("use_backup", (event, {value}) => use_backup = value);
+electron.ipcRenderer.on("use_backup", (event, {value}) => use_backup(value));
 electron.ipcRenderer.on("backup_folder", (event, {value}) => backup_folder = value);
 electron.ipcRenderer.on("chat_window_toggle", (event, opts) => chat_window_toggle(opts));
 electron.ipcRenderer.on("crop", (event, opts) => crop(opts));

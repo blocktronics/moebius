@@ -3,13 +3,11 @@ const libtextmode = require("./js/libtextmode/libtextmode");
 const action =  {CONNECTED: 0, REFUSED: 1, JOIN: 2, LEAVE: 3, CURSOR: 4, SELECTION: 5, RESIZE_SELECTION: 6, OPERATION: 7, HIDE_CURSOR: 8, DRAW: 9, CHAT: 10, STATUS: 11, SAUCE: 12, ICE_COLORS: 13, USE_9PX_FONT: 14, CHANGE_FONT: 15, SET_CANVAS_SIZE: 16};
 const status_types = {ACTIVE: 0, IDLE: 1, AWAY: 2, WEB: 3};
 const os = require("os");
-const http = require("http");
 const url = require("url");
-const server = http.createServer();
+const server = require("http").createServer();
 const joints = {};
 const path = require("path");
-const crypto = require("crypto");
-const fs = require("fs");
+const hourly_saver = require("./hourly_saver");
 
 function send(ws, type, data = {}) {
     ws.send(JSON.stringify({type, data}));
@@ -107,27 +105,8 @@ class Joint {
         }
     }
 
-    save() {
-        const date = new Date();
-        const hours = date.getHours();
-        const parsed_file = path.parse(this.file);
-        const hour = `${hours > 12 ? hours - 12 : hours}${hours > 12 ? "pm" : "am"}`;
-        const file = path.join(parsed_file.dir, `${parsed_file.name} - ${date.toDateString()} ${hour}${parsed_file.ext}`);
+    save(file = this.file) {
         libtextmode.write_file(this.doc, file);
-        if (this.last_file == undefined || this.last_file == file) {
-            this.log(`${hour}: saved ${file}`);
-            this.last_file = file;
-        } else {
-            const sha1_old = crypto.createHash("sha1").update(fs.readFileSync(this.last_file)).digest("hex");
-            const sha1_new = crypto.createHash("sha1").update(fs.readFileSync(file)).digest("hex");
-            if (sha1_old == sha1_new) {
-                this.log(`${hour}: no changes, file not saved`);
-                fs.unlinkSync(file);
-            } else {
-                this.log(`${hour}: saved ${file}`);
-                this.last_file = file;
-            }
-        }
     }
 
     constructor({path, file, pass, quiet = false}) {
@@ -137,6 +116,11 @@ class Joint {
         this.quiet = quiet;
         this.data_store = [];
         this.chat_history = [];
+        hourly_saver.on("save", () => {
+            const file = hourly_saver.filename(this.file);
+            this.save(file);
+            if (hourly_saver.keep_if_changes(file)) this.log(`saved backup as ${file}`);
+        });
     }
 
     connection(ws) {
@@ -160,17 +144,17 @@ class Joint {
     async start() {
         this.hostname = os.hostname();
         this.doc = await libtextmode.read_file(this.file);
-        this.timer = setInterval(() => this.save(), 60 * 60 * 1000);
         this.wss = new ws.Server({noServer: true});
         this.log(`started`);
+        hourly_saver.start();
     }
 
     close() {
         for (const data of this.data_store) {
             if (!data.closed) data.ws.close();
         }
-        clearInterval(this.timer);
         this.wss.close();
+        hourly_saver.stop();
         this.save();
     }
 }
