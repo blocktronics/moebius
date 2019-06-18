@@ -5,6 +5,7 @@
     --dark-border-color: rgb(30, 31, 35);
     --view-color: rgb(128, 128, 128);
     --dark-view-color: rgb(34, 37, 43);
+    --scaling-type: pixelated;
 }
 html, body {
     width: 100%;
@@ -20,7 +21,7 @@ body.dark {
     color: white;
 }
 canvas {
-    image-rendering: pixelated;
+    image-rendering: var(--scaling-type);
     vertical-align: bottom;
 }
 

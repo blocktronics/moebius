@@ -1205,6 +1205,7 @@ function draw_rectangle(x, y, col) {
 }
 
 function mouse_move(event) {
+    if (!render) return;
     const {x, y, half_y} = get_canvas_xy(event);
     if (event.altKey && !mouse.drawing) {
         if (mouse.button) sample_half_block(x, half_y, mouse.button == mouse_button_types.LEFT ? set_fg : set_bg);
@@ -1268,6 +1269,7 @@ function mouse_move(event) {
 }
 
 function mouse_up(event) {
+    if (!render) return;
     const {x, y, half_y} = get_canvas_xy(event);
     switch (mode) {
         case editor_modes.LINE:
@@ -1287,13 +1289,16 @@ function mouse_up(event) {
 }
 
 function mouse_out(event) {
-    switch (mode) {
-        case editor_modes.LINE:
-        case editor_modes.RECTANGLE:
-            destroy_tool_preview();
-            break;
+    if (!render) return;
+    if (!event.relatedTarget) {
+        switch (mode) {
+            case editor_modes.LINE:
+            case editor_modes.RECTANGLE:
+                destroy_tool_preview();
+                break;
+        }
+        unregester_mouse();
     }
-    unregester_mouse();
 }
 
 function open_reference_image({image}) {
@@ -1536,6 +1541,10 @@ function use_backup(value) {
     }
 }
 
+function use_pixel_aliasing(value) {
+    document.documentElement.style.setProperty("--scaling-type", value ? "high-quality" : "pixelated");
+}
+
 function chat_window_toggle() {
     chat.toggle();
 }
@@ -1602,6 +1611,7 @@ electron.ipcRenderer.on("connect_to_server", (event, opts) => connect_to_server(
 electron.ipcRenderer.on("nick", (event, {value}) => nick = value);
 electron.ipcRenderer.on("group", (event, {value}) => group = value);
 electron.ipcRenderer.on("use_flashing_cursor", (event, {value}) => cursor.set_flashing(value));
+electron.ipcRenderer.on("use_pixel_aliasing", (event, {value}) => use_pixel_aliasing(value));
 electron.ipcRenderer.on("use_numpad", (event, {value}) => use_numpad = value);
 electron.ipcRenderer.on("use_backup", (event, {value}) => use_backup(value));
 electron.ipcRenderer.on("backup_folder", (event, {value}) => backup_folder = value);
@@ -1612,11 +1622,10 @@ document.addEventListener("DOMContentLoaded", (event) => {
     document.getElementById("ice_colors_toggle").addEventListener("mousedown", (event) => ice_colors(!doc.ice_colors), true);
     document.getElementById("use_9px_font_toggle").addEventListener("mousedown", (event) => use_9px_font(!doc.use_9px_font), true);
     document.getElementById("dimensions").addEventListener("mousedown", (event) => get_canvas_size(), true);
-    const canvas_container = document.getElementById("canvas_container");
-    canvas_container.addEventListener("mousedown", mouse_down, true);
-    canvas_container.addEventListener("mousemove", mouse_move, true);
-    canvas_container.addEventListener("mouseup", mouse_up, true);
-    canvas_container.addEventListener("mouseout", mouse_out, true);
+    document.getElementById("canvas_container").addEventListener("mousedown", mouse_down, true);
+    document.body.addEventListener("mouseup", mouse_up, true);
+    document.body.addEventListener("mousemove", mouse_move, true);
+    document.body.addEventListener("mouseout", mouse_out, true);
     document.getElementById("select_mode").addEventListener("mousedown", (event) => change_to_select_mode(), true);
     document.getElementById("brush_mode").addEventListener("mousedown", (event) => change_to_brush_mode(), true);
     document.getElementById("line_mode").addEventListener("mousedown", (event) => change_to_line_mode(), true);

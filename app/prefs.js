@@ -1,7 +1,7 @@
 const electron = require("electron");
 const path = require("path");
 const file = path.join(electron.app.getPath("userData"), "preferences.json");
-const default_values = {nick: "Anonymous", group: "", use_flashing_cursor: false, use_numpad: false, use_backup: false, backup_folder: ""};
+const default_values = {nick: "Anonymous", group: "", use_flashing_cursor: false, use_pixel_aliasing: false, use_numpad: false, use_backup: false, backup_folder: ""};
 const fs = require("fs");
 const prefs = (fs.existsSync(file)) ? JSON.parse(fs.readFileSync(file, "utf-8")) : default_values;
 

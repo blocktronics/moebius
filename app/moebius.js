@@ -118,6 +118,7 @@ async function new_document_window() {
     win.send("group", {value: prefs.get("group")});
     win.send("use_numpad", {value: prefs.get("use_numpad")});
     win.send("use_flashing_cursor", {value: prefs.get("use_flashing_cursor")});
+    win.send("use_pixel_aliasing", {value: prefs.get("use_pixel_aliasing")});
     win.send("use_backup", {value: prefs.get("use_backup")});
     win.send("backup_folder", {value: prefs.get("backup_folder")});
     win.on("focus", (event) => {
@@ -242,7 +243,7 @@ function preferences() {
     if (preferences_win && !preferences_win.isDestroyed()) {
         preferences_win.focus();
     } else {
-        preferences_win = new electron.BrowserWindow({width: 480, height: 265, show: false, backgroundColor: "#000000", maximizable: false, resizable: false, fullscreenable: false, webPreferences: {nodeIntegration: true}});
+        preferences_win = new electron.BrowserWindow({width: 480, height: 295, show: false, backgroundColor: "#000000", maximizable: false, resizable: false, fullscreenable: false, webPreferences: {nodeIntegration: true}});
         if (!darwin) preferences_win.setMenu(null);
         preferences_win.on("focus", (event) => set_application_menu());
         preferences_win.on("ready-to-show", (event) => {
@@ -466,7 +467,7 @@ function document_menu(win) {
                 {label: "Cut", id: "cut", accelerator: "Cmd+X", click(item) {win.send("cut");}, enabled: false},
                 {label: "Copy", id: "copy", accelerator: "Cmd+C", click(item) {win.send("copy");}, enabled: false},
                 {label: "Paste", id: "paste", accelerator: "Cmd+V", click(item) {win.send("paste");}},
-                {label: "Delete", id: "delete_selection", accelerator: "Cmd+Backspace", click(item) {win.send("delete_selection");}, enabled: false},
+                {label: "Delete", id: "delete_selection", accelerator: "E", click(item) {win.send("delete_selection");}, enabled: false},
                 {type: "separator"},
                 {label: "Select All", id: "select_all", accelerator: "Cmd+A", click(item) {win.send("select_all");}},
                 {label: "Deselect", id: "deselect", accelerator: "Escape", click(item) {win.send("deselect");}, enabled: false},
@@ -678,7 +679,7 @@ function document_menu(win) {
                 {label: "Cut", id: "cut", accelerator: "Ctrl+X", click(item) {win.send("cut");}, enabled: false},
                 {label: "Copy", id: "copy", accelerator: "Ctrl+C", click(item) {win.send("copy");}, enabled: false},
                 {label: "Paste", id: "paste", accelerator: "Ctrl+V", click(item) {win.send("paste");}},
-                {label: "Delete", id: "delete_selection", accelerator: "Ctrl+Backspace", click(item) {win.send("delete_selection");}, enabled: false},
+                {label: "Delete", id: "delete_selection", accelerator: "E", click(item) {win.send("delete_selection");}, enabled: false},
                 {type: "separator"},
                 {label: "Select All", id: "select_all", accelerator: "Ctrl+A", click(item) {win.send("select_all");}},
                 {label: "Deselect", id: "deselect", accelerator: "Escape", click(item) {win.send("deselect");}, enabled: false},
@@ -1186,6 +1187,11 @@ function use_flashing_cursor(value) {
     send_all("use_flashing_cursor", {value});
 }
 
+function use_pixel_aliasing(value) {
+    prefs.set("use_pixel_aliasing", value);
+    send_all("use_pixel_aliasing", {value});
+}
+
 function use_backup(value) {
     prefs.set("use_backup", value);
     send_all("use_backup", {value});
@@ -1258,6 +1264,7 @@ electron.ipcMain.on("nick", (event, {value}) => nick(value));
 electron.ipcMain.on("group", (event, {value}) => group(value));
 electron.ipcMain.on("use_numpad", (event, {value}) => use_numpad(value));
 electron.ipcMain.on("use_flashing_cursor", (event, {value}) => use_flashing_cursor(value));
+electron.ipcMain.on("use_pixel_aliasing", (event, {value}) => use_pixel_aliasing(value));
 electron.ipcMain.on("use_backup", (event, {value}) => use_backup(value));
 electron.ipcMain.on("backup_folder", (event, {value}) => backup_folder(value));
 electron.ipcMain.on("preferences", (event) => preferences());

@@ -1,11 +1,12 @@
 const electron = require("electron");
 let backup_folder_value;
 
-function prefs({nick, group, use_numpad, use_flashing_cursor, use_backup, backup_folder}) {
+function prefs({nick, group, use_numpad, use_flashing_cursor, use_pixel_aliasing, use_backup, backup_folder}) {
     document.getElementById("nick").value = nick;
     document.getElementById("group").value = group;
     document.getElementById("use_numpad").checked = use_numpad;
     document.getElementById("use_flashing_cursor").checked = use_flashing_cursor;
+    document.getElementById("use_pixel_aliasing").checked = use_pixel_aliasing;
     document.getElementById("use_backup").checked = use_backup;
     backup_folder_value = backup_folder;
     document.getElementById("backup_folder").innerText = (backup_folder == "") ? "No Backup Folder Set" : backup_folder;
@@ -25,6 +26,10 @@ function use_numpad() {
 
 function use_flashing_cursor() {
     electron.ipcRenderer.send("use_flashing_cursor", {value: document.getElementById("use_flashing_cursor").checked});
+}
+
+function use_pixel_aliasing() {
+    electron.ipcRenderer.send("use_pixel_aliasing", {value: document.getElementById("use_pixel_aliasing").checked});
 }
 
 function use_backup() {
@@ -53,6 +58,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
     document.getElementById("group").addEventListener("keyup", (event) => group(), true);
     document.getElementById("use_numpad").addEventListener("change", (event) => use_numpad(), true);
     document.getElementById("use_flashing_cursor").addEventListener("change", (event) => use_flashing_cursor(), true);
+    document.getElementById("use_pixel_aliasing").addEventListener("change", (event) => use_pixel_aliasing(), true);
     document.getElementById("backup_choose").addEventListener("click", (event) => {
         choose_folder();
         event.preventDefault();
