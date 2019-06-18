@@ -18,10 +18,8 @@ let stored_blocks;
 let undo_buffer = [];
 let redo_buffer = [];
 const mouse_button_types = {NONE: 0, LEFT: 1, RIGHT: 2};
-let mouse_button = mouse_button_types.NONE;
-let start_mouse_x, start_mouse_y;
 let preview_canvas;
-let mouse_x, mouse_y;
+const mouse = {x: 0, y: 0, button: mouse_button_types.NONE, start: {x: 0, y: 0}, drawing: false};
 const editor_modes = {SELECT: 0, BRUSH: 1, LINE: 2, RECTANGLE: 3, FILL: 4, SAMPLE: 5};
 let mode;
 let previous_mode;
@@ -890,33 +888,33 @@ function draw_half_block_line(sx, sy, dx, dy, col) {
 }
 
 function half_block_brush(x, y, col) {
-    draw_half_block_line(mouse_x, mouse_y, x, y, col);
-    mouse_x = x;
-    mouse_y = y;
+    draw_half_block_line(mouse.x, mouse.y, x, y, col);
+    mouse.x = x;
+    mouse.y = y;
 }
 
 function colorize_brush(x, y) {
-    const coords = line(mouse_x, mouse_y, x, y);
+    const coords = line(mouse.x, mouse.y, x, y);
     for (const coord of coords) {
         const block = doc.data[coord.y * doc.columns + coord.x];
         change_data({x: coord.x, y: coord.y, code: block.code, fg: toolbar.is_in_colorize_fg_mode() ? fg : block.fg, bg: toolbar.is_in_colorize_bg_mode() ? bg : block.bg});
     }
-    mouse_x = x;
-    mouse_y = y;
+    mouse.x = x;
+    mouse.y = y;
 }
 
 function clear_block_brush(x, y) {
-    const coords = line(mouse_x, mouse_y, x, y);
+    const coords = line(mouse.x, mouse.y, x, y);
     for (const coord of coords) change_data({x: coord.x, y: coord.y, code: 32, fg: 7, bg: 0});
-    mouse_x = x;
-    mouse_y = y;
+    mouse.x = x;
+    mouse.y = y;
 }
 
 function full_block_brush(x, y, col) {
-    const coords = line(mouse_x, mouse_y, x, y);
+    const coords = line(mouse.x, mouse.y, x, y);
     for (const coord of coords) change_data({x: coord.x, y: coord.y, code: 219, fg: col, bg: 0});
-    mouse_x = x;
-    mouse_y = y;
+    mouse.x = x;
+    mouse.y = y;
 }
 
 function get_canvas_xy(event) {
@@ -977,7 +975,7 @@ function get_half_block(x, y) {
             is_blocky = false;
         }
     }
-    return {x, y, text_y, is_blocky, is_vertically_blocky, upper_block_color, lower_block_color, left_block_color, right_block_color, is_top};
+    return {x, y, text_y, is_blocky, is_vertically_blocky, upper_block_color, lower_block_color, left_block_color, right_block_color, is_top, fg: block.fg, bg: block.bg};
 }
 
 function fill(x, y, col) {
@@ -1015,85 +1013,122 @@ function fill(x, y, col) {
     }
 }
 
+function sample_half_block(x, y, set_fg_or_bg) {
+    const block = get_half_block(x, y);
+    if (mouse.button == mouse_button_types.LEFT) {
+        if (block.is_blocky) {
+            set_fg_or_bg(block.is_top ? block.upper_block_color : block.lower_block_color);
+        } else {
+            set_fg_or_bg(block.fg);
+        }
+    } else {
+        if (block.is_blocky) {
+            set_fg_or_bg(block.is_top ? block.upper_block_color : block.lower_block_color);
+        } else {
+            set_fg_or_bg(block.fg);
+        }
+    }
+}
+
+function register_mouse(event, x, y, record_start, drawing) {
+    if (event.button == 0) {
+        mouse.button = mouse_button_types.LEFT;
+    } else if (event.button == 2) {
+        mouse.button = mouse_button_types.RIGHT;
+    }
+    mouse.x = x;
+    mouse.y = y;
+    if (record_start) {
+        mouse.start.x = x;
+        mouse.start.y = y;
+    }
+    mouse.drawing = drawing;
+}
+
+function unregester_mouse() {
+    mouse.button = mouse_button_types.NONE;
+    mouse.drawing = false;
+}
+
 function mouse_down(event) {
     const {x, y, half_y} = get_canvas_xy(event);
-    if (event.button == 0) {
-        mouse_button = mouse_button_types.LEFT;
-    } else if (event.button == 2) {
-        mouse_button = mouse_button_types.RIGHT;
-    }
-    switch (mode) {
-        case editor_modes.SELECT:
-            switch (cursor.mode) {
-                case canvas.cursor_modes.EDITING:
-                    mouse_x = x; mouse_y = y;
-                    cursor.move_to(x, y);
-                    break;
-                case canvas.cursor_modes.SELECTION:
-                    cursor.start_editing_mode();
-                    cursor.move_to(x, y);
-                    break;
-                case canvas.cursor_modes.OPERATION:
-                    cursor.move_to(x, y);
-                    stamp(cursor.is_move_operation);
-                    cursor.start_editing_mode();
-                    break;
-            }
-        break;
-        case editor_modes.BRUSH:
-            start_undo_chunk();
-            if (toolbar.is_in_half_block_mode()) {
-                mouse_x = x; mouse_y = half_y;
-                if (event.shiftKey) {
-                    half_block_brush(x, half_y, 0);
-                } else {
-                    half_block_brush(x, half_y, (mouse_button == mouse_button_types.LEFT) ? fg : bg);
+    if (event.altKey) {
+        register_mouse(event, x, half_y, false, false);
+        sample_half_block(x, half_y, event.button == 0 ? set_fg : set_bg);
+    } else {
+        switch (mode) {
+            case editor_modes.SELECT:
+                switch (cursor.mode) {
+                    case canvas.cursor_modes.EDITING:
+                        register_mouse(event, x, y, false, true);
+                        cursor.move_to(x, y);
+                        break;
+                    case canvas.cursor_modes.SELECTION:
+                        cursor.start_editing_mode();
+                        register_mouse(event, x, y, false, true);
+                        cursor.move_to(x, y);
+                        break;
+                    case canvas.cursor_modes.OPERATION:
+                        cursor.move_to(x, y);
+                        stamp(cursor.is_move_operation);
+                        cursor.start_editing_mode();
+                        break;
                 }
-            } else if (event.shiftKey || toolbar.is_in_clear_block_mode()) {
-                mouse_x = x; mouse_y = y;
-                clear_block_brush(x, y);
-            } else if (toolbar.is_in_full_block_mode()) {
-                mouse_x = x; mouse_y = y;
-                full_block_brush(x, y, (mouse_button == mouse_button_types.LEFT) ? fg : bg);
-            } else if (toolbar.is_in_colorize_mode()) {
-                mouse_x = x; mouse_y = y;
-                colorize_brush(x, y);
-            }
-        break;
-        case editor_modes.LINE:
-        case editor_modes.RECTANGLE:
-            mouse_x = x; mouse_y = toolbar.is_in_half_block_mode() ? half_y : y;
-            start_mouse_x = mouse_x; start_mouse_y = mouse_y;
-            create_tool_preview();
             break;
-        case editor_modes.FILL:
-            if (connection) {
-                const choice = electron.remote.dialog.showMessageBox(electron.remote.getCurrentWindow(), {type: "question", message: "Fill", detail: "Using fill whilst connected to a server is a potentially destructive operation. Are you sure?", buttons: ["Perform Fill", "Cancel"], defaultId: 1, cancelId: 1});
-                if (choice == 0) fill(x, half_y, (mouse_button == mouse_button_types.LEFT) ? fg : bg);
-            } else {
-                fill(x, half_y, (mouse_button == mouse_button_types.LEFT) ? fg : bg);
-            }
+            case editor_modes.BRUSH:
+                start_undo_chunk();
+                if (toolbar.is_in_half_block_mode()) {
+                    register_mouse(event, x, half_y, false, true);
+                    if (event.shiftKey) {
+                        half_block_brush(x, half_y, 0);
+                    } else {
+                        half_block_brush(x, half_y, (mouse.button == mouse_button_types.LEFT) ? fg : bg);
+                    }
+                } else if (event.shiftKey || toolbar.is_in_clear_block_mode()) {
+                    register_mouse(event, x, y, false, true);
+                    clear_block_brush(x, y);
+                } else if (toolbar.is_in_full_block_mode()) {
+                    register_mouse(event, x, y, false, true);
+                    full_block_brush(x, y, (mouse.button == mouse_button_types.LEFT) ? fg : bg);
+                } else if (toolbar.is_in_colorize_mode()) {
+                    register_mouse(event, x, y, false, true);
+                    colorize_brush(x, y);
+                }
             break;
-        case editor_modes.SAMPLE:
-            const block = doc.data[doc.columns * y + x];
-            set_fg(block.fg);
-            set_bg(block.bg);
-            mouse_button = mouse_button_types.NONE;
-            switch (previous_mode) {
-                case editor_modes.SELECT: change_to_select_mode(); break;
-                case editor_modes.BRUSH: change_to_brush_mode(); break;
-                case editor_modes.LINE: change_to_line_mode(); break;
-                case editor_modes.FILL: change_to_fill_mode(); break;
-                case editor_modes.RECTANGLE: change_to_rectangle_mode(); break;
-            }
-        break;
+            case editor_modes.LINE:
+            case editor_modes.RECTANGLE:
+                register_mouse(event, x, toolbar.is_in_half_block_mode() ? half_y : y, true, true);
+                create_tool_preview();
+                break;
+            case editor_modes.FILL:
+                if (connection) {
+                    const choice = electron.remote.dialog.showMessageBox(electron.remote.getCurrentWindow(), {type: "question", message: "Fill", detail: "Using fill whilst connected to a server is a potentially destructive operation. Are you sure?", buttons: ["Perform Fill", "Cancel"], defaultId: 1, cancelId: 1});
+                    if (choice == 0) fill(x, half_y, (event.button == 0) ? fg : bg);
+                } else {
+                    fill(x, half_y, (event.button == 0) ? fg : bg);
+                }
+                break;
+            case editor_modes.SAMPLE:
+                const block = doc.data[doc.columns * y + x];
+                set_fg(block.fg);
+                set_bg(block.bg);
+                unregester_mouse();
+                switch (previous_mode) {
+                    case editor_modes.SELECT: change_to_select_mode(); break;
+                    case editor_modes.BRUSH: change_to_brush_mode(); break;
+                    case editor_modes.LINE: change_to_line_mode(); break;
+                    case editor_modes.FILL: change_to_fill_mode(); break;
+                    case editor_modes.RECTANGLE: change_to_rectangle_mode(); break;
+                }
+            break;
+        }
     }
 }
 
 function draw_line_preview(x, y, col) {
-    if (x != mouse_x || y != mouse_y) {
-        const [sx, dx] = (start_mouse_x < x) ? [start_mouse_x, x] : [x, start_mouse_x];
-        const [sy, dy] = (start_mouse_y < y) ? [start_mouse_y, y] : [y, start_mouse_y];
+    if (x != mouse.x || y != mouse.y) {
+        const [sx, dx] = (mouse.start.x < x) ? [mouse.start.x, x] : [x, mouse.start.x];
+        const [sy, dy] = (mouse.start.y < y) ? [mouse.start.y, y] : [y, mouse.start.y];
         if (toolbar.is_in_half_block_mode()) {
             update_tool_preview(sx * render.font.width, Math.floor(sy * render.font.height / 2), (dx - sx + 1) * render.font.width, Math.ceil((dy - sy + 1) * render.font.height / 2));
         } else {
@@ -1101,7 +1136,7 @@ function draw_line_preview(x, y, col) {
         }
         const ctx = preview_canvas.getContext("2d");
         ctx.fillStyle = libtextmode.convert_ega_to_style(render.font.palette[col]);
-        const coords = line(start_mouse_x, start_mouse_y, x, y);
+        const coords = line(mouse.start.x, mouse.start.y, x, y);
         if (toolbar.is_in_half_block_mode()) {
             for (const coord of coords) {
                 const odd_y = (coord.y % 2);
@@ -1116,7 +1151,7 @@ function draw_line_preview(x, y, col) {
 function draw_line(x, y, col) {
     start_undo_chunk();
     if (toolbar.is_in_half_block_mode()) {
-        draw_half_block_line(mouse_x, mouse_y, x, y, col);
+        draw_half_block_line(mouse.x, mouse.y, x, y, col);
     } else if (toolbar.is_in_full_block_mode()) {
         full_block_brush(x, y, col);
     } else if (toolbar.is_in_clear_block_mode()) {
@@ -1127,9 +1162,9 @@ function draw_line(x, y, col) {
 }
 
 function draw_rectangle_preview(x, y, col) {
-    if (x != mouse_x || y != mouse_y) {
-        const [sx, dx] = (start_mouse_x < x) ? [start_mouse_x, x] : [x, start_mouse_x];
-        const [sy, dy] = (start_mouse_y < y) ? [start_mouse_y, y] : [y, start_mouse_y];
+    if (x != mouse.x || y != mouse.y) {
+        const [sx, dx] = (mouse.start.x < x) ? [mouse.start.x, x] : [x, mouse.start.x];
+        const [sy, dy] = (mouse.start.y < y) ? [mouse.start.y, y] : [y, mouse.start.y];
         if (toolbar.is_in_half_block_mode()) {
             update_tool_preview(sx * render.font.width, Math.floor(sy * render.font.height / 2), (dx - sx + 1) * render.font.width, Math.ceil((dy - sy + 1) * render.font.height / 2));
         } else {
@@ -1140,8 +1175,8 @@ function draw_rectangle_preview(x, y, col) {
 }
 
 function draw_rectangle(x, y, col) {
-    const [sx, dx] = (start_mouse_x < x) ? [start_mouse_x, x] : [x, start_mouse_x];
-    const [sy, dy] = (start_mouse_y < y) ? [start_mouse_y, y] : [y, start_mouse_y];
+    const [sx, dx] = (mouse.start.x < x) ? [mouse.start.x, x] : [x, mouse.start.x];
+    const [sy, dy] = (mouse.start.y < y) ? [mouse.start.y, y] : [y, mouse.start.y];
     start_undo_chunk();
     if (toolbar.is_in_half_block_mode()) {
         for (let y = sy; y <= dy; y++) {
@@ -1171,82 +1206,84 @@ function draw_rectangle(x, y, col) {
 
 function mouse_move(event) {
     const {x, y, half_y} = get_canvas_xy(event);
-    switch (mode) {
-        case editor_modes.SELECT:
-            switch (cursor.mode) {
-                case canvas.cursor_modes.EDITING:
-                    if (mouse_button) {
-                        if (mouse_x != x || mouse_y != y) cursor.start_selection_mode();
+    if (event.altKey && !mouse.drawing) {
+        if (mouse.button) sample_half_block(x, half_y, mouse.button == mouse_button_types.LEFT ? set_fg : set_bg);
+    } else {
+        switch (mode) {
+            case editor_modes.SELECT:
+                switch (cursor.mode) {
+                    case canvas.cursor_modes.EDITING:
+                        if (mouse.drawing && (mouse.x != x || mouse.y != y)) cursor.start_selection_mode();
+                        break;
+                    case canvas.cursor_modes.SELECTION:
+                        if (mouse.drawing) cursor.move_to(x, y);
+                        break;
+                    case canvas.cursor_modes.OPERATION:
+                        cursor.move_to(x, y);
+                        break;
+                }
+            break;
+            case editor_modes.BRUSH:
+                if (mouse.drawing) {
+                    if (toolbar.is_in_half_block_mode()) {
+                        if (event.shiftKey) {
+                            half_block_brush(x, half_y, 0);
+                        } else {
+                            half_block_brush(x, half_y, (mouse.button == mouse_button_types.LEFT) ? fg : bg);
+                        }
+                    } else if (event.shiftKey || toolbar.is_in_clear_block_mode()) {
+                        clear_block_brush(x, y);
+                    } else if (toolbar.is_in_full_block_mode()) {
+                        full_block_brush(x, y, (mouse.button == mouse_button_types.LEFT) ? fg : bg);
+                    } else if (toolbar.is_in_colorize_mode()) {
+                        colorize_brush(x, y);
                     }
-                    break;
-                case canvas.cursor_modes.SELECTION:
-                    if (mouse_button) cursor.move_to(x, y);
-                    break;
-                case canvas.cursor_modes.OPERATION:
-                    cursor.move_to(x, y);
-                    break;
-            }
-        break;
-        case editor_modes.BRUSH:
-            if (mouse_button) {
-                if (toolbar.is_in_half_block_mode()) {
-                    if (event.shiftKey) {
-                        half_block_brush(x, half_y, 0);
+                }
+            break;
+            case editor_modes.LINE:
+                if (mouse.drawing) {
+                    if (toolbar.is_in_half_block_mode()) {
+                        draw_line_preview(x, half_y, (mouse.button == mouse_button_types.LEFT) ? fg : bg);
+                    } else if (toolbar.is_in_clear_block_mode()) {
+                        draw_line_preview(x, y, 0);
                     } else {
-                        half_block_brush(x, half_y, (mouse_button == mouse_button_types.LEFT) ? fg : bg);
+                        draw_line_preview(x, y, (mouse.button == mouse_button_types.LEFT) ? fg : bg);
                     }
-                } else if (event.shiftKey || toolbar.is_in_clear_block_mode()) {
-                    clear_block_brush(x, y);
-                } else if (toolbar.is_in_full_block_mode()) {
-                    full_block_brush(x, y, (mouse_button == mouse_button_types.LEFT) ? fg : bg);
-                } else if (toolbar.is_in_colorize_mode()) {
-                    colorize_brush(x, y);
                 }
-            }
-        break;
-        case editor_modes.LINE:
-            if (mouse_button) {
-                if (toolbar.is_in_half_block_mode()) {
-                    draw_line_preview(x, half_y, (mouse_button == mouse_button_types.LEFT) ? fg : bg);
-                } else if (toolbar.is_in_clear_block_mode()) {
-                    draw_line_preview(x, y, 0);
-                } else {
-                    draw_line_preview(x, y, (mouse_button == mouse_button_types.LEFT) ? fg : bg);
+                break;
+            case editor_modes.RECTANGLE:
+                if (mouse.drawing) {
+                    if (toolbar.is_in_half_block_mode()) {
+                        draw_rectangle_preview(x, half_y, (mouse.button == mouse_button_types.LEFT) ? fg : bg);
+                    } else if (toolbar.is_in_clear_block_mode()) {
+                        draw_rectangle_preview(x, y, 0);
+                    } else {
+                        draw_rectangle_preview(x, y, (mouse.button == mouse_button_types.LEFT) ? fg : bg);
+                    }
                 }
-            }
-            break;
-        case editor_modes.RECTANGLE:
-            if (mouse_button) {
-                if (toolbar.is_in_half_block_mode()) {
-                    draw_rectangle_preview(x, half_y, (mouse_button == mouse_button_types.LEFT) ? fg : bg);
-                } else if (toolbar.is_in_clear_block_mode()) {
-                    draw_rectangle_preview(x, y, 0);
-                } else {
-                    draw_rectangle_preview(x, y, (mouse_button == mouse_button_types.LEFT) ? fg : bg);
-                }
-            }
-            break;
+                break;
+        }
+        toolbar.set_sample(doc.data[doc.columns * y + x]);
     }
-    toolbar.set_sample(doc.data[doc.columns * y + x]);
 }
 
 function mouse_up(event) {
     const {x, y, half_y} = get_canvas_xy(event);
     switch (mode) {
         case editor_modes.LINE:
-            if (mouse_button) {
-                draw_line(x, toolbar.is_in_half_block_mode() ? half_y : y, (mouse_button == mouse_button_types.LEFT) ? fg : bg);
+            if (mouse.drawing) {
+                draw_line(x, toolbar.is_in_half_block_mode() ? half_y : y, (mouse.button == mouse_button_types.LEFT) ? fg : bg);
                 destroy_tool_preview();
             }
             break;
         case editor_modes.RECTANGLE:
-            if (mouse_button) {
-                draw_rectangle(x, toolbar.is_in_half_block_mode() ? half_y : y, (mouse_button == mouse_button_types.LEFT) ? fg : bg);
+            if (mouse.drawing) {
+                draw_rectangle(x, toolbar.is_in_half_block_mode() ? half_y : y, (mouse.button == mouse_button_types.LEFT) ? fg : bg);
                 destroy_tool_preview();
             }
             break;
     }
-    mouse_button = mouse_button_types.NONE;
+    unregester_mouse();
 }
 
 function mouse_out(event) {
@@ -1256,7 +1293,7 @@ function mouse_out(event) {
             destroy_tool_preview();
             break;
     }
-    mouse_button = mouse_button_types.NONE;
+    unregester_mouse();
 }
 
 function open_reference_image({image}) {
