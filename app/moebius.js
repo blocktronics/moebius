@@ -216,6 +216,12 @@ function export_as_png({win}) {
     });
 }
 
+function export_as_utf8({win}) {
+    electron.dialog.showSaveDialog(win, {filters: [{name: "ANSI Art ", extensions: ["utf8ans"]}], defaultPath: `${docs[win.id].file ? path.parse(docs[win.id].file).name : "Untitled"}.utf8ans`}, (file) => {
+        if (file) win.send("export_as_utf8", file);
+    });
+}
+
 function open_reference_image({win}) {
     electron.dialog.showOpenDialog(win, {filters: [{name: "Images", extensions: ["png", "jpg"]}], properties: ["openFile"]}, (files) => {
         if (files) {
@@ -328,6 +334,10 @@ const application_menu = electron.Menu.buildFromTemplate([{
         {label: "Show Numpad Mappings", id: "show_numpad_mappings", click(item) {show_numpad_mappings();}},
         {type: "separator"},
         {label: "Acknowledgements", id: "show_cheatsheet", click(item) {show_acknowledgements();}},
+        {type: "separator"},
+        {label: "Mœbius Homepage", id: "show_homepage", click(item) {electron.shell.openExternal("http://www.andyh.org/moebius/");}},
+        {label: "Source Code at GitHub", id: "show_repo", click(item) {electron.shell.openExternal("https://github.com/blocktronics/moebius");}},
+        {label: "Raise an Issue at GitHub", id: "show_issues", click(item) {electron.shell.openExternal("https://github.com/blocktronics/moebius/issues");}},
     ]
 }]);
 
@@ -442,6 +452,7 @@ function document_menu(win) {
                 {label: "Save As\u2026", id: "save_as", accelerator: "Cmd+Shift+S", click(item) {save_as({win});}},
                 {type: "separator"},
                 {label: "Export As PNG\u2026", id: "export_as_png", accelerator: "Cmd+Shift+E", click(item) {export_as_png({win});}},
+                {label: "Export As UTF-8\u2026", id: "export_as_utf8", click(item) {export_as_utf8({win});}},
                 {type: "separator"},
                 {role: "close"}
             ]
@@ -631,6 +642,10 @@ function document_menu(win) {
                 {label: "Show Numpad Mappings", id: "show_numpad_mappings", click(item) {show_numpad_mappings();}},
                 {type: "separator"},
                 {label: "Acknowledgements", id: "show_cheatsheet", click(item) {show_acknowledgements();}},
+                {type: "separator"},
+                {label: "Mœbius Homepage", id: "show_homepage", click(item) {electron.shell.openExternal("http://www.andyh.org/moebius/");}},
+                {label: "Source Code at GitHub", id: "show_repo", click(item) {electron.shell.openExternal("https://github.com/blocktronics/moebius");}},
+                {label: "Raise an Issue at GitHub", id: "show_issues", click(item) {electron.shell.openExternal("https://github.com/blocktronics/moebius/issues");}},
             ]
         }]);
     } else {
@@ -647,6 +662,7 @@ function document_menu(win) {
                 {label: "Save As\u2026", id: "save_as", accelerator: "Ctrl+Shift+S", click(item) {save_as({win});}},
                 {type: "separator"},
                 {label: "Export As PNG\u2026", id: "export_as_png", accelerator: "Ctrl+Shift+E", click(item) {export_as_png({win});}},
+                {label: "Export As UTF-8\u2026", id: "export_as_utf8", click(item) {export_as_utf8({win});}},
                 {type: "separator"},
                 {label: "Settings", id: "preferences", click(item) {preferences();}},
                 {type: "separator"},
@@ -831,11 +847,15 @@ function document_menu(win) {
                 {label: "Open Dev Tools", id: "open_dev_tools", click(item) {open_dev_tools({item, win});}}
             ]
         }, {
-            label: "Help", role: "help", submenu: [
+            label: "&Help", role: "help", submenu: [
                 {label: "Cheatsheet", id: "show_cheatsheet", click(item) {show_cheatsheet();}},
                 {label: "Show Numpad Mappings", id: "show_numpad_mappings", click(item) {show_numpad_mappings();}},
                 {type: "separator"},
                 {label: "Acknowledgements", id: "show_cheatsheet", click(item) {show_acknowledgements();}},
+                {type: "separator"},
+                {label: "Mœbius Homepage", id: "show_homepage", click(item) {electron.shell.openExternal("http://www.andyh.org/moebius/");}},
+                {label: "Source Code at GitHub", id: "show_repo", click(item) {electron.shell.openExternal("https://github.com/blocktronics/moebius");}},
+                {label: "Raise an Issue at GitHub", id: "show_issues", click(item) {electron.shell.openExternal("https://github.com/blocktronics/moebius/issues");}},
             ]
         }]);
     }

@@ -1,5 +1,6 @@
 const {ega} = require("./palette");
 const {Textmode, add_sauce_for_ans} = require("./textmode");
+const {cp437_to_unicode_bytes} = require("./encodings");
 
 const sequence_type = {UNKNOWN: 0, UP: "A", DOWN: "B", RIGHT: "C", LEFT: "D", MOVE: "H", MOVE_ALT: "f", ERASE_DISPLAY: "J", ERASE_LINE: "K", SGR: "m", SAVE_POS: "s", TRUE_COLOR: "t", RESTORE_POS: "u"};
 const token_type = {ESCAPE_SEQUENCE: 0, LITERAL: 1};
@@ -431,7 +432,7 @@ function bin_to_ansi_colour(bin_colour) {
     }
 }
 
-function encode_as_ansi(doc) {
+function encode_as_ansi(doc, {utf8 = false} = {}) {
     let output = [27, 91, 48, 109];
     let bold = false;
     let blink = false;
@@ -501,16 +502,21 @@ function encode_as_ansi(doc) {
             for (let j = i; j < doc.data.length; j++) {
                 let {code: look_ahead_code, bg: look_ahead_bg} = doc.data[j];
                 if (look_ahead_code != 32 || look_ahead_bg != 0) {
-                    output.push(code);
+                    while (i < j) {
+                        output.push(32);
+                        i += 1;
+                    }
+                    i = j - 1;
                     break;
                 }
                 if ((j + 1) % doc.columns == 0) {
-                    output.push(13);
-                    output.push(10);
+                    output.push(13, 10);
                     i = j;
                     break;
                 }
             }
+        } else if (utf8) {
+            output.push.apply(output, cp437_to_unicode_bytes(code));
         } else {
             output.push(code);
         }

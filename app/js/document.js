@@ -306,6 +306,11 @@ function export_as_png(file) {
     canvas.export_as_png({file, ice_colors: doc.ice_colors});
 }
 
+
+function export_as_utf8(file) {
+    libtextmode.write_file(doc, file, {utf8: true});
+}
+
 function previous_foreground_color() {
     set_fg(fg == 0 ? 15 : fg - 1);
 }
@@ -1505,6 +1510,7 @@ electron.ipcRenderer.on("use_9px_font", (event, opts) => use_9px_font(opts));
 electron.ipcRenderer.on("change_font", (event, opts) => change_font(opts));
 electron.ipcRenderer.on("insert_mode", (event, opts) => set_insert_mode(opts));
 electron.ipcRenderer.on("export_as_png", (event, opts) => export_as_png(opts));
+electron.ipcRenderer.on("export_as_utf8", (event, opts) => export_as_utf8(opts));
 electron.ipcRenderer.on("previous_foreground_color", (event, opts) => previous_foreground_color(opts));
 electron.ipcRenderer.on("next_foreground_color", (event, opts) => next_foreground_color(opts));
 electron.ipcRenderer.on("previous_background_colour", (event, opts) => previous_background_colour(opts));
