@@ -917,6 +917,33 @@ function full_block_brush(x, y, col) {
     mouse.y = y;
 }
 
+function draw_shading_block(x, y) {
+    const block = doc.data[y * doc.columns + x];
+    if (mouse.button == mouse_button_types.LEFT) {
+        switch (block.code) {
+            case 219: break;
+            case 178: change_data({x, y, code: 219, fg, bg: block.bg}); break;
+            case 177: change_data({x, y, code: 178, fg, bg: block.bg}); break;
+            case 176: change_data({x, y, code: 177, fg, bg: block.bg}); break;
+            default: change_data({x, y, code: 176, fg, bg: block.bg}); break;
+        }
+    } else if (mouse.button == mouse_button_types.RIGHT) {
+        switch (block.code) {
+            case 176: change_data({x, y, code: 32, fg, bg: block.bg}); break;
+            case 177: change_data({x, y, code: 176, fg, bg: block.bg}); break;
+            case 178: change_data({x, y, code: 177, fg, bg: block.bg}); break;
+            case 219: change_data({x, y, code: 178, fg, bg: block.bg}); break;
+            default:
+        }
+    }
+    mouse.x = x; mouse.y = y;
+}
+
+function draw_shading_block_line(sx, sy, dx, dy) {
+    const coords = line(sx, sy, dx, dy);
+    for (const coord of coords) draw_shading_block(coord.x, coord.y);
+}
+
 function get_canvas_xy(event) {
     const canvas_container = document.getElementById("canvas_container");
     const canvas_container_rect = canvas_container.getBoundingClientRect();
@@ -1087,6 +1114,9 @@ function mouse_down(event) {
                 } else if (event.shiftKey || toolbar.is_in_clear_block_mode()) {
                     register_mouse(event, x, y, false, true);
                     clear_block_brush(x, y);
+                } else if (toolbar.is_in_shading_block_mode()) {
+                    register_mouse(event, x, y, false, true);
+                    draw_shading_block(x, y, (mouse.button == mouse_button_types.LEFT) ? fg : bg);
                 } else if (toolbar.is_in_full_block_mode()) {
                     register_mouse(event, x, y, false, true);
                     full_block_brush(x, y, (mouse.button == mouse_button_types.LEFT) ? fg : bg);
@@ -1154,6 +1184,8 @@ function draw_line(x, y, col) {
         draw_half_block_line(mouse.x, mouse.y, x, y, col);
     } else if (toolbar.is_in_full_block_mode()) {
         full_block_brush(x, y, col);
+    } else if (toolbar.is_in_shading_block_mode()) {
+        draw_shading_block_line(mouse.x, mouse.y, x, y);
     } else if (toolbar.is_in_clear_block_mode()) {
         clear_block_brush(x, y);
     } else if (toolbar.is_in_colorize_mode()) {
@@ -1188,6 +1220,12 @@ function draw_rectangle(x, y, col) {
                 change_data({x, y, code: 219, fg: col, bg: 0});
             }
         }
+    } else if (toolbar.is_in_shading_block_mode()) {
+        for (let y = sy; y <= dy; y++) {
+            for (let x = sx; x <= dx; x++) {
+                draw_shading_block(x, y);
+            }
+        }
     } else if (toolbar.is_in_clear_block_mode()) {
         for (let y = sy; y <= dy; y++) {
             for (let x = sx; x <= dx; x++) {
@@ -1207,6 +1245,7 @@ function draw_rectangle(x, y, col) {
 function mouse_move(event) {
     if (!render) return;
     const {x, y, half_y} = get_canvas_xy(event);
+    if (x == mouse.x && y == mouse.y) return;
     if (event.altKey && !mouse.drawing) {
         if (mouse.button) sample_half_block(x, half_y, mouse.button == mouse_button_types.LEFT ? set_fg : set_bg);
     } else {
@@ -1234,6 +1273,8 @@ function mouse_move(event) {
                         }
                     } else if (event.shiftKey || toolbar.is_in_clear_block_mode()) {
                         clear_block_brush(x, y);
+                    } else if (toolbar.is_in_shading_block_mode()) {
+                        draw_shading_block(x, y);
                     } else if (toolbar.is_in_full_block_mode()) {
                         full_block_brush(x, y, (mouse.button == mouse_button_types.LEFT) ? fg : bg);
                     } else if (toolbar.is_in_colorize_mode()) {
