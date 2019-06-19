@@ -39,7 +39,7 @@ electron.app.on("open-url", (event, url) => {
 
 electron.app.on("window-all-closed", (event) => {
     if (darwin) {
-        moebius.set_application_menu()
+        moebius.set_application_menu();
     } else {
         electron.app.quit();
     }
