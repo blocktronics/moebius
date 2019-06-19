@@ -719,7 +719,7 @@ function document_menu(win) {
                 {label: "Crop", id: "crop", accelerator: "Ctrl+K", click(item) {win.send("crop");}, enabled: false},
             ]
         }, {
-            label: "&Colors",
+            label: "Colors",
             submenu: [
                 {label: "Previous Foreground Color", id: "previous_foreground_color", accelerator: "Alt+Up", click(item) {win.send("previous_foreground_color");}},
                 {label: "Next Foreground Color", id: "next_foreground_color", accelerator: "Alt+Down", click(item) {win.send("next_foreground_color");}},
