@@ -1,6 +1,6 @@
 {
   "name": "moebius",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "ANSI Art Editor",
   "main": "app.js",
   "scripts": {
