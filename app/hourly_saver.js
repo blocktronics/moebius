@@ -17,7 +17,7 @@ class HourlySaver extends events.EventEmitter {
     }
 
     keep_if_changes(file) {
-        if (this.last_file && this.last_file != file) {
+        if (this.last_file && this.last_file != file && fs.existsSync(this.last_file)) {
             if (files_match(this.last_file, file)) {
                 fs.unlinkSync(file);
                 return false;
