@@ -488,6 +488,7 @@ function document_menu(win) {
                 {label: "Center", id: "center", accelerator: "=", click(item) {win.send("center");}, enabled: false},
                 {type: "separator"},
                 {label: "Transparent", id: "transparent", accelerator: "T", click(item) {win.send("transparent", item.checked);}, type: "checkbox", checked: false, enabled: false},
+                {label: "Underneath", id: "underneath", accelerator: "U", click(item) {win.send("underneath", item.checked);}, type: "checkbox", checked: false, enabled: false},
                 {type: "separator"},
                 {label: "Set Canvas Size\u2026", id: "set_canvas_size", accelerator: "Cmd+Alt+C", click(item) {win.send("get_canvas_size");}, enabled: true},
                 {type: "separator"},
@@ -713,6 +714,7 @@ function document_menu(win) {
                 {label: "Center", id: "center", accelerator: "=", click(item) {win.send("center");}, enabled: false},
                 {type: "separator"},
                 {label: "Transparent", id: "transparent", accelerator: "T", click(item) {win.send("transparent", item.checked);}, type: "checkbox", checked: false, enabled: false},
+                {label: "Underneath", id: "underneath", accelerator: "U", click(item) {win.send("underneath", item.checked);}, type: "checkbox", checked: false, enabled: false},
                 {type: "separator"},
                 {label: "Set Canvas Size\u2026", id: "set_canvas_size", accelerator: "Ctrl+Alt+C", click(item) {win.send("get_canvas_size");}, enabled: true},
                 {type: "separator"},
@@ -1045,6 +1047,14 @@ function disable_selection_menu_items_except_deselect_and_crop(id) {
     docs[id].menu.getMenuItemById("crop").enabled = true;
 }
 
+function uncheck_transparent(id) {
+    docs[id].menu.getMenuItemById("transparent").checked = false;
+}
+
+function uncheck_underneath(id) {
+    docs[id].menu.getMenuItemById("underneath").checked = false;
+}
+
 function enable_selection_menu_items(id) {
     docs[id].menu.getMenuItemById("cut").enabled = true;
     docs[id].menu.getMenuItemById("copy").enabled = true;
@@ -1066,6 +1076,7 @@ function enable_operation_menu_items(id) {
     docs[id].menu.getMenuItemById("flip_y").enabled = true;
     docs[id].menu.getMenuItemById("center").enabled = true;
     docs[id].menu.getMenuItemById("transparent").enabled = true;
+    docs[id].menu.getMenuItemById("underneath").enabled = true;
     docs[id].menu.getMenuItemById("left_justify_line").enabled = false;
     docs[id].menu.getMenuItemById("right_justify_line").enabled = false;
     docs[id].menu.getMenuItemById("center_line").enabled = false;
@@ -1081,6 +1092,9 @@ function disable_operation_menu_items(id) {
     const transparent = docs[id].menu.getMenuItemById("transparent");
     transparent.enabled = false;
     transparent.checked= false;
+    const underneath = docs[id].menu.getMenuItemById("underneath");
+    underneath.enabled = false;
+    underneath.checked= false;
 }
 
 function disable_editing_shortcuts(id) {
@@ -1310,6 +1324,8 @@ electron.ipcMain.on("enable_redo", (event, {id}) => enable_redo(id));
 electron.ipcMain.on("disable_redo", (event, {id}) => disable_redo(id));
 electron.ipcMain.on("disable_selection_menu_items", (event, {id}) => disable_selection_menu_items(id));
 electron.ipcMain.on("disable_selection_menu_items_except_deselect_and_crop", (event, {id}) => disable_selection_menu_items_except_deselect_and_crop(id));
+electron.ipcMain.on("uncheck_transparent", (event, {id}) => uncheck_transparent(id));
+electron.ipcMain.on("uncheck_underneath", (event, {id}) => uncheck_underneath(id));
 electron.ipcMain.on("enable_selection_menu_items", (event, {id}) => enable_selection_menu_items(id));
 electron.ipcMain.on("enable_operation_menu_items", (event, {id}) => enable_operation_menu_items(id));
 electron.ipcMain.on("disable_operation_menu_items", (event, {id}) => disable_operation_menu_items(id));

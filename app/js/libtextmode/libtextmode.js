@@ -111,6 +111,22 @@ function render_blocks(blocks, font) {
     return canvas;
 }
 
+function merge_blocks(under_blocks, over_blocks) {
+    const merged_blocks = {columns: Math.max(under_blocks.columns, over_blocks.columns), rows: Math.max(under_blocks.rows, over_blocks.rows), data: new Array(Math.max(under_blocks.rows, over_blocks.rows) * Math.max(under_blocks.columns, over_blocks.columns)), transparent: false};
+    for (let y = 0, i = 0; y < merged_blocks.rows; y++) {
+        for (let x = 0; x < merged_blocks.columns; x++, i++) {
+            const under_block = (y < under_blocks.rows && x < under_blocks.columns) ? under_blocks.data[y * under_blocks.columns + x] : undefined;
+            const over_block = (y < over_blocks.rows && x < over_blocks.columns) ? over_blocks.data[y * over_blocks.columns + x] : undefined;
+            if (over_block == undefined || (over_block.code == 32 && over_block.bg == 0)) {
+                merged_blocks.data[i] = Object.assign(under_block);
+            } else {
+                merged_blocks.data[i] = Object.assign(over_block);
+            }
+        }
+    }
+    return merged_blocks;
+}
+
 function copy_canvases(sources) {
     return sources.map((source) => {
         const {canvas, ctx} = create_canvas(source.width, source.height);
@@ -373,4 +389,4 @@ function uncompress(doc) {
     return doc;
 }
 
-module.exports = {read_bytes, read_file, write_file, animate, render, render_split, render_at, new_document, resize_canvas, cp437_to_unicode, cp437_to_unicode_bytes, unicode_to_cp437, render_blocks, flip_x, flip_y, rotate, get_data_url, convert_ega_to_style, compress, uncompress};
+module.exports = {read_bytes, read_file, write_file, animate, render, render_split, render_at, new_document, resize_canvas, cp437_to_unicode, cp437_to_unicode_bytes, unicode_to_cp437, render_blocks, merge_blocks, flip_x, flip_y, rotate, get_data_url, convert_ega_to_style, compress, uncompress};

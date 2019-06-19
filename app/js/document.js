@@ -27,6 +27,10 @@ let connection;
 const users = [];
 const darwin = (process.platform == "darwin");
 
+function show_debug() {
+    electron.remote.getCurrentWebContents().openDevTools({mode: "detach"});
+}
+
 function send_sync(channel, opts) {
     return electron.ipcRenderer.sendSync(channel, {id: electron.remote.getCurrentWindow().id, ...opts});
 }
@@ -420,10 +424,11 @@ function f_key(value) {
 function stamp(single_undo = false) {
     if (document.activeElement == document.getElementById("chat_input")) return;
     if (!single_undo) start_undo_chunk();
-    for (let y = 0; y + cursor.y < doc.rows && y < stored_blocks.rows; y++) {
-        for (let x = 0; x + cursor.x < doc.columns && x < stored_blocks.columns; x++) {
-            const block = stored_blocks.data[y * stored_blocks.columns + x];
-            if (!stored_blocks.transparent || block.code != 32 || block.bg != 0) change_data({x: cursor.x + x, y: cursor.y + y, code: block.code, fg: block.fg, bg: block.bg});
+    const blocks = stored_blocks.underneath ? libtextmode.merge_blocks(stored_blocks, cursor.get_blocks_in_operation(doc.data)) : stored_blocks;
+    for (let y = 0; y + cursor.y < doc.rows && y < blocks.rows; y++) {
+        for (let x = 0; x + cursor.x < doc.columns && x < blocks.columns; x++) {
+            const block = blocks.data[y * blocks.columns + x];
+            if (!blocks.transparent || block.code != 32 || block.bg != 0) change_data({x: cursor.x + x, y: cursor.y + y, code: block.code, fg: block.fg, bg: block.bg});
         }
     }
 }
@@ -656,9 +661,7 @@ function delete_selection() {
 
 function select_all() {
     if (document.activeElement == document.getElementById("chat_input")) return;
-    if (mode != editor_modes.SELECT) {
-        change_to_select_mode();
-    }
+    if (mode != editor_modes.SELECT) change_to_select_mode();
     cursor.start_editing_mode();
     cursor.move_to(0, 0, true);
     cursor.start_selection_mode();
@@ -667,9 +670,7 @@ function select_all() {
 
 function copy_block() {
     if (document.activeElement == document.getElementById("chat_input")) return;
-    if (cursor.mode == canvas.cursor_modes.SELECTION) {
-        stored_blocks = cursor.start_operation_mode(doc.data);
-    }
+    if (cursor.mode == canvas.cursor_modes.SELECTION) stored_blocks = cursor.start_operation_mode(doc.data);
 }
 
 function move_block() {
@@ -1411,7 +1412,26 @@ function center() {
 
 function transparent(value) {
     stored_blocks.transparent = value;
+    if (value) {
+        send("uncheck_underneath");
+        stored_blocks.underneath = false;
+    }
     cursor.update_cursor_with_blocks(stored_blocks);
+}
+
+function draw_underneath_cursor() {
+    cursor.update_cursor_with_blocks(libtextmode.merge_blocks(stored_blocks, cursor.get_blocks_in_operation(doc.data)));
+}
+
+function underneath(value) {
+    stored_blocks.underneath = value;
+    if (value) {
+        send("uncheck_transparent");
+        stored_blocks.transparent = false;
+        draw_underneath_cursor();
+    } else {
+        cursor.update_cursor_with_blocks(stored_blocks);
+    }
 }
 
 function set_zoom(factor) {
@@ -1698,6 +1718,10 @@ function erase_line() {
     for (let x = 0; x < doc.columns; x++) change_data({x, y: cursor.y, code: 32, fg: 7, bg: 0});
 }
 
+cursor.on("move", () => {
+    if (stored_blocks && stored_blocks.underneath) draw_underneath_cursor();
+});
+
 electron.ipcRenderer.on("open_file", (event, opts) => open_file(opts));
 electron.ipcRenderer.on("save", (event, opts) => save(opts));
 electron.ipcRenderer.on("show_statusbar", (event, opts) => show_statusbar(opts));
@@ -1724,6 +1748,7 @@ electron.ipcRenderer.on("flip_x", (event, opts) => flip_x(opts));
 electron.ipcRenderer.on("flip_y", (event, opts) => flip_y(opts));
 electron.ipcRenderer.on("center", (event, opts) => center(opts));
 electron.ipcRenderer.on("transparent", (event, opts) => transparent(opts));
+electron.ipcRenderer.on("underneath", (event, opts) => underneath(opts));
 electron.ipcRenderer.on("cut", (event, opts) => cut(opts));
 electron.ipcRenderer.on("copy", (event, opts) => copy(opts));
 electron.ipcRenderer.on("paste", (event, opts) => paste(opts));

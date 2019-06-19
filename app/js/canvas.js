@@ -1,6 +1,7 @@
 const libtextmode = require("../js/libtextmode/libtextmode");
 const fs = require("fs");
 let render, interval, mouse_button;
+const events = require("events");
 
 const cursor_modes = {EDITING: 0, SELECTION: 1, OPERATION: 2};
 
@@ -20,7 +21,7 @@ function update_columns_and_rows(columns, rows) {
     document.getElementById("rows_s").textContent = (rows > 1) ? "s" : "";
 }
 
-class Cursor {
+class Cursor extends events.EventEmitter {
     draw() {
         const ctx = this.canvas.getContext("2d");
         switch (this.mode) {
@@ -30,6 +31,7 @@ class Cursor {
                     ctx.drawImage(render.ice_color_collection[Math.floor(this.y / render.maximum_rows)], this.x * render.font.width, (this.y % render.maximum_rows) * render.font.height, render.font.width, render.font.height, 0, 0, render.font.width, render.font.height);
                     ctx.globalCompositeOperation = "difference";
                     render.font.draw_cursor(ctx, 0, render.font.height - 2);
+                    ctx.clearRect(0, 0, this.canvas.width, render.font.height - 2);
                 }
             break;
             case cursor_modes.SELECTION:
@@ -57,7 +59,7 @@ class Cursor {
         return reorientated_selection;
     }
 
-    move_to(x, y, scroll_view = false) {
+    move_to(x, y, scroll_view = false, emit = true) {
         this.x = x; this.y = y;
         if (this.user) update_status_bar_cursor_pos(this.x, this.y);
         switch (this.mode) {
@@ -83,6 +85,7 @@ class Cursor {
                 this.canvas.style.left = `${x * render.font.width}px`;
                 this.canvas.style.top = `${y * render.font.height}px`;
                 if (this.connection) this.connection.operation(x, y);
+                if (this.user && emit) this.emit("move");
                 break;
         }
         this.draw();
@@ -247,9 +250,24 @@ class Cursor {
     get_blocks_in_selection(data) {
         if (this.mode == cursor_modes.SELECTION) {
             const {sx, sy, dx, dy} = this.reorientate_selection();
-            const blocks = {columns: dx - sx + 1, rows: dy - sy + 1, data: [], transparent: false};
+            const blocks = {columns: dx - sx + 1, rows: dy - sy + 1, data: [], transparent: false, underneath: false};
             for (let y = sy; y <= dy; y++) {
                 for (let x = sx; x <= dx; x++) {
+                    blocks.data.push(Object.assign(data[y * render.columns + x]));
+                }
+            }
+            return blocks;
+        }
+    }
+
+    get_blocks_in_operation(data) {
+        if (this.mode == cursor_modes.OPERATION) {
+            let {sx, sy, dx, dy} = this.reorientate_selection();
+            dx = Math.min(render.columns - 1, cursor.x + dx - sx);
+            dy = Math.min(render.rows - 1, cursor.y + dy - sy);
+            const blocks = {columns: dx - cursor.x + 1, rows: dy - cursor.y + 1, data: [], transparent: true};
+            for (let y = cursor.y; y <= dy; y++) {
+                for (let x = cursor.x; x <= dx; x++) {
                     blocks.data.push(Object.assign(data[y * render.columns + x]));
                 }
             }
@@ -280,7 +298,7 @@ class Cursor {
             this.update_cursor_with_blocks(blocks);
             this.mode = cursor_modes.OPERATION;
             const {sx, sy} = this.reorientate_selection();
-            this.move_to(sx, sy, true);
+            this.move_to(sx, sy, true, false);
             this.is_move_operation = is_move_operation;
             send("show_operation_touchbar");
             return blocks;
@@ -296,6 +314,7 @@ class Cursor {
     }
 
     constructor(user = true) {
+        super();
         this.user = user;
         this.canvas = document.createElement("canvas");
         this.x = 0; this.y = 0;
