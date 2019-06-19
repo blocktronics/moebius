@@ -107,7 +107,7 @@ function cleanup_document(id) {
 
 async function new_document_window() {
     const win = await new_window({width: NEW_DOCUMENT_WIDTH, height: NEW_DOCUMENT_HEIGHT, file: "app/html/document.html"});
-    if (splash_screen_win && !splash_screen_win.isDestroyed()) splash_screen_win.close();
+    if (darwin && splash_screen_win && !splash_screen_win.isDestroyed()) splash_screen_win.close();
     if (last_document_xy_position) {
         const display = electron.screen.getPrimaryDisplay();
         win.setPosition(Math.min(display.workArea.width + display.workArea.x - NEW_DOCUMENT_WIDTH, last_document_xy_position[0] + 30), Math.min(display.workArea.height + display.workArea.y - NEW_DOCUMENT_HEIGHT, last_document_xy_position[1] + 30));

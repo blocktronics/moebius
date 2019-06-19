@@ -18,7 +18,6 @@ if (darwin) {
     electron.app.on("activate", (event) => {
         if (!moebius.has_document_windows()) moebius.show_splash_screen();
     });
-    electron.app.on("window-all-closed", (event) => moebius.set_application_menu());
 }
 
 electron.app.on("ready", (event) => {
@@ -35,5 +34,13 @@ electron.app.on("open-url", (event, url) => {
     } else {
         prevent_splash_screen_at_startup = true;
         electron.app.whenReady().then(() => moebius.open_url(url));
+    }
+});
+
+electron.app.on("window-all-closed", (event) => {
+    if (darwin) {
+        moebius.set_application_menu()
+    } else {
+        electron.app.quit();
     }
 });
