@@ -61,7 +61,7 @@ class Joint {
             }
         break;
         case action.DRAW:
-            if ((msg.data.x < this.doc.columns - 1) && (msg.data.y < this.doc.rows - 1)) {
+            if ((msg.data.x < this.doc.columns) && (msg.data.y < this.doc.rows)) {
                 this.doc.data[msg.data.y * this.doc.columns + msg.data.x] = Object.assign(msg.data.block);
                 this.send_all_including_guests(ws, msg.type, msg.data);
             }

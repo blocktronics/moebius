@@ -30,7 +30,7 @@ function create_touch_bar(win) {
                 new electron.TouchBar.TouchBarButton({label: "Copy", click() {win.send("copy_block");}}),
                 new electron.TouchBar.TouchBarButton({label: "Move", click() {win.send("move_block");}}),
                 new electron.TouchBar.TouchBarSpacer({size: "flexible"}),
-                new electron.TouchBar.TouchBarButton({label: "Delete", click() {win.send("delete_selection");}}),
+                new electron.TouchBar.TouchBarButton({label: "Erase", click() {win.send("delete_selection");}}),
                 new electron.TouchBar.TouchBarSpacer({size: "flexible"}),
                 new electron.TouchBar.TouchBarButton({label: "Copy to Clipboard", click() {win.send("copy");}}),
                 new electron.TouchBar.TouchBarButton({label: "Cut to Clipboard", click() {win.send("cut");}}),
@@ -119,6 +119,7 @@ async function new_document_window() {
     win.send("use_numpad", {value: prefs.get("use_numpad")});
     win.send("use_flashing_cursor", {value: prefs.get("use_flashing_cursor")});
     win.send("use_pixel_aliasing", {value: prefs.get("use_pixel_aliasing")});
+    win.send("hide_scrollbars", {value: prefs.get("hide_scrollbars")});
     win.send("use_backup", {value: prefs.get("use_backup")});
     win.send("backup_folder", {value: prefs.get("backup_folder")});
     win.on("focus", (event) => {
@@ -243,7 +244,7 @@ function preferences() {
     if (preferences_win && !preferences_win.isDestroyed()) {
         preferences_win.focus();
     } else {
-        preferences_win = new electron.BrowserWindow({width: 480, height: 295, show: false, backgroundColor: "#000000", maximizable: false, resizable: false, fullscreenable: false, webPreferences: {nodeIntegration: true}});
+        preferences_win = new electron.BrowserWindow({width: 480, height: 335, show: false, backgroundColor: "#000000", maximizable: false, resizable: false, fullscreenable: false, webPreferences: {nodeIntegration: true}});
         if (!darwin) preferences_win.setMenu(null);
         preferences_win.on("focus", (event) => set_application_menu());
         preferences_win.on("ready-to-show", (event) => {
@@ -453,7 +454,7 @@ function document_menu(win) {
                 {label: "Save As\u2026", id: "save_as", accelerator: "Cmd+Shift+S", click(item) {save_as({win});}},
                 {type: "separator"},
                 {label: "Export As PNG\u2026", id: "export_as_png", accelerator: "Cmd+Shift+E", click(item) {export_as_png({win});}},
-                {label: "Export As UTF-8\u2026", id: "export_as_utf8", click(item) {export_as_utf8({win});}},
+                {label: "Export As UTF-8\u2026", id: "export_as_utf8", accelerator: "Cmd+Shift+U", click(item) {export_as_utf8({win});}},
                 {type: "separator"},
                 {role: "close"}
             ]
@@ -467,7 +468,11 @@ function document_menu(win) {
                 {label: "Cut", id: "cut", accelerator: "Cmd+X", click(item) {win.send("cut");}, enabled: false},
                 {label: "Copy", id: "copy", accelerator: "Cmd+C", click(item) {win.send("copy");}, enabled: false},
                 {label: "Paste", id: "paste", accelerator: "Cmd+V", click(item) {win.send("paste");}},
-                {label: "Delete", id: "delete_selection", accelerator: "E", click(item) {win.send("delete_selection");}, enabled: false},
+                {type: "separator"},
+                {label: "Left Justify Line", id: "left_justify_line", accelerator: "Alt+L", click(item) {win.send("left_justify_line");}, enabled: true},
+                {label: "Right Justify Line", id: "right_justify_line", accelerator: "Alt+R", click(item) {win.send("right_justify_line");}, enabled: true},
+                {label: "Center Line", id: "center_line", accelerator: "Alt+C", click(item) {win.send("center_line");}, enabled: true},
+                {label: "Erase Line", id: "erase_line", accelerator: "Alt+E", click(item) {win.send("erase_line");}, enabled: true},
                 {type: "separator"},
                 {label: "Select All", id: "select_all", accelerator: "Cmd+A", click(item) {win.send("select_all");}},
                 {label: "Deselect", id: "deselect", accelerator: "Escape", click(item) {win.send("deselect");}, enabled: false},
@@ -475,16 +480,22 @@ function document_menu(win) {
                 {label: "Move Block", id: "move_block", accelerator: "M", click(item) {win.send("move_block");}, enabled: false},
                 {label: "Copy Block", id: "copy_block", accelerator: "C", click(item) {win.send("copy_block");}, enabled: false},
                 {type: "separator"},
+                {label: "Erase", id: "delete_selection", accelerator: "E", click(item) {win.send("delete_selection");}, enabled: false},
                 {label: "Stamp", id: "stamp", accelerator: "S", click(item) {win.send("stamp");}, enabled: false},
                 {label: "Rotate", id: "rotate", accelerator: "R", click(item) {win.send("rotate");}, enabled: false},
                 {label: "Flip X", id: "flip_x", accelerator: "X", click(item) {win.send("flip_x");}, enabled: false},
                 {label: "Flip Y", id: "flip_y", accelerator: "Y", click(item) {win.send("flip_y");}, enabled: false},
                 {label: "Center", id: "center", accelerator: "=", click(item) {win.send("center");}, enabled: false},
                 {type: "separator"},
+                {label: "Transparent", id: "transparent", accelerator: "T", click(item) {win.send("transparent", item.checked);}, type: "checkbox", checked: false, enabled: false},
+                {type: "separator"},
                 {label: "Set Canvas Size\u2026", id: "set_canvas_size", accelerator: "Cmd+Alt+C", click(item) {win.send("get_canvas_size");}, enabled: true},
                 {type: "separator"},
                 {label: "Crop", id: "crop", accelerator: "Cmd+K", click(item) {win.send("crop");}, enabled: false},
-                {type: "separator"},
+            ]
+        }, {
+            label: "Colors",
+            submenu: [
                 {label: "Previous Foreground Color", id: "previous_foreground_color", accelerator: "Alt+Up", click(item) {win.send("previous_foreground_color");}},
                 {label: "Next Foreground Color", id: "next_foreground_color", accelerator: "Alt+Down", click(item) {win.send("next_foreground_color");}},
                 {type: "separator"},
@@ -493,9 +504,11 @@ function document_menu(win) {
                 {type: "separator"},
                 {label: "Use Attribute Under Cursor", id: "use_attribute_under_cursor", accelerator: "Alt+U", click(item) {win.send("use_attribute_under_cursor");}},
                 {label: "Default Color", id: "default_color", accelerator: "Cmd+D", click(item) {win.send("default_color");}},
-                {label: "Switch Foreground / Background", id: "switch_foreground_background", accelerator: "Shift+Cmd+X", click(item) {win.send("switch_foreground_background");}}
+                {label: "Switch Foreground / Background", id: "switch_foreground_background", accelerator: "Shift+Cmd+X", click(item) {win.send("switch_foreground_background");}},
+                {type: "separator"},
+                {label: "Use iCE Colors", id: "ice_colors", accelerator: "Cmd+E", click(item) {win.send("ice_colors", item.checked);}, type: "checkbox", checked: false},
             ]
-        }, {
+        } , {
             label: "View",
             submenu: [
                 {label: "Show Status Bar", id: "show_status_bar", accelerator: "Cmd+/", click(item) {win.send("show_statusbar", item.checked);}, type: "checkbox", checked: true},
@@ -509,8 +522,7 @@ function document_menu(win) {
                 {label: "Fill Mode", id: "change_to_fill_mode", accelerator: "Cmd+5", click(item) {win.send("change_to_fill_mode");}, type: "checkbox", checked: false},
                 {label: "Sample Mode", id: "change_to_sample_mode", accelerator: "Cmd+6", click(item) {win.send("change_to_sample_mode");}, type: "checkbox", checked: false},
                 {type: "separator"},
-                {label: "Use 9px Font", id: "use_9px_font", click(item) {win.send("use_9px_font", item.checked);}, type: "checkbox", checked: false},
-                {label: "Use iCE Colors", id: "ice_colors", click(item) {win.send("ice_colors", item.checked);}, type: "checkbox", checked: false},
+                {label: "Use 9px Font", id: "use_9px_font", accelerator: "Cmd+F", click(item) {win.send("use_9px_font", item.checked);}, type: "checkbox", checked: false},
                 {type: "separator"},
                 {label: "Actual Size", id: "actual_size", accelerator: "Cmd+0", click(item) {win.send("actual_size");}, type: "checkbox", checked: false},
                 {label: "Zoom In", id: "zoom_in", accelerator: "Cmd+=", click(item) {win.send("zoom_in");}},
@@ -617,9 +629,11 @@ function document_menu(win) {
                     ]}
                 ]},
                 {type: "separator"},
-                {label: "Open Reference Image\u2026", id: "open_reference_image", click(item) {open_reference_image({win});}},
+                {label: "Open Reference Image\u2026", id: "open_reference_image", accelerator: "Cmd+Shift+O", click(item) {open_reference_image({win});}},
                 {label: "Toggle Reference Image", id: "toggle_reference_image", accelerator: "Ctrl+Tab", click(item) {toggle_reference_image(win, item.checked);}, enabled: false, type: "checkbox", checked: true},
                 {label: "Clear", id: "clear_reference_image", click(item) {win.send("clear_reference_image");}, enabled: false},
+                {type: "separator"},
+                {label: "Scroll Document With Cursor", id: "scroll_document_with_cursor", accelerator: "Cmd+R", click(item) {win.send("scroll_document_with_cursor", item.checked);}, type: "checkbox", checked: false},
                 {type: "separator"},
                 {role: "togglefullscreen"}
             ]
@@ -663,7 +677,7 @@ function document_menu(win) {
                 {label: "Save As\u2026", id: "save_as", accelerator: "Ctrl+Shift+S", click(item) {save_as({win});}},
                 {type: "separator"},
                 {label: "Export As PNG\u2026", id: "export_as_png", accelerator: "Ctrl+Shift+E", click(item) {export_as_png({win});}},
-                {label: "Export As UTF-8\u2026", id: "export_as_utf8", click(item) {export_as_utf8({win});}},
+                {label: "Export As UTF-8\u2026", id: "export_as_utf8", accelerator: "Ctrl+Shift+U", click(item) {export_as_utf8({win});}},
                 {type: "separator"},
                 {label: "Settings", id: "preferences", click(item) {preferences();}},
                 {type: "separator"},
@@ -679,7 +693,11 @@ function document_menu(win) {
                 {label: "Cut", id: "cut", accelerator: "Ctrl+X", click(item) {win.send("cut");}, enabled: false},
                 {label: "Copy", id: "copy", accelerator: "Ctrl+C", click(item) {win.send("copy");}, enabled: false},
                 {label: "Paste", id: "paste", accelerator: "Ctrl+V", click(item) {win.send("paste");}},
-                {label: "Delete", id: "delete_selection", accelerator: "E", click(item) {win.send("delete_selection");}, enabled: false},
+                {type: "separator"},
+                {label: "Left Justify Line", id: "left_justify_line", accelerator: "Alt+L", click(item) {win.send("left_justify_line");}, enabled: true},
+                {label: "Right Justify Line", id: "right_justify_line", accelerator: "Alt+R", click(item) {win.send("right_justify_line");}, enabled: true},
+                {label: "Center Line", id: "center_line", accelerator: "Alt+C", click(item) {win.send("center_line");}, enabled: true},
+                {label: "Erase Line", id: "erase_line", accelerator: "Alt+E", click(item) {win.send("erase_line");}, enabled: true},
                 {type: "separator"},
                 {label: "Select All", id: "select_all", accelerator: "Ctrl+A", click(item) {win.send("select_all");}},
                 {label: "Deselect", id: "deselect", accelerator: "Escape", click(item) {win.send("deselect");}, enabled: false},
@@ -687,16 +705,22 @@ function document_menu(win) {
                 {label: "Move Block", id: "move_block", accelerator: "M", click(item) {win.send("move_block");}, enabled: false},
                 {label: "Copy Block", id: "copy_block", accelerator: "C", click(item) {win.send("copy_block");}, enabled: false},
                 {type: "separator"},
+                {label: "Erase", id: "delete_selection", accelerator: "E", click(item) {win.send("delete_selection");}, enabled: false},
                 {label: "Stamp", id: "stamp", accelerator: "S", click(item) {win.send("stamp");}, enabled: false},
                 {label: "Rotate", id: "rotate", accelerator: "R", click(item) {win.send("rotate");}, enabled: false},
                 {label: "Flip X", id: "flip_x", accelerator: "X", click(item) {win.send("flip_x");}, enabled: false},
                 {label: "Flip Y", id: "flip_y", accelerator: "Y", click(item) {win.send("flip_y");}, enabled: false},
                 {label: "Center", id: "center", accelerator: "=", click(item) {win.send("center");}, enabled: false},
                 {type: "separator"},
+                {label: "Transparent", id: "transparent", accelerator: "T", click(item) {win.send("transparent", item.checked);}, type: "checkbox", checked: false, enabled: false},
+                {type: "separator"},
                 {label: "Set Canvas Size\u2026", id: "set_canvas_size", accelerator: "Ctrl+Alt+C", click(item) {win.send("get_canvas_size");}, enabled: true},
                 {type: "separator"},
                 {label: "Crop", id: "crop", accelerator: "Ctrl+K", click(item) {win.send("crop");}, enabled: false},
-                {type: "separator"},
+            ]
+        }, {
+            label: "&Colors",
+            submenu: [
                 {label: "Previous Foreground Color", id: "previous_foreground_color", accelerator: "Alt+Up", click(item) {win.send("previous_foreground_color");}},
                 {label: "Next Foreground Color", id: "next_foreground_color", accelerator: "Alt+Down", click(item) {win.send("next_foreground_color");}},
                 {type: "separator"},
@@ -705,7 +729,9 @@ function document_menu(win) {
                 {type: "separator"},
                 {label: "Use Attribute Under Cursor", id: "use_attribute_under_cursor", accelerator: "Alt+U", click(item) {win.send("use_attribute_under_cursor");}},
                 {label: "Default Color", id: "default_color", accelerator: "Ctrl+D", click(item) {win.send("default_color");}},
-                {label: "Switch Foreground / Background", id: "switch_foreground_background", accelerator: "Shift+Ctrl+X", click(item) {win.send("switch_foreground_background");}}
+                {label: "Switch Foreground / Background", id: "switch_foreground_background", accelerator: "Shift+Ctrl+X", click(item) {win.send("switch_foreground_background");}},
+                {type: "separator"},
+                {label: "Use iCE Colors", id: "ice_colors", accelerator: "Ctrl+E", click(item) {win.send("ice_colors", item.checked);}, type: "checkbox", checked: false},
             ]
         }, {
             label: "&View",
@@ -721,8 +747,7 @@ function document_menu(win) {
                 {label: "Fill Mode", id: "change_to_fill_mode", click(item) {win.send("change_to_fill_mode");}, type: "checkbox", checked: false},
                 {label: "Sample Mode", id: "change_to_sample_mode", click(item) {win.send("change_to_sample_mode");}, type: "checkbox", checked: false},
                 {type: "separator"},
-                {label: "Use 9px Font", id: "use_9px_font", click(item) {win.send("use_9px_font", item.checked);}, type: "checkbox", checked: false},
-                {label: "Use iCE Colors", id: "ice_colors", click(item) {win.send("ice_colors", item.checked);}, type: "checkbox", checked: false},
+                {label: "Use 9px Font", id: "use_9px_font", accelerator: "Ctrl+F", click(item) {win.send("use_9px_font", item.checked);}, type: "checkbox", checked: false},
                 {type: "separator"},
                 {label: "Actual Size", id: "actual_size", accelerator: "Ctrl+Alt+0", click(item) {win.send("actual_size");}, type: "checkbox", checked: false},
                 {label: "Zoom In", id: "zoom_in", accelerator: "Ctrl+=", click(item) {win.send("zoom_in");}},
@@ -829,9 +854,11 @@ function document_menu(win) {
                     ]}
                 ]},
                 {type: "separator"},
-                {label: "Open Reference Image\u2026", id: "open_reference_image", click(item) {open_reference_image({win});}},
+                {label: "Open Reference Image\u2026", id: "open_reference_image", accelerator: "Ctrl+Shift+O", click(item) {open_reference_image({win});}},
                 {label: "Toggle Reference Image", id: "toggle_reference_image", accelerator: "Ctrl+Tab", click(item) {toggle_reference_image(win, item.checked);}, enabled: false, type: "checkbox", checked: true},
                 {label: "Clear", id: "clear_reference_image", click(item) {win.send("clear_reference_image");}, enabled: false},
+                {type: "separator"},
+                {label: "Scroll Document With Cursor", id: "scroll_document_with_cursor", accelerator: "Ctrl+R", click(item) {win.send("scroll_document_with_cursor", item.checked);}, type: "checkbox", checked: false},
                 {type: "separator"},
                 {role: "togglefullscreen"}
             ]
@@ -1006,6 +1033,10 @@ function disable_selection_menu_items(id) {
     docs[id].menu.getMenuItemById("move_block").enabled = false;
     docs[id].menu.getMenuItemById("copy_block").enabled = false;
     docs[id].menu.getMenuItemById("crop").enabled = false;
+    docs[id].menu.getMenuItemById("left_justify_line").enabled = true;
+    docs[id].menu.getMenuItemById("right_justify_line").enabled = true;
+    docs[id].menu.getMenuItemById("center_line").enabled = true;
+    docs[id].menu.getMenuItemById("erase_line").enabled = true;
 }
 
 function disable_selection_menu_items_except_deselect_and_crop(id) {
@@ -1022,6 +1053,10 @@ function enable_selection_menu_items(id) {
     docs[id].menu.getMenuItemById("move_block").enabled = true;
     docs[id].menu.getMenuItemById("copy_block").enabled = true;
     docs[id].menu.getMenuItemById("crop").enabled = true;
+    docs[id].menu.getMenuItemById("left_justify_line").enabled = false;
+    docs[id].menu.getMenuItemById("right_justify_line").enabled = false;
+    docs[id].menu.getMenuItemById("center_line").enabled = false;
+    docs[id].menu.getMenuItemById("erase_line").enabled = false;
 }
 
 function enable_operation_menu_items(id) {
@@ -1030,6 +1065,11 @@ function enable_operation_menu_items(id) {
     docs[id].menu.getMenuItemById("flip_x").enabled = true;
     docs[id].menu.getMenuItemById("flip_y").enabled = true;
     docs[id].menu.getMenuItemById("center").enabled = true;
+    docs[id].menu.getMenuItemById("transparent").enabled = true;
+    docs[id].menu.getMenuItemById("left_justify_line").enabled = false;
+    docs[id].menu.getMenuItemById("right_justify_line").enabled = false;
+    docs[id].menu.getMenuItemById("center_line").enabled = false;
+    docs[id].menu.getMenuItemById("erase_line").enabled = false;
 }
 
 function disable_operation_menu_items(id) {
@@ -1038,6 +1078,9 @@ function disable_operation_menu_items(id) {
     docs[id].menu.getMenuItemById("flip_x").enabled = false;
     docs[id].menu.getMenuItemById("flip_y").enabled = false;
     docs[id].menu.getMenuItemById("center").enabled = false;
+    const transparent = docs[id].menu.getMenuItemById("transparent");
+    transparent.enabled = false;
+    transparent.checked= false;
 }
 
 function disable_editing_shortcuts(id) {
@@ -1111,6 +1154,10 @@ function change_to_select_mode(id) {
     docs[id].menu.getMenuItemById("change_to_rectangle_mode").checked = false;
     docs[id].menu.getMenuItemById("change_to_fill_mode").checked = false;
     docs[id].menu.getMenuItemById("change_to_sample_mode").checked = false;
+    docs[id].menu.getMenuItemById("left_justify_line").enabled = true;
+    docs[id].menu.getMenuItemById("right_justify_line").enabled = true;
+    docs[id].menu.getMenuItemById("center_line").enabled = true;
+    docs[id].menu.getMenuItemById("erase_line").enabled = true;
 }
 
 function change_to_brush_mode(id) {
@@ -1120,6 +1167,10 @@ function change_to_brush_mode(id) {
     docs[id].menu.getMenuItemById("change_to_rectangle_mode").checked = false;
     docs[id].menu.getMenuItemById("change_to_fill_mode").checked = false;
     docs[id].menu.getMenuItemById("change_to_sample_mode").checked = false;
+    docs[id].menu.getMenuItemById("left_justify_line").enabled = false;
+    docs[id].menu.getMenuItemById("right_justify_line").enabled = false;
+    docs[id].menu.getMenuItemById("center_line").enabled = false;
+    docs[id].menu.getMenuItemById("erase_line").enabled = false;
 }
 
 function change_to_line_mode(id) {
@@ -1129,6 +1180,10 @@ function change_to_line_mode(id) {
     docs[id].menu.getMenuItemById("change_to_rectangle_mode").checked = false;
     docs[id].menu.getMenuItemById("change_to_fill_mode").checked = false;
     docs[id].menu.getMenuItemById("change_to_sample_mode").checked = false;
+    docs[id].menu.getMenuItemById("left_justify_line").enabled = false;
+    docs[id].menu.getMenuItemById("right_justify_line").enabled = false;
+    docs[id].menu.getMenuItemById("center_line").enabled = false;
+    docs[id].menu.getMenuItemById("erase_line").enabled = false;
 }
 
 function change_to_rectangle_mode(id) {
@@ -1138,6 +1193,10 @@ function change_to_rectangle_mode(id) {
     docs[id].menu.getMenuItemById("change_to_rectangle_mode").checked = true;
     docs[id].menu.getMenuItemById("change_to_fill_mode").checked = false;
     docs[id].menu.getMenuItemById("change_to_sample_mode").checked = false;
+    docs[id].menu.getMenuItemById("left_justify_line").enabled = false;
+    docs[id].menu.getMenuItemById("right_justify_line").enabled = false;
+    docs[id].menu.getMenuItemById("center_line").enabled = false;
+    docs[id].menu.getMenuItemById("erase_line").enabled = false;
 }
 
 function change_to_fill_mode(id) {
@@ -1147,6 +1206,10 @@ function change_to_fill_mode(id) {
     docs[id].menu.getMenuItemById("change_to_rectangle_mode").checked = false;
     docs[id].menu.getMenuItemById("change_to_fill_mode").checked = true;
     docs[id].menu.getMenuItemById("change_to_sample_mode").checked = false;
+    docs[id].menu.getMenuItemById("left_justify_line").enabled = false;
+    docs[id].menu.getMenuItemById("right_justify_line").enabled = false;
+    docs[id].menu.getMenuItemById("center_line").enabled = false;
+    docs[id].menu.getMenuItemById("erase_line").enabled = false;
 }
 
 function change_to_sample_mode(id) {
@@ -1156,6 +1219,10 @@ function change_to_sample_mode(id) {
     docs[id].menu.getMenuItemById("change_to_rectangle_mode").checked = false;
     docs[id].menu.getMenuItemById("change_to_fill_mode").checked = false;
     docs[id].menu.getMenuItemById("change_to_sample_mode").checked = true;
+    docs[id].menu.getMenuItemById("left_justify_line").enabled = false;
+    docs[id].menu.getMenuItemById("right_justify_line").enabled = false;
+    docs[id].menu.getMenuItemById("center_line").enabled = false;
+    docs[id].menu.getMenuItemById("erase_line").enabled = false;
 }
 
 function destroy(id) {
@@ -1190,6 +1257,11 @@ function use_flashing_cursor(value) {
 function use_pixel_aliasing(value) {
     prefs.set("use_pixel_aliasing", value);
     send_all("use_pixel_aliasing", {value});
+}
+
+function hide_scrollbars(value) {
+    prefs.set("hide_scrollbars", value);
+    send_all("hide_scrollbars", {value});
 }
 
 function use_backup(value) {
@@ -1265,6 +1337,7 @@ electron.ipcMain.on("group", (event, {value}) => group(value));
 electron.ipcMain.on("use_numpad", (event, {value}) => use_numpad(value));
 electron.ipcMain.on("use_flashing_cursor", (event, {value}) => use_flashing_cursor(value));
 electron.ipcMain.on("use_pixel_aliasing", (event, {value}) => use_pixel_aliasing(value));
+electron.ipcMain.on("hide_scrollbars", (event, {value}) => hide_scrollbars(value));
 electron.ipcMain.on("use_backup", (event, {value}) => use_backup(value));
 electron.ipcMain.on("backup_folder", (event, {value}) => backup_folder(value));
 electron.ipcMain.on("preferences", (event) => preferences());

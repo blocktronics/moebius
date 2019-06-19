@@ -6,6 +6,8 @@
     --view-color: rgb(128, 128, 128);
     --dark-view-color: rgb(34, 37, 43);
     --scaling-type: pixelated;
+    --scrollbar-width: 8px;
+    --scrollbar-height: 8px;
 }
 html, body {
     width: 100%;
@@ -26,8 +28,8 @@ canvas {
 }
 
 ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: var(--scrollbar-width);
+    height: var(--scrollbar-height);
 }
 
 ::-webkit-scrollbar-corner {

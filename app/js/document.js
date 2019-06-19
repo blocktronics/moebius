@@ -132,12 +132,17 @@ function connect_to_server({server, pass = ""} = {}) {
         error: () => {},
         disconnected: () => {
             send("close_modal");
+            chat.clear_users();
+            for (const id of Object.keys(users)) {
+                if (users[id].cursor) users[id].cursor.hide();
+                delete users[id];
+            }
+            chat.disconnected();
             const choice = electron.remote.dialog.showMessageBox(electron.remote.getCurrentWindow(), {message: "Connect to Server", detail: "Cannot connect to server.", buttons: ["Retry", "Cancel"], defaultId: 0, cancelId: 1});
             if (choice == 0) {
-                chat.clear();
                 connect_to_server({server, pass});
             } else {
-                send("destroy");
+                send_sync("destroy");
             }
         },
         refused: () => {
@@ -191,7 +196,7 @@ function connect_to_server({server, pass = ""} = {}) {
             if (users[id]) users[id].cursor.hide();
         },
         draw: (id, x, y, block) => {
-            if ((x < doc.columns - 1) && (y < doc.rows - 1)) {
+            if ((x < doc.columns) && (y < doc.rows)) {
                 const i = doc.columns * y + x;
                 doc.data[i] = Object.assign(block);
                 render_at(x, y);
@@ -301,6 +306,10 @@ function set_insert_mode(value) {
     update_status_bar();
 }
 
+function scroll_document_with_cursor(value) {
+    cursor.scroll_document_with_cursor = value;
+}
+
 function export_as_png(file) {
     canvas.export_as_png({file, ice_colors: doc.ice_colors});
 }
@@ -318,7 +327,7 @@ function next_foreground_color() {
     set_fg(fg == 15 ? 0 : fg + 1);
 }
 
-function previous_background_colour() {
+function previous_background_color() {
     set_bg(bg == 0 ? 15 : bg - 1);
 }
 
@@ -414,7 +423,7 @@ function stamp(single_undo = false) {
     for (let y = 0; y + cursor.y < doc.rows && y < stored_blocks.rows; y++) {
         for (let x = 0; x + cursor.x < doc.columns && x < stored_blocks.columns; x++) {
             const block = stored_blocks.data[y * stored_blocks.columns + x];
-            change_data({x: cursor.x + x, y: cursor.y + y, code: block.code, fg: block.fg, bg: block.bg});
+            if (!stored_blocks.transparent || block.code != 32 || block.bg != 0) change_data({x: cursor.x + x, y: cursor.y + y, code: block.code, fg: block.fg, bg: block.bg});
         }
     }
 }
@@ -460,21 +469,19 @@ document.addEventListener("keydown", (event) => {
                     }
                 }
                 switch (event.code) {
-                    case "F1": if (!event.altKey) f_key(0); break;
-                    case "F2": if (!event.altKey) f_key(1); break;
-                    case "F3": if (!event.altKey) f_key(2); break;
-                    case "F4": if (!event.altKey) f_key(3); break;
-                    case "F5": if (!event.altKey) f_key(4); break;
-                    case "F6": if (!event.altKey) f_key(5); break;
-                    case "F7": if (!event.altKey) f_key(6); break;
-                    case "F8": if (!event.altKey) f_key(7); break;
-                    case "F9": if (!event.altKey) f_key(8); break;
-                    case "F10": if (!event.altKey) f_key(9);  break;
-                    case "Backspace": backspace(); break;
-                    case "Delete": delete_key(); break;
-                    case "Enter":
-                        cursor.new_line();
-                        break;
+                    case "F1": if (!event.altKey) f_key(0); return;
+                    case "F2": if (!event.altKey) f_key(1); return;
+                    case "F3": if (!event.altKey) f_key(2); return;
+                    case "F4": if (!event.altKey) f_key(3); return;
+                    case "F5": if (!event.altKey) f_key(4); return;
+                    case "F6": if (!event.altKey) f_key(5); return;
+                    case "F7": if (!event.altKey) f_key(6); return;
+                    case "F8": if (!event.altKey) f_key(7); return;
+                    case "F9": if (!event.altKey) f_key(8); return;
+                    case "F10": if (!event.altKey) f_key(9);  return;
+                    case "Backspace": backspace(); return;
+                    case "Delete": delete_key(); return;
+                    case "Enter": cursor.new_line(); return;
                     default:
                         if (event.key.length == 1 && !event.metaKey && !event.altKey && !event.ctrlKey) {
                             if (event.key.length == 1) {
@@ -482,30 +489,33 @@ document.addEventListener("keydown", (event) => {
                                 if (code >= 32 && code <= 126) {
                                     key_typed(code);
                                     event.preventDefault();
+                                    return;
                                 }
                             }
                         } else if ((event.key == "v" || event.key == "V") && event.ctrlKey && !event.altKey && !event.metaKey && !event.shiftKey) {
                             paste();
                             event.preventDefault();
+                            return;
                         }
                 }
             } else if (cursor.mode == canvas.cursor_modes.SELECTION && event.ctrlKey && !event.altKey && !event.metaKey && !event.shiftKey) {
                 switch (event.key) {
-                    case "x": case "X": cut(); event.preventDefault(); break;
-                    case "c": case "C": copy(); event.preventDefault(); break;
+                    case "x": case "X": cut(); event.preventDefault(); return;
+                    case "c": case "C": copy(); event.preventDefault(); return;
                 }
             } else if (cursor.mode == canvas.cursor_modes.OPERATION && event.code == "Enter") {
                 place();
+                return;
             }
             switch (event.code) {
                 case "Home":
                     cursor.start_of_row();
                     event.preventDefault();
-                    break;
+                    return;
                 case "End":
                     cursor.end_of_row();
                     event.preventDefault();
-                    break;
+                    return;
                 case "ArrowLeft":
                     if (!event.altKey) {
                         if (event.shiftKey && cursor.mode != canvas.cursor_modes.SELECTION) cursor.start_selection_mode();
@@ -515,6 +525,7 @@ document.addEventListener("keydown", (event) => {
                             cursor.left();
                         }
                         event.preventDefault();
+                        return;
                     }
                     break;
                 case "ArrowUp":
@@ -526,6 +537,7 @@ document.addEventListener("keydown", (event) => {
                             cursor.up();
                         }
                         event.preventDefault();
+                        return;
                     }
                     break;
                 case "ArrowRight":
@@ -537,6 +549,7 @@ document.addEventListener("keydown", (event) => {
                             cursor.right();
                         }
                         event.preventDefault();
+                        return;
                     }
                     break;
                 case "ArrowDown":
@@ -548,49 +561,59 @@ document.addEventListener("keydown", (event) => {
                             cursor.down();
                         }
                         event.preventDefault();
+                        return;
                     }
                     break;
                 case "PageUp":
                     if (event.shiftKey && cursor.mode != canvas.cursor_modes.SELECTION) cursor.start_selection_mode();
                     cursor.page_up();
                     event.preventDefault();
-                    break;
+                    return;
                 case "PageDown":
                     if (event.shiftKey && cursor.mode != canvas.cursor_modes.SELECTION) cursor.start_selection_mode();
                     cursor.page_down();
                     event.preventDefault();
-                    break;
+                    return;
+                case "Tab":
+                    if (event.shiftKey) {
+                        event.preventDefault();
+                        cursor.reverse_tab();
+                    } else if (!event.ctrlKey) {
+                        event.preventDefault();
+                        cursor.tab();
+                    }
+                    return;
                 case "Insert":
                 case "NumpadEnter":
                     set_insert_mode(!insert_mode);
                     update_menu_checkboxes();
-                    break;
+                    return;
             }
             if (event.altKey && !event.metaKey && !event.ctrlKey) {
                 switch (event.code) {
-                    case "Digit0": toggle_fg(0); break;
-                    case "Digit1": toggle_fg(1); break;
-                    case "Digit2": toggle_fg(2); break;
-                    case "Digit3": toggle_fg(3); break;
-                    case "Digit4": toggle_fg(4); break;
-                    case "Digit5": toggle_fg(5); break;
-                    case "Digit6": toggle_fg(6); break;
-                    case "Digit7": toggle_fg(7); break;
-                    case "ArrowLeft": previous_background_color(); event.preventDefault(); break;
-                    case "ArrowRight": next_background_color(); event.preventDefault(); break;
-                    case "ArrowUp": previous_foreground_color(); event.preventDefault(); break;
-                    case "ArrowDown": next_foreground_color(); event.preventDefault(); break;
+                    case "Digit0": toggle_fg(0); return;
+                    case "Digit1": toggle_fg(1); return;
+                    case "Digit2": toggle_fg(2); return;
+                    case "Digit3": toggle_fg(3); return;
+                    case "Digit4": toggle_fg(4); return;
+                    case "Digit5": toggle_fg(5); return;
+                    case "Digit6": toggle_fg(6); return;
+                    case "Digit7": toggle_fg(7); return;
+                    case "ArrowLeft": previous_background_color(); event.preventDefault(); return;
+                    case "ArrowRight": next_background_color(); event.preventDefault(); return;
+                    case "ArrowUp": previous_foreground_color(); event.preventDefault(); return;
+                    case "ArrowDown": next_foreground_color(); event.preventDefault(); return;
                 }
             } else if (event.ctrlKey && !event.altKey && !event.metaKey) {
                 switch (event.code) {
-                    case "Digit0": toggle_bg(0); break;
-                    case "Digit1": toggle_bg(1); break;
-                    case "Digit2": toggle_bg(2); break;
-                    case "Digit3": toggle_bg(3); break;
-                    case "Digit4": toggle_bg(4); break;
-                    case "Digit5": toggle_bg(5); break;
-                    case "Digit6": toggle_bg(6); break;
-                    case "Digit7": toggle_bg(7); break;
+                    case "Digit0": toggle_bg(0); return;
+                    case "Digit1": toggle_bg(1); return;
+                    case "Digit2": toggle_bg(2); return;
+                    case "Digit3": toggle_bg(3); return;
+                    case "Digit4": toggle_bg(4); return;
+                    case "Digit5": toggle_bg(5); return;
+                    case "Digit6": toggle_bg(6); return;
+                    case "Digit7": toggle_bg(7); return;
                 }
             }
         break;
@@ -1386,6 +1409,11 @@ function center() {
     cursor.move_to(Math.max(Math.floor((doc.columns - stored_blocks.columns) / 2), 0), cursor.y);
 }
 
+function transparent(value) {
+    stored_blocks.transparent = value;
+    cursor.update_cursor_with_blocks(stored_blocks);
+}
+
 function set_zoom(factor) {
     const zoom_element = document.getElementById("zoom");
     electron.remote.getCurrentWebContents().setZoomFactor(factor);
@@ -1596,6 +1624,11 @@ function use_pixel_aliasing(value) {
     document.documentElement.style.setProperty("--scaling-type", value ? "high-quality" : "pixelated");
 }
 
+function hide_scrollbars(value) {
+    document.documentElement.style.setProperty("--scrollbar-width", value ? "0px" : "8px");
+    document.documentElement.style.setProperty("--scrollbar-height", value ? "0px" : "8px");
+}
+
 function chat_window_toggle() {
     chat.toggle();
 }
@@ -1604,6 +1637,65 @@ function crop() {
     const blocks = (cursor.mode == canvas.cursor_modes.SELECTION) ? cursor.get_blocks_in_selection(doc.data) : stored_blocks;
     send("new_document", {title: doc.title, author: doc.author, group: doc.group, date: doc.date, palette: doc.palette, font_name: doc.font_name, use_9px_font: doc.use_9px_font, ice_colors: doc.ice_colors, ...blocks});
     deselect();
+}
+
+function count_left(y) {
+    for (let x = 0; x < doc.columns; x++) {
+        const half_block = get_half_block(x, y * 2);
+        if (!half_block.is_blocky || half_block.lower_block_color != 0 || half_block.lower_block_color != 0) return x;
+    }
+    return 0;
+}
+
+function count_right(y) {
+    for (let x = 0; x < doc.columns; x++) {
+        const half_block = get_half_block(doc.columns - 1 - x, y * 2);
+        if (!half_block.is_blocky || half_block.lower_block_color != 0 || half_block.lower_block_color != 0) return x;
+    }
+    return 0;
+}
+
+function left_justify_line() {
+    const count = count_left(cursor.y);
+    if (count) {
+        start_undo_chunk();
+        for (let x = 0; x < doc.columns - count; x++) {
+            const block = doc.data[cursor.y * doc.columns + x + count];
+            change_data({x, y: cursor.y, code: block.code, fg: block.fg, bg: block.bg});
+        }
+        for (let x = doc.columns - count; x < doc.columns; x++) change_data({x, y: cursor.y, code: 32, fg: 7, bg: 0});
+    }
+}
+
+function right_justify_line() {
+    const count = count_right(cursor.y);
+    if (count) {
+        start_undo_chunk();
+        for (let x = doc.columns - 1; x > count - 1; x--) {
+            const block = doc.data[cursor.y * doc.columns + x - count];
+            change_data({x, y: cursor.y, code: block.code, fg: block.fg, bg: 0});
+        }
+        for (let x = count - 1; x >= 0; x--) change_data({x, y: cursor.y, code: 32, fg: 7, bg: 0});
+    }
+}
+
+function center_line() {
+    const left = count_left(cursor.y);
+    const right = count_right(cursor.y);
+    if (left || right) {
+        start_undo_chunk();
+        const blocks = new Array(doc.columns - right - left);
+        for (let i = 0; i < blocks.length; i++) blocks[i] = Object.assign(doc.data[cursor.y * doc.columns + left + i]);
+        const new_left = Math.floor((left + right) / 2);
+        for (let x = 0; x < new_left; x++) change_data({x, y: cursor.y, code: 32, fg: 7, bg: 0});
+        for (let x = 0; x < blocks.length; x++) change_data({x: new_left + x, y: cursor.y, code: blocks[x].code, fg: blocks[x].fg, bg: blocks[x].bg});
+        for (let x = 0; x < doc.columns - new_left - blocks.length; x++) change_data({x: new_left + blocks.length + x, y: cursor.y, code: 32, fg: 7, bg: 0});
+    }
+}
+
+function erase_line() {
+    start_undo_chunk();
+    for (let x = 0; x < doc.columns; x++) change_data({x, y: cursor.y, code: 32, fg: 7, bg: 0});
 }
 
 electron.ipcRenderer.on("open_file", (event, opts) => open_file(opts));
@@ -1615,11 +1707,12 @@ electron.ipcRenderer.on("ice_colors", (event, opts) => ice_colors(opts));
 electron.ipcRenderer.on("use_9px_font", (event, opts) => use_9px_font(opts));
 electron.ipcRenderer.on("change_font", (event, opts) => change_font(opts));
 electron.ipcRenderer.on("insert_mode", (event, opts) => set_insert_mode(opts));
+electron.ipcRenderer.on("scroll_document_with_cursor", (event, opts) => scroll_document_with_cursor(opts));
 electron.ipcRenderer.on("export_as_png", (event, opts) => export_as_png(opts));
 electron.ipcRenderer.on("export_as_utf8", (event, opts) => export_as_utf8(opts));
 electron.ipcRenderer.on("previous_foreground_color", (event, opts) => previous_foreground_color(opts));
 electron.ipcRenderer.on("next_foreground_color", (event, opts) => next_foreground_color(opts));
-electron.ipcRenderer.on("previous_background_colour", (event, opts) => previous_background_colour(opts));
+electron.ipcRenderer.on("previous_background_color", (event, opts) => previous_background_color(opts));
 electron.ipcRenderer.on("next_background_color", (event, opts) => next_background_color(opts));
 electron.ipcRenderer.on("deselect", (event, opts) => deselect(opts));
 electron.ipcRenderer.on("select_all", (event, opts) => select_all(opts));
@@ -1630,9 +1723,14 @@ electron.ipcRenderer.on("rotate", (event, opts) => rotate(opts));
 electron.ipcRenderer.on("flip_x", (event, opts) => flip_x(opts));
 electron.ipcRenderer.on("flip_y", (event, opts) => flip_y(opts));
 electron.ipcRenderer.on("center", (event, opts) => center(opts));
+electron.ipcRenderer.on("transparent", (event, opts) => transparent(opts));
 electron.ipcRenderer.on("cut", (event, opts) => cut(opts));
 electron.ipcRenderer.on("copy", (event, opts) => copy(opts));
 electron.ipcRenderer.on("paste", (event, opts) => paste(opts));
+electron.ipcRenderer.on("left_justify_line", (event, opts) => left_justify_line(opts));
+electron.ipcRenderer.on("right_justify_line", (event, opts) => right_justify_line(opts));
+electron.ipcRenderer.on("center_line", (event, opts) => center_line(opts));
+electron.ipcRenderer.on("erase_line", (event, opts) => erase_line(opts));
 electron.ipcRenderer.on("delete_selection", (event, opts) => delete_selection(opts));
 electron.ipcRenderer.on("undo", (event, opts) => undo(opts));
 electron.ipcRenderer.on("redo", (event, opts) => redo(opts));
@@ -1663,6 +1761,7 @@ electron.ipcRenderer.on("nick", (event, {value}) => nick = value);
 electron.ipcRenderer.on("group", (event, {value}) => group = value);
 electron.ipcRenderer.on("use_flashing_cursor", (event, {value}) => cursor.set_flashing(value));
 electron.ipcRenderer.on("use_pixel_aliasing", (event, {value}) => use_pixel_aliasing(value));
+electron.ipcRenderer.on("hide_scrollbars", (event, {value}) => hide_scrollbars(value));
 electron.ipcRenderer.on("use_numpad", (event, {value}) => use_numpad = value);
 electron.ipcRenderer.on("use_backup", (event, {value}) => use_backup(value));
 electron.ipcRenderer.on("backup_folder", (event, {value}) => backup_folder = value);

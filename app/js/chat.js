@@ -184,9 +184,16 @@ function clear(element_name) {
     while (element.firstChild) element.removeChild(element.firstChild);
 }
 
-function clear_all() {
-    clear("messages");
+function disconnected() {
+    const scroll = is_at_bottom();
+    const disconnected_div = document.createElement("div");
+    disconnected_div.innerText = "You were disconnected from the server";
+    document.getElementById("messages").appendChild(disconnected_div);
+    if (scroll) scroll_to_bottom();
+}
+
+function clear_users() {
     clear("user_list");
 }
 
-module.exports = {toggle, is_at_bottom, scroll_to_bottom, join, leave, chat, welcome, updated_sauce, changed_ice_colors, changed_use_9px_font, changed_font, set_canvas_size, status: set_status, show: show_chat, clear: clear_all};
+module.exports = {toggle, is_at_bottom, scroll_to_bottom, join, leave, chat, welcome, updated_sauce, changed_ice_colors, changed_use_9px_font, changed_font, set_canvas_size, status: set_status, show: show_chat, clear_users, disconnected};

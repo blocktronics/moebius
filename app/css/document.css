@@ -300,10 +300,10 @@ body.dark #statusbar > div > div {
 #editing_layer > canvas.flashing {
     box-sizing: border-box;
     border: 1px solid white;
-    animation: blink 1s steps(1, end) infinite;
+    animation: blink 0.2s steps(1, end) infinite;
 }
 @keyframes blink {
-    0% {border-color: white;} 50% {border-color: black;}
+    0% {border-color: rgb(170, 170, 170);} 50% {border-color: black;}
 }
 #editing_layer > canvas.selection {
     border: 1px solid;

@@ -105,7 +105,7 @@ function render_blocks(blocks, font) {
     for (let y = 0, py = 0, i = 0; y < blocks.rows; y++, py += font.height) {
         for (let x = 0, px = 0; x < blocks.columns; x++, px += font.width, i++) {
             const block = blocks.data[i];
-            font.draw(ctx, block, px, py);
+            if (!blocks.transparent || block.code != 32 || block.bg != 0) font.draw(ctx, block, px, py);
         }
     }
     return canvas;

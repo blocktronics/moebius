@@ -108,24 +108,35 @@ class Cursor {
         }
     }
 
+    scroll(x, y) {
+        document.getElementById("viewport").scrollLeft += x * render.font.width;
+        document.getElementById("viewport").scrollTop += y * render.font.height;
+    }
+
     left() {
-        if (this.x > 0) this.move_to(this.x - 1, this.y, true);
+        if (this.x > 0) this.move_to(this.x - 1, this.y, !this.scroll_document_with_cursor);
+        if (this.scroll_document_with_cursor) this.scroll(-1, 0);
     }
 
     up() {
-        if (this.y > 0) this.move_to(this.x, this.y - 1, true);
+        if (this.y > 0) this.move_to(this.x, this.y - 1, !this.scroll_document_with_cursor);
+        if (this.scroll_document_with_cursor) this.scroll(0, -1);
     }
 
     right() {
-        if (this.x < render.columns - 1) this.move_to(this.x + 1, this.y, true);
+        if (this.x < render.columns - 1) this.move_to(this.x + 1, this.y, !this.scroll_document_with_cursor);
+        if (this.scroll_document_with_cursor) this.scroll(1, 0);
     }
 
     down() {
-        if (this.y < render.rows - 1) this.move_to(this.x, this.y + 1, true);
+        if (this.y < render.rows - 1) this.move_to(this.x, this.y + 1, !this.scroll_document_with_cursor);
+        if (this.scroll_document_with_cursor) this.scroll(0, 1);
     }
 
     new_line() {
-        this.move_to(0, Math.min(render.rows - 1, this.y + 1), true);
+        const old_x = this.x;
+        this.move_to(0, Math.min(render.rows - 1, this.y + 1), !this.scroll_document_with_cursor);
+        if (this.scroll_document_with_cursor) this.scroll(-old_x, 1);
     }
 
     start_of_row() {
@@ -133,15 +144,39 @@ class Cursor {
     }
 
     end_of_row() {
-        if (this.x < render.columns - 1) this.move_to(render.columns - 1, this.y, true);
+        if (this.mode == cursor_modes.OPERATION) {
+            const {sx, dx} = this.reorientate_selection();
+            const right_justified_x = render.columns - (dx - sx + 1);
+            if (this.x == right_justified_x) {
+                if (this.x < render.columns - 1) this.move_to(render.columns - 1, this.y, true);
+            } else {
+                this.move_to(right_justified_x, this.y, true);
+            }
+        } else {
+            if (this.x < render.columns - 1) this.move_to(render.columns - 1, this.y, true);
+        }
     }
 
     page_up() {
-        if (this.y > 0) this.move_to(this.x, Math.max(this.y - Math.floor(document.getElementById("viewport").getBoundingClientRect().height / render.font.height), 0), true);
+        const characters_in_screen_height = Math.floor(document.getElementById("viewport").getBoundingClientRect().height / render.font.height);
+        if (this.y > 0) this.move_to(this.x, Math.max(this.y - characters_in_screen_height, 0), !this.scroll_document_with_cursor);
+        if (this.scroll_document_with_cursor) this.scroll(0, -characters_in_screen_height);
     }
 
     page_down() {
-        if (this.y < render.rows - 1) this.move_to(this.x, Math.min(this.y + Math.floor(document.getElementById("viewport").getBoundingClientRect().height / render.font.height), render.rows - 1), true);
+        const characters_in_screen_height = Math.floor(document.getElementById("viewport").getBoundingClientRect().height / render.font.height);
+        if (this.y < render.rows - 1) this.move_to(this.x, Math.min(this.y + characters_in_screen_height, render.rows - 1), !this.scroll_document_with_cursor);
+        if (this.scroll_document_with_cursor) this.scroll(0, characters_in_screen_height);
+    }
+
+    tab() {
+        if (this.x < render.columns - 1) this.move_to(Math.min(render.columns - 1, this.x + 8), this.y, !this.scroll_document_with_cursor);
+        if (this.scroll_document_with_cursor) this.scroll(8, 0);
+    }
+
+    reverse_tab() {
+        if (this.x > 0) this.move_to(Math.max(0, this.x - 8), this.y, !this.scroll_document_with_cursor);
+        if (this.scroll_document_with_cursor) this.scroll(-8, 0);
     }
 
     resize_to_font() {
@@ -212,7 +247,7 @@ class Cursor {
     get_blocks_in_selection(data) {
         if (this.mode == cursor_modes.SELECTION) {
             const {sx, sy, dx, dy} = this.reorientate_selection();
-            const blocks = {columns: dx - sx + 1, rows: dy - sy + 1, data: []};
+            const blocks = {columns: dx - sx + 1, rows: dy - sy + 1, data: [], transparent: false};
             for (let y = sy; y <= dy; y++) {
                 for (let x = sx; x <= dx; x++) {
                     blocks.data.push(Object.assign(data[y * render.columns + x]));
@@ -232,7 +267,9 @@ class Cursor {
     update_cursor_with_blocks(blocks) {
         const canvas = libtextmode.render_blocks(blocks, render.font);
         this.resize_selection(blocks.columns, blocks.rows);
-        this.canvas.getContext("2d").drawImage(canvas, 1, 1, canvas.width - 2, canvas.height - 2, 0, 0, canvas.width - 2, canvas.height - 2);
+        const ctx = this.canvas.getContext("2d");
+        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        ctx.drawImage(canvas, 1, 1, canvas.width - 2, canvas.height - 2, 0, 0, canvas.width - 2, canvas.height - 2);
     }
 
     start_operation_mode(data, is_move_operation = false) {
