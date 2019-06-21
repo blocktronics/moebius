@@ -1,4 +1,4 @@
-const libtextmode = require("../js/libtextmode/libtextmode");
+const libtextmode = require("../libtextmode/libtextmode");
 let divs, old_fg, old_bg;
 
 function set_fg(fg) {

@@ -1,4 +1,4 @@
-const libtextmode = require("../js/libtextmode/libtextmode");
+const libtextmode = require("../libtextmode/libtextmode");
 
 document.addEventListener("DOMContentLoaded", () => {
     libtextmode.animate({file: `${process.resourcesPath}/ans/numpad_mappings.ans`, ctx: document.getElementById("numpad_mappings_terminal").getContext("2d")});

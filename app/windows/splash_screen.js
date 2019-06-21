@@ -1,4 +1,4 @@
-const libtextmode = require("../js/libtextmode/libtextmode");
+const libtextmode = require("../libtextmode/libtextmode");
 const electron = require("electron");
 
 function show_new_version_button() {

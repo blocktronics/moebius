@@ -9,11 +9,12 @@ function files_match(file_1, file_2) {
 
 class HourlySaver extends events.EventEmitter {
     filename(file) {
+        if (this.backup_folder == undefined) return;
         const date = new Date();
         const hours = date.getHours();
         const parsed_file = path.parse(file);
         const hour = `${hours > 12 ? hours - 12 : hours}${hours > 12 ? "pm" : "am"}`;
-        return path.join(parsed_file.dir, `${parsed_file.name} - ${date.toDateString()} - ${hour}${parsed_file.ext}`);
+        return path.join(this.backup_folder, `${parsed_file.name} - ${date.toDateString()} - ${hour}${parsed_file.ext}`);
     }
 
     keep_if_changes(file) {
@@ -34,6 +35,11 @@ class HourlySaver extends events.EventEmitter {
     start() {
         if (this.timer) this.stop();
         this.timer = setInterval(() => this.emit("save"), 60 * 60 * 1000);
+    }
+
+    constructor(backup_folder) {
+        super();
+        this.backup_folder = backup_folder;
     }
 }
 

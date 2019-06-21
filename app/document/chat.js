@@ -196,4 +196,6 @@ function clear_users() {
     clear("user_list");
 }
 
+electron.ipcRenderer.on("chat_window_toggle", (event) => toggle());
+
 module.exports = {toggle, is_at_bottom, scroll_to_bottom, join, leave, chat, welcome, updated_sauce, changed_ice_colors, changed_use_9px_font, changed_font, set_canvas_size, status: set_status, show: show_chat, clear_users, disconnected};

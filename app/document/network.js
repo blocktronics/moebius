@@ -1,6 +1,6 @@
 const action =  {CONNECTED: 0, REFUSED: 1, JOIN: 2, LEAVE: 3, CURSOR: 4, SELECTION: 5, RESIZE_SELECTION: 6, OPERATION: 7, HIDE_CURSOR: 8, DRAW: 9, CHAT: 10, STATUS: 11, SAUCE: 12, ICE_COLORS: 13, USE_9PX_FONT: 14, CHANGE_FONT: 15, SET_CANVAS_SIZE: 16};
 const status_types = {ACTIVE: 0, IDLE: 1, AWAY: 2};
-const libtextmode = require("../js/libtextmode/libtextmode");
+const libtextmode = require("../libtextmode/libtextmode");
 let byte_count = 0;
 let idle_timer, away_timer, status;
 let ready = false;

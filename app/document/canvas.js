@@ -1,9 +1,9 @@
-const libtextmode = require("../js/libtextmode/libtextmode");
+const libtextmode = require("../libtextmode/libtextmode");
 const fs = require("fs");
 let render, interval, mouse_button;
 const events = require("events");
 
-const cursor_modes = {EDITING: 0, SELECTION: 1, OPERATION: 2};
+const modes = {EDITING: 0, SELECTION: 1, OPERATION: 2};
 
 function send(channel, opts) {
     electron.ipcRenderer.send(channel, {id: electron.remote.getCurrentWindow().id, ...opts});
@@ -25,7 +25,7 @@ class Cursor extends events.EventEmitter {
     draw() {
         const ctx = this.canvas.getContext("2d");
         switch (this.mode) {
-            case cursor_modes.EDITING:
+            case modes.EDITING:
                 if (!this.flashing) {
                     ctx.globalCompositeOperation = "source-over";
                     ctx.drawImage(render.ice_color_collection[Math.floor(this.y / render.maximum_rows)], this.x * render.font.width, (this.y % render.maximum_rows) * render.font.height, render.font.width, render.font.height, 0, 0, render.font.width, render.font.height);
@@ -34,7 +34,7 @@ class Cursor extends events.EventEmitter {
                     ctx.clearRect(0, 0, this.canvas.width, render.font.height - 2);
                 }
             break;
-            case cursor_modes.SELECTION:
+            case modes.SELECTION:
                 ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
                 break;
         }
@@ -63,14 +63,14 @@ class Cursor extends events.EventEmitter {
         this.x = x; this.y = y;
         if (this.user) update_status_bar_cursor_pos(this.x, this.y);
         switch (this.mode) {
-            case cursor_modes.EDITING:
+            case modes.EDITING:
                 this.canvas.style.left = `${x * render.font.width}px`;
                 this.canvas.style.top = `${y * render.font.height}px`;
                 this.canvas.style.width = `${render.font.width}px`;
                 this.canvas.style.height = `${render.font.height}px`;
                 if (this.connection) this.connection.cursor(x, y);
                 break;
-            case cursor_modes.SELECTION:
+            case modes.SELECTION:
                 this.selection.dx = x;
                 this.selection.dy = y;
                 const {sx, sy, dx, dy} = this.reorientate_selection();
@@ -81,7 +81,7 @@ class Cursor extends events.EventEmitter {
                 if (this.connection) this.connection.selection(x, y);
                 if (this.user) update_columns_and_rows(dx - sx + 1, dy - sy + 1);
                 break;
-            case cursor_modes.OPERATION:
+            case modes.OPERATION:
                 this.canvas.style.left = `${x * render.font.width}px`;
                 this.canvas.style.top = `${y * render.font.height}px`;
                 if (this.connection) this.connection.operation(x, y);
@@ -147,7 +147,7 @@ class Cursor extends events.EventEmitter {
     }
 
     end_of_row() {
-        if (this.mode == cursor_modes.OPERATION) {
+        if (this.mode == modes.OPERATION) {
             const {sx, dx} = this.reorientate_selection();
             const right_justified_x = render.columns - (dx - sx + 1);
             if (this.x == right_justified_x) {
@@ -201,18 +201,18 @@ class Cursor extends events.EventEmitter {
             document.getElementById("editing_layer").removeChild(this.canvas);
             this.hidden = true;
             if (this.connection) this.connection.hide_cursor();
-            if (this.user && this.mode != cursor_modes.EDITING) update_columns_and_rows(render.columns, render.rows);
+            if (this.user && this.mode != modes.EDITING) update_columns_and_rows(render.columns, render.rows);
         }
     }
 
     start_using_selection_border() {
         this.selection = {sx: this.x, sy: this.y};
         this.canvas.classList.add("selection");
-        this.mode = cursor_modes.SELECTION;
+        this.mode = modes.SELECTION;
     }
 
     stop_using_selection_border() {
-        this.mode = cursor_modes.EDITING;
+        this.mode = modes.EDITING;
         this.x = this.selection.sx; this.y = this.selection.sy;
         this.canvas.classList.remove("selection");
         this.resize_to_font();
@@ -226,19 +226,19 @@ class Cursor extends events.EventEmitter {
 
     start_editing_mode() {
         switch (this.mode) {
-            case cursor_modes.EDITING:
+            case modes.EDITING:
                 send("show_editing_touchbar");
                 break;
-            case cursor_modes.SELECTION:
+            case modes.SELECTION:
                 send("disable_selection_menu_items");
                 this.stop_using_selection_border();
                 send("show_editing_touchbar");
                 if (this.user) update_columns_and_rows(render.columns, render.rows);
                 break;
-            case cursor_modes.OPERATION:
+            case modes.OPERATION:
                 send("disable_selection_menu_items");
                 send("disable_operation_menu_items");
-                this.mode = cursor_modes.EDITING;
+                this.mode = modes.EDITING;
                 this.canvas.classList.remove("selection");
                 this.resize_to_font();
                 send("show_editing_touchbar");
@@ -249,7 +249,7 @@ class Cursor extends events.EventEmitter {
     }
 
     get_blocks_in_selection(data) {
-        if (this.mode == cursor_modes.SELECTION) {
+        if (this.mode == modes.SELECTION) {
             const {sx, sy, dx, dy} = this.reorientate_selection();
             const blocks = {columns: dx - sx + 1, rows: dy - sy + 1, data: [], transparent: false, underneath: false};
             for (let y = sy; y <= dy; y++) {
@@ -262,7 +262,7 @@ class Cursor extends events.EventEmitter {
     }
 
     get_blocks_in_operation(data) {
-        if (this.mode == cursor_modes.OPERATION) {
+        if (this.mode == modes.OPERATION) {
             let {sx, sy, dx, dy} = this.reorientate_selection();
             dx = Math.min(render.columns - 1, cursor.x + dx - sx);
             dy = Math.min(render.rows - 1, cursor.y + dy - sy);
@@ -292,12 +292,12 @@ class Cursor extends events.EventEmitter {
     }
 
     start_operation_mode(data, is_move_operation = false) {
-        if (this.mode == cursor_modes.SELECTION) {
+        if (this.mode == modes.SELECTION) {
             send("disable_selection_menu_items_except_deselect_and_crop");
             send("enable_operation_menu_items");
             const blocks = this.get_blocks_in_selection(data);
             this.update_cursor_with_blocks(blocks);
-            this.mode = cursor_modes.OPERATION;
+            this.mode = modes.OPERATION;
             const {sx, sy} = this.reorientate_selection();
             this.move_to(sx, sy, true);
             this.is_move_operation = is_move_operation;
@@ -316,12 +316,17 @@ class Cursor extends events.EventEmitter {
 
     constructor(user = true) {
         super();
+        this.modes = modes;
         this.user = user;
         this.canvas = document.createElement("canvas");
         this.x = 0; this.y = 0;
-        this.mode = cursor_modes.EDITING;
+        this.mode = modes.EDITING;
         this.hidden = true;
         this.flashing = false;
+        if (this.user) {
+            electron.ipcRenderer.on("scroll_document_with_cursor", (event, value) => this.scroll_document_with_cursor = value);
+            electron.ipcRenderer.on("use_flashing_cursor", (event, value) => this.set_flashing(value));
+        }
     }
 
     set_flashing(value) {
@@ -461,4 +466,4 @@ function export_as_png({file, ice_colors}) {
     fs.writeFileSync(file, base64_string, "base64");
 }
 
-module.exports = {cursor_modes, Cursor, add, start_blinking, stop_blinking, update_frame, export_as_png, render_at};
+module.exports = {modes, Cursor, add, start_blinking, stop_blinking, update_frame, export_as_png, render_at};

@@ -157,8 +157,6 @@ async function connect_to_server({server, pass} = {}) {
 }
 electron.ipcMain.on("connect_to_server", (event, opts) => connect_to_server(opts));
 
-menu.on("open_dev_tools", ({win}) => win.webContents.openDevTools({activate: true, mode: "detach"}));
-
 async function show_splash_screen() {
     window.static("app/html/splash_screen.html", {width: 720, height: 600, ...frameless}, touchbar.splash_screen, {new_document, open});
 }
@@ -252,6 +250,7 @@ if (darwin) {
 }
 
 electron.app.on("ready", (event) => {
+    new_document();
     if (!darwin && process.argv.length > 1 && require("path").parse(process.argv[0]).name != "electron") {
         for (let i = 1; i < process.argv.length; i++) open_file(process.argv[i]);
     } else {

@@ -179,7 +179,7 @@ function view_menu_template(win) {
             {label: "Change Font", submenu: font_menu_items(win)},
             {type: "separator"},
             {label: "Open Reference Image\u2026", id: "open_reference_image", accelerator: "CmdorCtrl+Shift+O", click(item) {win.send("open_reference_image");}},
-            {label: "Toggle Reference Image", id: "toggle_reference_image", accelerator: "Ctrl+Tab", click(item) {win.send("toggle_reference_image", {is_visible: item.checked});}, enabled: false, type: "checkbox", checked: true},
+            {label: "Toggle Reference Image", id: "toggle_reference_image", accelerator: "Ctrl+Tab", click(item) {win.send("toggle_reference_image", item.checked);}, enabled: false, type: "checkbox", checked: true},
             {label: "Clear", id: "clear_reference_image", click(item) {win.send("clear_reference_image");}, enabled: false},
             {type: "separator"},
             {label: "Scroll Document With Cursor", id: "scroll_document_with_cursor", accelerator: "CmdorCtrl+R", click(item) {win.send("scroll_document_with_cursor", item.checked);}, type: "checkbox", checked: false},
@@ -196,7 +196,7 @@ function colors_menu_template(win) {
             {label: "Previous Foreground Color", id: "previous_foreground_color", accelerator: "Alt+Up", click(item) {win.send("previous_foreground_color");}},
             {label: "Next Foreground Color", id: "next_foreground_color", accelerator: "Alt+Down", click(item) {win.send("next_foreground_color");}},
             {type: "separator"},
-            {label: "Previous Background Color", id: "previous_background_colour", accelerator: "Alt+Left", click(item) {win.send("previous_background_colour");}},
+            {label: "Previous Background Color", id: "previous_background_colour", accelerator: "Alt+Left", click(item) {win.send("previous_background_color");}},
             {label: "Next Background Color", id: "next_background_color", accelerator: "Alt+Right", click(item) {win.send("next_background_color");}},
             {type: "separator"},
             {label: "Use Attribute Under Cursor", id: "use_attribute_under_cursor", accelerator: "Alt+U", click(item) {win.send("use_attribute_under_cursor");}},
@@ -223,7 +223,7 @@ function debug_menu_template(win) {
     return {
         label: "Debug",
         submenu: [
-            {label: "Open Dev Tools", id: "open_dev_tools", click(item) {event.emit("open_dev_tools", {item, win});}}
+            {label: "Open Dev Tools", id: "open_dev_tools", click(item) {win.openDevTools({mode: "detach"});}}
         ]
     };
 }
