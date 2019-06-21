@@ -1,6 +1,6 @@
 const electron = require("electron");
 const libtextmode = require("../js/libtextmode/libtextmode");
-const canvas = require("../js/canvas.js");
+const canvas = require("../js/canvas");
 const palette = require("../js/palette");
 const toolbar = require("../js/toolbar");
 const chat = require("../js/chat");
@@ -314,13 +314,16 @@ function scroll_document_with_cursor(value) {
     cursor.scroll_document_with_cursor = value;
 }
 
-function export_as_png(file) {
-    canvas.export_as_png({file, ice_colors: doc.ice_colors});
+function export_as_png() {
+    electron.remote.dialog.showSaveDialog(electron.remote.getCurrentWindow(), {filters: [{name: "Portable Network Graphics ", extensions: ["png"]}], defaultPath: `${path.parse(file).name}.png`}, (file) => {
+        if (file) canvas.export_as_png({file, ice_colors: doc.ice_colors});
+    });
 }
 
-
-function export_as_utf8(file) {
-    libtextmode.write_file(doc, file, {utf8: true});
+function export_as_utf8() {
+    electron.remote.dialog.showSaveDialog(electron.remote.getCurrentWindow(), {filters: [{name: "ANSI Art ", extensions: ["utf8ans"]}], defaultPath: `${path.parse(file).name}.utf8ans`}, (file) => {
+        if (file) libtextmode.write_file(doc, file, {utf8: true});
+    });
 }
 
 function previous_foreground_color() {
@@ -592,6 +595,7 @@ document.addEventListener("keydown", (event) => {
                 case "NumpadEnter":
                     set_insert_mode(!insert_mode);
                     update_menu_checkboxes();
+                    event.preventDefault();
                     return;
             }
             if (event.altKey && !event.metaKey && !event.ctrlKey) {
@@ -1376,9 +1380,14 @@ function mouse_out(event) {
     }
 }
 
-function open_reference_image({image}) {
-    document.getElementById("reference_image").style.backgroundImage = `url(${image})`;
-    document.getElementById("reference_image").style.opacity = 0.4;
+function open_reference_image() {
+    electron.remote.dialog.showOpenDialog(electron.remote.getCurrentWindow(), {filters: [{name: "Images", extensions: ["png", "jpg"]}], properties: ["openFile"]}, (files) => {
+        if (files) {
+            document.getElementById("reference_image").style.backgroundImage = `url(${electron.nativeImage.createFromPath(files[0]).toDataURL()})`;
+            document.getElementById("reference_image").style.opacity = 0.4;
+            send("enable_reference_image");
+        }
+    });
 }
 
 function toggle_reference_image({is_visible}) {
@@ -1411,12 +1420,40 @@ function center() {
 }
 
 function transparent(value) {
-    stored_blocks.transparent = value;
     if (value) {
+        if (stored_blocks.underneath) {
+            stored_blocks.underneath = false;
+            send("uncheck_underneath");
+        } else {
+            send("uncheck_over");
+        }
+    } else {
         send("uncheck_underneath");
-        stored_blocks.underneath = false;
+        send("check_over");
     }
+    stored_blocks.transparent = value;
     cursor.update_cursor_with_blocks(stored_blocks);
+}
+
+function over(value) {
+    if (value) {
+        if (stored_blocks.transparent) {
+            stored_blocks.transparent = false;
+            send("uncheck_transparent");
+        }
+        if (stored_blocks.underneath) {
+            stored_blocks.underneath = false;
+            send("uncheck_underneath");
+        }
+    } else {
+        send("check_underneath");
+    }
+    stored_blocks.underneath = !value;
+    if (value) {
+        cursor.update_cursor_with_blocks(stored_blocks);
+    } else {
+        draw_underneath_cursor();
+    }
 }
 
 function draw_underneath_cursor() {
@@ -1424,10 +1461,20 @@ function draw_underneath_cursor() {
 }
 
 function underneath(value) {
+    if (value) {
+        if (stored_blocks.transparent) {
+            stored_blocks.transparent = false;
+            send("uncheck_transparent");
+        }
+        if (!stored_blocks.underneath) {
+            stored_blocks.underneath = false;
+            send("uncheck_over");
+        }
+    } else {
+        send("check_over");
+    }
     stored_blocks.underneath = value;
     if (value) {
-        send("uncheck_transparent");
-        stored_blocks.transparent = false;
         draw_underneath_cursor();
     } else {
         cursor.update_cursor_with_blocks(stored_blocks);
@@ -1470,6 +1517,7 @@ function set_canvas_size({columns, rows}) {
         if (connection) connection.set_canvas_size(columns, rows);
         reset_undo_buffer();
         libtextmode.resize_canvas(doc, columns, rows);
+        cursor.start_editing_mode();
         cursor.move_to(Math.min(cursor.x, columns - 1), Math.min(cursor.y, rows - 1), true);
         start_render();
     }
@@ -1722,6 +1770,10 @@ cursor.on("move", () => {
     if (stored_blocks && stored_blocks.underneath) draw_underneath_cursor();
 });
 
+cursor.on("end_operation", () => {
+    if (stored_blocks) stored_blocks = undefined;
+});
+
 electron.ipcRenderer.on("open_file", (event, opts) => open_file(opts));
 electron.ipcRenderer.on("save", (event, opts) => save(opts));
 electron.ipcRenderer.on("show_statusbar", (event, opts) => show_statusbar(opts));
@@ -1748,6 +1800,7 @@ electron.ipcRenderer.on("flip_x", (event, opts) => flip_x(opts));
 electron.ipcRenderer.on("flip_y", (event, opts) => flip_y(opts));
 electron.ipcRenderer.on("center", (event, opts) => center(opts));
 electron.ipcRenderer.on("transparent", (event, opts) => transparent(opts));
+electron.ipcRenderer.on("over", (event, opts) => over(opts));
 electron.ipcRenderer.on("underneath", (event, opts) => underneath(opts));
 electron.ipcRenderer.on("cut", (event, opts) => cut(opts));
 electron.ipcRenderer.on("copy", (event, opts) => copy(opts));
@@ -1782,14 +1835,14 @@ electron.ipcRenderer.on("change_to_rectangle_mode", (event, opts) => change_to_r
 electron.ipcRenderer.on("change_to_fill_mode", (event, opts) => change_to_fill_mode(opts));
 electron.ipcRenderer.on("change_to_sample_mode", (event, opts) => change_to_sample_mode(opts));
 electron.ipcRenderer.on("connect_to_server", (event, opts) => connect_to_server(opts));
-electron.ipcRenderer.on("nick", (event, {value}) => nick = value);
-electron.ipcRenderer.on("group", (event, {value}) => group = value);
-electron.ipcRenderer.on("use_flashing_cursor", (event, {value}) => cursor.set_flashing(value));
-electron.ipcRenderer.on("use_pixel_aliasing", (event, {value}) => use_pixel_aliasing(value));
-electron.ipcRenderer.on("hide_scrollbars", (event, {value}) => hide_scrollbars(value));
-electron.ipcRenderer.on("use_numpad", (event, {value}) => use_numpad = value);
-electron.ipcRenderer.on("use_backup", (event, {value}) => use_backup(value));
-electron.ipcRenderer.on("backup_folder", (event, {value}) => backup_folder = value);
+electron.ipcRenderer.on("nick", (event, value) => nick = value);
+electron.ipcRenderer.on("group", (event, value) => group = value);
+electron.ipcRenderer.on("use_flashing_cursor", (event, value) => cursor.set_flashing(value));
+electron.ipcRenderer.on("use_pixel_aliasing", (event, value) => use_pixel_aliasing(value));
+electron.ipcRenderer.on("hide_scrollbars", (event, value) => hide_scrollbars(value));
+electron.ipcRenderer.on("use_numpad", (event, value) => use_numpad = value);
+electron.ipcRenderer.on("use_backup", (event, value) => use_backup(value));
+electron.ipcRenderer.on("backup_folder", (event, value) => backup_folder = value);
 electron.ipcRenderer.on("chat_window_toggle", (event, opts) => chat_window_toggle(opts));
 electron.ipcRenderer.on("crop", (event, opts) => crop(opts));
 

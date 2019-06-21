@@ -4,6 +4,11 @@ function send(channel, opts) {
     electron.ipcRenderer.send(channel, {id: electron.remote.getCurrentWindow().getParentWindow().id, ...opts});
 }
 
+function send_parent(channel, opts) {
+    electron.remote.getCurrentWindow().getParentWindow().send(channel, opts);
+    send("close_modal");
+}
+
 function fill_string(text, length) {
     const text_bytes = Buffer.from(text, "utf-8");
     if (text_bytes.length > length) return undefined;
@@ -20,9 +25,8 @@ function ok() {
     const comments_value = document.getElementById("comments").value;
     const comments_value_length = Buffer.from(comments_value, "utf-8").length;
     const comments = fill_string(comments_value, Math.min(Math.ceil(comments_value_length / 64) * 64, 64 * 255));
-    if (title != undefined && author != undefined && group != undefined && comments != undefined) send("set_sauce_info", {title, author, group, comments});
+    if (title != undefined && author != undefined && group != undefined && comments != undefined) send_parent("set_sauce_info", {title, author, group, comments});
 }
-
 
 function cancel() {
     send("close_modal");

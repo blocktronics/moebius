@@ -13,32 +13,36 @@ function prefs({nick, group, use_numpad, use_flashing_cursor, use_pixel_aliasing
     document.getElementById("backup_folder").innerText = (backup_folder == "") ? "No Backup Folder Set" : backup_folder;
 }
 
+function update(key, value) {
+    electron.ipcRenderer.send("update_prefs", {key, value});
+}
+
 function nick() {
-    electron.ipcRenderer.send("nick", {value: document.getElementById("nick").value});
+    update("nick", document.getElementById("nick").value);
 }
 
 function group() {
-    electron.ipcRenderer.send("group", {value: document.getElementById("group").value});
+    update("group", document.getElementById("group").value);
 }
 
 function use_numpad() {
-    electron.ipcRenderer.send("use_numpad", {value: document.getElementById("use_numpad").checked});
+    update("use_numpad", document.getElementById("use_numpad").checked);
 }
 
 function use_flashing_cursor() {
-    electron.ipcRenderer.send("use_flashing_cursor", {value: document.getElementById("use_flashing_cursor").checked});
+    update("use_flashing_cursor", document.getElementById("use_flashing_cursor").checked);
 }
 
 function use_pixel_aliasing() {
-    electron.ipcRenderer.send("use_pixel_aliasing", {value: document.getElementById("use_pixel_aliasing").checked});
+    update("use_pixel_aliasing", document.getElementById("use_pixel_aliasing").checked);
 }
 
 function hide_scrollbars() {
-    electron.ipcRenderer.send("hide_scrollbars", {value: document.getElementById("hide_scrollbars").checked});
+    update("hide_scrollbars", document.getElementById("hide_scrollbars").checked);
 }
 
 function use_backup() {
-    electron.ipcRenderer.send("use_backup", {value: document.getElementById("use_backup").checked});
+    update("use_backup", document.getElementById("use_backup").checked);
 }
 
 function choose_folder() {
@@ -47,7 +51,7 @@ function choose_folder() {
         if (files) {
             const folder = files[0];
             document.getElementById("backup_folder").innerText = folder;
-            electron.ipcRenderer.send("backup_folder", {value: folder});
+            update("backup_folder", folder);
         }
     });
 }

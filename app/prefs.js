@@ -24,4 +24,9 @@ function get_all() {
     return prefs;
 }
 
-module.exports = {set, get, get_all};
+function send(win) {
+    const prefs = get_all();
+    for (const key of Object.keys(prefs)) win.send(key, prefs[key]);
+}
+
+module.exports = {set, get, get_all, send};

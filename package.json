@@ -2,7 +2,7 @@
   "name": "moebius",
   "version": "1.0.11",
   "description": "ANSI Art Editor",
-  "main": "app.js",
+  "main": "app/moebius.js",
   "scripts": {
     "start": "electron .",
     "build-script": "browserify build/script.js -o server/script.js",
@@ -21,6 +21,6 @@
   "dependencies": {
     "linkifyjs": "^2.1.8",
     "minimist": "^1.2.0",
-    "ws": "^7.0.0"
+    "ws": "^7.0.1"
   }
 }

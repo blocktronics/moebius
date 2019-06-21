@@ -59,7 +59,7 @@ class Cursor extends events.EventEmitter {
         return reorientated_selection;
     }
 
-    move_to(x, y, scroll_view = false, emit = true) {
+    move_to(x, y, scroll_view = false) {
         this.x = x; this.y = y;
         if (this.user) update_status_bar_cursor_pos(this.x, this.y);
         switch (this.mode) {
@@ -85,7 +85,7 @@ class Cursor extends events.EventEmitter {
                 this.canvas.style.left = `${x * render.font.width}px`;
                 this.canvas.style.top = `${y * render.font.height}px`;
                 if (this.connection) this.connection.operation(x, y);
-                if (this.user && emit) this.emit("move");
+                if (this.user) this.emit("move");
                 break;
         }
         this.draw();
@@ -243,6 +243,7 @@ class Cursor extends events.EventEmitter {
                 this.resize_to_font();
                 send("show_editing_touchbar");
                 if (this.user) update_columns_and_rows(render.columns, render.rows);
+                this.emit("end_operation");
                 break;
         }
     }
@@ -298,7 +299,7 @@ class Cursor extends events.EventEmitter {
             this.update_cursor_with_blocks(blocks);
             this.mode = cursor_modes.OPERATION;
             const {sx, sy} = this.reorientate_selection();
-            this.move_to(sx, sy, true, false);
+            this.move_to(sx, sy, true);
             this.is_move_operation = is_move_operation;
             send("show_operation_touchbar");
             return blocks;
