@@ -313,6 +313,7 @@ class KeyboardEvent extends events.EventEmitter {
         on("use_numpad", (event, value) => this.use_numpad = value);
         on("insert_mode", (event, value) => this.insert_mode = value);
         on("overwrite_mode", (event, value) => this.overwrite_mode = value);
+        on("f_key", (event, value) => this.emit("f_key", value));
         document.addEventListener("DOMContentLoaded", () => {
             this.chat_input = document.getElementById("chat_input");
             document.body.addEventListener("keydown", () => this.keydown(event), true);

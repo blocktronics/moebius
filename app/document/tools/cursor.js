@@ -203,6 +203,7 @@ class Cursor {
         this.canvas.classList.add("selection");
         this.mode = modes.SELECTION;
         send("enable_selection_menu_items");
+        send("show_selection_touchbar");
     }
 
     start_editing_mode() {
@@ -215,6 +216,7 @@ class Cursor {
         this.canvas.classList.remove("selection");
         this.resize_to_font();
         statusbar.use_canvas_size_for_status_bar();
+        send("show_editing_touchbar");
     }
 
     deselect() {
@@ -237,13 +239,14 @@ class Cursor {
         this.redraw_operation_blocks();
         send("disable_selection_menu_items_except_deselect_and_crop");
         send("enable_operation_menu_items");
+        send("show_operation_touchbar");
         statusbar.use_canvas_size_for_status_bar();
     }
 
     start_operation_mode(is_move_operation) {
         const {sx, sy, dx, dy} = this.reorientate_selection();
+        this.set_operation_mode({...doc.get_blocks(sx, sy, dx, dy), is_move_operation});
         if (is_move_operation) doc.erase(sx, sy, dx, dy);
-        this.set_operation_mode(doc.get_blocks(sx, sy, dx, dy));
         this.move_to(sx, sy);
         this.draw();
     }
@@ -398,9 +401,13 @@ class Cursor {
         if (this.mode == modes.EDITING) doc.center_line(this.y);
     }
 
-    place() {
+    stamp() {
         const blocks = this.operation_blocks.underneath ? libtextmode.merge_blocks(this.operation_blocks, this.get_blocks_in_operation()) : this.operation_blocks;
         doc.place(blocks, this.x, this.y, this.operation_blocks.is_move_operation);
+    }
+
+    place() {
+        this.stamp();
         this.start_editing_mode();
     }
 
@@ -419,8 +426,8 @@ class Cursor {
 
     cut() {
         const {sx, sy, dx, dy} = this.reorientate_selection();
-        doc.erase(sx, sy, dx, dy);
         this.copy();
+        doc.erase(sx, sy, dx, dy);
         this.start_editing_mode();
     }
 
@@ -479,6 +486,8 @@ class Cursor {
                 if (!this.hidden) this[event]();
             });
         });
+        on("stamp", (event, value) => this.stamp());
+        on("erase", (event, value) => this.erase());
         on("place", (event, value) => this.place());
         on("crop", (event, value) => this.crop());
         keyboard.on("key_typed", (code) => this.key_typed(code));

@@ -101,6 +101,10 @@ class PaletteChooser extends events.EventEmitter {
         keyboard.on("next_foreground_color", () => this.next_foreground_color());
         keyboard.on("previous_background_color", () => this.previous_background_color());
         keyboard.on("next_background_color", () => this.next_background_color());
+        on("previous_foreground_color", (event) => this.previous_foreground_color());
+        on("next_foreground_color", (event) => this.next_foreground_color());
+        on("previous_background_color", (event) => this.previous_background_color());
+        on("next_background_color", (event) => this.next_background_color());
         on("default_color", (event) => this.default_color());
         on("switch_foreground_background", (event) => this.switch_foreground_background());
         keyboard.on("toggle_fg", (num) => this.toggle_fg(num));

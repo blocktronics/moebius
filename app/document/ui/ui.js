@@ -218,6 +218,8 @@ class Tools extends events.EventEmitter {
     constructor() {
         super();
         this.modes = {SELECT: 0, BRUSH: 1, LINE: 2, RECTANGLE: 3, FILL: 4, SAMPLE: 5};
+        on("change_to_select_mode", (event) => this.start(this.modes.SELECT));
+        on("change_to_brush_mode", (event) => this.start(this.modes.BRUSH));
         document.addEventListener("DOMContentLoaded", (event) => {
             $("select_mode").addEventListener("mousedown", (event) => this.start(this.modes.SELECT), true);
             $("brush_mode").addEventListener("mousedown", (event) => this.start(this.modes.BRUSH), true);
@@ -256,18 +258,21 @@ class Toolbar {
     }
 
     show_select() {
+        send("show_editing_touchbar");
         $("select_panel").classList.remove("hidden");
         $("brush_panel").classList.add("hidden");
         $("sample_panel").classList.add("hidden");
     }
 
     show_brush() {
+        send("show_brush_touchbar");
         $("select_panel").classList.add("hidden");
         $("brush_panel").classList.remove("hidden");
         $("sample_panel").classList.add("hidden");
     }
 
     show_sample() {
+        send("show_brush_touchbar");
         $("select_panel").classList.add("hidden");
         $("brush_panel").classList.add("hidden");
         $("sample_panel").classList.remove("hidden");

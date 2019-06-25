@@ -21,7 +21,8 @@ function create_touch_bars(win) {
                 new electron.TouchBar.TouchBarButton({label: "Copy", click() {win.send("copy_block");}}),
                 new electron.TouchBar.TouchBarButton({label: "Move", click() {win.send("move_block");}}),
                 new electron.TouchBar.TouchBarSpacer({size: "flexible"}),
-                new electron.TouchBar.TouchBarButton({label: "Erase", click() {win.send("delete_selection");}}),
+                new electron.TouchBar.TouchBarButton({label: "Fill", click() {win.send("fill");}}),
+                new electron.TouchBar.TouchBarButton({label: "Erase", click() {win.send("erase");}}),
                 new electron.TouchBar.TouchBarSpacer({size: "flexible"}),
                 new electron.TouchBar.TouchBarButton({label: "Copy to Clipboard", click() {win.send("copy");}}),
                 new electron.TouchBar.TouchBarButton({label: "Cut to Clipboard", click() {win.send("cut");}}),
@@ -86,7 +87,7 @@ function new_connection(win) {
     win.setTouchBar(simple_touch_bar(win, "Connect"));
 }
 
-function splash_screen(win, {new_document, open}) {
+function splash_screen(win, {preferences, new_document, open}) {
     win.setTouchBar(new electron.TouchBar({
         items: [
             new electron.TouchBar.TouchBarButton({
@@ -103,7 +104,12 @@ function splash_screen(win, {new_document, open}) {
             }),
             new electron.TouchBar.TouchBarSpacer({size: "flexible"}),
         ],
-        escapeItem: new electron.TouchBar.TouchBarLabel({label: "Mœbius", textColor: "#939393"})
+        escapeItem: new electron.TouchBar.TouchBarButton({
+            label: "Preferences",
+            click() {
+                preferences();
+            }
+        })
     }));
 }
 

@@ -138,7 +138,7 @@ async function connect_to_server(server, pass = "") {
 electron.ipcMain.on("connect_to_server", (event, {server, pass}) => connect_to_server(server, pass));
 
 async function show_splash_screen() {
-    window.static("app/html/splash_screen.html", {width: 720, height: 600, ...frameless}, touchbar.splash_screen, {new_document, open});
+    window.static("app/html/splash_screen.html", {width: 720, height: 600, ...frameless}, touchbar.splash_screen, {preferences, new_document, open});
 }
 
 menu.on("show_cheatsheet", () => window.static("app/html/cheatsheet.html", {width: 640, height: 816, ...frameless}));
