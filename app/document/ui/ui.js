@@ -1,5 +1,5 @@
 const electron = require("electron");
-const {on, send} = require("../../senders");
+const {on, send, open_box} = require("../../senders");
 const doc = require("../doc");
 const palette = require("../palette");
 const keyboard = require("../input/keyboard");
@@ -19,7 +19,7 @@ function set_var_px(name, value) {
 }
 
 function open_reference_image() {
-    electron.remote.dialog.showOpenDialog(electron.remote.getCurrentWindow(), {filters: [{name: "Images", extensions: ["png", "jpg"]}]}, (files) => {
+    open_box({filters: [{name: "Images", extensions: ["png", "jpg"]}]}, (files) => {
         if (files) {
             $("reference_image").style.backgroundImage = `url(${electron.nativeImage.createFromPath(files[0]).toDataURL()})`;
             $("reference_image").style.opacity = 0.4;

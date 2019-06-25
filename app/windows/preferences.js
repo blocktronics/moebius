@@ -1,4 +1,5 @@
 const electron = require("electron");
+const {open_box} = require("../senders");
 let backup_folder_value;
 
 function $(name) {
@@ -71,7 +72,7 @@ function use_backup() {
 
 function choose_folder() {
     const defaultPath = (backup_folder_value && backup_folder_value != "") ? backup_folder_value : electron.remote.app.getPath("documents");
-    electron.remote.dialog.showOpenDialog(electron.remote.getCurrentWindow(), {defaultPath, properties: ["openDirectory", "createDirectory"]}, (files) => {
+    open_box({defaultPath, properties: ["openDirectory", "createDirectory"]}, (files) => {
         if (files) {
             const folder = files[0];
             $("backup_folder").innerText = folder;

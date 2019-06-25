@@ -208,6 +208,7 @@ class Connection extends events.EventEmitter {
                 this.users[data.id] = ({nick: data.nick, group: data.group, status: data.status});
                 chat.join(data.id, nick, group, data.status);
                 chat.show();
+                this.ws.addEventListener("close", () => this.disconnected());
             } else if (type == actions.REFUSED) {
                 this.emit("refused");
             } else {
@@ -303,6 +304,8 @@ class Connection extends events.EventEmitter {
 
     constructor(server, pass, web = false) {
         super();
+        this.server = server;
+        this.pass = pass;
         chat.on("goto_user", (id) => console.log(id));
         try {
             const {groups} = (/(?<host>[^\/]+)\/?(?<path>[^\/]*)\/?/).exec(server);
@@ -313,11 +316,10 @@ class Connection extends events.EventEmitter {
             this.ready = false;
             this.ws = new WebSocket(`ws://${encodeURI(groups.host)}:8000/${encodeURI(groups.path)}`);
             this.ws.addEventListener("open", () => this.open(pass));
-            this.ws.addEventListener("error", () => this.disconnected());
-            this.ws.addEventListener("close", () => this.disconnected());
+            this.ws.addEventListener("error", () => this.emit("unable_to_connect"));
             this.ws.addEventListener("message", (resp) => this.message(JSON.parse(resp.data)));
         } catch (err) {
-            this.error(err);
+            this.emit("unable_to_connect");
         }
     }
 }
@@ -441,13 +443,18 @@ class TextModeDoc extends events.EventEmitter {
     }
 
     connect_to_server(server, pass) {
+        this.emit("connecting");
         connection = new Connection(server, pass);
         connection.on("connected", async (remote_doc) => {
+            this.emit("connected");
             doc = remote_doc;
             await this.start_rendering();
             this.emit("new_document");
             this.ready();
         });
+        connection.on("refused", () => this.emit("refused"));
+        connection.on("disconnected", () => this.emit("disconnected"));
+        connection.on("unable_to_connect", () => this.emit("unable_to_connect"));
         connection.on("ice_colors", (value) => {
             doc.ice_colors = value;
             this.emit("ice_colors", doc.ice_colors);

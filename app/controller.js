@@ -1,7 +1,6 @@
 const electron = require("electron");
-const {on, send, send_sync} = require("./senders");
+const {on, send, send_sync, msg_box, save_box} = require("./senders");
 const doc = require("./document/doc");
-const path = require("path");
 const {tools} = require("./document/ui/ui");
 require("./document/ui/canvas");
 require("./document/tools/select");
@@ -13,6 +12,22 @@ require("./document/tools/sample");
 
 doc.on("start_rendering", () => send_sync("show_rendering_modal"));
 doc.on("end_rendering", () => send("close_modal"));
+doc.on("connecting", () => send_sync("show_connecting_modal"));
+doc.on("connected", () => send("close_modal"));
+doc.on("unable_to_connect", () => {
+    const choice = msg_box("Connect to Server", "Cannot connect to Server", {buttons: ["Retry", "Cancel"], defaultId: 0, cancelId: 1});
+    if (choice == 1) send("destroy");
+    doc.connect_to_server(doc.connection.server, doc.connection.pass);
+});
+doc.on("refused", () => {
+    msg_box("Connect to Server", "Incorrect password!");
+    send("destroy");
+});
+doc.on("disconnected", () => {
+    const choice = msg_box("Disconnected", "You were disconnected from the server.", {buttons: ["Retry", "Cancel"], defaultId: 0, cancelId: 1});
+    if (choice == 1) send("destroy");
+    doc.connect_to_server(doc.connection.server, doc.connection.pass);
+});
 doc.on("ready", () => tools.start(tools.modes.SELECT));
 
 function save(destroy_when_done = false) {
@@ -26,7 +41,7 @@ function save(destroy_when_done = false) {
 }
 
 function save_as(destroy_when_done = false) {
-    electron.remote.dialog.showSaveDialog(electron.remote.getCurrentWindow(), {filters: [{name: "ANSI Art", extensions: ["ans", "asc", "diz", "nfo", "txt"]}, {name: "XBin", extensions: ["xb"]}, {name: "Binary Text", extensions: ["bin"]}], defaultPath: `${doc.file ? path.parse(doc.file).name : "Untitled"}.ans`}, async (file) => {
+    save_box(doc.file, "ans", {filters: [{name: "ANSI Art", extensions: ["ans", "asc", "diz", "nfo", "txt"]}, {name: "XBin", extensions: ["xb"]}, {name: "Binary Text", extensions: ["bin"]}]}, async (file) => {
         if (file) {
             if (!doc.network) {
                 doc.file = file;
@@ -38,7 +53,7 @@ function save_as(destroy_when_done = false) {
 }
 
 function check_before_closing() {
-    const choice = electron.remote.dialog.showMessageBox(electron.remote.getCurrentWindow(), {message: "Save this document?", detail: "This document contains unsaved changes.", buttons: ["Save", "Cancel", "Don't Save"], defaultId: 0, cancelId: 1});
+    const choice = msg_box("Save this document?", "This document contains unsaved changes.", {buttons: ["Save", "Cancel", "Don't Save"], defaultId: 0, cancelId: 1});
     if (choice == 0) {
         save(true);
     } else if (choice == 2) {
@@ -47,13 +62,13 @@ function check_before_closing() {
 }
 
 function export_as_utf8() {
-    electron.remote.dialog.showSaveDialog(electron.remote.getCurrentWindow(), {filters: [{name: "ANSI Art ", extensions: ["utf8ans"]}], defaultPath: `${doc.file ? path.parse(doc.file).name : "Untitled"}.utf8ans`}, (file) => {
+    save_box(doc.file, "utf8ans", {filters: [{name: "ANSI Art ", extensions: ["utf8ans"]}]}, (file) => {
         if (file) doc.export_as_utf8(file);
     });
 }
 
 function export_as_png() {
-    electron.remote.dialog.showSaveDialog(electron.remote.getCurrentWindow(), {filters: [{name: "Portable Network Graphics ", extensions: ["png"]}], defaultPath: `${doc.file ? path.parse(doc.file).name : "Untitled"}.png`}, (file) => {
+    save_box(doc.file, "png", {filters: [{name: "Portable Network Graphics ", extensions: ["png"]}]}, (file) => {
         if (file) doc.export_as_png(file);
     });
 }

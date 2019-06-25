@@ -230,7 +230,6 @@ if (darwin) {
 }
 
 electron.app.on("ready", (event) => {
-    connect_to_server("imac.local");
     if (!darwin && process.argv.length > 1 && require("path").parse(process.argv[0]).name != "electron") {
         for (let i = 1; i < process.argv.length; i++) open_file(process.argv[i]);
     } else {
