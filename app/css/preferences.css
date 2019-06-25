@@ -45,7 +45,7 @@ input {
     display: inline-block;
     border: 1px solid #aaaaaa;
     background: none;
-    font-family: BlinkMacSystemFont, "Segoe UI";
+    font-family: var(--system-font);
     font-size: 14px;
     outline: none;
     padding: 3px 6px;

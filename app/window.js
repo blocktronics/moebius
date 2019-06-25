@@ -23,7 +23,7 @@ async function new_doc() {
 
 async function new_modal(file, window_opts, touchbar, touchbar_opts) {
     const win = await new_win(file, {...window_opts, ...modal_prefs}, touchbar, touchbar_opts);
-    if (!darwin) win.setMenu(null);
+    if (!darwin) win.setMenuBarVisibility(false);
     return win;
 }
 
@@ -32,7 +32,7 @@ async function static(file, window_opts, touchbar, touchbar_opts) {
         static_wins[file].focus();
     } else {
         static_wins[file] = await new_win(file, {...window_opts, maximizable: false, resizable: false, fullscreenable: false}, touchbar, touchbar_opts);
-        if (!darwin) static_wins[file].setMenu(null);
+        if (!darwin) static_wins[file].setMenuBarVisibility(false);
         static_wins[file].on("focus", (event) => menu.set_application_menu());
         static_wins[file].on("close", () => delete static_wins[file]);
     }
