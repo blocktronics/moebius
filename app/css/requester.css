@@ -68,7 +68,7 @@ input {
 }
 
 input[type=text] {
-    width: max-content;
+    width: 170px;
 }
 
 input[type=number] {

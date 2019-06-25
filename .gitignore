@@ -2,4 +2,4 @@
 dist
 node_modules
 .vscode
-server.ans
+server*.ans
