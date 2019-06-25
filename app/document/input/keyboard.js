@@ -296,8 +296,8 @@ class KeyboardEvent extends events.EventEmitter {
             this.alt_key(event, this.emit);
         } else if (event.metaKey && !event.ctrlKey && !event.altKey) {
             this.meta_key(event, this.emit);
-        } else {
-            if (!event.metaKey) this.key_typed(event, this.emit, this.use_numpad);
+        } else if (!event.ctrlKey && !event.altKey && !event.metaKey) {
+            this.key_typed(event, this.emit, this.use_numpad);
         }
     }
 
