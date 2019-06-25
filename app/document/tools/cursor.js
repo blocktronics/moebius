@@ -401,6 +401,10 @@ class Cursor {
         if (this.mode == modes.EDITING) doc.center_line(this.y);
     }
 
+    erase_line() {
+        if (this.mode == modes.EDITING) doc.erase_line(this.y);
+    }
+
     stamp() {
         const blocks = this.operation_blocks.underneath ? libtextmode.merge_blocks(this.operation_blocks, this.get_blocks_in_operation()) : this.operation_blocks;
         doc.place(blocks, this.x, this.y, this.operation_blocks.is_move_operation);
@@ -481,6 +485,7 @@ class Cursor {
         on("left_justify_line", (event, value) => this.left_justify_line());
         on("right_justify_line", (event, value) => this.right_justify_line());
         on("center_line", (event, value) => this.center_line());
+        on("erase_line", (event, value) => this.erase_line());
         ["left", "right", "up", "down", "page_up", "page_down", "start_of_row", "end_of_row", "tab", "reverse_tab"].map((event) => {
             keyboard.on(event, () => {
                 if (!this.hidden) this[event]();

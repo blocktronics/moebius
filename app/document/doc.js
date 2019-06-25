@@ -689,6 +689,11 @@ class TextModeDoc extends events.EventEmitter {
         }
     }
 
+    erase_line(y) {
+        this.undo_history.start_chunk();
+        for (let x = 0; x < doc.columns; x++) this.change_data(x, y, 32, 7, 0);
+    }
+
     place(blocks, dx, dy, single_undo) {
         if (!single_undo) this.undo_history.start_chunk();
         for (let y = 0; y + dy < doc.rows && y < blocks.rows; y++) {
