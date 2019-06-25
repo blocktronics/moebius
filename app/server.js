@@ -16,7 +16,7 @@ function send(ws, type, data = {}) {
 
 class Joint {
     log(text) {
-        if (!this.quiet) console.log(`${this.hostname}${this.path}: ${text}`);
+        if (!this.quiet) console.log(`${new Date().toISOString()} ${this.hostname}${this.path}: ${text}`);
     }
 
     send_all(sender, type, opts = {}) {

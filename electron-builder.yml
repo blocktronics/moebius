@@ -51,4 +51,11 @@ win:
   target:
   - target: nsis
     arch: [x64, ia32]
+linux:
+  artifactName: Mœbius.AppImage
+  target: AppImage
+  executableName: Mœbius
+  icon: icon512x512.png
+  synopsis: Modern ANSI Art Editor
+  category: Graphics
 electronVersion: 5.0.3

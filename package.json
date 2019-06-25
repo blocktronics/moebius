@@ -1,14 +1,15 @@
 {
   "name": "moebius",
   "version": "1.0.11",
-  "description": "ANSI Art Editor",
+  "description": "Modern ANSI Art Editor",
   "main": "app/moebius.js",
   "scripts": {
     "start": "electron .",
     "build-script": "browserify build/script.js -o server/script.js",
-    "build": "node_modules/.bin/build -mw",
+    "build": "node_modules/.bin/build -mwl",
     "build-mac": "node_modules/.bin/build -m",
-    "build-win": "node_modules/.bin/build -w"
+    "build-win": "node_modules/.bin/build -w",
+    "build-linux": "node_modules/.bin/build -l"
   },
   "author": "Andy Herbert",
   "license": "Apache-2.0",
