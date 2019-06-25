@@ -44,7 +44,10 @@ class KeyboardEvent extends events.EventEmitter {
                 this.emit("cut");
                 return;
             case "KeyA":
-                if (!darwin) this.emit("select_all");
+                if (!darwin) {
+                    this.emit("select_all");
+                    event.preventDefault();
+                }
                 return;
             case "ArrowLeft":
                 if (event.shiftKey) this.emit("start_selection");
