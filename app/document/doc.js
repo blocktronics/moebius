@@ -177,6 +177,7 @@ class Connection extends events.EventEmitter {
     }
 
     disconnected()  {
+        this.connected = false;
         this.emit("disconnected");
     }
 
@@ -197,6 +198,7 @@ class Connection extends events.EventEmitter {
         const {type, data} = message;
         if (!this.ready) {
             if (type == actions.CONNECTED) {
+                this.connected = true;
                 this.id = data.id;
                 this.status = data.status;
                 this.users = {};
@@ -304,6 +306,7 @@ class Connection extends events.EventEmitter {
 
     constructor(server, pass, web = false) {
         super();
+        this.connected = false;
         this.server = server;
         this.pass = pass;
         chat.on("goto_user", (id) => console.log(id));
@@ -724,6 +727,10 @@ class TextModeDoc extends events.EventEmitter {
         if (!this.file) return;
         await libtextmode.write_file(this, this.file);
         send("set_file", {file: this.file});
+    }
+
+    async save_backup(file) {
+        await libtextmode.write_file(this, file);
     }
 
     async export_as_utf8(file) {

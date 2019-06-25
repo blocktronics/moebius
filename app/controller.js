@@ -2,6 +2,8 @@ const electron = require("electron");
 const {on, send, send_sync, msg_box, save_box} = require("./senders");
 const doc = require("./document/doc");
 const {tools} = require("./document/ui/ui");
+const {HourlySaver} = require("./hourly_saver");
+let hourly_saver, backup_folder;
 require("./document/ui/canvas");
 require("./document/tools/select");
 require("./document/tools/brush");
@@ -73,6 +75,24 @@ function export_as_png() {
     });
 }
 
+function hourly_save() {
+    if (doc.connection && !doc.connection.connected) return;
+    const file = (doc.connection) ? `${doc.connection.server}.ans` : (doc.file ? doc.file : "Untitled.ans");
+    const timestamped_file = hourly_saver.filename(backup_folder, file);
+    doc.save_backup(timestamped_file);
+    hourly_saver.keep_if_changes(timestamped_file);
+}
+
+function use_backup(value) {
+    if (value) {
+        hourly_saver = new HourlySaver();
+        hourly_saver.start();
+        hourly_saver.on("save", hourly_save);
+    } else if (hourly_saver) {
+        hourly_saver.stop();
+    }
+}
+
 // electron.remote.getCurrentWebContents().openDevTools();
 on("new_document", (event, opts) => doc.new_document(opts));
 on("save", (event, opts) => save());
@@ -82,3 +102,5 @@ on("check_before_closing", (event) => check_before_closing());
 on("export_as_utf8", (event) => export_as_utf8());
 on("export_as_png", (event) => export_as_png());
 on("connect_to_server", (event, {server, pass}) => doc.connect_to_server(server, pass));
+on("backup_folder", (event, folder) => backup_folder = folder);
+on("use_backup", (event, value) => use_backup(value));

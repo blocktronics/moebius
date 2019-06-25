@@ -7,7 +7,8 @@ const url = require("url");
 const server = require("http").createServer();
 const joints = {};
 const path = require("path");
-const hourly_saver = require("./hourly_saver");
+const {HourlySaver} = require("./hourly_saver");
+let hourly_saver;
 
 function send(ws, type, data = {}) {
     ws.send(JSON.stringify({type, data}));
@@ -116,8 +117,10 @@ class Joint {
         this.quiet = quiet;
         this.data_store = [];
         this.chat_history = [];
+        hourly_saver = new HourlySaver();
+        hourly_saver.start();
         hourly_saver.on("save", () => {
-            const file = hourly_saver.filename(this.file);
+            const file = hourly_saver.filename("./", this.file);
             this.save(file);
             if (hourly_saver.keep_if_changes(file)) this.log(`saved backup as ${file}`);
         });
