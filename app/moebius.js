@@ -150,7 +150,7 @@ function has_documents_open() {
 }
 
 electron.ipcMain.on("get_canvas_size", async (event, {id, columns, rows}) => {
-    docs[id].modal = await window.new_modal("app/html/resize.html", {width: 300, height: 164, parent: docs[id].win}, touchbar.get_canvas_size);
+    docs[id].modal = await window.new_modal("app/html/resize.html", {width: 300, height: 184, parent: docs[id].win}, touchbar.get_canvas_size);
     docs[id].modal.send("set_canvas_size", {columns, rows});
     if (darwin) electron.Menu.setApplicationMenu(menu.modal_menu);
 });
@@ -204,7 +204,7 @@ electron.ipcMain.on("chat_input_blur", (event, {id}) => {
 });
 
 electron.ipcMain.on("get_sauce_info", async (event, {id, title, author, group, comments}) => {
-    docs[id].modal = await window.new_modal("app/html/sauce.html", {width: 350, height: 330, parent: docs[id].win}, touchbar.get_sauce_info);
+    docs[id].modal = await window.new_modal("app/html/sauce.html", {width: 350, height: 340, parent: docs[id].win}, touchbar.get_sauce_info);
     docs[id].modal.send("set_sauce_info", {title, author, group, comments});
     if (darwin) electron.Menu.setApplicationMenu(menu.modal_menu);
 });
