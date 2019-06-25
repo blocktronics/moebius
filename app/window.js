@@ -6,7 +6,6 @@ const modal_prefs = darwin ? {modal: true, transparent: true, vibrancy: "dark"} 
 
 async function new_win(file, options, touchbar, touchbar_opts) {
     return new Promise((resolve) => {
-        if (!darwin) options.height += 25;
         const win = new electron.BrowserWindow({...options, show: false, useContentSize: true, webPreferences: {nodeIntegration: true}});
         if (touchbar) touchbar(win, touchbar_opts);
         win.on("ready-to-show", (event) => {
