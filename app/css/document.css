@@ -81,14 +81,18 @@ body.dark #current_colors > canvas {
 #fg {
     top: 4px;
     left: 4px;
+    background-color: rgb(170, 170, 170);
 }
 #bg {
     top: 16px;
     right: 4px;
+    background-color: rgb(0, 0, 0);
 }
 #swatches {
     column-gap: 0px;
     column-count: 2;
+    width: 48px;
+    min-height: 192px;
 }
 #swatches > div {
     display: inline-block;
@@ -96,6 +100,9 @@ body.dark #current_colors > canvas {
     width: 24px;
     height: 24px;
     background-size: 24px 24px;
+    -webkit-transform-origin: left top;
+    transform-origin: left top;
+    outline: 1px solid transparent;
 }
 #swatches > div.selected_fg {
     background-image: url("../img/selected_fg.png");
@@ -151,6 +158,10 @@ body.dark #current_colors > canvas {
     background-size: 12px 12px;
     background-repeat: no-repeat;
 }
+#user_list > div:hover {
+    text-decoration: underline;
+    cursor: pointer;
+}
 #messages {
     float: left;
     border-top: 1px solid var(--dark-border-color);
@@ -166,6 +177,7 @@ body.dark #current_colors > canvas {
 }
 #messages > div.welcome {
     text-align: center;
+    user-select: text;
 }
 #chat_input {
     background-color: var(--dark-mid-color);
@@ -192,6 +204,7 @@ body.dark #current_colors > canvas {
     color: white;
     padding-left: 4px;
     word-wrap: break-word;
+    user-select: text;
 }
 body.dark #viewport {
     border-color: var(--dark-border-color);
@@ -300,7 +313,7 @@ body.dark #statusbar > div > div {
 #editing_layer > canvas.flashing {
     box-sizing: border-box;
     border: 1px solid white;
-    animation: blink 0.2s steps(1, end) infinite;
+    animation: blink 0.1s steps(1, end) infinite;
 }
 @keyframes blink {
     0% {border-color: rgb(170, 170, 170);} 50% {border-color: black;}

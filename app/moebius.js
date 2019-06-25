@@ -12,6 +12,7 @@ let prevent_splash_screen_at_startup = false;
 
 function cleanup(id) {
     menu.cleanup(id);
+    last_win_pos = docs[id].win_pos;
     delete docs[id];
     if (docs.length == 0) menu.set_application_menu();
 }
@@ -27,7 +28,7 @@ async function new_document_window() {
     }
     const win_pos = win.getPosition();
     last_win_pos = win_pos;
-    docs[win.id] = {win, menu: menu.document_menu(win), chat_input_menu: menu.chat_input_menu(win), edited: false};
+    docs[win.id] = {win, menu: menu.document_menu(win), chat_input_menu: menu.chat_input_menu(win), edited: false, win_pos, destroyed: false};
     touchbar.create_touch_bars(win);
     prefs.send(win);
     win.on("focus", (event) => {
@@ -40,21 +41,13 @@ async function new_document_window() {
         } else {
             docs[win.id].win.setMenu(docs[win.id].menu);
         }
+        // win.openDevTools({mode: "detach"});
     });
     win.on("close", (event) => {
-        if (!docs[win.id].network && docs[win.id].edited) {
-            const choice = electron.dialog.showMessageBox(win, {message: "Save this document?", detail: "This document contains unsaved changes.", buttons: ["Save", "Cancel", "Don't Save"], defaultId: 0, cancelId: 1});
-            if (choice == 0) {
-                event.preventDefault();
-                save({win, close_on_save: true});
-            } else if (choice == 1) {
-                event.preventDefault();
-            } else {
-                last_win_pos = win_pos;
-                cleanup(win.id);
-            }
+        if (prefs.get("unsaved_changes") && docs[win.id].edited && !docs[win.id].destroyed) {
+            event.preventDefault();
+            win.send("check_before_closing");
         } else {
-            last_win_pos = win_pos;
             cleanup(win.id);
         }
     });
@@ -65,40 +58,57 @@ async function new_document({columns, rows, title, author, group, date, palette,
     const win = await new_document_window();
     if (!author) author = prefs.get("nick");
     if (!group) group = prefs.get("group");
+    if (!rows) {
+        const num = Number.parseInt(prefs.get("new_document_rows"));
+        rows = (num >= 1 && num <=3000) ? num : 25;
+    }
     win.send("new_document", {columns, rows, title, author, group, date, palette, font_name, use_9px_font, ice_colors, comments, data});
 }
+
+function set_file(id, file) {
+    docs[id].file = file;
+    docs[id].win.setRepresentedFilename(file);
+    docs[id].win.setTitle(path.basename(file));
+    docs[id].win.setDocumentEdited(false);
+    docs[id].edited = false;
+    electron.app.addRecentDocument(file);
+}
+
+electron.ipcMain.on("set_file", (event, {id, file}) => set_file(id, file));
 
 menu.on("new_document", new_document);
 electron.ipcMain.on("new_document", (event, opts) => new_document(opts));
 
-async function open_file(file) {
+function check_if_file_is_already_open(file) {
     for (const id of Object.keys(docs)) {
         if (docs[id].file == file) {
             docs[id].win.show();
-            return;
+            return true;
         }
     }
-    const win = await new_document_window();
-    docs[win.id].file = file;
-    electron.app.addRecentDocument(file);
-    win.setRepresentedFilename(file);
-    win.setTitle(path.basename(file));
-    win.send("open_file", {file});
+    return false;
 }
 
-function open({win} = {}) {
-    electron.dialog.showOpenDialog(win, {filters: [{name: "TextArt", extensions: ["ans", "xb", "bin", "diz", "asc", "txt", "nfo"]}, {name: "All Files", extensions: ["*"]}], properties: ["openFile", "multiSelections"]}, (files) => {
-        if (files) {
-            if (win && !docs[win.id].network && !docs[win.id].file && !docs[win.id].edited) {
-                docs[win.id].file = files[0];
-                electron.app.addRecentDocument(files[0]);
-                win.setRepresentedFilename(files[0]);
-                win.setTitle(path.basename(files[0]));
-                win.send("open_file", {file: files[0]});
+async function open_file(file) {
+    if (check_if_file_is_already_open(file)) return;
+    const win = await new_document_window();
+    win.send("open_file", file);
+}
+
+function open_in_new_window(win) {
+    return !win || docs[win.id].network || docs[win.id].file || docs[win.id].edited;
+}
+
+function open(win) {
+    electron.dialog.showOpenDialog(open_in_new_window(win) ? undefined : win, {filters: [{name: "TextArt", extensions: ["ans", "xb", "bin", "diz", "asc", "txt", "nfo"]}, {name: "All Files", extensions: ["*"]}], properties: ["openFile", "multiSelections"]}, (files) => {
+        if (!files) return;
+        for (const file of files) {
+            if (win && !docs[win.id].file && !check_if_file_is_already_open(file)) {
+                win.send("open_file", file);
+                docs[win.id].file = file;
             } else {
-                open_file(files[0]);
+                open_file(file);
             }
-            for (let i = 1; i < files.length; i++) open_file(files[i]);
         }
     });
 }
@@ -106,38 +116,8 @@ function open({win} = {}) {
 menu.on("open", open);
 electron.ipcMain.on("open", (event) => open());
 
-menu.on("save", save);
-
-function save_as({win, close_on_save = false}) {
-    electron.dialog.showSaveDialog(win, {filters: [{name: "ANSI Art", extensions: ["ans", "asc", "diz", "nfo", "txt"]}, {name: "XBin", extensions: ["xb"]}, {name: "Binary Text", extensions: ["bin"]}], defaultPath: `${docs[win.id].file ? path.parse(docs[win.id].file).name : "Untitled"}.ans`}, (file) => {
-        if (file) {
-            if (!docs[win.id].network) {
-                docs[win.id].file = file;
-                docs[win.id].edited = false;
-                win.setRepresentedFilename(file);
-                win.setTitle(path.basename(file));
-                win.setDocumentEdited(false);
-            }
-            electron.app.addRecentDocument(file);
-            win.send("save", {file, close_on_save});
-        }
-    });
-}
-menu.on("save_as", save_as);
-
-function save({win, close_on_save = false}) {
-    if (docs[win.id].file) {
-        docs[win.id].edited = false;
-        win.setDocumentEdited(false);
-        win.send("save", {file: docs[win.id].file, close_on_save});
-    } else {
-        save_as({win, close_on_save});
-    }
-}
-menu.on("save", save);
-
 async function preferences() {
-    const preferences = await window.static("app/html/preferences.html", {width: 480, height: 305});
+    const preferences = await window.static("app/html/preferences.html", {width: 480, height: 445});
     preferences.send("prefs", prefs.get_all());
 }
 menu.on("preferences", preferences);
@@ -149,13 +129,13 @@ menu.on("start_server", () => {
 
 menu.on("show_new_connection_window", async () => await window.static("app/html/new_connection.html", {width: 480, height: 160}, touchbar.new_connection));
 
-async function connect_to_server({server, pass} = {}) {
+async function connect_to_server(server, pass = "") {
     const win = await new_document_window();
     docs[win.id].network = true;
     win.setTitle(server);
     win.send("connect_to_server", {server, pass});
 }
-electron.ipcMain.on("connect_to_server", (event, opts) => connect_to_server(opts));
+electron.ipcMain.on("connect_to_server", (event, {server, pass}) => connect_to_server(server, pass));
 
 async function show_splash_screen() {
     window.static("app/html/splash_screen.html", {width: 720, height: 600, ...frameless}, touchbar.splash_screen, {new_document, open});
@@ -183,8 +163,8 @@ electron.ipcMain.on("document_changed", (event, {id}) => {
 });
 
 electron.ipcMain.on("destroy", (event, {id}) => {
+    docs[id].destroyed = true;
     docs[id].win.close();
-    cleanup(id);
 });
 
 electron.ipcMain.on("update_prefs", (event, {key, value}) => {
@@ -250,7 +230,7 @@ if (darwin) {
 }
 
 electron.app.on("ready", (event) => {
-    new_document();
+    connect_to_server("imac.local");
     if (!darwin && process.argv.length > 1 && require("path").parse(process.argv[0]).name != "electron") {
         for (let i = 1; i < process.argv.length; i++) open_file(process.argv[i]);
     } else {

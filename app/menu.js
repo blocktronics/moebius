@@ -2,6 +2,7 @@ const electron = require("electron");
 const events = new require("events");
 const darwin = (process.platform == "darwin");
 const menus = [];
+const chat_menus = [];
 const font_names = [];
 const font_list = {
     "Amiga": {"Amiga Topaz 1": 16, "Amiga Topaz 1+": 16, "Amiga Topaz 2": 16, "Amiga Topaz 2+": 16, "Amiga P0T-NOoDLE": 16, "Amiga MicroKnight": 16, "Amiga MicroKnight+": 16, "Amiga mOsOul": 16},
@@ -97,13 +98,13 @@ function file_menu_template(win) {
         submenu: [
             {label: "New", id: "new_document", accelerator: "CmdorCtrl+N", click(item) {event.emit("new_document");}},
             {type: "separator"},
-            {label: "Open\u2026", id: "open", accelerator: "CmdorCtrl+O", click(item) {event.emit("open", {win});}},
+            {label: "Open\u2026", id: "open", accelerator: "CmdorCtrl+O", click(item) {event.emit("open", win);}},
             darwin ? {role: "recentDocuments", submenu: [{role: "clearrecentdocuments"}]} : ({type: "separator"}, {label: "Settings", click(item) {event.emit("preferences");}}),
             {type: "separator"},
             {label: "Edit Sauce Info\u2026", id: "edit_sauce_info", accelerator: "CmdorCtrl+I", click(item) {win.send("get_sauce_info");}},
             {type: "separator"},
-            {label: "Save", id: "save", accelerator: "CmdorCtrl+S", click(item) {event.emit("save", {win});}},
-            {label: "Save As\u2026", id: "save_as", accelerator: "CmdorCtrl+Shift+S", click(item) {event.emit("save_as", {win});}},
+            {label: "Save", id: "save", accelerator: "CmdorCtrl+S", click(item) {win.send("save");}},
+            {label: "Save As\u2026", id: "save_as", accelerator: "CmdorCtrl+Shift+S", click(item) {win.send("save_as");}},
             {type: "separator"},
             {label: "Export As PNG\u2026", id: "export_as_png", accelerator: "CmdorCtrl+Shift+E", click(item) {win.send("export_as_png");}},
             {label: "Export As UTF-8\u2026", id: "export_as_utf8", accelerator: "CmdorCtrl+Shift+U", click(item) {win.send("export_as_utf8");}},
@@ -119,11 +120,14 @@ function edit_menu_template(win, chat) {
         submenu: [
             chat ? {label: "Undo", accelerator: "Cmd+Z", role: "undo"} : {label: "Undo", id: "undo", accelerator: "CmdorCtrl+Z", click(item) {win.send("undo");}, enabled: false},
             chat ? {label: "Redo", accelerator: "Cmd+Shift+Z", role: "redo"} : {label: "Redo", id: "redo", accelerator: darwin ? "Cmd+Shift+Z" : "Ctrl+Y", click(item) {win.send("redo");}, enabled: false},
+            {type: "separator"},
             {label: "Toggle Insert Mode", id: "toggle_insert_mode", accelerator: darwin ? "" : "Insert", click(item) {win.send("insert_mode", item.checked);}, type: "checkbox", checked: false},
+            {label: "Toggle Overwrite Mode", id: "overwrite_mode", accelerator: "CmdorCtrl+Alt+O", click(item) {win.send("overwrite_mode", item.checked);}, type: "checkbox", checked: false},
             {type: "separator"},
             chat ? {label: "Cut", accelerator: "Cmd+X", role: "cut"} : {label: "Cut", id: "cut", accelerator: "CmdorCtrl+X", click(item) {win.send("cut");}, enabled: false},
             chat ? {label: "Copy", accelerator: "Cmd+C", role: "copy"} : {label: "Copy", id: "copy", accelerator: "CmdorCtrl+C", click(item) {win.send("copy");}, enabled: false},
-            chat ? {label: "Paste", accelerator: "Cmd+V", role: "paste"} : {label: "Paste", id: "paste", accelerator: "CmdorCtrl+V", click(item) {win.send("paste");}},
+            chat ? {label: "Paste", accelerator: "Cmd+V", role: "paste"} : {label: "Paste", id: "paste", accelerator: "CmdorCtrl+V", click(item) {win.send("paste");}, enabled: true},
+            {label: "Paste As Selection", id: "paste_as_selection", accelerator: "CmdorCtrl+Alt+V", click(item) {win.send("paste_as_selection");}, enabled: true},
             {type: "separator"},
             {label: "Left Justify Line", id: "left_justify_line", accelerator: "Alt+L", click(item) {win.send("left_justify_line");}, enabled: true},
             {label: "Right Justify Line", id: "right_justify_line", accelerator: "Alt+R", click(item) {win.send("right_justify_line");}, enabled: true},
@@ -136,8 +140,10 @@ function edit_menu_template(win, chat) {
             {label: "Move Block", id: "move_block", accelerator: "M", click(item) {win.send("move_block");}, enabled: false},
             {label: "Copy Block", id: "copy_block", accelerator: "C", click(item) {win.send("copy_block");}, enabled: false},
             {type: "separator"},
-            {label: "Erase", id: "delete_selection", accelerator: "E", click(item) {win.send("delete_selection");}, enabled: false},
+            {label: "Fill", id: "fill", accelerator: "F", click(item) {win.send("fill");}, enabled: false},
+            {label: "Erase", id: "erase", accelerator: "E", click(item) {win.send("erase");}, enabled: false},
             {label: "Stamp", id: "stamp", accelerator: "S", click(item) {win.send("stamp");}, enabled: false},
+            {label: "Place", id: "place", accelerator: "Enter", click(item) {win.send("place");}, enabled: false},
             {label: "Rotate", id: "rotate", accelerator: "R", click(item) {win.send("rotate");}, enabled: false},
             {label: "Flip X", id: "flip_x", accelerator: "X", click(item) {win.send("flip_x");}, enabled: false},
             {label: "Flip Y", id: "flip_y", accelerator: "Y", click(item) {win.send("flip_y");}, enabled: false},
@@ -236,24 +242,33 @@ function get_menu_item(id, name) {
     return menus[id].getMenuItemById(name);
 }
 
+function get_chat_menu_item(id, name) {
+    return chat_menus[id].getMenuItemById(name);
+}
+
 function enable(id, name) {
     get_menu_item(id, name).enabled = true;
+    if (name != "cut" && name != "copy" && name != "paste" && name != "undo" && name != "redo" && name != "select_all") get_chat_menu_item(id, name).enabled = true;
 }
 
 function disable(id, name) {
     get_menu_item(id, name).enabled = false;
+    if (name != "cut" && name != "copy" && name != "paste" && name != "undo" && name != "redo" && name != "select_all") get_chat_menu_item(id, name).enabled = false;
 }
 
 function check(id, name) {
     get_menu_item(id, name).checked = true;
+    get_chat_menu_item(id, name).checked = true;
 }
 
 function uncheck(id, name) {
     get_menu_item(id, name).checked = false;
+    get_chat_menu_item(id, name).checked = false;
 }
 
 function set_check(id, name, value) {
     get_menu_item(id, name).checked = value;
+    get_chat_menu_item(id, name).checked = value;
 }
 
 electron.ipcMain.on("enable_undo", (event, {id}) => {
@@ -283,52 +298,13 @@ electron.ipcMain.on("disable_clear_reference_image", (event, {id}) => {
     disable(id, "clear_reference_image");
 });
 
-electron.ipcMain.on("change_to_select_mode", (event, {id}) => {
-    enable(id, "left_justify_line");
-    enable(id, "right_justify_line");
-    enable(id, "center_line");
-    enable(id, "erase_line");
-});
-
-electron.ipcMain.on("change_to_brush_mode", (event, {id}) => {
-    disable(id, "left_justify_line");
-    disable(id, "right_justify_line");
-    disable(id, "center_line");
-    disable(id, "erase_line");
-});
-
-electron.ipcMain.on("change_to_line_mode", (event, {id}) => {
-    disable(id, "left_justify_line");
-    disable(id, "right_justify_line");
-    disable(id, "center_line");
-    disable(id, "erase_line");
-});
-
-electron.ipcMain.on("change_to_rectangle_mode", (event, {id}) => {
-    disable(id, "left_justify_line");
-    disable(id, "right_justify_line");
-    disable(id, "center_line");
-    disable(id, "erase_line");
-});
-
-electron.ipcMain.on("change_to_fill_mode", (event, {id}) => {
-    disable(id, "left_justify_line");
-    disable(id, "right_justify_line");
-    disable(id, "center_line");
-    disable(id, "erase_line");
-});
-
-electron.ipcMain.on("change_to_sample_mode", (event, {id}) => {
-    disable(id, "left_justify_line");
-    disable(id, "right_justify_line");
-    disable(id, "center_line");
-    disable(id, "erase_line");
-});
-
 electron.ipcMain.on("enable_selection_menu_items", (event, {id}) => {
     enable(id, "cut");
     enable(id, "copy");
-    enable(id, "delete_selection");
+    enable(id, "erase");
+    enable(id, "fill");
+    disable(id, "paste");
+    disable(id, "paste_as_selection");
     enable(id, "deselect");
     enable(id, "move_block");
     enable(id, "copy_block");
@@ -337,20 +313,25 @@ electron.ipcMain.on("enable_selection_menu_items", (event, {id}) => {
     disable(id, "right_justify_line");
     disable(id, "center_line");
     disable(id, "erase_line");
+    disable(id, "use_attribute_under_cursor");
 });
 
 function disable_selection_menu_items(id) {
     disable(id, "cut");
     disable(id, "copy");
-    disable(id, "delete_selection");
+    disable(id, "erase");
+    disable(id, "fill");
     disable(id, "deselect");
     disable(id, "move_block");
     disable(id, "copy_block");
     disable(id, "crop");
+    enable(id, "paste");
+    enable(id, "paste_as_selection");
     enable(id, "left_justify_line");
     enable(id, "right_justify_line");
     enable(id, "center_line");
     enable(id, "erase_line");
+    enable(id, "use_attribute_under_cursor");
 }
 
 electron.ipcMain.on("disable_selection_menu_items", (event, {id}) => disable_selection_menu_items(id));
@@ -363,6 +344,7 @@ electron.ipcMain.on("disable_selection_menu_items_except_deselect_and_crop", (ev
 
 electron.ipcMain.on("enable_operation_menu_items", (event, {id}) => {
     enable(id, "stamp");
+    enable(id, "place");
     enable(id, "rotate");
     enable(id, "flip_x");
     enable(id, "flip_y");
@@ -375,10 +357,14 @@ electron.ipcMain.on("enable_operation_menu_items", (event, {id}) => {
     disable(id, "right_justify_line");
     disable(id, "center_line");
     disable(id, "erase_line");
+    disable(id, "paste");
+    disable(id, "paste_as_selection");
+    disable(id, "use_attribute_under_cursor");
 });
 
 function disable_operation_menu_items(id) {
     disable(id, "stamp");
+    disable(id, "place");
     disable(id, "rotate");
     disable(id, "flip_x");
     disable(id, "flip_y");
@@ -389,6 +375,9 @@ function disable_operation_menu_items(id) {
     uncheck(id, "over");
     disable(id, "underneath");
     uncheck(id, "underneath");
+    enable(id, "paste");
+    enable(id, "paste_as_selection");
+    enable(id, "use_attribute_under_cursor");
 }
 
 electron.ipcMain.on("disable_operation_menu_items", (event, {id}) => disable_operation_menu_items(id));
@@ -397,32 +386,44 @@ electron.ipcMain.on("disable_editing_shortcuts", (event, {id}) => {
     disable_selection_menu_items(id);
     disable_operation_menu_items(id);
     disable(id, "use_attribute_under_cursor");
+    disable(id, "left_justify_line");
+    disable(id, "right_justify_line");
+    disable(id, "center_line");
+    disable(id, "erase_line");
+    disable(id, "paste");
+    disable(id, "paste_as_selection");
 });
 
 electron.ipcMain.on("enable_editing_shortcuts", (event, {id}) => {
     disable_selection_menu_items(id);
     disable_operation_menu_items(id);
     enable(id, "use_attribute_under_cursor");
+    enable(id, "left_justify_line");
+    enable(id, "right_justify_line");
+    enable(id, "center_line");
+    enable(id, "erase_line");
+    enable(id, "paste");
+    enable(id, "paste_as_selection");
 });
 
-electron.ipcMain.on("update_menu_checkboxes", (event, {id, insert_mode, use_9px_font, ice_colors, actual_size, font_name}) => {
-    set_check(id, "toggle_insert_mode", insert_mode);
-    set_check(id, "use_9px_font", use_9px_font);
-    set_check(id, "ice_colors", ice_colors);
-    set_check(id, "actual_size", actual_size);
-    if (font_names[id]) uncheck(id, font_names[id]);
-    const font_menu_item = get_menu_item(id, font_name);
-    if (font_menu_item) {
-        font_menu_item.checked = true;
-        font_names[id] = font_name;
+electron.ipcMain.on("update_menu_checkboxes", (event, {id, insert_mode, overwrite_mode, use_9px_font, ice_colors, actual_size, font_name}) => {
+    if (insert_mode != undefined) set_check(id, "toggle_insert_mode", insert_mode);
+    if (overwrite_mode != undefined) set_check(id, "overwrite_mode", overwrite_mode);
+    if (use_9px_font != undefined) set_check(id, "use_9px_font", use_9px_font);
+    if (ice_colors != undefined) set_check(id, "ice_colors", ice_colors);
+    if (actual_size != undefined) set_check(id, "actual_size", actual_size);
+    if (font_name != undefined) {
+        if (font_names[id]) uncheck(id, font_names[id]);
+        if (get_menu_item(id, font_name)) {
+            check(id, font_name);
+            font_names[id] = font_name;
+        }
     }
 });
 
 electron.ipcMain.on("uncheck_transparent", (event, {id}) => uncheck(id, "transparent"));
-
 electron.ipcMain.on("uncheck_underneath", (event, {id}) => uncheck(id, "underneath"));
 electron.ipcMain.on("check_underneath", (event, {id}) => check(id, "underneath"));
-
 electron.ipcMain.on("uncheck_over", (event, {id}) => uncheck(id, "over"));
 electron.ipcMain.on("check_over", (event, {id}) => check(id, "over"));
 
@@ -437,7 +438,9 @@ class MenuEvent extends events.EventEmitter {
     }
 
     chat_input_menu(win) {
-        return electron.Menu.buildFromTemplate([moebius_menu, file_menu_template(win), edit_menu_template(win, true), view_menu_template(win), colors_menu_template(win), network_menu_template(win, true), window_menu_items, debug_menu_template(win), help_menu_items]);
+        const menu = electron.Menu.buildFromTemplate([moebius_menu, file_menu_template(win), edit_menu_template(win, true), view_menu_template(win), colors_menu_template(win), network_menu_template(win, true), window_menu_items, debug_menu_template(win), help_menu_items]);
+        chat_menus[win.id] = menu;
+        return menu;
     }
 
     get modal_menu() {

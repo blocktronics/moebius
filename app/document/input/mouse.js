@@ -1,5 +1,8 @@
 const events = require("events");
+const doc = require("../doc");
 const buttons = {NONE: 0, LEFT: 1, RIGHT: 2};
+const {toolbar} = require("../ui/ui");
+const palette = require("../palette");
 
 class MouseListener extends events.EventEmitter {
     set_dimensions(columns, rows, font) {
@@ -11,21 +14,19 @@ class MouseListener extends events.EventEmitter {
     get_xy(event) {
         const canvas_container = document.getElementById("canvas_container");
         const canvas_container_rect = canvas_container.getBoundingClientRect();
-        const x = Math.min(Math.max(Math.floor((event.clientX - canvas_container_rect.left) / render.font.width), 0), doc.columns - 1);
-        const y = Math.min(Math.max(Math.floor((event.clientY - canvas_container_rect.top) / render.font.height), 0), doc.rows - 1);
-        const half_y = Math.min(Math.max(Math.floor((event.clientY - canvas_container_rect.top) / (render.font.height / 2)), 0), doc.rows * 2 - 1);
+        const x = Math.min(Math.max(Math.floor((event.clientX - canvas_container_rect.left) / this.font.width), 0), this.columns - 1);
+        const y = Math.min(Math.max(Math.floor((event.clientY - canvas_container_rect.top) / this.font.height), 0), this.rows - 1);
+        const half_y = Math.min(Math.max(Math.floor((event.clientY - canvas_container_rect.top) / (this.font.height / 2)), 0), this.rows * 2 - 1);
         return {x, y, half_y};
     }
 
-    record_start(half_block_precision = false) {
+    record_start() {
         [this.start.x, this.start.y, this.start.half_y] = [this.x, this.y, this.half_y];
         this.started = true;
-        this.half_block_precision = half_block_precision;
     }
 
-    start_drawing(half_block_precision = false) {
+    start_drawing() {
         this.drawing = true;
-        this.half_block_precision = half_block_precision;
     }
 
     end() {
@@ -41,18 +42,27 @@ class MouseListener extends events.EventEmitter {
     mouse_down(event) {
         if (!this.font) return;
         const {x, y, half_y} = this.get_xy(event);
+        if (event.altKey) {
+            const block = doc.get_half_block(x, half_y);
+            if (block.is_blocky) {
+                palette[(event.button == 0) ? "fg" : "bg"] = block.is_top ? block.upper_block_color : block.lower_block_color;
+            } else {
+                palette[(event.button == 0) ? "fg" : "bg"] = block.fg;
+            }
+            return;
+        }
         this.store(x, y, half_y);
         if (event.button == 0) {
             this.button = buttons.LEFT;
         } else if (event.button == 2) {
             this.button = buttons.RIGHT;
         }
-        this.emit("down", {x, y, half_y, button: this.button, shift_key: event.shiftKey, alt_key: event.altKey});
+        this.emit("down", x, y, half_y, this.button, event.shiftKey);
         this.last = {x, y, half_y};
     }
 
     same_as_last(x, y, half_y) {
-        if (this.last.x == x && this.last.y == y && (!this.half_block_precision || this.last.half_y == half_y)) return true;
+        if (this.last.x == x && this.last.y == y && (toolbar.mode != toolbar.modes.HALF_BLOCK || this.last.half_y == half_y)) return true;
         this.last = {x, y, half_y};
         return false;
     }
@@ -63,13 +73,13 @@ class MouseListener extends events.EventEmitter {
         if (this.x == x && this.y == y && this.half_y == half_y) return;
         if (this.drawing) {
             if (!this.same_as_last(x, y, half_y)) {
-                this.emit("draw", {x, y, half_y, button: this.button, shift_key: event.shiftKey});
+                this.emit("draw", x, y, half_y, this.button, event.shiftKey);
                 this.store(x, y, half_y);
             }
         } else if (this.started) {
-            if (!this.same_as_last(x, y, half_y)) this.emit("to", {x, y, half_y, button: this.button, shift_key: event.shiftKey});
+            if (!this.same_as_last(x, y, half_y)) this.emit("to", x, y, half_y, this.button);
         } else {
-            this.emit("move", {x, y, half_y});
+            this.emit("move", x, y, half_y);
         }
     }
 
@@ -77,7 +87,7 @@ class MouseListener extends events.EventEmitter {
         if (!this.font) return;
         const {x, y, half_y} = this.get_xy(event);
         if (this.drawing || this.started) {
-            this.emit("up", {x, y, half_y, button: mouse.button});
+            this.emit("up", x, y, half_y, this.button);
             this.end();
         }
     }
@@ -94,6 +104,7 @@ class MouseListener extends events.EventEmitter {
         this.start = {x: 0, y: 0, half_y: 0};
         this.started = false;
         this.drawing = false;
+        doc.on("render", () => this.set_dimensions(doc.columns, doc.rows, doc.font));
         document.addEventListener("DOMContentLoaded", (event) => {
             document.getElementById("canvas_container").addEventListener("mousedown", (event) => this.mouse_down(event), true);
             document.body.addEventListener("mousemove", (event) => this.mouse_move(event), true);
@@ -102,5 +113,6 @@ class MouseListener extends events.EventEmitter {
         });
     }
 }
+
 
 module.exports = new MouseListener();

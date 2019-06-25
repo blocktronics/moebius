@@ -1,4 +1,6 @@
-class ToolPreview {
+const {convert_ega_to_style} = require("../../libtextmode/libtextmode");
+
+class Overlay {
     constructor() {
         this.canvas = document.createElement("canvas");
         this.ctx = this.canvas.getContext("2d");
@@ -7,7 +9,7 @@ class ToolPreview {
     }
 
     fill_style(font, col) {
-        this.ctx.fillStyle = libtextmode.convert_ega_to_style(font.palette[col]);
+        this.ctx.fillStyle = convert_ega_to_style(font.palette[col]);
     }
 
     fill_rect(x, y, width, height) {
@@ -15,7 +17,7 @@ class ToolPreview {
     }
 
     background_color(font, col) {
-        this.canvas.style.backgroundColor = libtextmode.convert_ega_to_style(font.palette[col]);
+        this.canvas.style.backgroundColor = convert_ega_to_style(font.palette[col]);
     }
 
     destroy() {
@@ -32,4 +34,4 @@ class ToolPreview {
     }
 }
 
-module.exports = {ToolPreview};
+module.exports = {Overlay};

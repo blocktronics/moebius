@@ -320,7 +320,7 @@ function rotate(blocks) {
     return blocks;
 }
 
-function new_document({columns = 80, rows = 24, title = "", author = "", group = "", date = "", palette = ega, font_name = "IBM VGA", ice_colors = false, use_9px_font = false, comments = "", data} = {}) {
+function new_document({columns = 80, rows = 100, title = "", author = "", group = "", date = "", palette = ega, font_name = "IBM VGA", ice_colors = false, use_9px_font = false, comments = "", data} = {}) {
     const doc = {columns, rows, title, author, group, date: (date != "") ? date : current_date(), palette, font_name, ice_colors, use_9px_font, comments};
     if (!data || data.length != columns * rows) {
         doc.data = new Array(columns * rows);
@@ -389,4 +389,23 @@ function uncompress(doc) {
     return doc;
 }
 
-module.exports = {read_bytes, read_file, write_file, animate, render, render_split, render_at, new_document, resize_canvas, cp437_to_unicode, cp437_to_unicode_bytes, unicode_to_cp437, render_blocks, merge_blocks, flip_x, flip_y, rotate, get_data_url, convert_ega_to_style, compress, uncompress};
+function get_blocks(doc, sx, sy, dx, dy, opts) {
+    dx = Math.min(doc.columns - 1, dx);
+    dy = Math.min(doc.rows - 1, dy);
+    const columns = dx - sx + 1;
+    const rows = dy - sy + 1;
+    const blocks = {columns, rows, data: new Array(columns * rows), ...opts};
+    for (let y = sy, i = 0; y <= dy; y++) {
+        for (let x = sx; x <= dx; x++, i++) {
+            blocks.data[i] = Object.assign(doc.data[y * doc.columns + x]);
+        }
+    }
+    return blocks;
+}
+
+function export_as_png(doc, render, file) {
+    const base64_string = get_data_url(doc.ice_colors ? render.ice_color_collection : render.blink_off_collection).split(";base64,").pop();
+    fs.writeFileSync(file, base64_string, "base64");
+}
+
+module.exports = {read_bytes, read_file, write_file, animate, render, render_split, render_at, new_document, resize_canvas, cp437_to_unicode, cp437_to_unicode_bytes, unicode_to_cp437, render_blocks, merge_blocks, flip_x, flip_y, rotate, get_data_url, convert_ega_to_style, compress, uncompress, get_blocks, export_as_png};

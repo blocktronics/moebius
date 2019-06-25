@@ -1,9 +1,11 @@
 const events = require("events");
+const {on} = require("../../senders");
 const darwin = (process.platform == "darwin");
+const doc = require("../doc");
 
 class KeyboardEvent extends events.EventEmitter {
     chat(text) {
-        this.emit("chat", text);
+        if (doc.connection) doc.connection.chat(text);
     }
 
     ctrl_key(event) {
@@ -36,31 +38,31 @@ class KeyboardEvent extends events.EventEmitter {
                 this.emit("copy");
                 return;
             case "KeyV":
-                this.emit("copy");
+                this.emit("paste");
                 return;
             case "KeyX":
                 this.emit("cut");
                 return;
             case "KeyA":
-                this.emit("select_all");
+                if (!darwin) this.emit("select_all");
                 return;
             case "ArrowLeft":
-                if (event.shiftKey) this.emit("start_selection_if_necessary");
+                if (event.shiftKey) this.emit("start_selection");
                 this.emit("start_of_row");
                 event.preventDefault();
                 return;
             case "ArrowUp":
-                if (event.shiftKey) this.emit("start_selection_if_necessary");
+                if (event.shiftKey) this.emit("start_selection");
                 this.emit("page_up");
                 event.preventDefault();
                 return;
             case "ArrowRight":
-                if (event.shiftKey) this.emit("start_selection_if_necessary");
+                if (event.shiftKey) this.emit("start_selection");
                 this.emit("end_of_row");
                 event.preventDefault();
                 return;
             case "ArrowDown":
-                if (event.shiftKey) this.emit("start_selection_if_necessary");
+                if (event.shiftKey) this.emit("start_selection");
                 this.emit("page_down");
                 event.preventDefault();
                 return;
@@ -93,6 +95,22 @@ class KeyboardEvent extends events.EventEmitter {
             case "Digit7":
                 this.emit("toggle_fg", 7);
                 return;
+            case "ArrowLeft":
+                this.emit("previous_background_color");
+                event.preventDefault();
+                return;
+            case "ArrowUp":
+                this.emit("previous_foreground_color");
+                event.preventDefault();
+                return;
+            case "ArrowRight":
+                this.emit("next_background_color");
+                event.preventDefault();
+                return;
+            case "ArrowDown":
+                this.emit("next_foreground_color");
+                event.preventDefault();
+                return;
         }
     }
 
@@ -100,22 +118,22 @@ class KeyboardEvent extends events.EventEmitter {
         if (darwin) {
             switch (event.code) {
                 case "ArrowLeft":
-                    if (event.shiftKey) this.emit("start_selection_if_necessary");
+                    if (event.shiftKey) this.emit("start_selection");
                     this.emit("start_of_row");
                     event.preventDefault();
                     return;
                 case "ArrowUp":
-                    if (event.shiftKey) this.emit("start_selection_if_necessary");
+                    if (event.shiftKey) this.emit("start_selection");
                     this.emit("page_up");
                     event.preventDefault();
                     return;
                 case "ArrowRight":
-                    if (event.shiftKey) this.emit("start_selection_if_necessary");
+                    if (event.shiftKey) this.emit("start_selection");
                     this.emit("end_of_row");
                     event.preventDefault();
                     return;
                 case "ArrowDown":
-                    if (event.shiftKey) this.emit("start_selection_if_necessary");
+                    if (event.shiftKey) this.emit("start_selection");
                     this.emit("page_down");
                     event.preventDefault();
                     return;
@@ -169,42 +187,42 @@ class KeyboardEvent extends events.EventEmitter {
         }
         switch (event.code) {
             case "Home":
-                if (event.shiftKey) this.emit("start_selection_if_necessary");
+                if (event.shiftKey) this.emit("start_selection");
                 this.emit("start_of_row");
                 event.preventDefault();
                 return;
             case "End":
-                if (event.shiftKey) this.emit("start_selection_if_necessary");
+                if (event.shiftKey) this.emit("start_selection");
                 this.emit("end_of_row");
                 event.preventDefault();
                 return;
             case "ArrowLeft":
-                if (event.shiftKey) this.emit("start_selection_if_necessary");
+                if (event.shiftKey) this.emit("start_selection");
                 this.emit("left");
                 event.preventDefault();
                 return;
             case "ArrowUp":
-                if (event.shiftKey) this.emit("start_selection_if_necessary");
+                if (event.shiftKey) this.emit("start_selection");
                 this.emit("up");
                 event.preventDefault();
                 return;
             case "ArrowRight":
-                if (event.shiftKey) this.emit("start_selection_if_necessary");
+                if (event.shiftKey) this.emit("start_selection");
                 this.emit("right");
                 event.preventDefault();
                 return;
             case "ArrowDown":
-                if (event.shiftKey) this.emit("start_selection_if_necessary");
+                if (event.shiftKey) this.emit("start_selection");
                 this.emit("down");
                 event.preventDefault();
                 return;
             case "PageUp":
-                if (event.shiftKey) this.emit("start_selection_if_necessary");
+                if (event.shiftKey) this.emit("start_selection");
                 this.emit("page_up");
                 event.preventDefault();
                 return;
             case "PageDown":
-                if (event.shiftKey) this.emit("start_selection_if_necessary");
+                if (event.shiftKey) this.emit("start_selection");
                 this.emit("page_down");
                 event.preventDefault();
                 return;
@@ -213,54 +231,53 @@ class KeyboardEvent extends events.EventEmitter {
                 event.preventDefault();
                 return;
             case "Enter":
-                this.emit("enter");
+                this.emit("new_line");
                 return;
             case "Insert":
-                this.emit("insert");
+                this.insert_mode = !this.insert_mode;
+                this.emit("insert", this.insert_mode);
                 return;
             case "F1":
-                if (!this.prevent_typing) this.emit("f_key", 0);
+                this.emit("f_key", 0);
                 return;
             case "F2":
-                if (!this.prevent_typing) this.emit("f_key", 1);
+                this.emit("f_key", 1);
                 return;
             case "F3":
-                if (!this.prevent_typing) this.emit("f_key", 2);
+                this.emit("f_key", 2);
                 return;
             case "F4":
-                if (!this.prevent_typing) this.emit("f_key", 3);
+                this.emit("f_key", 3);
                 return;
             case "F5":
-                if (!this.prevent_typing) this.emit("f_key", 4);
+                this.emit("f_key", 4);
                 return;
             case "F6":
-                if (!this.prevent_typing) this.emit("f_key", 5);
+                this.emit("f_key", 5);
                 return;
             case "F7":
-                if (!this.prevent_typing) this.emit("f_key", 6);
+                this.emit("f_key", 6);
                 return;
             case "F8":
-                if (!this.prevent_typing) this.emit("f_key", 7);
+                this.emit("f_key", 7);
                 return;
             case "F9":
-                if (!this.prevent_typing) this.emit("f_key", 8);
+                this.emit("f_key", 8);
                 return;
             case "F10":
-                if (!this.prevent_typing) this.emit("f_key", 9);
+                this.emit("f_key", 9);
                 return;
             case "Backspace":
-                if (!this.prevent_typing) this.emit("backspace");
+                this.emit("backspace");
                 return;
             case "Delete":
-                if (!this.prevent_typing) this.emit("delete_key");
+                this.emit("delete_key");
                 return;
         }
-        if (!this.prevent_typing && event.key.length == 1) {
+        if (event.key.length == 1) {
             const code = event.key.charCodeAt(0);
-            if (code >= 32 && code <= 126) {
-                event.preventDefault();
-                this.emit("key_typed", code);
-            }
+            if (code == 32) event.preventDefault();
+            if (code >= 32 && code <= 126) this.emit("key_typed", code);
         }
     }
 
@@ -288,8 +305,11 @@ class KeyboardEvent extends events.EventEmitter {
     constructor() {
         super();
         this.use_numpad = false;
-        this.prevent_typing = false;
-        electron.ipcRenderer.on("use_numpad", (event, value) => this.use_numpad = value);
+        this.insert_mode = false;
+        this.overwrite_mode = false;
+        on("use_numpad", (event, value) => this.use_numpad = value);
+        on("insert_mode", (event, value) => this.insert_mode = value);
+        on("overwrite_mode", (event, value) => this.overwrite_mode = value);
         document.addEventListener("DOMContentLoaded", () => {
             this.chat_input = document.getElementById("chat_input");
             document.body.addEventListener("keydown", () => this.keydown(event), true);

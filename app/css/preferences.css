@@ -32,13 +32,15 @@ label.text_box {
     vertical-align: middle;
 }
 
-input[type="text"] {
+label.number_box {
+    width: 300px;
+}
+
+input {
     vertical-align: top;
     padding: none;
     margin: 4px;
-    width: 190px;
     height: 16px;
-    padding: 3px 6px;
     color: white;
     display: inline-block;
     border: 1px solid #aaaaaa;
@@ -46,9 +48,25 @@ input[type="text"] {
     font-family: BlinkMacSystemFont, "Segoe UI";
     font-size: 14px;
     outline: none;
+    padding: 3px 6px;
 }
 
-input[type="text"]:focus {
+input[type="text"] {
+    width: 190px;
+}
+
+input[type="number"] {
+    text-align: center;
+    width: 25px;
+    font-size: 12px;
+}
+
+input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="text"]:focus, input[type="number"]:focus {
     border-color: white;
 }
 

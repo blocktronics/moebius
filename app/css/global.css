@@ -39,4 +39,5 @@ canvas {
 ::-webkit-scrollbar-thumb {
     border-radius: 2px;
     background: rgba(0, 0, 0, 0.4);
+    opacity: 0.5;
 }

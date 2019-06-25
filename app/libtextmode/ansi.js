@@ -522,6 +522,7 @@ function encode_as_ansi(doc, {utf8 = false} = {}) {
         }
     }
     const bytes = new Uint8Array(output);
+    if (utf8) return bytes;
     return add_sauce_for_ans({doc, bytes});
 }
 

@@ -340,8 +340,8 @@ function optimize_block(x, y) {
         switch (block.code) {
         case 0: case 32: case 255: change_data(x, y, 219, block.bg, 0); break;
         case 219: change_data(x, y, 0, block.bg, block.fg); break;
-        case 220: change_data(x, y, 223, block.bg, block.fg); break;
-        case 223: change_data(x, y, 220, block.bg, block.fg); break;
+        // case 220: change_data(x, y, 223, block.bg, block.fg); break;
+        // case 223: change_data(x, y, 220, block.bg, block.fg); break;
         }
     }
     if (block.fg == 0) {
