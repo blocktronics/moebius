@@ -190,7 +190,11 @@ class Connection extends events.EventEmitter {
     }
 
     join(id, nick, group, status, show_join = true) {
-        this.users[id] = {nick, group, status, cursor: (nick != undefined) ? new NetworkCursor() : undefined};
+        if (id == this.id || nick == undefined) {
+            this.users[id] = {nick, group, status};
+        } else {
+            this.users[id] = {nick, group, status, cursor: new NetworkCursor()};
+        }
         chat.join(id, nick, group, status, show_join);
     }
 
@@ -204,11 +208,10 @@ class Connection extends events.EventEmitter {
                 this.users = {};
                 chat.welcome(data.doc.comments, data.chat_history);
                 for (const user of data.users) this.join(user.id, user.nick, user.group, user.status, false);
+                this.join(data.id, nick, group, data.status);
                 this.ready = true;
                 this.emit("connected", libtextmode.uncompress(data.doc));
                 for (const message of this.queued_messages) this.message(message);
-                this.users[data.id] = ({nick: data.nick, group: data.group, status: data.status});
-                chat.join(data.id, nick, group, data.status);
                 chat.show();
                 this.ws.addEventListener("close", () => this.disconnected());
             } else if (type == actions.REFUSED) {
@@ -309,7 +312,13 @@ class Connection extends events.EventEmitter {
         this.connected = false;
         this.server = server;
         this.pass = pass;
-        chat.on("goto_user", (id) => console.log(id));
+        chat.on("goto_user", (id) => {
+            if (id == this.id) {
+                this.emit("goto_self");
+            } else if (this.users[id].cursor) {
+                this.emit("goto_row", this.users[id].cursor.y);
+            }
+        });
         try {
             const {groups} = (/(?<host>[^\/]+)\/?(?<path>[^\/]*)\/?/).exec(server);
             this.host = groups.host;
@@ -482,6 +491,8 @@ class TextModeDoc extends events.EventEmitter {
             libtextmode.resize_canvas(doc, columns, rows);
             this.start_rendering();
         });
+        connection.on("goto_row", (line_no) => this.emit("goto_row", line_no));
+        connection.on("goto_self", (line_no) => this.emit("goto_self"));
     }
 
     get connection() {return connection;}

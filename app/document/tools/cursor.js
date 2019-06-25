@@ -506,6 +506,7 @@ class Cursor {
         on("scroll_margin", (event, value) => this.use_scroll_margin(value));
         doc.undo_history.on("move_to", (x, y) => this.undo_move_to(x, y));
         doc.on("render", () => this.new_render());
+        doc.on("goto_self", () => this.move_to(this.x, this.y));
     }
 }
 

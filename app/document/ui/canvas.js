@@ -2,26 +2,30 @@ const doc = require("../doc");
 let interval, render;
 let mouse_button = false;
 
+function $(name) {
+    return document.getElementById(name);
+}
+
 function hide(id) {
-    document.getElementById(id).classList.add("hidden");
+    $(id).classList.add("hidden");
 }
 
 function show(id) {
-    document.getElementById(id).classList.remove("hidden");
+    $(id).classList.remove("hidden");
 }
 
 function start_blinking() {
     let vis_toggle = false;
-    document.getElementById("ice_color_container").style.display = "none";
-    document.getElementById("blink_off_container").style.removeProperty("display");
+    $("ice_color_container").style.display = "none";
+    $("blink_off_container").style.removeProperty("display");
     if (interval) clearInterval(interval);
     interval = setInterval(() => {
         if (vis_toggle) {
-            document.getElementById("blink_on_container").style.display = "none";
-            document.getElementById("blink_off_container").style.removeProperty("display");
+            $("blink_on_container").style.display = "none";
+            $("blink_off_container").style.removeProperty("display");
         } else {
-            document.getElementById("blink_off_container").style.display = "none";
-            document.getElementById("blink_on_container").style.removeProperty("display");
+            $("blink_off_container").style.display = "none";
+            $("blink_on_container").style.removeProperty("display");
         }
         vis_toggle = !vis_toggle;
     }, 300);
@@ -29,22 +33,22 @@ function start_blinking() {
 
 function stop_blinking() {
     if (interval) clearInterval(interval);
-    document.getElementById("ice_color_container").style.removeProperty("display");
-    document.getElementById("blink_off_container").style.display = "none";
-    document.getElementById("blink_on_container").style.display = "none";
+    $("ice_color_container").style.removeProperty("display");
+    $("blink_off_container").style.display = "none";
+    $("blink_on_container").style.display = "none";
 }
 
 function update_frame() {
-    const viewport = document.getElementById("viewport");
+    const viewport = $("viewport");
     const view_rect = viewport.getBoundingClientRect();
-    const view_frame = document.getElementById("view_frame");
+    const view_frame = $("view_frame");
     if (render) {
         const scale_factor = render.width / 260;
         const width = Math.min(Math.ceil(view_rect.width / scale_factor), 260);
         const height = Math.min(Math.ceil(view_rect.height / scale_factor), render.height / scale_factor);
         const top = Math.ceil(viewport.scrollTop / scale_factor);
         const left = Math.ceil(viewport.scrollLeft / scale_factor);
-        const preview = document.getElementById("preview");
+        const preview = $("preview");
         view_frame.style.width = `${width}px`;
         view_frame.style.height = `${height}px`;
         view_frame.style.top = `${top}px`;
@@ -57,10 +61,10 @@ function update_frame() {
 
 function add(new_render) {
     hide("view_frame");
-    const ice_color_container = document.getElementById("ice_color_container");
-    const blink_off_container = document.getElementById("blink_off_container");
-    const blink_on_container = document.getElementById("blink_on_container");
-    const preview = document.getElementById("preview");
+    const ice_color_container = $("ice_color_container");
+    const blink_off_container = $("blink_off_container");
+    const blink_on_container = $("blink_on_container");
+    const preview = $("preview");
     if (render) {
         for (const canvas of render.ice_color_collection) ice_color_container.removeChild(canvas);
         for (const canvas of render.blink_off_collection) blink_off_container.removeChild(canvas);
@@ -68,8 +72,8 @@ function add(new_render) {
         for (const canvas of render.preview_collection) preview.removeChild(canvas);
     }
     render = new_render;
-    document.getElementById("canvas_container").style.width = `${render.width}px`;
-    document.getElementById("canvas_container").style.height = `${render.height}px`;
+    $("canvas_container").style.width = `${render.width}px`;
+    $("canvas_container").style.height = `${render.height}px`;
     for (const canvas of render.ice_color_collection) ice_color_container.appendChild(canvas);
     for (const canvas of render.blink_off_collection) blink_off_container.appendChild(canvas);
     for (const canvas of render.blink_on_collection) blink_on_container.appendChild(canvas);
@@ -79,8 +83,8 @@ function add(new_render) {
 }
 
 function update_with_mouse_pos(client_x, client_y) {
-    const preview = document.getElementById("preview");
-    const viewport = document.getElementById("viewport");
+    const preview = $("preview");
+    const viewport = $("viewport");
     const preview_rect = preview.getBoundingClientRect();
     const viewport_rect = viewport.getBoundingClientRect();
     const x = client_x - preview_rect.left - 20 + preview.scrollLeft;
@@ -109,13 +113,18 @@ function unregister_button(event) {
 }
 
 window.addEventListener("DOMContentLoaded", (event) => {
-    document.getElementById("viewport").addEventListener("scroll", event => update_frame(), true);
+    $("viewport").addEventListener("scroll", event => update_frame(), true);
     window.addEventListener("resize", event => update_frame(), true);
-    document.getElementById("preview").addEventListener("mousedown", mouse_down, true);
-    document.getElementById("preview").addEventListener("mousemove", mouse_move, true);
+    $("preview").addEventListener("mousedown", mouse_down, true);
+    $("preview").addEventListener("mousemove", mouse_move, true);
     preview.addEventListener("mouseup", unregister_button, true);
     preview.addEventListener("mouseout", unregister_button, true);
 }, true);
+
+function goto_row(row) {
+    const rows_in_view = Math.floor($("viewport").getBoundingClientRect().height / doc.font.height);
+    $("viewport").scrollTop = (row - Math.floor(rows_in_view / 2)) * doc.font.height;
+}
 
 doc.on("render", () => add(doc.render));
 doc.on("ice_color", (value) => {
@@ -126,5 +135,5 @@ doc.on("ice_color", (value) => {
     }
 });
 doc.on("use_9px_font", () => add(doc.render));
-doc.on("goto_row", (row_no) => console.log(row_no));
+doc.on("goto_row", (row_no) => goto_row(row_no));
 module.export = {update_frame};
