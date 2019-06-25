@@ -38,7 +38,7 @@ textarea {
     border-top: 1px solid rgb(50, 50, 50);
     border-bottom: 1px solid rgb(50, 50, 50);
     padding: 0 8px;
-    width: 334px;
+    width: max-content;
     height: 100px;
     margin: 0 auto;
     resize: none;
