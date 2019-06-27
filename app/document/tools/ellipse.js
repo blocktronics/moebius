@@ -66,6 +66,7 @@ function half_block_ellipse_overlay(sx, sy, dx, dy, col) {
     const {x, y, radius_x, radius_y} = orientate_preview(sx, sy, dx, dy);
     overlay.update(x * font.width, Math.floor(y * font.height / 2), (radius_x * 2 + 1) * font.width, Math.floor((radius_y * 2 + 1) * font.height / 2));
     const coords = ellipse_outline(radius_x, radius_y, radius_x, radius_y);
+    if (!coords) return;
     overlay.fill_style(font, col);
     for (const coord of coords) overlay.fill_rect(coord.x * font.width, Math.floor(coord.y * font.height / 2), font.width, Math.floor(font.height / 2));
 }

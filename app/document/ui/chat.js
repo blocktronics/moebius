@@ -193,7 +193,7 @@ class ChatUI extends events.EventEmitter {
 
     chat(id, nick, group, text, time) {
         if (this.users[id] && this.users[id].element.nick != nick) this.users[id].element.innerText = nick;
-        const nick_div = this.create_div({classname: "nick", text: `${nick} <${group}>`});
+        const nick_div = this.create_div({classname: "nick", text: group ? `${nick} <${group}>` : nick});
         const text_div = this.create_div({classname: "text", text, linkify: true});
         const container = this.create_div();
         if (time) {
