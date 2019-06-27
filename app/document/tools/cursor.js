@@ -251,6 +251,7 @@ class Cursor {
     start_operation_mode(is_move_operation) {
         const {sx, sy, dx, dy} = this.reorientate_selection();
         this.set_operation_mode({...doc.get_blocks(sx, sy, dx, dy), is_move_operation});
+        if (doc.connection) doc.connection.operation(sx, sy);
         if (is_move_operation) doc.erase(sx, sy, dx, dy);
         this.move_to(sx, sy);
     }

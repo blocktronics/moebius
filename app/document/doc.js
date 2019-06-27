@@ -424,6 +424,10 @@ class UndoHistory extends events.EventEmitter {
     }
 }
 
+async function next_frame() {
+    return new Promise((resolve) => window.requestAnimationFrame(resolve));
+}
+
 class TextModeDoc extends events.EventEmitter {
     async start_rendering() {
         const big_data = (doc.data.length > 80 * 1000);
@@ -730,7 +734,8 @@ class TextModeDoc extends events.EventEmitter {
         this.undo_history.undo();
     }
 
-    insert_row(insert_y) {
+    async insert_row(insert_y) {
+        await next_frame();
         if (insert_y >= 25) return;
         this.undo_history.start_chunk();
         const max_x = Math.min(doc.columns, 80);
@@ -744,7 +749,8 @@ class TextModeDoc extends events.EventEmitter {
         for (let x = 0; x < max_x; x++) this.change_data(x, insert_y, 32, 7, 0);
     }
 
-    delete_row(delete_y) {
+    async delete_row(delete_y) {
+        await next_frame();
         if (delete_y >= 25) return;
         this.undo_history.start_chunk();
         const max_x = Math.min(doc.columns, 80);
@@ -758,7 +764,8 @@ class TextModeDoc extends events.EventEmitter {
         for (let x = 0; x < max_x; x++) this.change_data(x, max_y - 1, 32, 7, 0);
     }
 
-    insert_column(insert_x) {
+    async insert_column(insert_x) {
+        await next_frame();
         if (insert_x >= 80) return;
         this.undo_history.start_chunk();
         const max_x = Math.min(doc.columns, 80);
@@ -772,7 +779,8 @@ class TextModeDoc extends events.EventEmitter {
         for (let y = 0; y < max_y; y++) this.change_data(insert_x, y, 32, 7, 0);
     }
 
-    delete_column(delete_x) {
+    async delete_column(delete_x) {
+        await next_frame();
         if (delete_x >= 80) return;
         this.undo_history.start_chunk();
         const max_x = Math.min(doc.columns, 80);
@@ -786,7 +794,8 @@ class TextModeDoc extends events.EventEmitter {
         for (let y = 0; y < max_y; y++) this.change_data(max_x - 1, y, 32, 7, 0);
     }
 
-    scroll_left() {
+    async scroll_left() {
+        await next_frame();
         this.undo_history.start_chunk();
         const max_x = Math.min(doc.columns, 80);
         const max_y = Math.min(doc.rows, 25);
@@ -801,7 +810,8 @@ class TextModeDoc extends events.EventEmitter {
         for (let y = 0; y < max_y; y++) this.change_data(max_x - 1, y, store[y].code, store[y].fg, store[y].bg);
     }
 
-    scroll_up() {
+    async scroll_up() {
+        await next_frame();
         this.undo_history.start_chunk();
         const max_x = Math.min(doc.columns, 80);
         const max_y = Math.min(doc.rows, 25);
@@ -816,7 +826,8 @@ class TextModeDoc extends events.EventEmitter {
         for (let x = 0; x < max_x; x++) this.change_data(x, max_y - 1, store[x].code, store[x].fg, store[x].bg);
     }
 
-    scroll_right() {
+    async scroll_right() {
+        await next_frame();
         this.undo_history.start_chunk();
         const max_x = Math.min(doc.columns, 80);
         const max_y = Math.min(doc.rows, 25);
@@ -831,7 +842,8 @@ class TextModeDoc extends events.EventEmitter {
         for (let y = 0; y < max_y; y++) this.change_data(0, y, store[y].code, store[y].fg, store[y].bg);
     }
 
-    scroll_down() {
+    async scroll_down() {
+        await next_frame();
         this.undo_history.start_chunk();
         const max_x = Math.min(doc.columns, 80);
         const max_y = Math.min(doc.rows, 25);

@@ -14,6 +14,7 @@ tools.on("start", (mode) => {
 });
 
 function ellipse_outline(sx, sy, width, height) {
+    if (width == 0 || height == 0) return;
     const a2 = width * width;
     const b2 = height * height;
     const fa2 = 4 * a2;
@@ -74,32 +75,38 @@ function full_block_ellipse_overlay(sx, sy, dx, dy, col) {
     const {x, y, radius_x, radius_y} = orientate_preview(sx, sy, dx, dy);
     overlay.update(x * font.width, y * font.height, (radius_x * 2 + 1) * font.width, (radius_y * 2 + 1) * font.height);
     const coords = ellipse_outline(radius_x, radius_y, radius_x, radius_y);
+    if (!coords) return;
     overlay.fill_style(font, col);
     for (const coord of coords) overlay.fill_rect(coord.x * font.width, coord.y * font.height, font.width, font.height);
 }
 
 function draw_half_block_ellipse(sx, sy, dx, dy, col) {
     const coords = ellipse_coords(sx, sy, dx, dy);
+    if (!coords) return;
     for (const coord of coords) doc.set_half_block(coord.x, coord.y, col);
 }
 
 function draw_clear_block_ellipse(sx, sy, dx, dy) {
     const coords = ellipse_coords(sx, sy, dx, dy);
+    if (!coords) return;
     for (const coord of coords) doc.change_data(coord.x, coord.y, 32, 7, 0);
 }
 
 function draw_full_block_ellipse(sx, sy, dx, dy, col) {
     const coords = ellipse_coords(sx, sy, dx, dy);
+    if (!coords) return;
     for (const coord of coords) doc.change_data(coord.x, coord.y, 219, col, 0);
 }
 
 function draw_shaded_block_ellipse(sx, sy, dx, dy, col, reduce) {
     const coords = ellipse_coords(sx, sy, dx, dy);
+    if (!coords) return;
     for (const coord of coords) brushes.shading_block(coord.x, coord.y, col, reduce);
 }
 
 function draw_colorize_block_ellipse(sx, sy, dx, dy, fg, bg) {
     const coords = ellipse_coords(sx, sy, dx, dy);
+    if (!coords) return;
     for (const coord of coords) {
         const block = doc.at(coord.x, coord.y);
         if (block) doc.change_data(coord.x, coord.y, block.code, (fg != undefined) ? fg : block.fg, (bg != undefined) ? bg : block.bg);
