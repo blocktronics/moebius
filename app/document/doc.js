@@ -143,12 +143,6 @@ class NetworkCursor {
 }
 
 class Connection extends events.EventEmitter {
-    set_active() {
-        this.set_status(statuses.ACTIVE);
-        if (this.idle_timer) clearTimeout(this.idle_timer);
-        if (this.away_timer) clearTimeout(this.away_timer);
-    }
-
     set_status(status) {
         if (this.status != status) {
             this.status = status;
@@ -156,7 +150,13 @@ class Connection extends events.EventEmitter {
         }
     }
 
+    stop_away_timers() {
+        if (this.idle_timer) clearTimeout(this.idle_timer);
+        if (this.away_timer) clearTimeout(this.away_timer);
+    }
+
     start_away_timers() {
+        this.stop_away_timers();
         this.idle_timer = setTimeout(() => {
             this.set_status(statuses.IDLE);
             this.away_timer = setTimeout(() => this.set_status(statuses.AWAY), 4 * 60 * 1000);
@@ -166,8 +166,8 @@ class Connection extends events.EventEmitter {
     send(type, data ={}) {
         data.id = this.id;
         this.ws.send(JSON.stringify({type, data}));
-        if (!this.web) {
-            if (type != actions.CONNECTED) this.set_active();
+        if (!this.web && type != actions.CONNECTED) {
+            this.set_status(statuses.ACTIVE);
             this.start_away_timers();
         }
     }
@@ -177,6 +177,7 @@ class Connection extends events.EventEmitter {
     }
 
     disconnected()  {
+        this.stop_away_timers();
         this.connected = false;
         this.emit("disconnected");
     }
@@ -227,7 +228,7 @@ class Connection extends events.EventEmitter {
                     if (user) {
                         if (user.cursor) user.cursor.hide();
                         chat.leave(data.id);
-                        delete this.users[id];
+                        delete this.users[data.id];
                     }
                     break;
                 case actions.CURSOR:
@@ -253,7 +254,7 @@ class Connection extends events.EventEmitter {
                     doc.data[data.y * doc.columns + data.x] = Object.assign(data.block);
                     libtextmode.render_at(render, data.x, data.y, data.block);
                     break;
-                case actions.CHAT: if (user) chat.chat(data.id, data.nick, data.group, data.text); break;
+                case actions.CHAT: if (user) chat.chat(data.id, data.nick, data.group, data.text, data.time); break;
                 case actions.STATUS: if (user) chat.status(data.id, data.status); break;
                 case actions.SAUCE:
                     this.emit("sauce", data.title, data.group, data.author, data.comments);
@@ -299,7 +300,7 @@ class Connection extends events.EventEmitter {
     flip_y() {this.send(actions.FLIP_Y);}
     chat(text) {
         this.send(actions.CHAT, {nick, group, text});
-        chat.chat(this.id, nick, group, text);
+        chat.chat(this.id, nick, group, text, Date.now());
     }
     resize_cursors() {
         for (const id of Object.keys(this.users)) {
@@ -309,6 +310,7 @@ class Connection extends events.EventEmitter {
 
     constructor(server, pass, web = false) {
         super();
+        chat.removeAllListeners("goto_user");
         this.connected = false;
         this.server = server;
         this.pass = pass;
@@ -538,6 +540,7 @@ class TextModeDoc extends events.EventEmitter {
     }
 
     at(x, y) {
+        if (x < 0 || x >= doc.columns || y < 0 || y >= doc.rows) return;
         return doc.data[y * doc.columns + x];
     }
 
@@ -545,7 +548,8 @@ class TextModeDoc extends events.EventEmitter {
         return libtextmode.get_blocks(doc, sx, sy, dx, dy, opts);
     }
 
-    change_data(x, y, code, fg, bg, prev_cursor, cursor) {
+    change_data(x, y, code, fg, bg, prev_cursor, cursor, mirrored = false) {
+        if (x < 0 || x >= doc.columns || y < 0 || y >= doc.rows) return;
         const i = doc.columns * y + x;
         if (prev_cursor) {
             this.undo_history.push(x, y, doc.data[i], {prev_x: prev_cursor.prev_x, prev_y: prev_cursor.prev_y, post_x: cursor.x, post_y: cursor.y});
@@ -555,6 +559,10 @@ class TextModeDoc extends events.EventEmitter {
         doc.data[i] = {code, fg, bg};
         libtextmode.render_at(render, x, y, doc.data[i]);
         if (connection) connection.draw(x, y, doc.data[i]);
+        if (this.mirror_mode && !mirrored) {
+            const opposing_x = Math.floor(doc.columns / 2) - (x - Math.ceil(doc.columns / 2)) - 1;
+            this.change_data(opposing_x, y, libtextmode.flip_code_x(code), fg, bg, undefined, undefined, true);
+        }
     }
 
     clear_at(x, y, prev_cursor, cursor) {
@@ -609,6 +617,7 @@ class TextModeDoc extends events.EventEmitter {
     }
 
     set_half_block(x, y, col) {
+        if (x < 0 || x >= doc.columns || y < 0 || y >= doc.rows * 2) return;
         const block = this.get_half_block(x, y);
         if (block.is_blocky) {
             if ((block.is_top && block.lower_block_color == col) || (!block.is_top && block.upper_block_color == col)) {
@@ -729,6 +738,122 @@ class TextModeDoc extends events.EventEmitter {
         this.undo_history.undo();
     }
 
+    insert_row(insert_y) {
+        if (insert_y >= 25) return;
+        this.undo_history.start_chunk();
+        const max_x = Math.min(doc.columns, 80);
+        const max_y = Math.min(doc.rows, 25);
+        for (let y = max_y - 1; y > insert_y; y--) {
+            for (let x = 0; x < max_x; x++) {
+                const block = this.at(x, y - 1);
+                this.change_data(x, y, block.code, block.fg, block.bg);
+            }
+        }
+        for (let x = 0; x < max_x; x++) this.change_data(x, insert_y, 32, 7, 0);
+    }
+
+    delete_row(delete_y) {
+        if (delete_y >= 25) return;
+        this.undo_history.start_chunk();
+        const max_x = Math.min(doc.columns, 80);
+        const max_y = Math.min(doc.rows, 25);
+        for (let y = delete_y; y < max_y - 1; y++) {
+            for (let x = 0; x < max_x; x++) {
+                const block = this.at(x, y + 1);
+                this.change_data(x, y, block.code, block.fg, block.bg);
+            }
+        }
+        for (let x = 0; x < max_x; x++) this.change_data(x, max_y - 1, 32, 7, 0);
+    }
+
+    insert_column(insert_x) {
+        if (insert_x >= 80) return;
+        this.undo_history.start_chunk();
+        const max_x = Math.min(doc.columns, 80);
+        const max_y = Math.min(doc.rows, 25);
+        for (let x = max_x - 1; x > insert_x; x--) {
+            for (let y = 0; y < max_y; y++) {
+                const block = this.at(x - 1, y);
+                this.change_data(x, y, block.code, block.fg, block.bg);
+            }
+        }
+        for (let y = 0; y < max_y; y++) this.change_data(insert_x, y, 32, 7, 0);
+    }
+
+    delete_column(delete_x) {
+        if (delete_x >= 80) return;
+        this.undo_history.start_chunk();
+        const max_x = Math.min(doc.columns, 80);
+        const max_y = Math.min(doc.rows, 25);
+        for (let x = delete_x; x < max_x - 1; x++) {
+            for (let y = 0; y < max_y; y++) {
+                const block = this.at(x + 1, y);
+                this.change_data(x, y, block.code, block.fg, block.bg);
+            }
+        }
+        for (let y = 0; y < max_y; y++) this.change_data(max_x - 1, y, 32, 7, 0);
+    }
+
+    scroll_left() {
+        this.undo_history.start_chunk();
+        const max_x = Math.min(doc.columns, 80);
+        const max_y = Math.min(doc.rows, 25);
+        const store = new Array(max_y);
+        for (let y = 0; y < max_y; y++) store[y] = Object.assign(doc.data[y * doc.columns]);
+        for (let x = 0; x < max_x - 1; x++) {
+            for (let y = 0; y < max_y; y++) {
+                const block = this.at(x + 1, y);
+                this.change_data(x, y, block.code, block.fg, block.bg);
+            }
+        }
+        for (let y = 0; y < max_y; y++) this.change_data(max_x - 1, y, store[y].code, store[y].fg, store[y].bg);
+    }
+
+    scroll_up() {
+        this.undo_history.start_chunk();
+        const max_x = Math.min(doc.columns, 80);
+        const max_y = Math.min(doc.rows, 25);
+        const store = new Array(max_x);
+        for (let x = 0; x < max_x; x++) store[x] = Object.assign(doc.data[x]);
+        for (let y = 0; y < max_y - 1; y++) {
+            for (let x = 0; x < max_x; x++) {
+                const block = this.at(x, y + 1);
+                this.change_data(x, y, block.code, block.fg, block.bg);
+            }
+        }
+        for (let x = 0; x < max_x; x++) this.change_data(x, max_y - 1, store[x].code, store[x].fg, store[x].bg);
+    }
+
+    scroll_right() {
+        this.undo_history.start_chunk();
+        const max_x = Math.min(doc.columns, 80);
+        const max_y = Math.min(doc.rows, 25);
+        const store = new Array(max_y);
+        for (let y = 0; y < max_y; y++) store[y] = Object.assign(doc.data[y * doc.columns + max_x - 1]);
+        for (let x = max_x - 1; x > 0; x--) {
+            for (let y = 0; y < max_y; y++) {
+                const block = this.at(x - 1, y);
+                this.change_data(x, y, block.code, block.fg, block.bg);
+            }
+        }
+        for (let y = 0; y < max_y; y++) this.change_data(0, y, store[y].code, store[y].fg, store[y].bg);
+    }
+
+    scroll_down() {
+        this.undo_history.start_chunk();
+        const max_x = Math.min(doc.columns, 80);
+        const max_y = Math.min(doc.rows, 25);
+        const store = new Array(max_x);
+        for (let x = 0; x < max_x; x++) store[x] = Object.assign(doc.data[(max_y - 1) * doc.columns + x]);
+        for (let y = max_y - 1; y > 0; y--) {
+            for (let x = 0; x < max_x; x++) {
+                const block = this.at(x, y - 1);
+                this.change_data(x, y, block.code, block.fg, block.bg);
+            }
+        }
+        for (let x = 0; x < max_x; x++) this.change_data(x, 0, store[x].code, store[x].fg, store[x].bg);
+    }
+
     async open(file) {
         doc = await libtextmode.read_file(file);
         this.undo_history.reset_undos();
@@ -760,6 +885,7 @@ class TextModeDoc extends events.EventEmitter {
     constructor() {
         super();
         this.init = false;
+        this.mirror_mode = false;
         this.undo_history = new UndoHistory();
         on("ice_colors", (event, value) => this.ice_colors = value);
         on("use_9px_font", (event, value) => this.use_9px_font = value);
@@ -768,6 +894,7 @@ class TextModeDoc extends events.EventEmitter {
         on("get_canvas_size", (event) => send("get_canvas_size", {columns: doc.columns, rows: doc.rows}));
         on("set_canvas_size", (event, {columns, rows}) => this.resize(columns, rows));
         on("set_sauce_info", (event, {title, author, group, comments}) => this.set_sauce(title, author, group, comments));
+        on("mirror_mode", (event, value) => this.mirror_mode = value);
         chat.on("goto_row", (line_no) => this.emit("goto_row", line_no));
     }
 }

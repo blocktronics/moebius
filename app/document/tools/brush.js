@@ -14,7 +14,7 @@ tools.on("start", (mode) => {
 });
 
 function mouse_handler(skip_first) {
-    return (x, y, half_y, button, shift_key) => {
+    return (x, y, half_y, is_legal, button, shift_key) => {
         if (!enabled) return;
         if (!chunked_undo || !skip_first) doc.start_undo();
         mouse.start_drawing();

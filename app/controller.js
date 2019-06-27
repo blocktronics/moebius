@@ -9,6 +9,7 @@ require("./document/tools/select");
 require("./document/tools/brush");
 require("./document/tools/line");
 require("./document/tools/rectangle");
+require("./document/tools/ellipse");
 require("./document/tools/fill");
 require("./document/tools/sample");
 

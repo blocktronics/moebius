@@ -8,15 +8,15 @@ tools.on("start", (mode) => {
     if (enabled) toolbar.show_sample();
 });
 
-mouse.on("down", (x, y) => {
-    if (!enabled) return;
+mouse.on("down", (x, y, half_y, is_legal) => {
+    if (!enabled || !is_legal) return;
     const block = doc.at(x, y);
     tools.change_to_previous_mode();
     palette.fg = block.fg;
     palette.bg = block.bg;
 });
 
-mouse.on("move", (x, y) => {
-    if (!enabled) return;
+mouse.on("move", (x, y, half_y, is_legal) => {
+    if (!enabled || !is_legal) return;
     toolbar.set_sample(x, y);
 });

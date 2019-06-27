@@ -122,7 +122,7 @@ function get_sauce(bytes) {
             let filesize = (sauce_bytes[93] << 24) + (sauce_bytes[92] << 16) + (sauce_bytes[91] << 8) + sauce_bytes[90];
             const datatype = sauce_bytes[94];
             let columns, rows;
-            if (datatype === 5) {
+            if (datatype == 5) {
                 columns = sauce_bytes[95] * 2;
                 rows = filesize / columns / 2;
             } else {

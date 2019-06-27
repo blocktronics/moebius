@@ -52,6 +52,9 @@ body.dark .tool.selected {
 #rectangle_mode {
     background-image: url("../img/rectangle.png");
 }
+#ellipse_mode {
+    background-image: url("../img/ellipse.png");
+}
 #fill_mode {
     background-image: url("../img/fill.png");
 }
@@ -138,6 +141,9 @@ body.dark #current_colors > canvas {
     height: 8px;
     cursor: ns-resize;
 }
+#chat_resizer:hover, #chat_resizer.active {
+    background-color: rgba(0, 0, 0, 0.3);
+}
 #user_list {
     float: left;
     background-color: var(--dark-mid-color);
@@ -162,6 +168,10 @@ body.dark #current_colors > canvas {
     text-decoration: underline;
     cursor: pointer;
 }
+#user_list > div.guest:hover {
+    text-decoration: none;
+    cursor: default;
+}
 #messages {
     float: left;
     border-top: 1px solid var(--dark-border-color);
@@ -178,6 +188,10 @@ body.dark #current_colors > canvas {
 #messages > div.welcome {
     text-align: center;
     user-select: text;
+}
+#messages > div.date {
+    text-align: center;
+    color: #aaaaaa;
 }
 #chat_input {
     background-color: var(--dark-mid-color);
@@ -198,6 +212,11 @@ body.dark #current_colors > canvas {
 #messages > div > div.nick {
     display: inline-block;
     color: #aaaaaa;
+}
+#messages > div > div.time {
+    display: inline-block;
+    color: #555555;
+    margin-right: 4px;
 }
 #messages > div > div.text {
     display: inline-block;
@@ -328,6 +347,15 @@ body.dark #statusbar > div > div {
     background-size: 100%;
     background-repeat: no-repeat;
     opacity: 0.4;
+}
+#smallscale_guide.hidden {
+    display: none;
+}
+#smallscale_guide.guide_column {
+    border-right: rgba(255, 255, 255, 0.4) 1px dashed;
+}
+#smallscale_guide.guide_row {
+    border-bottom: rgba(255, 255, 255, 0.4) 1px dashed;
 }
 #zoom {
     font-size: 30px;

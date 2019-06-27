@@ -31,7 +31,7 @@ function rectangle_overlay(sx, sy, dx, dy, col) {
     overlay.background_color(font, col);
 }
 
-mouse.on("down",(x, y, half_y, button, shift_key) => {
+mouse.on("down",(x, y, half_y, is_legal, button, shift_key) => {
     if (!enabled) return;
     clear = shift_key;
     overlay = new Overlay();

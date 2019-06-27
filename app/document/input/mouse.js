@@ -14,9 +14,9 @@ class MouseListener extends events.EventEmitter {
     get_xy(event) {
         const canvas_container = document.getElementById("canvas_container");
         const canvas_container_rect = canvas_container.getBoundingClientRect();
-        const x = Math.min(Math.max(Math.floor((event.clientX - canvas_container_rect.left) / this.font.width), 0), this.columns - 1);
-        const y = Math.min(Math.max(Math.floor((event.clientY - canvas_container_rect.top) / this.font.height), 0), this.rows - 1);
-        const half_y = Math.min(Math.max(Math.floor((event.clientY - canvas_container_rect.top) / (this.font.height / 2)), 0), this.rows * 2 - 1);
+        const x = Math.floor((event.clientX - canvas_container_rect.left) / this.font.width);
+        const y = Math.floor((event.clientY - canvas_container_rect.top) / this.font.height);
+        const half_y = Math.floor((event.clientY - canvas_container_rect.top) / (this.font.height / 2));
         return {x, y, half_y};
     }
 
@@ -42,7 +42,9 @@ class MouseListener extends events.EventEmitter {
     mouse_down(event) {
         if (!this.font) return;
         const {x, y, half_y} = this.get_xy(event);
+        const is_legal = (x >= 0 && x < doc.columns && y >= 0 && y < doc.rows);
         if (event.altKey) {
+            if (!is_legal) return;
             const block = doc.get_half_block(x, half_y);
             if (block.is_blocky) {
                 palette[(event.button == 0) ? "fg" : "bg"] = block.is_top ? block.upper_block_color : block.lower_block_color;
@@ -57,7 +59,7 @@ class MouseListener extends events.EventEmitter {
         } else if (event.button == 2) {
             this.button = buttons.RIGHT;
         }
-        this.emit("down", x, y, half_y, this.button, event.shiftKey);
+        this.emit("down", x, y, half_y, is_legal, this.button, event.shiftKey);
         this.last = {x, y, half_y};
     }
 
@@ -70,16 +72,17 @@ class MouseListener extends events.EventEmitter {
     mouse_move(event) {
         if (!this.font) return;
         const {x, y, half_y} = this.get_xy(event);
+        const is_legal = (x >= 0 && x < doc.columns && y >= 0 && y < doc.rows);
         if (this.x == x && this.y == y && this.half_y == half_y) return;
         if (this.drawing) {
             if (!this.same_as_last(x, y, half_y)) {
-                this.emit("draw", x, y, half_y, this.button, event.shiftKey);
+                this.emit("draw", x, y, half_y, is_legal, this.button, event.shiftKey);
                 this.store(x, y, half_y);
             }
         } else if (this.started) {
             if (!this.same_as_last(x, y, half_y)) this.emit("to", x, y, half_y, this.button);
         } else {
-            this.emit("move", x, y, half_y);
+            this.emit("move", x, y, half_y, is_legal);
         }
     }
 
@@ -106,7 +109,7 @@ class MouseListener extends events.EventEmitter {
         this.drawing = false;
         doc.on("render", () => this.set_dimensions(doc.columns, doc.rows, doc.font));
         document.addEventListener("DOMContentLoaded", (event) => {
-            document.getElementById("canvas_container").addEventListener("mousedown", (event) => this.mouse_down(event), true);
+            document.getElementById("viewport").addEventListener("mousedown", (event) => this.mouse_down(event), true);
             document.body.addEventListener("mousemove", (event) => this.mouse_move(event), true);
             document.body.addEventListener("mouseup", (event) => this.mouse_up(event), true);
             document.body.addEventListener("mouseout", (event) => this.mouse_out(event), true);

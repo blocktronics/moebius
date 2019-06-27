@@ -3,6 +3,7 @@ const {tools} = require("../ui/ui");
 const {toolbar} = require("../ui/ui");
 const mouse = require("../input/mouse");
 const palette = require("../palette");
+const {msg_box} = require("../../senders");
 let enabled = false;
 
 tools.on("start", (mode) => {
@@ -15,6 +16,10 @@ function fill(x, y, col) {
     if (block.is_blocky) {
         const target_color = block.is_top ? block.upper_block_color : block.lower_block_color;
         if (target_color == col) return;
+        if (doc.connection) {
+            const choice = msg_box("Fill", "Using fill whilst connected to a server is a potentially destructive operation. Are you sure?", {type: "question", buttons: ["Perform Fill", "Cancel"], defaultId: 1, cancelId: 1});
+            if (choice == 1) return;
+        }
         doc.start_undo();
         const queue = [{to: {x, y}, from: {x, y}}];
         while (queue.length) {
@@ -45,14 +50,14 @@ function fill(x, y, col) {
     }
 }
 
-mouse.on("down", (x, y, half_y, button, shift_key) => {
-    if (!enabled) return;
+mouse.on("down", (x, y, half_y, is_legal, button, shift_key) => {
+    if (!enabled || !is_legal) return;
     const {fg, bg} = palette;
     const col = (button == mouse.buttons.LEFT) ? fg : bg;
     fill(x, half_y, shift_key ? 0 : col);
 });
 
-mouse.on("move", (x, y) => {
-    if (!enabled) return;
+mouse.on("move", (x, y, half_y, is_legal) => {
+    if (!enabled || !is_legal) return;
     toolbar.set_sample(x, y);
 });

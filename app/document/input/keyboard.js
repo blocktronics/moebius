@@ -5,7 +5,7 @@ const doc = require("../doc");
 
 class KeyboardEvent extends events.EventEmitter {
     chat(text) {
-        if (doc.connection) doc.connection.chat(text);
+        if (doc.connection && text) doc.connection.chat(text);
     }
 
     ctrl_key(event) {
@@ -114,7 +114,21 @@ class KeyboardEvent extends events.EventEmitter {
                 this.emit("next_foreground_color");
                 event.preventDefault();
                 return;
-        }
+            case "KeyI":
+                if (event.shiftKey) {
+                    this.emit("insert_column");
+                } else {
+                    this.emit("insert_row");
+                }
+                return;
+            case "KeyY":
+                if (event.shiftKey) {
+                    this.emit("delete_column");
+                } else {
+                    this.emit("delete_row");
+                }
+                return;
+            }
     }
 
     meta_key(event) {
@@ -284,6 +298,27 @@ class KeyboardEvent extends events.EventEmitter {
         }
     }
 
+    ctrl_and_alt(event) {
+        switch (event.code) {
+            case "ArrowLeft":
+                doc.scroll_left();
+                event.preventDefault();
+                return;
+            case "ArrowUp":
+                doc.scroll_up();
+                event.preventDefault();
+                return;
+            case "ArrowRight":
+                doc.scroll_right();
+                event.preventDefault();
+                return;
+            case "ArrowDown":
+                doc.scroll_down();
+                event.preventDefault();
+                return;
+        }
+    }
+
     keydown(event) {
         if (document.activeElement == this.chat_input) {
             if (event.code == "Enter" || event.code == "NumpadEnter" && this.chat_input.value){
@@ -291,13 +326,15 @@ class KeyboardEvent extends events.EventEmitter {
                 this.chat_input.value = "";
             }
         } else if (event.ctrlKey && !event.altKey && !event.metaKey) {
-            this.ctrl_key(event, this.emit);
+            this.ctrl_key(event);
         } else if (event.altKey && !event.ctrlKey && !event.metaKey) {
-            this.alt_key(event, this.emit);
+            this.alt_key(event);
         } else if (event.metaKey && !event.ctrlKey && !event.altKey) {
-            this.meta_key(event, this.emit);
+            this.meta_key(event);
+        } else if (event.ctrlKey && event.altKey && !event.metaKey) {
+            this.ctrl_and_alt(event);
         } else if (!event.ctrlKey && !event.altKey && !event.metaKey) {
-            this.key_typed(event, this.emit, this.use_numpad);
+            this.key_typed(event);
         }
     }
 

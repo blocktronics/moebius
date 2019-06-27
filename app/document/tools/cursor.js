@@ -6,6 +6,7 @@ const palette = require("../palette");
 const keyboard = require("../input/keyboard");
 const {statusbar} = require("../ui/ui");
 const clipboard = require("./clipboard");
+const {toolbar} = require("../ui/ui");
 
 class Cursor {
     draw() {
@@ -189,13 +190,17 @@ class Cursor {
         this.height = font.height;
         this.canvas.width = this.width;
         this.canvas.height = this.height;
-        this.move_to(this.x, this.y);
+        this.move_to(this.x, this.y, false);
     }
 
     new_render() {
         this.resize_to_font();
         if (this.mode == modes.OPERATION) this.redraw_operation_blocks();
-        this.draw();
+        if (this.x >= doc.columns || this.y >= doc.rows) {
+            this.move_to(Math.min(this.x, doc.columns - 1), Math.min(this.y, doc.rows - 1));
+        } else {
+            this.draw();
+        }
     }
 
     start_selection_mode() {
@@ -248,7 +253,6 @@ class Cursor {
         this.set_operation_mode({...doc.get_blocks(sx, sy, dx, dy), is_move_operation});
         if (is_move_operation) doc.erase(sx, sy, dx, dy);
         this.move_to(sx, sy);
-        this.draw();
     }
 
     erase() {
@@ -486,6 +490,10 @@ class Cursor {
         on("right_justify_line", (event, value) => this.right_justify_line());
         on("center_line", (event, value) => this.center_line());
         on("erase_line", (event, value) => this.erase_line());
+        keyboard.on("insert_row", () => doc.insert_row(this.y));
+        keyboard.on("delete_row", () => doc.delete_row(this.y));
+        keyboard.on("insert_column", () => doc.insert_column(this.x));
+        keyboard.on("delete_column", () => doc.delete_column(this.x));
         ["left", "right", "up", "down", "page_up", "page_down", "start_of_row", "end_of_row", "tab", "reverse_tab"].map((event) => {
             keyboard.on(event, () => {
                 if (!this.hidden) this[event]();
@@ -496,6 +504,7 @@ class Cursor {
         on("place", (event, value) => this.place());
         on("crop", (event, value) => this.crop());
         keyboard.on("key_typed", (code) => this.key_typed(code));
+        toolbar.on("key_typed", (code) => this.key_typed(code));
         keyboard.on("backspace", () => this.backspace());
         keyboard.on("delete_key", () => this.delete_key());
         keyboard.on("f_key", (num) => this.f_key(num));

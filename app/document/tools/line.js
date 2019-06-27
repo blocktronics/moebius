@@ -36,9 +36,10 @@ function draw_line_overlay(x, y, col) {
     for (const coord of coords) overlay.fill_rect((coord.x - sx) * font.width, (coord.y - sy) * font.height, font.width, font.height);
 }
 
-mouse.on("down",(x, y, half_y, button, shift_key) => {
+mouse.on("down",(x, y, half_y, is_legal, button, shift_key) => {
     if (!enabled) return;
     clear = shift_key;
+    if (overlay && !overlay.destroyed) overlay.destroy();
     overlay = new Overlay();
     mouse.record_start();
 });

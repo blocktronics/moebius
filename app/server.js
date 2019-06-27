@@ -70,7 +70,7 @@ class Joint {
         case action.CHAT:
             if (this.data_store[msg.data.id].user.nick != msg.data.nick) this.data_store[msg.data.id].user.nick = msg.data.nick;
             if (this.data_store[msg.data.id].user.group != msg.data.group) this.data_store[msg.data.id].user.group = msg.data.group;
-            this.chat_history.push({id: msg.data.id, nick: msg.data.nick, group: msg.data.group, text: msg.data.text});
+            this.chat_history.push({id: msg.data.id, nick: msg.data.nick, group: msg.data.group, text: msg.data.text, time: Date.now()});
             if (this.chat_history.length > 32) this.chat_history.shift();
             this.send_all(ws, msg.type, msg.data);
         break;

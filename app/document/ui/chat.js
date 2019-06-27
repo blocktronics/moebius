@@ -6,6 +6,7 @@ const {send} = require("../../senders");
 require("linkifyjs/plugins/ticket")(require("linkifyjs"));
 const linkify_string = require("linkifyjs/string");
 let last_height = 240;
+let last_date;
 
 function $(name) {
     return document.getElementById(name);
@@ -113,7 +114,18 @@ class ChatUI extends events.EventEmitter {
         this.append(msg_div);
     }
 
+
+    update_date(time = Date.now()) {
+        const date = new Date(time);
+        const date_text = date.toDateString();
+        if (date_text != last_date) {
+            last_date = date_text;
+            this.append(this.create_div({classname: "date", text: date_text}), false);
+        }
+    }
+
     action(id, text) {
+        this.update_date();
         this.append(this.create_div({classname: "nick", text: `${this.users[id].nick} has ${text}`}));
     }
 
@@ -147,22 +159,29 @@ class ChatUI extends events.EventEmitter {
     }
 
     join(id, nick, group, status, show_join = true) {
-        this.users[id] = {nick, group, status, element: this.create_div({text: nick, parent: $("user_list")})};
-        this.users[id].element.addEventListener("click", (event) => this.emit("goto_user", id), false);
+        if (nick) {
+            this.users[id] = {nick, group, status, element: this.create_div({text: nick, parent: $("user_list")})};
+            this.users[id].element.addEventListener("click", (event) => this.emit("goto_user", id), false);
+        } else {
+            this.users[id] = {nick: "Guest", undefined, status, element: this.create_div({text: "Guest", classname: "guest", parent: $("user_list")})};
+        }
         if (show_join) this.action(id, "joined");
         this.status(id, status);
     }
 
-    leave(id) {
-        this.action(id, "left");
+    remove_user(id) {
         $("user_list").removeChild(this.users[id].element);
         delete this.users[id];
     }
 
+    leave(id) {
+        this.action(id, "left");
+        this.remove_user(id);
+    }
+
     welcome(comments, chat_history) {
-        const element = $("user_list");
-        while (element.firstChild) element.removeChild(element.firstChild);
-        for (const chat of chat_history) this.chat(chat.id, chat.nick, chat.group, chat.text);
+        for (const id of Object.keys(this.users)) this.remove_user(id);
+        for (const chat of chat_history) this.chat(chat.id, chat.nick, chat.group, chat.text, chat.time);
         const text = comments.split("\n")[0];
         if (text.length) this.append(this.create_div({classname: "welcome", text, linkify: true}), false);
     }
@@ -172,18 +191,25 @@ class ChatUI extends events.EventEmitter {
         send("enable_chat_window_toggle");
     }
 
-    mouse_down(event) {
-        this.mouse_button = true;
-    }
-
-    chat(id, nick, group, text) {
+    chat(id, nick, group, text, time) {
         if (this.users[id] && this.users[id].element.nick != nick) this.users[id].element.innerText = nick;
         const nick_div = this.create_div({classname: "nick", text: `${nick} <${group}>`});
         const text_div = this.create_div({classname: "text", text, linkify: true});
         const container = this.create_div();
+        if (time) {
+            this.update_date(time);
+            const date = new Date(time);
+            const text = `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
+            container.appendChild(this.create_div({classname: "time", text}));
+        }
         container.appendChild(nick_div);
         container.appendChild(text_div);
         this.append(container, false);
+    }
+
+    mouse_down(event) {
+        this.mouse_button = true;
+        $("chat_resizer").classList.add("active");
     }
 
     mouse_move(event) {
@@ -198,6 +224,7 @@ class ChatUI extends events.EventEmitter {
 
     mouse_up() {
         this.mouse_button = false;
+        $("chat_resizer").classList.remove("active");
     }
 
     constructor() {

@@ -2,6 +2,7 @@ const {convert_ega_to_style} = require("../../libtextmode/libtextmode");
 
 class Overlay {
     constructor() {
+        this.destroyed = false;
         this.canvas = document.createElement("canvas");
         this.ctx = this.canvas.getContext("2d");
         document.getElementById("editing_layer").appendChild(this.canvas);
@@ -21,6 +22,7 @@ class Overlay {
     }
 
     destroy() {
+        this.destroyed = true;
         document.getElementById("editing_layer").removeChild(this.canvas);
     }
 

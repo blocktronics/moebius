@@ -34,8 +34,8 @@ function select_all() {
 on("select_all", (event) => select_all());
 keyboard.on("select_all", () => select_all());
 
-function mouse_down(x, y) {
-    if (!enabled) return;
+function mouse_down(x, y, half_y, is_legal) {
+    if (!enabled || !is_legal) return;
     switch (cursor.mode) {
     case cursor.modes.EDITING:
         mouse.record_start();
@@ -55,6 +55,8 @@ function mouse_down(x, y) {
 
 function mouse_to(x, y) {
     if (!enabled) return;
+    x = Math.max(Math.min(doc.columns - 1, x), 0);
+    y = Math.max(Math.min(doc.rows - 1, y), 0);
     switch (cursor.mode) {
     case cursor.modes.EDITING:
         cursor.start_selection_mode();
@@ -68,6 +70,8 @@ function mouse_to(x, y) {
 
 function mouse_move(x, y) {
     if (!enabled) return;
+    x = Math.max(Math.min(doc.columns - 1, x), 0);
+    y = Math.max(Math.min(doc.rows - 1, y), 0);
     if (cursor.mode == cursor.modes.OPERATION) cursor.move_to(x, y, false);
 }
 

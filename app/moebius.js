@@ -103,7 +103,7 @@ function open(win) {
     electron.dialog.showOpenDialog(open_in_new_window(win) ? undefined : win, {filters: [{name: "TextArt", extensions: ["ans", "xb", "bin", "diz", "asc", "txt", "nfo"]}, {name: "All Files", extensions: ["*"]}], properties: ["openFile", "multiSelections"]}, (files) => {
         if (!files) return;
         for (const file of files) {
-            if (win && !docs[win.id].file && !check_if_file_is_already_open(file)) {
+            if (win && !check_if_file_is_already_open(file) && !open_in_new_window(win)) {
                 win.send("open_file", file);
                 docs[win.id].file = file;
             } else {
@@ -117,7 +117,7 @@ menu.on("open", open);
 electron.ipcMain.on("open", (event) => open());
 
 async function preferences() {
-    const preferences = await window.static("app/html/preferences.html", {width: 480, height: 445});
+    const preferences = await window.static("app/html/preferences.html", {width: 480, height: 475});
     preferences.send("prefs", prefs.get_all());
 }
 menu.on("preferences", preferences);

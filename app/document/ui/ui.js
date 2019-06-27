@@ -4,6 +4,7 @@ const doc = require("../doc");
 const palette = require("../palette");
 const keyboard = require("../input/keyboard");
 const events = require("events");
+const FKEYS = [176, 177, 178, 219, 223, 220, 221, 222, 254, 249];
 let interval;
 
 function $(name) {
@@ -44,6 +45,37 @@ on("clear_reference_image", (event) => clear_reference_image());
 function set_text(name, text) {
     $(name).textContent = text;
 }
+
+function toggle_smallscale_guide(visible) {
+    if (visible) {
+        $("smallscale_guide").classList.remove("hidden");
+        send("check_smallscale_guide");
+    } else {
+        $("smallscale_guide").classList.add("hidden");
+        send("uncheck_smallscale_guide");
+    }
+}
+
+function rescale_smallscale_guide() {
+    $("smallscale_guide").style.width = `${doc.render.font.width * Math.min(doc.columns, 80)}px`;
+    $("smallscale_guide").style.height = `${doc.render.font.height * Math.min(doc.rows, 25)}px`;
+    if (doc.columns >= 80) {
+        $("smallscale_guide").classList.add("guide_column");
+    } else {
+        $("smallscale_guide").classList.remove("guide_column");
+    }
+    if (doc.rows >= 25) {
+        $("smallscale_guide").classList.add("guide_row");
+    } else {
+        $("smallscale_guide").classList.remove("guide_row");
+    }
+}
+
+on("toggle_smallscale_guide", (event, visible) => toggle_smallscale_guide(visible));
+on("smallscale_guide", (event, visible) => {
+    toggle_smallscale_guide(visible);
+});
+doc.on("render", () => rescale_smallscale_guide());
 
 class StatusBar {
     status_bar_info(columns, rows) {
@@ -197,6 +229,7 @@ class Tools extends events.EventEmitter {
             case this.modes.BRUSH: return $("brush_mode");
             case this.modes.LINE: return $("line_mode");
             case this.modes.RECTANGLE: return $("rectangle_mode");
+            case this.modes.ELLIPSE: return $("ellipse_mode");
             case this.modes.FILL: return $("fill_mode");
             case this.modes.SAMPLE: return $("sample_mode");
         }
@@ -217,7 +250,7 @@ class Tools extends events.EventEmitter {
 
     constructor() {
         super();
-        this.modes = {SELECT: 0, BRUSH: 1, LINE: 2, RECTANGLE: 3, FILL: 4, SAMPLE: 5};
+        this.modes = {SELECT: 0, BRUSH: 1, LINE: 2, RECTANGLE: 3, ELLIPSE: 5, FILL: 6, SAMPLE: 7};
         on("change_to_select_mode", (event) => this.start(this.modes.SELECT));
         on("change_to_brush_mode", (event) => this.start(this.modes.BRUSH));
         document.addEventListener("DOMContentLoaded", (event) => {
@@ -225,13 +258,14 @@ class Tools extends events.EventEmitter {
             $("brush_mode").addEventListener("mousedown", (event) => this.start(this.modes.BRUSH), true);
             $("line_mode").addEventListener("mousedown", (event) => this.start(this.modes.LINE), true);
             $("rectangle_mode").addEventListener("mousedown", (event) => this.start(this.modes.RECTANGLE), true);
+            $("ellipse_mode").addEventListener("mousedown", (event) => this.start(this.modes.ELLIPSE), true);
             $("fill_mode").addEventListener("mousedown", (event) => this.start(this.modes.FILL), true);
             $("sample_mode").addEventListener("mousedown", (event) => this.start(this.modes.SAMPLE), true);
         });
     }
 }
 
-class Toolbar {
+class Toolbar extends events.EventEmitter {
     set_color(name, index, font) {
         const canvas = document.getElementById(name);
         const ctx = canvas.getContext("2d");
@@ -254,7 +288,7 @@ class Toolbar {
     }
 
     redraw_fkeys() {
-        for (let i = 0; i < 10; i++) this.draw_fkey(`f${i + 1}`, [176, 177, 178, 219, 223, 220, 221, 222, 254, 249][i]);
+        for (let i = 0; i < 10; i++) this.draw_fkey(`f${i + 1}`, FKEYS[i]);
     }
 
     show_select() {
@@ -276,6 +310,10 @@ class Toolbar {
         $("select_panel").classList.add("hidden");
         $("brush_panel").classList.add("hidden");
         $("sample_panel").classList.remove("hidden");
+    }
+
+    fkey_clicker(i) {
+        return (event) => this.emit("key_typed", FKEYS[i]);
     }
 
     change_mode(new_mode) {
@@ -318,6 +356,7 @@ class Toolbar {
     }
 
     constructor() {
+        super();
         this.modes = {HALF_BLOCK: 0, FULL_BLOCK: 1, SHADING_BLOCK: 2, CLEAR_BLOCK: 3, COLORIZE: 4};
         this.colorize_fg = true;
         this.colorize_bg = false;
@@ -335,6 +374,7 @@ class Toolbar {
             sample_block.style.margin = `${(48 - font.height * 2 - 2) / 2}px`;
         });
         document.addEventListener("DOMContentLoaded", (event) => {
+            for (let i = 0; i < 10; i++) $(`f${i + 1}`).addEventListener("mousedown", this.fkey_clicker(i), true);
             $("half_block").addEventListener("mousedown", (event) => this.change_mode(this.modes.HALF_BLOCK));
             $("full_block").addEventListener("mousedown", (event) => this.change_mode(this.modes.FULL_BLOCK));
             $("shading_block").addEventListener("mousedown", (event) => this.change_mode(this.modes.SHADING_BLOCK));

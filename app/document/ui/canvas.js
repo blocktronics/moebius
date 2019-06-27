@@ -1,4 +1,5 @@
 const doc = require("../doc");
+const chat = require("./chat");
 let interval, render;
 let mouse_button = false;
 
@@ -58,6 +59,8 @@ function update_frame() {
         if (top > preview_height + preview.scrollTop - height - 2) preview.scrollTop = top - preview_height + height + 2;
     }
 }
+
+chat.on("update_frame", () => update_frame());
 
 function add(new_render) {
     hide("view_frame");

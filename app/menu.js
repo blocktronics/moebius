@@ -124,6 +124,8 @@ function edit_menu_template(win, chat) {
             {label: "Toggle Insert Mode", id: "toggle_insert_mode", accelerator: darwin ? "" : "Insert", click(item) {win.send("insert_mode", item.checked);}, type: "checkbox", checked: false},
             {label: "Toggle Overwrite Mode", id: "overwrite_mode", accelerator: "CmdorCtrl+Alt+O", click(item) {win.send("overwrite_mode", item.checked);}, type: "checkbox", checked: false},
             {type: "separator"},
+            {label: "Mirror Mode", id: "mirror_mode", accelerator: "CmdorCtrl+Alt+M", click(item) {win.send("mirror_mode", item.checked);}, type: "checkbox", checked: false},
+            {type: "separator"},
             chat ? {label: "Cut", accelerator: "Cmd+X", role: "cut"} : {label: "Cut", id: "cut", accelerator: "CmdorCtrl+X", click(item) {win.send("cut");}, enabled: false},
             chat ? {label: "Copy", accelerator: "Cmd+C", role: "copy"} : {label: "Copy", id: "copy", accelerator: "CmdorCtrl+C", click(item) {win.send("copy");}, enabled: false},
             chat ? {label: "Paste", accelerator: "Cmd+V", role: "paste"} : {label: "Paste", id: "paste", accelerator: "CmdorCtrl+V", click(item) {win.send("paste");}, enabled: true},
@@ -183,6 +185,8 @@ function view_menu_template(win) {
             {label: "Zoom Out", id: "zoom_out", accelerator: "CmdorCtrl+-", click(item) {win.send("zoom_out");}},
             {type: "separator"},
             {label: "Change Font", submenu: font_menu_items(win)},
+            {type: "separator"},
+            {label: "Toggle 80×25 Guides", id: "smallscale_guide", click(item) {win.send("toggle_smallscale_guide", item.checked);}, type: "checkbox", checked: false},
             {type: "separator"},
             {label: "Open Reference Image\u2026", id: "open_reference_image", accelerator: "CmdorCtrl+Shift+O", click(item) {win.send("open_reference_image");}},
             {label: "Toggle Reference Image", id: "toggle_reference_image", accelerator: "Ctrl+Tab", click(item) {win.send("toggle_reference_image", item.checked);}, enabled: false, type: "checkbox", checked: true},
@@ -426,6 +430,9 @@ electron.ipcMain.on("uncheck_underneath", (event, {id}) => uncheck(id, "undernea
 electron.ipcMain.on("check_underneath", (event, {id}) => check(id, "underneath"));
 electron.ipcMain.on("uncheck_over", (event, {id}) => uncheck(id, "over"));
 electron.ipcMain.on("check_over", (event, {id}) => check(id, "over"));
+
+electron.ipcMain.on("uncheck_smallscale_guide", (event, {id}) => uncheck(id, "smallscale_guide"));
+electron.ipcMain.on("check_smallscale_guide", (event, {id}) => check(id, "smallscale_guide"));
 
 electron.ipcMain.on("enable_chat_window_toggle", (event, {id}) => {
     enable(id, "chat_window_toggle");

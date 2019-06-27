@@ -408,4 +408,4 @@ function export_as_png(doc, render, file) {
     fs.writeFileSync(file, base64_string, "base64");
 }
 
-module.exports = {read_bytes, read_file, write_file, animate, render, render_split, render_at, new_document, resize_canvas, cp437_to_unicode, cp437_to_unicode_bytes, unicode_to_cp437, render_blocks, merge_blocks, flip_x, flip_y, rotate, get_data_url, convert_ega_to_style, compress, uncompress, get_blocks, export_as_png};
+module.exports = {read_bytes, read_file, write_file, animate, render, render_split, render_at, new_document, resize_canvas, cp437_to_unicode, cp437_to_unicode_bytes, unicode_to_cp437, render_blocks, merge_blocks, flip_code_x, flip_x, flip_y, rotate, get_data_url, convert_ega_to_style, compress, uncompress, get_blocks, export_as_png};
