@@ -5,7 +5,7 @@
   "main": "app/moebius.js",
   "scripts": {
     "start": "electron .",
-    "build-script": "browserify build/script.js -o server/script.js",
+    "build-script": "browserify app/web_client/script.js -o server/script.js",
     "build": "node_modules/.bin/build -mwl",
     "build-mac": "node_modules/.bin/build -m",
     "build-win": "node_modules/.bin/build -w",
@@ -15,7 +15,7 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "browserify": "^16.2.3",
-    "electron": "^5.0.5",
+    "electron": "^5.0.6",
     "electron-builder": "^20.44.4",
     "express": "^4.17.1"
   },

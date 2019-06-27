@@ -1,4 +1,3 @@
-const electron = require("electron");
 const {on, send, send_sync, msg_box, save_box} = require("./senders");
 const doc = require("./document/doc");
 const {tools} = require("./document/ui/ui");

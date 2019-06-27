@@ -182,14 +182,6 @@ class Connection extends events.EventEmitter {
         this.emit("disconnected");
     }
 
-    queue(data) {
-        if (this.ready) {
-            this.incoming(data);
-        } else {
-            this.queued_messages.push(data);
-        }
-    }
-
     join(id, nick, group, status, show_join = true) {
         if (id == this.id || nick == undefined) {
             this.users[id] = {nick, group, status};

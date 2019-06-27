@@ -1,415 +1,7 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
-const libtextmode = require("../js/libtextmode/libtextmode");
-const fs = require("fs");
-let render, interval, mouse_button;
-
-const cursor_modes = {EDITING: 0, SELECTION: 1, OPERATION: 2};
-
-function send(channel, opts) {
-    electron.ipcRenderer.send(channel, {id: electron.remote.getCurrentWindow().id, ...opts});
-}
-
-function update_status_bar_cursor_pos(x, y) {
-    document.getElementById("cursor_x").textContent = `${x + 1}`;
-    document.getElementById("cursor_y").textContent = `${y + 1}`;
-}
-
-function update_columns_and_rows(columns, rows) {
-    document.getElementById("columns").textContent = `${columns}`;
-    document.getElementById("rows").textContent = `${rows}`;
-    document.getElementById("columns_s").textContent = (columns > 1) ? "s" : "";
-    document.getElementById("rows_s").textContent = (rows > 1) ? "s" : "";
-}
-
-class Cursor {
-    draw() {
-        const ctx = this.canvas.getContext("2d");
-        switch (this.mode) {
-            case cursor_modes.EDITING:
-                if (!this.flashing) {
-                    ctx.globalCompositeOperation = "source-over";
-                    ctx.drawImage(render.ice_color_collection[Math.floor(this.y / render.maximum_rows)], this.x * render.font.width, (this.y % render.maximum_rows) * render.font.height, render.font.width, render.font.height, 0, 0, render.font.width, render.font.height);
-                    ctx.globalCompositeOperation = "difference";
-                    render.font.draw_cursor(ctx, 0, render.font.height - 2);
-                }
-            break;
-            case cursor_modes.SELECTION:
-                ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                break;
-        }
-    }
-
-    reorientate_selection() {
-        const reorientated_selection = {sx: 0, sy: 0, dx: 0, dy: 0};
-        if (this.selection.dx < this.selection.sx) {
-            reorientated_selection.sx = this.selection.dx;
-            reorientated_selection.dx = this.selection.sx;
-        } else {
-            reorientated_selection.sx = this.selection.sx;
-            reorientated_selection.dx = this.selection.dx;
-        }
-        if (this.selection.dy < this.selection.sy) {
-            reorientated_selection.sy = this.selection.dy;
-            reorientated_selection.dy = this.selection.sy;
-        } else {
-            reorientated_selection.sy = this.selection.sy;
-            reorientated_selection.dy = this.selection.dy;
-        }
-        return reorientated_selection;
-    }
-
-    move_to(x, y, scroll_view = false) {
-        this.x = x; this.y = y;
-        if (this.user) update_status_bar_cursor_pos(this.x, this.y);
-        switch (this.mode) {
-            case cursor_modes.EDITING:
-                this.canvas.style.left = `${x * render.font.width}px`;
-                this.canvas.style.top = `${y * render.font.height}px`;
-                this.canvas.style.width = `${render.font.width}px`;
-                this.canvas.style.height = `${render.font.height}px`;
-                if (this.connection) this.connection.cursor(x, y);
-                break;
-            case cursor_modes.SELECTION:
-                this.selection.dx = x;
-                this.selection.dy = y;
-                const {sx, sy, dx, dy} = this.reorientate_selection();
-                this.canvas.style.left = `${sx * render.font.width}px`;
-                this.canvas.style.top = `${sy * render.font.height}px`;
-                this.canvas.style.width = `${(dx - sx + 1) * render.font.width}px`;
-                this.canvas.style.height = `${(dy - sy + 1) * render.font.height}px`;
-                if (this.connection) this.connection.selection(x, y);
-                if (this.user) update_columns_and_rows(dx - sx + 1, dy - sy + 1);
-                break;
-            case cursor_modes.OPERATION:
-                this.canvas.style.left = `${x * render.font.width}px`;
-                this.canvas.style.top = `${y * render.font.height}px`;
-                if (this.connection) this.connection.operation(x, y);
-                break;
-        }
-        this.draw();
-        if (scroll_view) {
-            const cursor_top = render.font.height * this.y;
-            const cursor_left = render.font.width * this.x;
-            const viewport = document.getElementById("viewport");
-            const viewport_rect = viewport.getBoundingClientRect();
-            if (viewport.scrollTop > cursor_top) {
-                viewport.scrollTop = cursor_top;
-            } else {
-                const bottom_of_view = viewport.scrollTop + viewport_rect.height;
-                const cursor_bottom = render.font.height * (this.y + 1) + 1;
-                if (bottom_of_view < cursor_bottom) viewport.scrollTop = cursor_bottom - viewport_rect.height;
-            }
-            if (viewport.scrollLeft > cursor_left) {
-                viewport.scrollLeft = cursor_left;
-            } else {
-                const right_of_view = viewport.scrollLeft + viewport_rect.width - 2;
-                const cursor_farthest_right = render.font.width * this.x + render.font.width - 1;
-                if (right_of_view < cursor_farthest_right) viewport.scrollLeft = cursor_farthest_right - viewport_rect.width + 2;
-            }
-        }
-    }
-
-    left() {
-        if (this.x > 0) this.move_to(this.x - 1, this.y, true);
-    }
-
-    up() {
-        if (this.y > 0) this.move_to(this.x, this.y - 1, true);
-    }
-
-    right() {
-        if (this.x < render.columns - 1) this.move_to(this.x + 1, this.y, true);
-    }
-
-    down() {
-        if (this.y < render.rows - 1) this.move_to(this.x, this.y + 1, true);
-    }
-
-    new_line() {
-        this.move_to(0, Math.min(render.rows - 1, this.y + 1), true);
-    }
-
-    start_of_row() {
-        if (this.x > 0) this.move_to(0, this.y, true);
-    }
-
-    end_of_row() {
-        if (this.x < render.columns - 1) this.move_to(render.columns - 1, this.y, true);
-    }
-
-    page_up() {
-        if (this.y > 0) this.move_to(this.x, Math.max(this.y - Math.floor(document.getElementById("viewport").getBoundingClientRect().height / render.font.height), 0), true);
-    }
-
-    page_down() {
-        if (this.y < render.rows - 1) this.move_to(this.x, Math.min(this.y + Math.floor(document.getElementById("viewport").getBoundingClientRect().height / render.font.height), render.rows - 1), true);
-    }
-
-    resize_to_font() {
-        this.canvas.width = render.font.width;
-        this.canvas.height = render.font.height;
-        this.move_to(this.x, this.y);
-    }
-
-    show() {
-        if (this.hidden) {
-            document.getElementById("editing_layer").appendChild(this.canvas);
-            this.hidden = false;
-            if (this.connection) this.connection.cursor(this.x, this.y);
-        }
-    }
-
-    hide() {
-        if (!this.hidden) {
-            document.getElementById("editing_layer").removeChild(this.canvas);
-            this.hidden = true;
-            if (this.connection) this.connection.hide_cursor();
-            if (this.user && this.mode != cursor_modes.EDITING) update_columns_and_rows(render.columns, render.rows);
-        }
-    }
-
-    start_using_selection_border() {
-        this.selection = {sx: this.x, sy: this.y};
-        this.canvas.classList.add("selection");
-        this.mode = cursor_modes.SELECTION;
-    }
-
-    stop_using_selection_border() {
-        this.mode = cursor_modes.EDITING;
-        this.x = this.selection.sx; this.y = this.selection.sy;
-        this.canvas.classList.remove("selection");
-        this.resize_to_font();
-    }
-
-    start_selection_mode() {
-        send("enable_selection_menu_items");
-        this.start_using_selection_border();
-        send("show_selection_touchbar");
-    }
-
-    start_editing_mode() {
-        switch (this.mode) {
-            case cursor_modes.EDITING:
-                send("show_editing_touchbar");
-                break;
-            case cursor_modes.SELECTION:
-                send("disable_selection_menu_items");
-                this.stop_using_selection_border();
-                send("show_editing_touchbar");
-                if (this.user) update_columns_and_rows(render.columns, render.rows);
-                break;
-            case cursor_modes.OPERATION:
-                send("disable_selection_menu_items");
-                send("disable_operation_menu_items");
-                this.mode = cursor_modes.EDITING;
-                this.canvas.classList.remove("selection");
-                this.resize_to_font();
-                send("show_editing_touchbar");
-                if (this.user) update_columns_and_rows(render.columns, render.rows);
-                break;
-        }
-    }
-
-    get_blocks_in_selection(data) {
-        if (this.mode == cursor_modes.SELECTION) {
-            const {sx, sy, dx, dy} = this.reorientate_selection();
-            const blocks = {columns: dx - sx + 1, rows: dy - sy + 1, data: []};
-            for (let y = sy; y <= dy; y++) {
-                for (let x = sx; x <= dx; x++) {
-                    blocks.data.push(Object.assign(data[y * render.columns + x]));
-                }
-            }
-            return blocks;
-        }
-    }
-
-    resize_selection(columns, rows) {
-        this.canvas.width = columns * render.font.width - 2; this.canvas.height = rows * render.font.height - 2;
-        this.canvas.style.width = `${this.canvas.width + 2}px`; this.canvas.style.height = `${this.canvas.height + 2}px`;
-        if (this.connection) this.connection.resize_selection(columns, rows);
-        if (this.user) update_columns_and_rows(columns, rows);
-    }
-
-    update_cursor_with_blocks(blocks) {
-        const canvas = libtextmode.render_blocks(blocks, render.font);
-        this.resize_selection(blocks.columns, blocks.rows);
-        this.canvas.getContext("2d").drawImage(canvas, 1, 1, canvas.width - 2, canvas.height - 2, 0, 0, canvas.width - 2, canvas.height - 2);
-    }
-
-    start_operation_mode(data, is_move_operation = false) {
-        if (this.mode == cursor_modes.SELECTION) {
-            send("disable_selection_menu_items_except_deselect_and_crop");
-            send("enable_operation_menu_items");
-            const blocks = this.get_blocks_in_selection(data);
-            this.update_cursor_with_blocks(blocks);
-            this.mode = cursor_modes.OPERATION;
-            const {sx, sy} = this.reorientate_selection();
-            this.move_to(sx, sy, true);
-            this.is_move_operation = is_move_operation;
-            send("show_operation_touchbar");
-            return blocks;
-        }
-    }
-
-    index() {
-        return render.columns * this.y + this.x;
-    }
-
-    appear_ghosted() {
-        this.canvas.classList.add("ghosted");
-    }
-
-    constructor(user = true) {
-        this.user = user;
-        this.canvas = document.createElement("canvas");
-        this.x = 0; this.y = 0;
-        this.mode = cursor_modes.EDITING;
-        this.hidden = true;
-        this.flashing = false;
-    }
-
-    set_flashing(value) {
-        if (this.flashing != value) {
-            this.flashing = value;
-            if (this.flashing) {
-                this.canvas.getContext("2d").clearRect(0, 0, this.canvas.width, this.canvas.height);
-                this.canvas.classList.add("flashing");
-            } else {
-                this.canvas.classList.remove("flashing");
-            }
-            this.draw();
-        }
-    }
-}
-
-function hide(id) {
-    document.getElementById(id).classList.add("hidden");
-}
-
-function show(id) {
-    document.getElementById(id).classList.remove("hidden");
-}
-
-function start_blinking() {
-    let vis_toggle = false;
-    document.getElementById("ice_color_container").style.display = "none";
-    document.getElementById("blink_off_container").style.removeProperty("display");
-    if (interval) clearInterval(interval);
-    interval = setInterval(() => {
-        if (vis_toggle) {
-            document.getElementById("blink_on_container").style.display = "none";
-            document.getElementById("blink_off_container").style.removeProperty("display");
-        } else {
-            document.getElementById("blink_off_container").style.display = "none";
-            document.getElementById("blink_on_container").style.removeProperty("display");
-        }
-        vis_toggle = !vis_toggle;
-    }, 300);
-}
-
-function stop_blinking() {
-    if (interval) clearInterval(interval);
-    document.getElementById("ice_color_container").style.removeProperty("display");
-    document.getElementById("blink_off_container").style.display = "none";
-    document.getElementById("blink_on_container").style.display = "none";
-}
-
-function update_frame() {
-    const viewport = document.getElementById("viewport");
-    const view_rect = viewport.getBoundingClientRect();
-    const view_frame = document.getElementById("view_frame");
-    if (render) {
-        const scale_factor = render.width / 260;
-        const width = Math.min(Math.ceil(view_rect.width / scale_factor), 260);
-        const height = Math.min(Math.ceil(view_rect.height / scale_factor), render.height / scale_factor);
-        const top = Math.ceil(viewport.scrollTop / scale_factor);
-        const left = Math.ceil(viewport.scrollLeft / scale_factor);
-        view_frame.style.width = `${width}px`;
-        view_frame.style.height = `${height}px`;
-        view_frame.style.top = `${top}px`;
-        view_frame.style.left = `${20 + left}px`;
-        if (top < preview.scrollTop) preview.scrollTop = top;
-        const preview_height = preview.getBoundingClientRect().height;
-        if (top > preview_height + preview.scrollTop - height - 2) preview.scrollTop = top - preview_height + height + 2;
-    }
-}
-
-function add(new_render) {
-    hide("view_frame");
-    const ice_color_container = document.getElementById("ice_color_container");
-    const blink_off_container = document.getElementById("blink_off_container");
-    const blink_on_container = document.getElementById("blink_on_container");
-    const preview = document.getElementById("preview");
-    if (render) {
-        for (const canvas of render.ice_color_collection) ice_color_container.removeChild(canvas);
-        for (const canvas of render.blink_off_collection) blink_off_container.removeChild(canvas);
-        for (const canvas of render.blink_on_collection) blink_on_container.removeChild(canvas);
-        for (const canvas of render.preview_collection) preview.removeChild(canvas);
-    }
-    render = new_render;
-    document.getElementById("canvas_container").style.width = `${render.width}px`;
-    document.getElementById("canvas_container").style.height = `${render.height}px`;
-    for (const canvas of render.ice_color_collection) ice_color_container.appendChild(canvas);
-    for (const canvas of render.blink_off_collection) blink_off_container.appendChild(canvas);
-    for (const canvas of render.blink_on_collection) blink_on_container.appendChild(canvas);
-    for (const canvas of render.preview_collection) preview.appendChild(canvas);
-    show("view_frame");
-    update_frame();
-}
-
-function update_with_mouse_pos(client_x, client_y) {
-    const preview = document.getElementById("preview");
-    const viewport = document.getElementById("viewport");
-    const preview_rect = preview.getBoundingClientRect();
-    const viewport_rect = viewport.getBoundingClientRect();
-    const x = client_x - preview_rect.left - 20 + preview.scrollLeft;
-    const y = client_y - preview_rect.top + preview.scrollTop;
-    const scale_factor = render.width / 260;
-    const half_view_width = viewport_rect.width / scale_factor / 2;
-    const half_view_height = viewport_rect.height / scale_factor / 2;
-    viewport.scrollLeft = Math.floor((x - half_view_width) * scale_factor);
-    viewport.scrollTop = Math.floor((y - half_view_height) * scale_factor);
-    update_frame();
-}
-
-function mouse_down(event) {
-    if (event.button == 0) {
-        mouse_button = true;
-        update_with_mouse_pos(event.clientX, event.clientY);
-    }
-}
-
-function mouse_move(event) {
-    if (mouse_button) update_with_mouse_pos(event.clientX, event.clientY);
-}
-
-function unregister_button(event) {
-    if (mouse_button) mouse_button = false;
-}
-
-function render_at(x, y, block) {
-    libtextmode.render_at(render, x, y, block);
-}
-
-window.addEventListener("DOMContentLoaded", (event) => {
-    document.getElementById("viewport").addEventListener("scroll", event => update_frame(), true);
-    window.addEventListener("resize", event => update_frame(), true);
-    document.getElementById("preview").addEventListener("mousedown", mouse_down, true);
-    document.getElementById("preview").addEventListener("mousemove", mouse_move, true);
-    preview.addEventListener("mouseup", unregister_button, true);
-    preview.addEventListener("mouseout", unregister_button, true);
-}, true);
-
-function export_as_png({file, ice_colors}) {
-    const base64_string = libtextmode.get_data_url(ice_colors ? render.ice_color_collection : render.blink_off_collection).split(";base64,").pop();
-    fs.writeFileSync(file, base64_string, "base64");
-}
-
-module.exports = {cursor_modes, Cursor, add, start_blinking, stop_blinking, export_as_png, render_at};
-
-},{"../js/libtextmode/libtextmode":6,"fs":13}],2:[function(require,module,exports){
 const {ega} = require("./palette");
 const {Textmode, add_sauce_for_ans} = require("./textmode");
+const {cp437_to_unicode_bytes} = require("./encodings");
 
 const sequence_type = {UNKNOWN: 0, UP: "A", DOWN: "B", RIGHT: "C", LEFT: "D", MOVE: "H", MOVE_ALT: "f", ERASE_DISPLAY: "J", ERASE_LINE: "K", SGR: "m", SAVE_POS: "s", TRUE_COLOR: "t", RESTORE_POS: "u"};
 const token_type = {ESCAPE_SEQUENCE: 0, LITERAL: 1};
@@ -841,7 +433,7 @@ function bin_to_ansi_colour(bin_colour) {
     }
 }
 
-function encode_as_ansi(doc) {
+function encode_as_ansi(doc, {utf8 = false} = {}) {
     let output = [27, 91, 48, 109];
     let bold = false;
     let blink = false;
@@ -907,15 +499,37 @@ function encode_as_ansi(doc) {
                 }
             }
         }
-        output.push(code);
+        if (code == 32 && bg == 0) {
+            for (let j = i; j < doc.data.length; j++) {
+                let {code: look_ahead_code, bg: look_ahead_bg} = doc.data[j];
+                if (look_ahead_code != 32 || look_ahead_bg != 0) {
+                    while (i < j) {
+                        output.push(32);
+                        i += 1;
+                    }
+                    i = j - 1;
+                    break;
+                }
+                if ((j + 1) % doc.columns == 0) {
+                    output.push(13, 10);
+                    i = j;
+                    break;
+                }
+            }
+        } else if (utf8) {
+            output.push.apply(output, cp437_to_unicode_bytes(code));
+        } else {
+            output.push(code);
+        }
     }
     const bytes = new Uint8Array(output);
+    if (utf8) return bytes;
     return add_sauce_for_ans({doc, bytes});
 }
 
 module.exports = {Ansi, encode_as_ansi};
 
-},{"./palette":7,"./textmode":8}],3:[function(require,module,exports){
+},{"./encodings":4,"./palette":7,"./textmode":8}],2:[function(require,module,exports){
 const {ega} = require("./palette");
 const {bytes_to_blocks, Textmode, add_sauce_for_bin} = require("./textmode");
 
@@ -949,7 +563,7 @@ function encode_as_bin(doc) {
 
 module.exports = {BinaryText, encode_as_bin};
 
-},{"./palette":7,"./textmode":8}],4:[function(require,module,exports){
+},{"./palette":7,"./textmode":8}],3:[function(require,module,exports){
 function create_canvas(width, height) {
     const canvas = document.createElement("canvas");
     canvas.width = width;
@@ -974,7 +588,351 @@ function join_canvases(canvases) {
 
 module.exports = {create_canvas, join_canvases};
 
-},{}],5:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
+(function (Buffer){
+function cp437_to_unicode(cp437) {
+    switch(cp437) {
+        case 1: return "\u263A";
+        case 2: return "\u263B";
+        case 3: return "\u2665";
+        case 4: return "\u2666";
+        case 5: return "\u2663";
+        case 6: return "\u2660";
+        case 7: return "\u2022";
+        case 8: return "\u25D8";
+        case 9: return "\u25CB";
+        case 10: return "\u25D9";
+        case 11: return "\u2642";
+        case 12: return "\u2640";
+        case 13: return "\u266A";
+        case 14: return "\u266B";
+        case 15: return "\u263C";
+        case 16: return "\u25BA";
+        case 17: return "\u25C4";
+        case 18: return "\u2195";
+        case 19: return "\u203C";
+        case 20: return "\u00B6";
+        case 21: return "\u00A7";
+        case 22: return "\u25AC";
+        case 23: return "\u21A8";
+        case 24: return "\u2191";
+        case 25: return "\u2193";
+        case 26: return "\u2192";
+        case 27: return "\u2190";
+        case 28: return "\u221F";
+        case 29: return "\u2194";
+        case 30: return "\u25B2";
+        case 31: return "\u25BC";
+        case 127: return "\u2302";
+        case 128: return "\u00C7";
+        case 129: return "\u00FC";
+        case 130: return "\u00E9";
+        case 131: return "\u00E2";
+        case 132: return "\u00E4";
+        case 133: return "\u00E0";
+        case 134: return "\u00E5";
+        case 135: return "\u00E7";
+        case 136: return "\u00EA";
+        case 137: return "\u00EB";
+        case 138: return "\u00E8";
+        case 139: return "\u00EF";
+        case 140: return "\u00EE";
+        case 141: return "\u00EC";
+        case 142: return "\u00C4";
+        case 143: return "\u00C5";
+        case 144: return "\u00C9";
+        case 145: return "\u00E6";
+        case 146: return "\u00C6";
+        case 147: return "\u00F4";
+        case 148: return "\u00F6";
+        case 149: return "\u00F2";
+        case 150: return "\u00FB";
+        case 151: return "\u00F9";
+        case 152: return "\u00FF";
+        case 153: return "\u00D6";
+        case 154: return "\u00DC";
+        case 155: return "\u00A2";
+        case 156: return "\u00A3";
+        case 157: return "\u00A5";
+        case 158: return "\u20A7";
+        case 159: return "\u0192";
+        case 160: return "\u00E1";
+        case 161: return "\u00ED";
+        case 162: return "\u00F3";
+        case 163: return "\u00FA";
+        case 164: return "\u00F1";
+        case 165: return "\u00D1";
+        case 166: return "\u00AA";
+        case 167: return "\u00BA";
+        case 168: return "\u00BF";
+        case 169: return "\u2310";
+        case 170: return "\u00AC";
+        case 171: return "\u00BD";
+        case 172: return "\u00BC";
+        case 173: return "\u00A1";
+        case 174: return "\u00AB";
+        case 175: return "\u00BB";
+        case 176: return "\u2591";
+        case 177: return "\u2592";
+        case 178: return "\u2593";
+        case 179: return "\u2502";
+        case 180: return "\u2524";
+        case 181: return "\u2561";
+        case 182: return "\u2562";
+        case 183: return "\u2556";
+        case 184: return "\u2555";
+        case 185: return "\u2563";
+        case 186: return "\u2551";
+        case 187: return "\u2557";
+        case 188: return "\u255D";
+        case 189: return "\u255C";
+        case 190: return "\u255B";
+        case 191: return "\u2510";
+        case 192: return "\u2514";
+        case 193: return "\u2534";
+        case 194: return "\u252C";
+        case 195: return "\u251C";
+        case 196: return "\u2500";
+        case 197: return "\u253C";
+        case 198: return "\u255E";
+        case 199: return "\u255F";
+        case 200: return "\u255A";
+        case 201: return "\u2554";
+        case 202: return "\u2569";
+        case 203: return "\u2566";
+        case 204: return "\u2560";
+        case 205: return "\u2550";
+        case 206: return "\u256C";
+        case 207: return "\u2567";
+        case 208: return "\u2568";
+        case 209: return "\u2564";
+        case 210: return "\u2565";
+        case 211: return "\u2559";
+        case 212: return "\u2558";
+        case 213: return "\u2552";
+        case 214: return "\u2553";
+        case 215: return "\u256B";
+        case 216: return "\u256A";
+        case 217: return "\u2518";
+        case 218: return "\u250C";
+        case 219: return "\u2588";
+        case 220: return "\u2584";
+        case 221: return "\u258C";
+        case 222: return "\u2590";
+        case 223: return "\u2580";
+        case 224: return "\u03B1";
+        case 225: return "\u00DF";
+        case 226: return "\u0393";
+        case 227: return "\u03C0";
+        case 228: return "\u03A3";
+        case 229: return "\u03C3";
+        case 230: return "\u00B5";
+        case 231: return "\u03C4";
+        case 232: return "\u03A6";
+        case 233: return "\u0398";
+        case 234: return "\u03A9";
+        case 235: return "\u03B4";
+        case 236: return "\u221E";
+        case 237: return "\u03C6";
+        case 238: return "\u03B5";
+        case 239: return "\u2229";
+        case 240: return "\u2261";
+        case 241: return "\u00B1";
+        case 242: return "\u2265";
+        case 243: return "\u2264";
+        case 244: return "\u2320";
+        case 245: return "\u2321";
+        case 246: return "\u00F7";
+        case 247: return "\u2248";
+        case 248: return "\u00B0";
+        case 249: return "\u2219";
+        case 250: return "\u00B7";
+        case 251: return "\u221A";
+        case 252: return "\u207F";
+        case 253: return "\u00B2";
+        case 254: return "\u25A0";
+        case 0:
+        case 255: return "\u00A0";
+        default: return String.fromCharCode(cp437);
+    }
+}
+
+function cp437_to_unicode_bytes(cp437) {
+    return Buffer.from(cp437_to_unicode(cp437));
+}
+
+function unicode_to_cp437(unicode) {
+    switch(unicode) {
+        case 0x263A: return 1;
+        case 0x263B: return 2;
+        case 0x2665: return 3;
+        case 0x2666: return 4;
+        case 0x2663: return 5;
+        case 0x2660: return 6;
+        case 0x2022: return 7;
+        case 0x25D8: return 8;
+        case 0x25CB: return 9;
+        case 0x25D9: return 10;
+        case 0x2642: return 11;
+        case 0x2640: return 12;
+        case 0x266A: return 13;
+        case 0x266B: return 14;
+        case 0x263C: return 15;
+        case 0x25BA: return 16;
+        case 0x25C4: return 17;
+        case 0x2195: return 18;
+        case 0x203C: return 19;
+        case 0x00B6: return 20;
+        case 0x00A7: return 21;
+        case 0x25AC: return 22;
+        case 0x21A8: return 23;
+        case 0x2191: return 24;
+        case 0x2193: return 25;
+        case 0x2192: return 26;
+        case 0x2190: return 27;
+        case 0x221F: return 28;
+        case 0x2194: return 29;
+        case 0x25B2: return 30;
+        case 0x25BC: return 31;
+        case 0x2302: return 127;
+        case 0x00C7: return 128;
+        case 0x00FC: return 129;
+        case 0x00E9: return 130;
+        case 0x00E2: return 131;
+        case 0x00E4: return 132;
+        case 0x00E0: return 133;
+        case 0x00E5: return 134;
+        case 0x00E7: return 135;
+        case 0x00EA: return 136;
+        case 0x00EB: return 137;
+        case 0x00E8: return 138;
+        case 0x00EF: return 139;
+        case 0x00EE: return 140;
+        case 0x00EC: return 141;
+        case 0x00C4: return 142;
+        case 0x00C5: return 143;
+        case 0x00C9: return 144;
+        case 0x00E6: return 145;
+        case 0x00C6: return 146;
+        case 0x00F4: return 147;
+        case 0x00F6: return 148;
+        case 0x00F2: return 149;
+        case 0x00FB: return 150;
+        case 0x00F9: return 151;
+        case 0x00FF: return 152;
+        case 0x00D6: return 153;
+        case 0x00DC: return 154;
+        case 0x00A2: return 155;
+        case 0x00A3: return 156;
+        case 0x00A5: return 157;
+        case 0x20A7: return 158;
+        case 0x0192: return 159;
+        case 0x00E1: return 160;
+        case 0x00ED: return 161;
+        case 0x00F3: return 162;
+        case 0x00FA: return 163;
+        case 0x00F1: return 164;
+        case 0x00D1: return 165;
+        case 0x00AA: return 166;
+        case 0x00BA: return 167;
+        case 0x00BF: return 168;
+        case 0x2310: return 169;
+        case 0x00AC: return 170;
+        case 0x00BD: return 171;
+        case 0x00BC: return 172;
+        case 0x00A1: return 173;
+        case 0x00AB: return 174;
+        case 0x00BB: return 175;
+        case 0x2591: return 176;
+        case 0x2592: return 177;
+        case 0x2593: return 178;
+        case 0x2502: return 179;
+        case 0x2524: return 180;
+        case 0x2561: return 181;
+        case 0x2562: return 182;
+        case 0x2556: return 183;
+        case 0x2555: return 184;
+        case 0x2563: return 185;
+        case 0x2551: return 186;
+        case 0x2557: return 187;
+        case 0x255D: return 188;
+        case 0x255C: return 189;
+        case 0x255B: return 190;
+        case 0x2510: return 191;
+        case 0x2514: return 192;
+        case 0x2534: return 193;
+        case 0x252C: return 194;
+        case 0x251C: return 195;
+        case 0x2500: return 196;
+        case 0x253C: return 197;
+        case 0x255E: return 198;
+        case 0x255F: return 199;
+        case 0x255A: return 200;
+        case 0x2554: return 201;
+        case 0x2569: return 202;
+        case 0x2566: return 203;
+        case 0x2560: return 204;
+        case 0x2550: return 205;
+        case 0x256C: return 206;
+        case 0x2567: return 207;
+        case 0x2568: return 208;
+        case 0x2564: return 209;
+        case 0x2565: return 210;
+        case 0x2559: return 211;
+        case 0x2558: return 212;
+        case 0x2552: return 213;
+        case 0x2553: return 214;
+        case 0x256B: return 215;
+        case 0x256A: return 216;
+        case 0x2518: return 217;
+        case 0x250C: return 218;
+        case 0x2588: return 219;
+        case 0x2584: return 220;
+        case 0x258C: return 221;
+        case 0x2590: return 222;
+        case 0x2580: return 223;
+        case 0x03B1: return 224;
+        case 0x00DF: return 225;
+        case 0x0393: return 226;
+        case 0x03C0: return 227;
+        case 0x03A3: return 228;
+        case 0x03C3: return 229;
+        case 0x00B5: return 230;
+        case 0x03C4: return 231;
+        case 0x03A6: return 232;
+        case 0x0398: return 233;
+        case 0x03A9: return 234;
+        case 0x03B4: return 235;
+        case 0x221E: return 236;
+        case 0x03C6: return 237;
+        case 0x03B5: return 238;
+        case 0x2229: return 239;
+        case 0x2261: return 240;
+        case 0x00B1: return 241;
+        case 0x2265: return 242;
+        case 0x2264: return 243;
+        case 0x2320: return 244;
+        case 0x2321: return 245;
+        case 0x00F7: return 246;
+        case 0x2248: return 247;
+        case 0x00B0: return 248;
+        case 0x2219: return 249;
+        case 0x00B7: return 250;
+        case 0x221A: return 251;
+        case 0x207F: return 252;
+        case 0x00B2: return 253;
+        case 0x25A0: return 254;
+        case 0x00A0: return 255;
+        default:
+            if (unicode >= 0 && unicode <= 127) return unicode;
+            return 0;
+    }
+}
+
+module.exports = {cp437_to_unicode, cp437_to_unicode_bytes, unicode_to_cp437};
+
+}).call(this,require("buffer").Buffer)
+},{"buffer":15}],5:[function(require,module,exports){
 const {white, bright_white, get_rgba, convert_ega_to_vga, ega} = require("./palette");
 const {create_canvas} = require("./canvas");
 
@@ -1272,7 +1230,7 @@ class Font {
 
 module.exports = {Font};
 
-},{"./canvas":4,"./palette":7}],6:[function(require,module,exports){
+},{"./canvas":3,"./palette":7}],6:[function(require,module,exports){
 const {Font} = require("./font");
 const {create_canvas, join_canvases} = require("./canvas");
 const {Ansi, encode_as_ansi} = require("./ansi");
@@ -1281,6 +1239,7 @@ const {XBin, encode_as_xbin} = require("./xbin");
 const {ega, convert_ega_to_style} = require("./palette");
 const path = require("path");
 const {current_date, resize_canvas} = require("./textmode");
+const {cp437_to_unicode, cp437_to_unicode_bytes, unicode_to_cp437} = require("./encodings");
 const fs = require("fs");
 
 function read_bytes(bytes, file) {
@@ -1323,7 +1282,7 @@ async function animate({file, ctx}) {
     }
 }
 
-function write_file(doc, file) {
+function write_file(doc, file, {utf8 = false} = {}) {
     let bytes;
     switch (path.extname(file).toLowerCase()) {
         case ".bin":
@@ -1334,7 +1293,7 @@ function write_file(doc, file) {
         break;
         case ".ans":
         default:
-        bytes = encode_as_ansi(doc);
+        bytes = encode_as_ansi(doc, {utf8});
     }
     fs.writeFileSync(file, bytes);
 }
@@ -1379,10 +1338,26 @@ function render_blocks(blocks, font) {
     for (let y = 0, py = 0, i = 0; y < blocks.rows; y++, py += font.height) {
         for (let x = 0, px = 0; x < blocks.columns; x++, px += font.width, i++) {
             const block = blocks.data[i];
-            font.draw(ctx, block, px, py);
+            if (!blocks.transparent || block.code != 32 || block.bg != 0) font.draw(ctx, block, px, py);
         }
     }
     return canvas;
+}
+
+function merge_blocks(under_blocks, over_blocks) {
+    const merged_blocks = {columns: Math.max(under_blocks.columns, over_blocks.columns), rows: Math.max(under_blocks.rows, over_blocks.rows), data: new Array(Math.max(under_blocks.rows, over_blocks.rows) * Math.max(under_blocks.columns, over_blocks.columns)), transparent: false};
+    for (let y = 0, i = 0; y < merged_blocks.rows; y++) {
+        for (let x = 0; x < merged_blocks.columns; x++, i++) {
+            const under_block = (y < under_blocks.rows && x < under_blocks.columns) ? under_blocks.data[y * under_blocks.columns + x] : undefined;
+            const over_block = (y < over_blocks.rows && x < over_blocks.columns) ? over_blocks.data[y * over_blocks.columns + x] : undefined;
+            if (over_block == undefined || (over_block.code == 32 && over_block.bg == 0)) {
+                merged_blocks.data[i] = Object.assign(under_block);
+            } else {
+                merged_blocks.data[i] = Object.assign(over_block);
+            }
+        }
+    }
+    return merged_blocks;
 }
 
 function copy_canvases(sources) {
@@ -1578,7 +1553,7 @@ function rotate(blocks) {
     return blocks;
 }
 
-function new_document({columns = 80, rows = 24, title = "", author = "", group = "", date = "", palette = ega, font_name = "IBM VGA", ice_colors = false, use_9px_font = false, comments = "", data} = {}) {
+function new_document({columns = 80, rows = 100, title = "", author = "", group = "", date = "", palette = ega, font_name = "IBM VGA", ice_colors = false, use_9px_font = false, comments = "", data} = {}) {
     const doc = {columns, rows, title, author, group, date: (date != "") ? date : current_date(), palette, font_name, ice_colors, use_9px_font, comments};
     if (!data || data.length != columns * rows) {
         doc.data = new Array(columns * rows);
@@ -1587,341 +1562,6 @@ function new_document({columns = 80, rows = 24, title = "", author = "", group =
         doc.data = data;
     }
     return doc;
-}
-
-function cp437_to_unicode(cp437) {
-    switch(cp437) {
-        case 1: return "\u263A";
-        case 2: return "\u263B";
-        case 3: return "\u2665";
-        case 4: return "\u2666";
-        case 5: return "\u2663";
-        case 6: return "\u2660";
-        case 7: return "\u2022";
-        case 8: return "\u25D8";
-        case 9: return "\u25CB";
-        case 10: return "\u25D9";
-        case 11: return "\u2642";
-        case 12: return "\u2640";
-        case 13: return "\u266A";
-        case 14: return "\u266B";
-        case 15: return "\u263C";
-        case 16: return "\u25BA";
-        case 17: return "\u25C4";
-        case 18: return "\u2195";
-        case 19: return "\u203C";
-        case 20: return "\u00B6";
-        case 21: return "\u00A7";
-        case 22: return "\u25AC";
-        case 23: return "\u21A8";
-        case 24: return "\u2191";
-        case 25: return "\u2193";
-        case 26: return "\u2192";
-        case 27: return "\u2190";
-        case 28: return "\u221F";
-        case 29: return "\u2194";
-        case 30: return "\u25B2";
-        case 31: return "\u25BC";
-        case 127: return "\u2302";
-        case 128: return "\u00C7";
-        case 129: return "\u00FC";
-        case 130: return "\u00E9";
-        case 131: return "\u00E2";
-        case 132: return "\u00E4";
-        case 133: return "\u00E0";
-        case 134: return "\u00E5";
-        case 135: return "\u00E7";
-        case 136: return "\u00EA";
-        case 137: return "\u00EB";
-        case 138: return "\u00E8";
-        case 139: return "\u00EF";
-        case 140: return "\u00EE";
-        case 141: return "\u00EC";
-        case 142: return "\u00C4";
-        case 143: return "\u00C5";
-        case 144: return "\u00C9";
-        case 145: return "\u00E6";
-        case 146: return "\u00C6";
-        case 147: return "\u00F4";
-        case 148: return "\u00F6";
-        case 149: return "\u00F2";
-        case 150: return "\u00FB";
-        case 151: return "\u00F9";
-        case 152: return "\u00FF";
-        case 153: return "\u00D6";
-        case 154: return "\u00DC";
-        case 155: return "\u00A2";
-        case 156: return "\u00A3";
-        case 157: return "\u00A5";
-        case 158: return "\u20A7";
-        case 159: return "\u0192";
-        case 160: return "\u00E1";
-        case 161: return "\u00ED";
-        case 162: return "\u00F3";
-        case 163: return "\u00FA";
-        case 164: return "\u00F1";
-        case 165: return "\u00D1";
-        case 166: return "\u00AA";
-        case 167: return "\u00BA";
-        case 168: return "\u00BF";
-        case 169: return "\u2310";
-        case 170: return "\u00AC";
-        case 171: return "\u00BD";
-        case 172: return "\u00BC";
-        case 173: return "\u00A1";
-        case 174: return "\u00AB";
-        case 175: return "\u00BB";
-        case 176: return "\u2591";
-        case 177: return "\u2592";
-        case 178: return "\u2593";
-        case 179: return "\u2502";
-        case 180: return "\u2524";
-        case 181: return "\u2561";
-        case 182: return "\u2562";
-        case 183: return "\u2556";
-        case 184: return "\u2555";
-        case 185: return "\u2563";
-        case 186: return "\u2551";
-        case 187: return "\u2557";
-        case 188: return "\u255D";
-        case 189: return "\u255C";
-        case 190: return "\u255B";
-        case 191: return "\u2510";
-        case 192: return "\u2514";
-        case 193: return "\u2534";
-        case 194: return "\u252C";
-        case 195: return "\u251C";
-        case 196: return "\u2500";
-        case 197: return "\u253C";
-        case 198: return "\u255E";
-        case 199: return "\u255F";
-        case 200: return "\u255A";
-        case 201: return "\u2554";
-        case 202: return "\u2569";
-        case 203: return "\u2566";
-        case 204: return "\u2560";
-        case 205: return "\u2550";
-        case 206: return "\u256C";
-        case 207: return "\u2567";
-        case 208: return "\u2568";
-        case 209: return "\u2564";
-        case 210: return "\u2565";
-        case 211: return "\u2559";
-        case 212: return "\u2558";
-        case 213: return "\u2552";
-        case 214: return "\u2553";
-        case 215: return "\u256B";
-        case 216: return "\u256A";
-        case 217: return "\u2518";
-        case 218: return "\u250C";
-        case 219: return "\u2588";
-        case 220: return "\u2584";
-        case 221: return "\u258C";
-        case 222: return "\u2590";
-        case 223: return "\u2580";
-        case 224: return "\u03B1";
-        case 225: return "\u00DF";
-        case 226: return "\u0393";
-        case 227: return "\u03C0";
-        case 228: return "\u03A3";
-        case 229: return "\u03C3";
-        case 230: return "\u00B5";
-        case 231: return "\u03C4";
-        case 232: return "\u03A6";
-        case 233: return "\u0398";
-        case 234: return "\u03A9";
-        case 235: return "\u03B4";
-        case 236: return "\u221E";
-        case 237: return "\u03C6";
-        case 238: return "\u03B5";
-        case 239: return "\u2229";
-        case 240: return "\u2261";
-        case 241: return "\u00B1";
-        case 242: return "\u2265";
-        case 243: return "\u2264";
-        case 244: return "\u2320";
-        case 245: return "\u2321";
-        case 246: return "\u00F7";
-        case 247: return "\u2248";
-        case 248: return "\u00B0";
-        case 249: return "\u2219";
-        case 250: return "\u00B7";
-        case 251: return "\u221A";
-        case 252: return "\u207F";
-        case 253: return "\u00B2";
-        case 254: return "\u25A0";
-        case 0:
-        case 255: return "\u00A0";
-        default: return String.fromCharCode(cp437);
-    }
-}
-
-function unicode_to_cp437(unicode) {
-    switch(unicode) {
-        case 0x263A: return 1;
-        case 0x263B: return 2;
-        case 0x2665: return 3;
-        case 0x2666: return 4;
-        case 0x2663: return 5;
-        case 0x2660: return 6;
-        case 0x2022: return 7;
-        case 0x25D8: return 8;
-        case 0x25CB: return 9;
-        case 0x25D9: return 10;
-        case 0x2642: return 11;
-        case 0x2640: return 12;
-        case 0x266A: return 13;
-        case 0x266B: return 14;
-        case 0x263C: return 15;
-        case 0x25BA: return 16;
-        case 0x25C4: return 17;
-        case 0x2195: return 18;
-        case 0x203C: return 19;
-        case 0x00B6: return 20;
-        case 0x00A7: return 21;
-        case 0x25AC: return 22;
-        case 0x21A8: return 23;
-        case 0x2191: return 24;
-        case 0x2193: return 25;
-        case 0x2192: return 26;
-        case 0x2190: return 27;
-        case 0x221F: return 28;
-        case 0x2194: return 29;
-        case 0x25B2: return 30;
-        case 0x25BC: return 31;
-        case 0x2302: return 127;
-        case 0x00C7: return 128;
-        case 0x00FC: return 129;
-        case 0x00E9: return 130;
-        case 0x00E2: return 131;
-        case 0x00E4: return 132;
-        case 0x00E0: return 133;
-        case 0x00E5: return 134;
-        case 0x00E7: return 135;
-        case 0x00EA: return 136;
-        case 0x00EB: return 137;
-        case 0x00E8: return 138;
-        case 0x00EF: return 139;
-        case 0x00EE: return 140;
-        case 0x00EC: return 141;
-        case 0x00C4: return 142;
-        case 0x00C5: return 143;
-        case 0x00C9: return 144;
-        case 0x00E6: return 145;
-        case 0x00C6: return 146;
-        case 0x00F4: return 147;
-        case 0x00F6: return 148;
-        case 0x00F2: return 149;
-        case 0x00FB: return 150;
-        case 0x00F9: return 151;
-        case 0x00FF: return 152;
-        case 0x00D6: return 153;
-        case 0x00DC: return 154;
-        case 0x00A2: return 155;
-        case 0x00A3: return 156;
-        case 0x00A5: return 157;
-        case 0x20A7: return 158;
-        case 0x0192: return 159;
-        case 0x00E1: return 160;
-        case 0x00ED: return 161;
-        case 0x00F3: return 162;
-        case 0x00FA: return 163;
-        case 0x00F1: return 164;
-        case 0x00D1: return 165;
-        case 0x00AA: return 166;
-        case 0x00BA: return 167;
-        case 0x00BF: return 168;
-        case 0x2310: return 169;
-        case 0x00AC: return 170;
-        case 0x00BD: return 171;
-        case 0x00BC: return 172;
-        case 0x00A1: return 173;
-        case 0x00AB: return 174;
-        case 0x00BB: return 175;
-        case 0x2591: return 176;
-        case 0x2592: return 177;
-        case 0x2593: return 178;
-        case 0x2502: return 179;
-        case 0x2524: return 180;
-        case 0x2561: return 181;
-        case 0x2562: return 182;
-        case 0x2556: return 183;
-        case 0x2555: return 184;
-        case 0x2563: return 185;
-        case 0x2551: return 186;
-        case 0x2557: return 187;
-        case 0x255D: return 188;
-        case 0x255C: return 189;
-        case 0x255B: return 190;
-        case 0x2510: return 191;
-        case 0x2514: return 192;
-        case 0x2534: return 193;
-        case 0x252C: return 194;
-        case 0x251C: return 195;
-        case 0x2500: return 196;
-        case 0x253C: return 197;
-        case 0x255E: return 198;
-        case 0x255F: return 199;
-        case 0x255A: return 200;
-        case 0x2554: return 201;
-        case 0x2569: return 202;
-        case 0x2566: return 203;
-        case 0x2560: return 204;
-        case 0x2550: return 205;
-        case 0x256C: return 206;
-        case 0x2567: return 207;
-        case 0x2568: return 208;
-        case 0x2564: return 209;
-        case 0x2565: return 210;
-        case 0x2559: return 211;
-        case 0x2558: return 212;
-        case 0x2552: return 213;
-        case 0x2553: return 214;
-        case 0x256B: return 215;
-        case 0x256A: return 216;
-        case 0x2518: return 217;
-        case 0x250C: return 218;
-        case 0x2588: return 219;
-        case 0x2584: return 220;
-        case 0x258C: return 221;
-        case 0x2590: return 222;
-        case 0x2580: return 223;
-        case 0x03B1: return 224;
-        case 0x00DF: return 225;
-        case 0x0393: return 226;
-        case 0x03C0: return 227;
-        case 0x03A3: return 228;
-        case 0x03C3: return 229;
-        case 0x00B5: return 230;
-        case 0x03C4: return 231;
-        case 0x03A6: return 232;
-        case 0x0398: return 233;
-        case 0x03A9: return 234;
-        case 0x03B4: return 235;
-        case 0x221E: return 236;
-        case 0x03C6: return 237;
-        case 0x03B5: return 238;
-        case 0x2229: return 239;
-        case 0x2261: return 240;
-        case 0x00B1: return 241;
-        case 0x2265: return 242;
-        case 0x2264: return 243;
-        case 0x2320: return 244;
-        case 0x2321: return 245;
-        case 0x00F7: return 246;
-        case 0x2248: return 247;
-        case 0x00B0: return 248;
-        case 0x2219: return 249;
-        case 0x00B7: return 250;
-        case 0x221A: return 251;
-        case 0x207F: return 252;
-        case 0x00B2: return 253;
-        case 0x25A0: return 254;
-        case 0x00A0: return 255;
-        default:
-            if (unicode >= 0 && unicode <= 127) return unicode;
-            return 0;
-    }
 }
 
 function get_data_url(canvases) {
@@ -1982,9 +1622,28 @@ function uncompress(doc) {
     return doc;
 }
 
-module.exports = {read_bytes, read_file, write_file, animate, render, render_split, render_at, new_document, resize_canvas, cp437_to_unicode, unicode_to_cp437, render_blocks, flip_x, flip_y, rotate, get_data_url, convert_ega_to_style, compress, uncompress};
+function get_blocks(doc, sx, sy, dx, dy, opts) {
+    dx = Math.min(doc.columns - 1, dx);
+    dy = Math.min(doc.rows - 1, dy);
+    const columns = dx - sx + 1;
+    const rows = dy - sy + 1;
+    const blocks = {columns, rows, data: new Array(columns * rows), ...opts};
+    for (let y = sy, i = 0; y <= dy; y++) {
+        for (let x = sx; x <= dx; x++, i++) {
+            blocks.data[i] = Object.assign(doc.data[y * doc.columns + x]);
+        }
+    }
+    return blocks;
+}
 
-},{"./ansi":2,"./binary_text":3,"./canvas":4,"./font":5,"./palette":7,"./textmode":8,"./xbin":9,"fs":13,"path":27}],7:[function(require,module,exports){
+function export_as_png(doc, render, file) {
+    const base64_string = get_data_url(doc.ice_colors ? render.ice_color_collection : render.blink_off_collection).split(";base64,").pop();
+    fs.writeFileSync(file, base64_string, "base64");
+}
+
+module.exports = {read_bytes, read_file, write_file, animate, render, render_split, render_at, new_document, resize_canvas, cp437_to_unicode, cp437_to_unicode_bytes, unicode_to_cp437, render_blocks, merge_blocks, flip_code_x, flip_x, flip_y, rotate, get_data_url, convert_ega_to_style, compress, uncompress, get_blocks, export_as_png};
+
+},{"./ansi":1,"./binary_text":2,"./canvas":3,"./encodings":4,"./font":5,"./palette":7,"./textmode":8,"./xbin":9,"fs":14,"path":29}],7:[function(require,module,exports){
 const black = {r: 0, g: 0, b: 0};
 const blue = {r: 0, g: 0, b: 42};
 const green = {r: 0, g: 42, b:   0};
@@ -2156,7 +1815,7 @@ function get_sauce(bytes) {
             let filesize = (sauce_bytes[93] << 24) + (sauce_bytes[92] << 16) + (sauce_bytes[91] << 8) + sauce_bytes[90];
             const datatype = sauce_bytes[94];
             let columns, rows;
-            if (datatype === 5) {
+            if (datatype == 5) {
                 columns = sauce_bytes[95] * 2;
                 rows = filesize / columns / 2;
             } else {
@@ -2220,7 +1879,7 @@ function resize_canvas(doc, columns, rows) {
 module.exports = {bytes_to_blocks, bytes_to_utf8, current_date, Textmode, add_sauce_for_ans, add_sauce_for_bin, add_sauce_for_xbin, resize_canvas};
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":14}],9:[function(require,module,exports){
+},{"buffer":15}],9:[function(require,module,exports){
 const {ega} = require("./palette");
 const {bytes_to_utf8, bytes_to_blocks, Textmode, add_sauce_for_xbin} = require("./textmode");
 const repeating = {NONE: 0, CHARACTERS: 1, ATTRIBUTES: 2, BOTH_CHARACTERS_AND_ATTRIBUTES: 3};
@@ -2330,248 +1989,319 @@ function encode_as_xbin(doc) {
 
 module.exports = {XBin, encode_as_xbin};
 
-},{"./binary_text":3,"./palette":7,"./textmode":8}],10:[function(require,module,exports){
-const action =  {CONNECTED: 0, REFUSED: 1, JOIN: 2, LEAVE: 3, CURSOR: 4, SELECTION: 5, RESIZE_SELECTION: 6, OPERATION: 7, HIDE_CURSOR: 8, DRAW: 9, CHAT: 10, STATUS: 11, SAUCE: 12, ICE_COLORS: 13, USE_9PX_FONT: 14, CHANGE_FONT: 15, SET_CANVAS_SIZE: 16};
-const status_types = {ACTIVE: 0, IDLE: 1, AWAY: 2};
-const libtextmode = require("../js/libtextmode/libtextmode");
-let byte_count = 0;
-let idle_timer, away_timer, status;
-let ready = false;
-const queued_events = [];
-
-function set_status(ws, id, new_status) {
-    if (status != new_status) {
-        status = new_status;
-        ws.send(JSON.stringify({type: action.STATUS, data: {id, status}}));
-    }
-}
-
-function send(ws, type, is_viewing, data = {}) {
-    ws.send(JSON.stringify({type, data}));
-    if (!is_viewing && type != action.CONNECTED) set_status(ws, data.id, status_types.ACTIVE);
-    if (idle_timer) clearTimeout(idle_timer);
-    if (away_timer) clearTimeout(away_timer);
-    if (!is_viewing) {
-        idle_timer = setTimeout(() => {
-            set_status(ws, data.id, status_types.IDLE);
-            away_timer = setTimeout(() => set_status(ws, data.id, status_types.AWAY), 4 * 60 * 1000);
-        }, 1 * 60 * 1000);
-    }
-}
-
-function queue(name, opts, network_handler) {
-    if (ready) {
-        network_handler[name](...opts);
-    } else {
-        queued_events.push({name, opts, network_handler});
-    }
-}
-
-function message(is_viewing, server, pass, ws, msg, network_handler) {
-    byte_count += JSON.stringify(msg).length;
-    // console.log(`${byte_count / 1024}kb received.`, msg.data);
-    switch (msg.type) {
-    case action.CONNECTED:
-        const id = msg.data.id;
-        status = msg.data.status;
-        network_handler.connected({
-            server, pass, id,
-            draw: (x, y, block) => {
-                send(ws, action.DRAW, is_viewing, {id, x, y, block});
-            },
-            cursor: (x, y) => send(ws, action.CURSOR, is_viewing, {id, x, y}),
-            selection: (x, y) => send(ws, action.SELECTION, is_viewing, {id, x, y}),
-            resize_selection: (columns, rows) => send(ws, action.RESIZE_SELECTION, is_viewing, {id, columns, rows}),
-            operation: (x, y) => send(ws, action.OPERATION, is_viewing, {id, x, y}),
-            chat: (nick, group, text) => {
-                send(ws, action.CHAT, is_viewing, {id, nick, group, text});
-                network_handler.chat(id, nick, group, text);
-            },
-            status: (status) => send(ws, action.STATUS, is_viewing, {id, status}),
-            sauce: (title, author, group, comments) => send(ws, action.SAUCE, is_viewing, {id, title, author, group, comments}),
-            ice_colors: (value) => send(ws, action.ICE_COLORS, is_viewing, {id, value}),
-            use_9px_font: (value) => send(ws, action.USE_9PX_FONT, is_viewing, {id, value}),
-            change_font: (font_name) => send(ws, action.CHANGE_FONT, is_viewing, {id, font_name}),
-            set_canvas_size: (columns, rows) => send(ws, action.SET_CANVAS_SIZE, is_viewing, {id, columns, rows}),
-            hide_cursor: () => send(ws, action.HIDE_CURSOR, is_viewing, {id}),
-            close: () => ws.close(),
-            users: msg.data.users
-        }, libtextmode.uncompress(msg.data.doc), msg.data.chat_history, msg.data.status);
-        break;
-    case action.REFUSED:
-        network_handler.refused();
-        break;
-    case action.JOIN:
-        queue("join", [msg.data.id, msg.data.nick, msg.data.group, msg.data.status], network_handler);
-        break;
-    case action.LEAVE:
-        queue("leave", [msg.data.id], network_handler);
-        break;
-    case action.CURSOR:
-        queue("cursor", [msg.data.id, msg.data.x, msg.data.y], network_handler);
-        break;
-    case action.SELECTION:
-        queue("selection", [msg.data.id, msg.data.x, msg.data.y], network_handler);
-        break;
-    case action.RESIZE_SELECTION:
-        queue("resize_selection", [msg.data.id, msg.data.columns, msg.data.rows], network_handler);
-        break;
-    case action.OPERATION:
-        queue("operation", [msg.data.id, msg.data.x, msg.data.y], network_handler);
-        break;
-    case action.HIDE_CURSOR:
-        queue("hide_cursor", [msg.data.id], network_handler);
-        break;
-    case action.DRAW:
-        queue("draw", [msg.data.id, msg.data.x, msg.data.y, msg.data.block], network_handler);
-        break;
-    case action.CHAT:
-        queue("chat", [msg.data.id, msg.data.nick, msg.data.group, msg.data.text], network_handler);
-        break;
-    case action.STATUS:
-        queue("status", [msg.data.id, msg.data.status], network_handler);
-        break;
-    case action.SAUCE:
-        queue("sauce", [msg.data.id, msg.data.title, msg.data.author, msg.data.group, msg.data.comments], network_handler);
-        break;
-    case action.ICE_COLORS:
-        queue("ice_colors", [msg.data.id, msg.data.value], network_handler);
-        break;
-    case action.USE_9PX_FONT:
-        queue("use_9px_font", [msg.data.id, msg.data.value], network_handler);
-        break;
-    case action.CHANGE_FONT:
-        queue("change_font", [msg.data.id, msg.data.font_name], network_handler);
-        break;
-    case action.SET_CANVAS_SIZE:
-        queue("set_canvas_size", [msg.data.id, msg.data.columns, msg.data.rows], network_handler);
-        break;
-    default:
-        break;
-    }
-}
-
-async function connect(server, nick, group, pass, network_handler) {
-    try {
-        const match = server.match(/([^\/]+)\/?([^\/]*)\/?/);
-        const ws = new WebSocket(`ws://${encodeURI(match[1])}:8000/${encodeURI(match[2])}`);
-        const is_viewing = (nick == undefined);
-        ws.addEventListener("open", () => send(ws, action.CONNECTED, is_viewing, {nick, group, pass}));
-        ws.addEventListener("error", network_handler.error);
-        ws.addEventListener("close", network_handler.disconnected);
-        ws.addEventListener("message", response => message(is_viewing, server, pass, ws, JSON.parse(response.data), network_handler));
-    } catch (err) {
-        network_handler.error(err);
-    }
-}
-
-function ready_to_receive_events() {
-    for (const event of queued_events) event.network_handler[event.name](...event.opts);
-    ready = true;
-}
-
-module.exports = {connect, ready_to_receive_events};
-
-},{"../js/libtextmode/libtextmode":6}],11:[function(require,module,exports){
-const libtextmode = require("../app/js/libtextmode/libtextmode");
-const network = require("../app/js/network");
-const canvas = require("../app/js/canvas");
+},{"./binary_text":2,"./palette":7,"./textmode":8}],10:[function(require,module,exports){
+const doc = require("./web_doc");
+require("./web_canvas");
 const linkify = require("linkifyjs/string");
 const mobile = (navigator.userAgent.match(/Android/i) || navigator.userAgent.match(/webOS/i) || navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPad/i) || navigator.userAgent.match(/iPod/i) || navigator.userAgent.match(/BlackBerry/i) || navigator.userAgent.match(/Windows Phone/i));
 
-let connection, doc, render;
-function update_sauce() {
-    document.title = `Mœbius - ${connection.server}`;
-    document.getElementById("title").innerText = doc.title;
-    document.getElementById("author").innerText = doc.author;
-    document.getElementById("group").innerText = doc.group;
-    document.getElementById("comments").innerHTML = linkify(doc.comments, {className: "", nl2br: true});
-}
-async function connected(new_connection, new_doc) {
-    connection = new_connection;
-    doc = new_doc;
-    if (mobile) {
-        render = await libtextmode.render(doc);
-        document.getElementById("canvas_container").appendChild(render.canvas);
-    } else {
-        render = await libtextmode.render_split(doc);
-        canvas.add(render);
-        if (doc.ice_colors) {
-            canvas.stop_blinking();
-        } else {
-            canvas.start_blinking();
-        }
-        update_sauce();
-    }
-    network.ready_to_receive_events();
-}
-function error() {
-    // todo
-}
-function disconnected() {
-    // todo
-}
-function refused() {
-    // todo
-}
-function draw(id, x, y, block) {
-    doc.data[doc.columns * y + x] = Object.assign(block);
-    if (mobile) {
-        render.font.draw(render.canvas.getContext("2d"), block, x * render.font.width, y * render.font.height);
-    } else {
-        canvas.render_at(x, y, block);
-    }
-}
-function sauce(id, title, author, group, comments) {
-    doc.title = title;
-    doc.author = author;
-    doc.group = group;
-    doc.comments = comments;
-    update_sauce();
-}
-function ice_colors(id, value) {
-    doc.ice_colors = value;
-    if (!mobile) {
-        if (doc.ice_colors) {
-            canvas.stop_blinking();
-        } else {
-            canvas.start_blinking();
-        }
-    }
-}
-async function update_renders() {
-    if (mobile) {
-        const canvas_container = document.getElementById("canvas_container");
-        canvas_container.removeChild(render.canvas);
-        render = await libtextmode.render(doc);
-        canvas_container.appendChild(render.canvas);
-    } else {
-        render = await libtextmode.render_split(doc);
-        canvas.add(render);
-    }
-}
-async function use_9px_font(id, value) {
-    doc.use_9px_font = value;
-    update_renders();
-}
-async function change_font(id, font_name) {
-    doc.font_name = font_name;
-    update_renders();
-}
-function set_canvas_size(id, columns, rows) {
-    libtextmode.resize_canvas(doc, columns, rows);
-    update_renders();
-}
-function connect_to_server({server, pass = ""} = {}) {
-    network.connect(server, undefined, undefined, pass, {connected, error, disconnected, refused, draw, sauce, ice_colors, use_9px_font, change_font, set_canvas_size});
+function sauce(title, author, group, comments) {
+    document.getElementById("title").innerText = title;
+    document.getElementById("author").innerText = author;
+    document.getElementById("group").innerText = group;
+    document.getElementById("comments").innerHTML = linkify(comments, {className: "", nl2br: true});
 }
 
+doc.on("new_document", () => sauce(doc.title, doc.author, doc.group, doc.comments));
+doc.on("sauce", sauce);
+
 document.addEventListener("DOMContentLoaded", (event) => {
-    connect_to_server({server: `${window.location.hostname}${window.location.pathname}`});
+    doc.connect_to_server(`${window.location.hostname}${window.location.pathname}`, "");
     if (mobile) document.body.classList.add("mobile");
 }, true);
 
-},{"../app/js/canvas":1,"../app/js/libtextmode/libtextmode":6,"../app/js/network":10,"linkifyjs/string":26}],12:[function(require,module,exports){
+},{"./web_canvas":11,"./web_doc":12,"linkifyjs/string":28}],11:[function(require,module,exports){
+const doc = require("./web_doc");
+let interval, render;
+let mouse_button = false;
+
+function $(name) {
+    return document.getElementById(name);
+}
+
+function hide(id) {
+    $(id).classList.add("hidden");
+}
+
+function show(id) {
+    $(id).classList.remove("hidden");
+}
+
+function start_blinking() {
+    let vis_toggle = false;
+    $("ice_color_container").style.display = "none";
+    $("blink_off_container").style.removeProperty("display");
+    if (interval) clearInterval(interval);
+    interval = setInterval(() => {
+        if (vis_toggle) {
+            $("blink_on_container").style.display = "none";
+            $("blink_off_container").style.removeProperty("display");
+        } else {
+            $("blink_off_container").style.display = "none";
+            $("blink_on_container").style.removeProperty("display");
+        }
+        vis_toggle = !vis_toggle;
+    }, 300);
+}
+
+function stop_blinking() {
+    if (interval) clearInterval(interval);
+    $("ice_color_container").style.removeProperty("display");
+    $("blink_off_container").style.display = "none";
+    $("blink_on_container").style.display = "none";
+}
+
+function update_frame() {
+    const viewport = $("viewport");
+    const view_rect = viewport.getBoundingClientRect();
+    const view_frame = $("view_frame");
+    if (render) {
+        const scale_factor = render.width / 260;
+        const width = Math.min(Math.ceil(view_rect.width / scale_factor), 260);
+        const height = Math.min(Math.ceil(view_rect.height / scale_factor), render.height / scale_factor);
+        const top = Math.ceil(viewport.scrollTop / scale_factor);
+        const left = Math.ceil(viewport.scrollLeft / scale_factor);
+        const preview = $("preview");
+        view_frame.style.width = `${width}px`;
+        view_frame.style.height = `${height}px`;
+        view_frame.style.top = `${top}px`;
+        view_frame.style.left = `${20 + left}px`;
+        if (top < preview.scrollTop) preview.scrollTop = top;
+        const preview_height = preview.getBoundingClientRect().height;
+        if (top > preview_height + preview.scrollTop - height - 2) preview.scrollTop = top - preview_height + height + 2;
+    }
+}
+
+function add(new_render) {
+    hide("view_frame");
+    const ice_color_container = $("ice_color_container");
+    const blink_off_container = $("blink_off_container");
+    const blink_on_container = $("blink_on_container");
+    const preview = $("preview");
+    if (render) {
+        for (const canvas of render.ice_color_collection) ice_color_container.removeChild(canvas);
+        for (const canvas of render.blink_off_collection) blink_off_container.removeChild(canvas);
+        for (const canvas of render.blink_on_collection) blink_on_container.removeChild(canvas);
+        for (const canvas of render.preview_collection) preview.removeChild(canvas);
+    }
+    render = new_render;
+    $("canvas_container").style.width = `${render.width}px`;
+    $("canvas_container").style.height = `${render.height}px`;
+    for (const canvas of render.ice_color_collection) ice_color_container.appendChild(canvas);
+    for (const canvas of render.blink_off_collection) blink_off_container.appendChild(canvas);
+    for (const canvas of render.blink_on_collection) blink_on_container.appendChild(canvas);
+    for (const canvas of render.preview_collection) preview.appendChild(canvas);
+    show("view_frame");
+    update_frame();
+}
+
+function update_with_mouse_pos(client_x, client_y) {
+    const preview = $("preview");
+    const viewport = $("viewport");
+    const preview_rect = preview.getBoundingClientRect();
+    const viewport_rect = viewport.getBoundingClientRect();
+    const x = client_x - preview_rect.left - 20 + preview.scrollLeft;
+    const y = client_y - preview_rect.top + preview.scrollTop;
+    const scale_factor = render.width / 260;
+    const half_view_width = viewport_rect.width / scale_factor / 2;
+    const half_view_height = viewport_rect.height / scale_factor / 2;
+    viewport.scrollLeft = Math.floor((x - half_view_width) * scale_factor);
+    viewport.scrollTop = Math.floor((y - half_view_height) * scale_factor);
+    update_frame();
+}
+
+function mouse_down(event) {
+    if (event.button == 0) {
+        mouse_button = true;
+        update_with_mouse_pos(event.clientX, event.clientY);
+    }
+}
+
+function mouse_move(event) {
+    if (mouse_button) update_with_mouse_pos(event.clientX, event.clientY);
+}
+
+function unregister_button(event) {
+    if (mouse_button) mouse_button = false;
+}
+
+window.addEventListener("DOMContentLoaded", (event) => {
+    $("viewport").addEventListener("scroll", event => update_frame(), true);
+    window.addEventListener("resize", event => update_frame(), true);
+    $("preview").addEventListener("mousedown", mouse_down, true);
+    $("preview").addEventListener("mousemove", mouse_move, true);
+    preview.addEventListener("mouseup", unregister_button, true);
+    preview.addEventListener("mouseout", unregister_button, true);
+}, true);
+
+doc.on("render", () => add(doc.render));
+doc.on("ice_color", (value) => {
+    if (value) {
+        start_blinking();
+    } else {
+        stop_blinking();
+    }
+});
+doc.on("use_9px_font", () => add(doc.render));
+doc.on("goto_row", (row_no) => goto_row(row_no));
+module.export = {update_frame};
+
+},{"./web_doc":12}],12:[function(require,module,exports){
+const libtextmode = require("../libtextmode/libtextmode");
+const events = require("events");
+let doc, render;
+const actions =  {CONNECTED: 0, REFUSED: 1, JOIN: 2, LEAVE: 3, CURSOR: 4, SELECTION: 5, RESIZE_SELECTION: 6, OPERATION: 7, HIDE_CURSOR: 8, DRAW: 9, CHAT: 10, STATUS: 11, SAUCE: 12, ICE_COLORS: 13, USE_9PX_FONT: 14, CHANGE_FONT: 15, SET_CANVAS_SIZE: 16, PASTE_AS_SELECTION: 17, ROTATE: 18, FLIP_X: 19, FLIP_Y: 20};
+let connection;
+
+class Connection extends events.EventEmitter {
+    open() {
+        this.ws.send(JSON.stringify({type: actions.CONNECTED, data: {nick: undefined, group: undefined, pass: ""}}));
+    }
+
+    disconnected()  {
+        this.connected = false;
+        this.emit("disconnected");
+    }
+
+    message(message) {
+        const {type, data} = message;
+        if (!this.ready) {
+            if (type == actions.CONNECTED) {
+                this.connected = true;
+                this.id = data.id;
+                this.status = data.status;
+                this.ready = true;
+                this.emit("connected", libtextmode.uncompress(data.doc));
+                for (const message of this.queued_messages) this.message(message);
+                this.ws.addEventListener("close", () => this.disconnected());
+            } else if (type == actions.REFUSED) {
+                this.emit("refused");
+            } else {
+                this.queued_messages.push(message);
+            }
+        } else {
+            switch (type) {
+                case actions.DRAW:
+                    doc.data[data.y * doc.columns + data.x] = Object.assign(data.block);
+                    libtextmode.render_at(render, data.x, data.y, data.block);
+                    break;
+                case actions.SAUCE:
+                    this.emit("sauce", data.title, data.author, data.group, data.comments);
+                    break;
+                case actions.ICE_COLORS:
+                    this.emit("ice_colors", data.value);
+                    break;
+                case actions.USE_9PX_FONT:
+                    this.emit("use_9px_font", data.value);
+                    break;
+                case actions.CHANGE_FONT:
+                    this.emit("change_font", data.font_name);
+                    break;
+                case actions.SET_CANVAS_SIZE:
+                    this.emit("set_canvas_size", data.columns, data.rows);
+                    break;
+            }
+        }
+    }
+
+    constructor(server, pass, web = false) {
+        super();
+        this.connected = false;
+        this.server = server;
+        this.pass = pass;
+        try {
+            const {groups} = (/(?<host>[^\/]+)\/?(?<path>[^\/]*)\/?/).exec(server);
+            this.host = groups.host;
+            this.path = groups.path;
+            this.web = web;
+            this.queued_messages = [];
+            this.ready = false;
+            this.ws = new WebSocket(`ws://${encodeURI(groups.host)}:8000/${encodeURI(groups.path)}`);
+            this.ws.addEventListener("open", () => this.open(pass));
+            this.ws.addEventListener("error", () => this.emit("unable_to_connect"));
+            this.ws.addEventListener("message", (resp) => this.message(JSON.parse(resp.data)));
+        } catch (err) {
+            this.emit("unable_to_connect");
+        }
+    }
+}
+
+class TextModeDoc extends events.EventEmitter {
+    async start_rendering() {
+        render = await libtextmode.render_split(doc);
+        this.emit("render");
+    }
+
+    ready() {
+        if (!this.init) {
+            this.emit("ready");
+            this.init = true;
+        }
+    }
+
+    connect_to_server(server, pass) {
+        this.emit("connecting");
+        connection = new Connection(server, pass);
+        connection.on("connected", async (remote_doc) => {
+            this.emit("connected");
+            doc = remote_doc;
+            await this.start_rendering();
+            this.emit("new_document");
+            this.ready();
+        });
+        connection.on("refused", () => this.emit("refused"));
+        connection.on("disconnected", () => this.emit("disconnected"));
+        connection.on("unable_to_connect", () => this.emit("unable_to_connect"));
+        connection.on("ice_colors", (value) => {
+            doc.ice_colors = value;
+            this.emit("ice_colors", doc.ice_colors);
+        });
+        connection.on("use_9px_font", (value) => {
+            doc.use_9px_font = value;
+            this.start_rendering().then(() => this.emit("use_9px_font", doc.use_9px_font));
+        });
+        connection.on("change_font", (font_name) => {
+            doc.font_name = font_name;
+            this.start_rendering().then(() => this.emit("change_font", doc.font_name));
+        });
+        connection.on("sauce", (title, author, group, comments) => {
+            doc.title = title;
+            doc.author = author;
+            doc.group = group;
+            doc.comments = comments;
+            this.emit("sauce", title, author, group, comments);
+        });
+        connection.on("set_canvas_size", (columns, rows) => {
+            this.undo_history.reset_undos();
+            libtextmode.resize_canvas(doc, columns, rows);
+            this.start_rendering();
+        });
+    }
+
+    get connection() {return connection;}
+    get render() {return render;}
+    get font() {return render.font;}
+    get columns() {return doc.columns;}
+    get rows() {return doc.rows;}
+    get title() {return doc.title;}
+    get author() {return doc.author;}
+    get group() {return doc.group;}
+    get comments() {return doc.comments;}
+    get palette() {return doc.palette;}
+    get font_name() {return doc.font_name;}
+    get ice_colors() {return doc.ice_colors;}
+    get use_9px_font() {return doc.use_9px_font;}
+    get data() {return doc.data;}
+
+    constructor() {
+        super();
+        this.init = false;
+    }
+}
+
+module.exports = new TextModeDoc();
+
+},{"../libtextmode/libtextmode":6,"events":16}],13:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -2724,9 +2454,9 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],13:[function(require,module,exports){
-
 },{}],14:[function(require,module,exports){
+
+},{}],15:[function(require,module,exports){
 (function (Buffer){
 /*!
  * The buffer module from node.js, for the browser.
@@ -4507,7 +4237,532 @@ function numberIsNaN (obj) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"base64-js":12,"buffer":14,"ieee754":15}],15:[function(require,module,exports){
+},{"base64-js":13,"buffer":15,"ieee754":17}],16:[function(require,module,exports){
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+var objectCreate = Object.create || objectCreatePolyfill
+var objectKeys = Object.keys || objectKeysPolyfill
+var bind = Function.prototype.bind || functionBindPolyfill
+
+function EventEmitter() {
+  if (!this._events || !Object.prototype.hasOwnProperty.call(this, '_events')) {
+    this._events = objectCreate(null);
+    this._eventsCount = 0;
+  }
+
+  this._maxListeners = this._maxListeners || undefined;
+}
+module.exports = EventEmitter;
+
+// Backwards-compat with node 0.10.x
+EventEmitter.EventEmitter = EventEmitter;
+
+EventEmitter.prototype._events = undefined;
+EventEmitter.prototype._maxListeners = undefined;
+
+// By default EventEmitters will print a warning if more than 10 listeners are
+// added to it. This is a useful default which helps finding memory leaks.
+var defaultMaxListeners = 10;
+
+var hasDefineProperty;
+try {
+  var o = {};
+  if (Object.defineProperty) Object.defineProperty(o, 'x', { value: 0 });
+  hasDefineProperty = o.x === 0;
+} catch (err) { hasDefineProperty = false }
+if (hasDefineProperty) {
+  Object.defineProperty(EventEmitter, 'defaultMaxListeners', {
+    enumerable: true,
+    get: function() {
+      return defaultMaxListeners;
+    },
+    set: function(arg) {
+      // check whether the input is a positive number (whose value is zero or
+      // greater and not a NaN).
+      if (typeof arg !== 'number' || arg < 0 || arg !== arg)
+        throw new TypeError('"defaultMaxListeners" must be a positive number');
+      defaultMaxListeners = arg;
+    }
+  });
+} else {
+  EventEmitter.defaultMaxListeners = defaultMaxListeners;
+}
+
+// Obviously not all Emitters should be limited to 10. This function allows
+// that to be increased. Set to zero for unlimited.
+EventEmitter.prototype.setMaxListeners = function setMaxListeners(n) {
+  if (typeof n !== 'number' || n < 0 || isNaN(n))
+    throw new TypeError('"n" argument must be a positive number');
+  this._maxListeners = n;
+  return this;
+};
+
+function $getMaxListeners(that) {
+  if (that._maxListeners === undefined)
+    return EventEmitter.defaultMaxListeners;
+  return that._maxListeners;
+}
+
+EventEmitter.prototype.getMaxListeners = function getMaxListeners() {
+  return $getMaxListeners(this);
+};
+
+// These standalone emit* functions are used to optimize calling of event
+// handlers for fast cases because emit() itself often has a variable number of
+// arguments and can be deoptimized because of that. These functions always have
+// the same number of arguments and thus do not get deoptimized, so the code
+// inside them can execute faster.
+function emitNone(handler, isFn, self) {
+  if (isFn)
+    handler.call(self);
+  else {
+    var len = handler.length;
+    var listeners = arrayClone(handler, len);
+    for (var i = 0; i < len; ++i)
+      listeners[i].call(self);
+  }
+}
+function emitOne(handler, isFn, self, arg1) {
+  if (isFn)
+    handler.call(self, arg1);
+  else {
+    var len = handler.length;
+    var listeners = arrayClone(handler, len);
+    for (var i = 0; i < len; ++i)
+      listeners[i].call(self, arg1);
+  }
+}
+function emitTwo(handler, isFn, self, arg1, arg2) {
+  if (isFn)
+    handler.call(self, arg1, arg2);
+  else {
+    var len = handler.length;
+    var listeners = arrayClone(handler, len);
+    for (var i = 0; i < len; ++i)
+      listeners[i].call(self, arg1, arg2);
+  }
+}
+function emitThree(handler, isFn, self, arg1, arg2, arg3) {
+  if (isFn)
+    handler.call(self, arg1, arg2, arg3);
+  else {
+    var len = handler.length;
+    var listeners = arrayClone(handler, len);
+    for (var i = 0; i < len; ++i)
+      listeners[i].call(self, arg1, arg2, arg3);
+  }
+}
+
+function emitMany(handler, isFn, self, args) {
+  if (isFn)
+    handler.apply(self, args);
+  else {
+    var len = handler.length;
+    var listeners = arrayClone(handler, len);
+    for (var i = 0; i < len; ++i)
+      listeners[i].apply(self, args);
+  }
+}
+
+EventEmitter.prototype.emit = function emit(type) {
+  var er, handler, len, args, i, events;
+  var doError = (type === 'error');
+
+  events = this._events;
+  if (events)
+    doError = (doError && events.error == null);
+  else if (!doError)
+    return false;
+
+  // If there is no 'error' event listener then throw.
+  if (doError) {
+    if (arguments.length > 1)
+      er = arguments[1];
+    if (er instanceof Error) {
+      throw er; // Unhandled 'error' event
+    } else {
+      // At least give some kind of context to the user
+      var err = new Error('Unhandled "error" event. (' + er + ')');
+      err.context = er;
+      throw err;
+    }
+    return false;
+  }
+
+  handler = events[type];
+
+  if (!handler)
+    return false;
+
+  var isFn = typeof handler === 'function';
+  len = arguments.length;
+  switch (len) {
+      // fast cases
+    case 1:
+      emitNone(handler, isFn, this);
+      break;
+    case 2:
+      emitOne(handler, isFn, this, arguments[1]);
+      break;
+    case 3:
+      emitTwo(handler, isFn, this, arguments[1], arguments[2]);
+      break;
+    case 4:
+      emitThree(handler, isFn, this, arguments[1], arguments[2], arguments[3]);
+      break;
+      // slower
+    default:
+      args = new Array(len - 1);
+      for (i = 1; i < len; i++)
+        args[i - 1] = arguments[i];
+      emitMany(handler, isFn, this, args);
+  }
+
+  return true;
+};
+
+function _addListener(target, type, listener, prepend) {
+  var m;
+  var events;
+  var existing;
+
+  if (typeof listener !== 'function')
+    throw new TypeError('"listener" argument must be a function');
+
+  events = target._events;
+  if (!events) {
+    events = target._events = objectCreate(null);
+    target._eventsCount = 0;
+  } else {
+    // To avoid recursion in the case that type === "newListener"! Before
+    // adding it to the listeners, first emit "newListener".
+    if (events.newListener) {
+      target.emit('newListener', type,
+          listener.listener ? listener.listener : listener);
+
+      // Re-assign `events` because a newListener handler could have caused the
+      // this._events to be assigned to a new object
+      events = target._events;
+    }
+    existing = events[type];
+  }
+
+  if (!existing) {
+    // Optimize the case of one listener. Don't need the extra array object.
+    existing = events[type] = listener;
+    ++target._eventsCount;
+  } else {
+    if (typeof existing === 'function') {
+      // Adding the second element, need to change to array.
+      existing = events[type] =
+          prepend ? [listener, existing] : [existing, listener];
+    } else {
+      // If we've already got an array, just append.
+      if (prepend) {
+        existing.unshift(listener);
+      } else {
+        existing.push(listener);
+      }
+    }
+
+    // Check for listener leak
+    if (!existing.warned) {
+      m = $getMaxListeners(target);
+      if (m && m > 0 && existing.length > m) {
+        existing.warned = true;
+        var w = new Error('Possible EventEmitter memory leak detected. ' +
+            existing.length + ' "' + String(type) + '" listeners ' +
+            'added. Use emitter.setMaxListeners() to ' +
+            'increase limit.');
+        w.name = 'MaxListenersExceededWarning';
+        w.emitter = target;
+        w.type = type;
+        w.count = existing.length;
+        if (typeof console === 'object' && console.warn) {
+          console.warn('%s: %s', w.name, w.message);
+        }
+      }
+    }
+  }
+
+  return target;
+}
+
+EventEmitter.prototype.addListener = function addListener(type, listener) {
+  return _addListener(this, type, listener, false);
+};
+
+EventEmitter.prototype.on = EventEmitter.prototype.addListener;
+
+EventEmitter.prototype.prependListener =
+    function prependListener(type, listener) {
+      return _addListener(this, type, listener, true);
+    };
+
+function onceWrapper() {
+  if (!this.fired) {
+    this.target.removeListener(this.type, this.wrapFn);
+    this.fired = true;
+    switch (arguments.length) {
+      case 0:
+        return this.listener.call(this.target);
+      case 1:
+        return this.listener.call(this.target, arguments[0]);
+      case 2:
+        return this.listener.call(this.target, arguments[0], arguments[1]);
+      case 3:
+        return this.listener.call(this.target, arguments[0], arguments[1],
+            arguments[2]);
+      default:
+        var args = new Array(arguments.length);
+        for (var i = 0; i < args.length; ++i)
+          args[i] = arguments[i];
+        this.listener.apply(this.target, args);
+    }
+  }
+}
+
+function _onceWrap(target, type, listener) {
+  var state = { fired: false, wrapFn: undefined, target: target, type: type, listener: listener };
+  var wrapped = bind.call(onceWrapper, state);
+  wrapped.listener = listener;
+  state.wrapFn = wrapped;
+  return wrapped;
+}
+
+EventEmitter.prototype.once = function once(type, listener) {
+  if (typeof listener !== 'function')
+    throw new TypeError('"listener" argument must be a function');
+  this.on(type, _onceWrap(this, type, listener));
+  return this;
+};
+
+EventEmitter.prototype.prependOnceListener =
+    function prependOnceListener(type, listener) {
+      if (typeof listener !== 'function')
+        throw new TypeError('"listener" argument must be a function');
+      this.prependListener(type, _onceWrap(this, type, listener));
+      return this;
+    };
+
+// Emits a 'removeListener' event if and only if the listener was removed.
+EventEmitter.prototype.removeListener =
+    function removeListener(type, listener) {
+      var list, events, position, i, originalListener;
+
+      if (typeof listener !== 'function')
+        throw new TypeError('"listener" argument must be a function');
+
+      events = this._events;
+      if (!events)
+        return this;
+
+      list = events[type];
+      if (!list)
+        return this;
+
+      if (list === listener || list.listener === listener) {
+        if (--this._eventsCount === 0)
+          this._events = objectCreate(null);
+        else {
+          delete events[type];
+          if (events.removeListener)
+            this.emit('removeListener', type, list.listener || listener);
+        }
+      } else if (typeof list !== 'function') {
+        position = -1;
+
+        for (i = list.length - 1; i >= 0; i--) {
+          if (list[i] === listener || list[i].listener === listener) {
+            originalListener = list[i].listener;
+            position = i;
+            break;
+          }
+        }
+
+        if (position < 0)
+          return this;
+
+        if (position === 0)
+          list.shift();
+        else
+          spliceOne(list, position);
+
+        if (list.length === 1)
+          events[type] = list[0];
+
+        if (events.removeListener)
+          this.emit('removeListener', type, originalListener || listener);
+      }
+
+      return this;
+    };
+
+EventEmitter.prototype.removeAllListeners =
+    function removeAllListeners(type) {
+      var listeners, events, i;
+
+      events = this._events;
+      if (!events)
+        return this;
+
+      // not listening for removeListener, no need to emit
+      if (!events.removeListener) {
+        if (arguments.length === 0) {
+          this._events = objectCreate(null);
+          this._eventsCount = 0;
+        } else if (events[type]) {
+          if (--this._eventsCount === 0)
+            this._events = objectCreate(null);
+          else
+            delete events[type];
+        }
+        return this;
+      }
+
+      // emit removeListener for all listeners on all events
+      if (arguments.length === 0) {
+        var keys = objectKeys(events);
+        var key;
+        for (i = 0; i < keys.length; ++i) {
+          key = keys[i];
+          if (key === 'removeListener') continue;
+          this.removeAllListeners(key);
+        }
+        this.removeAllListeners('removeListener');
+        this._events = objectCreate(null);
+        this._eventsCount = 0;
+        return this;
+      }
+
+      listeners = events[type];
+
+      if (typeof listeners === 'function') {
+        this.removeListener(type, listeners);
+      } else if (listeners) {
+        // LIFO order
+        for (i = listeners.length - 1; i >= 0; i--) {
+          this.removeListener(type, listeners[i]);
+        }
+      }
+
+      return this;
+    };
+
+function _listeners(target, type, unwrap) {
+  var events = target._events;
+
+  if (!events)
+    return [];
+
+  var evlistener = events[type];
+  if (!evlistener)
+    return [];
+
+  if (typeof evlistener === 'function')
+    return unwrap ? [evlistener.listener || evlistener] : [evlistener];
+
+  return unwrap ? unwrapListeners(evlistener) : arrayClone(evlistener, evlistener.length);
+}
+
+EventEmitter.prototype.listeners = function listeners(type) {
+  return _listeners(this, type, true);
+};
+
+EventEmitter.prototype.rawListeners = function rawListeners(type) {
+  return _listeners(this, type, false);
+};
+
+EventEmitter.listenerCount = function(emitter, type) {
+  if (typeof emitter.listenerCount === 'function') {
+    return emitter.listenerCount(type);
+  } else {
+    return listenerCount.call(emitter, type);
+  }
+};
+
+EventEmitter.prototype.listenerCount = listenerCount;
+function listenerCount(type) {
+  var events = this._events;
+
+  if (events) {
+    var evlistener = events[type];
+
+    if (typeof evlistener === 'function') {
+      return 1;
+    } else if (evlistener) {
+      return evlistener.length;
+    }
+  }
+
+  return 0;
+}
+
+EventEmitter.prototype.eventNames = function eventNames() {
+  return this._eventsCount > 0 ? Reflect.ownKeys(this._events) : [];
+};
+
+// About 1.5x faster than the two-arg version of Array#splice().
+function spliceOne(list, index) {
+  for (var i = index, k = i + 1, n = list.length; k < n; i += 1, k += 1)
+    list[i] = list[k];
+  list.pop();
+}
+
+function arrayClone(arr, n) {
+  var copy = new Array(n);
+  for (var i = 0; i < n; ++i)
+    copy[i] = arr[i];
+  return copy;
+}
+
+function unwrapListeners(arr) {
+  var ret = new Array(arr.length);
+  for (var i = 0; i < ret.length; ++i) {
+    ret[i] = arr[i].listener || arr[i];
+  }
+  return ret;
+}
+
+function objectCreatePolyfill(proto) {
+  var F = function() {};
+  F.prototype = proto;
+  return new F;
+}
+function objectKeysPolyfill(obj) {
+  var keys = [];
+  for (var k in obj) if (Object.prototype.hasOwnProperty.call(obj, k)) {
+    keys.push(k);
+  }
+  return k;
+}
+function functionBindPolyfill(context) {
+  var fn = this;
+  return function () {
+    return fn.apply(context, arguments);
+  };
+}
+
+},{}],17:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = (nBytes * 8) - mLen - 1
@@ -4593,7 +4848,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],16:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -4702,7 +4957,7 @@ if (!String.prototype.linkify) {
 }
 
 exports.default = linkifyStr;
-},{"./linkify":17}],17:[function(require,module,exports){
+},{"./linkify":19}],19:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -4788,7 +5043,7 @@ exports.parser = parser;
 exports.scanner = scanner;
 exports.test = test;
 exports.tokenize = tokenize;
-},{"./linkify/core/parser":18,"./linkify/core/scanner":19,"./linkify/utils/class":24,"./linkify/utils/options":25}],18:[function(require,module,exports){
+},{"./linkify/core/parser":20,"./linkify/core/scanner":21,"./linkify/utils/class":26,"./linkify/utils/options":27}],20:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -5076,7 +5331,7 @@ exports.State = _state.TokenState;
 exports.TOKENS = MULTI_TOKENS;
 exports.run = run;
 exports.start = S_START;
-},{"./state":20,"./tokens/multi":22,"./tokens/text":23}],19:[function(require,module,exports){
+},{"./state":22,"./tokens/multi":24,"./tokens/text":25}],21:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -5257,7 +5512,7 @@ exports.State = _state.CharacterState;
 exports.TOKENS = TOKENS;
 exports.run = run;
 exports.start = start;
-},{"./state":20,"./tokens/text":23}],20:[function(require,module,exports){
+},{"./state":22,"./tokens/text":25}],22:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -5499,7 +5754,7 @@ function stateify(str, start, endToken, defaultToken) {
 exports.CharacterState = CharacterState;
 exports.TokenState = TokenState;
 exports.stateify = stateify;
-},{"../utils/class":24}],21:[function(require,module,exports){
+},{"../utils/class":26}],23:[function(require,module,exports){
 "use strict";
 
 exports.__esModule = true;
@@ -5512,7 +5767,7 @@ function createTokenClass() {
 }
 
 exports.createTokenClass = createTokenClass;
-},{}],22:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -5717,7 +5972,7 @@ exports.EMAIL = EMAIL;
 exports.NL = NL;
 exports.TEXT = TEXT;
 exports.URL = URL;
-},{"../../utils/class":24,"./create-token-class":21,"./text":23}],23:[function(require,module,exports){
+},{"../../utils/class":26,"./create-token-class":23,"./text":25}],25:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -5922,7 +6177,7 @@ exports.CLOSEBRACKET = CLOSEBRACKET;
 exports.CLOSEANGLEBRACKET = CLOSEANGLEBRACKET;
 exports.CLOSEPAREN = CLOSEPAREN;
 exports.AMPERSAND = AMPERSAND;
-},{"../../utils/class":24,"./create-token-class":21}],24:[function(require,module,exports){
+},{"../../utils/class":26,"./create-token-class":23}],26:[function(require,module,exports){
 "use strict";
 
 exports.__esModule = true;
@@ -5938,7 +6193,7 @@ function inherits(parent, child) {
 	child.prototype = extended;
 	return child;
 }
-},{}],25:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -6066,10 +6321,10 @@ function noop(val) {
 function typeToTarget(href, type) {
 	return type === 'url' ? '_blank' : null;
 }
-},{}],26:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 module.exports = require('./lib/linkify-string').default;
 
-},{"./lib/linkify-string":16}],27:[function(require,module,exports){
+},{"./lib/linkify-string":18}],29:[function(require,module,exports){
 (function (process){
 // .dirname, .basename, and .extname methods are extracted from Node.js v8.11.1,
 // backported and transplited with Babel, with backwards-compat fixes
@@ -6375,7 +6630,7 @@ var substr = 'ab'.substr(-1) === 'b'
 ;
 
 }).call(this,require('_process'))
-},{"_process":28}],28:[function(require,module,exports){
+},{"_process":30}],30:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -6561,4 +6816,4 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}]},{},[11]);
+},{}]},{},[10]);
