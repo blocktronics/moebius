@@ -68,14 +68,13 @@ function validate(value) {
 class ChatUI extends events.EventEmitter {
     add_click_event(link) {
         return (event) => {
+            event.preventDefault();
             const match = link.href.match(/^row:\/\/#(\d+)/);
             if (match) {
                 this.emit("goto_row", match[1]);
-                return false;
             } else {
                 electron.shell.openExternal(link.href);
             }
-            event.preventDefault();
         };
     }
 

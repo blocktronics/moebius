@@ -246,4 +246,4 @@ electron.app.on("window-all-closed", (event) => {
     }
 });
 
-if (!darwin) electron.app.disableHardwareAcceleration();
+// if (!darwin) electron.app.disableHardwareAcceleration();
