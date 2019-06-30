@@ -35,35 +35,31 @@ function full_block_line(sx, sy, dx, dy, col, skip_first = false) {
     for (const coord of coords) doc.change_data(coord.x, coord.y, (col == 0) ? 32 : 219, col, 0);
 }
 
-function shading_block(x, y, col, reduce) {
+function shading_block(x, y, fg, bg, reduce) {
     const block = doc.at(x, y);
     if (block) {
         if (reduce) {
-            if (block.fg == 0 && block.bg != 0 && block.code == 32) {
-                doc.change_data(x, y, 178, block.bg, 0);
-            } else {
-                switch (block.code) {
-                    case 176: doc.change_data(x, y, 32, 0, block.bg); break;
-                    case 177: doc.change_data(x, y, 176, col, block.bg); break;
-                    case 178: doc.change_data(x, y, 177, col, block.bg); break;
-                    case 219: doc.change_data(x, y, 178, col, block.bg); break;
-                }
+            switch (block.code) {
+                case 176: doc.change_data(x, y, 32, fg, bg); break;
+                case 177: doc.change_data(x, y, 176, fg, bg); break;
+                case 178: doc.change_data(x, y, 177, fg, bg); break;
+                case 219: if (block.fg == fg) doc.change_data(x, y, 178, fg, bg); break;
             }
         } else {
             switch (block.code) {
-                case 219: if (block.fg != col) doc.change_data(x, y, 176, col, block.fg); break;
-                case 178: doc.change_data(x, y, 219, col, block.bg); break;
-                case 177: doc.change_data(x, y, 178, col, block.bg); break;
-                case 176: doc.change_data(x, y, 177, col, block.bg); break;
-                default: doc.change_data(x, y, 176, col, block.bg); break;
+                case 219: if (block.fg != fg) doc.change_data(x, y, 176, fg, bg); break;
+                case 178: doc.change_data(x, y, 219, fg, bg); break;
+                case 177: doc.change_data(x, y, 178, fg, bg); break;
+                case 176: doc.change_data(x, y, 177, fg, bg); break;
+                default: doc.change_data(x, y, 176, fg, bg); break;
             }
         }
     }
 }
 
-function shading_block_line(sx, sy, dx, dy, col, reduce, skip_first = false) {
+function shading_block_line(sx, sy, dx, dy, fg, bg, reduce, skip_first = false) {
     const coords = line(sx, sy, dx, dy, skip_first);
-    for (const coord of coords) shading_block(coord.x, coord.y, col, reduce);
+    for (const coord of coords) shading_block(coord.x, coord.y, fg, bg, reduce);
 }
 
 function clear_block_line(sx, sy, dx, dy, skip_first = false) {

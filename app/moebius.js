@@ -28,7 +28,8 @@ async function new_document_window() {
     }
     const win_pos = win.getPosition();
     last_win_pos = win_pos;
-    docs[win.id] = {win, menu: menu.document_menu(win), chat_input_menu: menu.chat_input_menu(win), edited: false, win_pos, destroyed: false};
+    const debug = prefs.get("debug");
+    docs[win.id] = {win, menu: menu.document_menu(win, debug), chat_input_menu: menu.chat_input_menu(win, debug), edited: false, win_pos, destroyed: false};
     touchbar.create_touch_bars(win);
     prefs.send(win);
     win.on("focus", (event) => {
@@ -117,15 +118,11 @@ menu.on("open", open);
 electron.ipcMain.on("open", (event) => open());
 
 async function preferences() {
-    const preferences = await window.static("app/html/preferences.html", {width: 480, height: 475});
+    const preferences = await window.static("app/html/preferences.html", {width: 480, height: 510});
     preferences.send("prefs", prefs.get_all());
 }
 menu.on("preferences", preferences);
 electron.ipcMain.on("preferences", (event) => preferences());
-
-menu.on("start_server", () => {
-    // Todo
-});
 
 menu.on("show_new_connection_window", async () => await window.static("app/html/new_connection.html", {width: 480, height: 160}, touchbar.new_connection));
 

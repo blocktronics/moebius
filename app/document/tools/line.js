@@ -79,7 +79,7 @@ mouse.on("up", (x, y, half_y, button) => {
                 brushes.full_block_line(mouse.start.x, mouse.start.y, x, y, (button == mouse.buttons.LEFT) ? fg : bg);
                 break;
             case toolbar.modes.SHADING_BLOCK:
-                brushes.shading_block_line(mouse.start.x, mouse.start.y, x, y, fg, button != mouse.buttons.LEFT);
+                brushes.shading_block_line(mouse.start.x, mouse.start.y, x, y, fg, bg, button != mouse.buttons.LEFT);
                 break;
             case toolbar.modes.COLORIZE:
                 brushes.colorize_line(mouse.start.x, mouse.start.y, x, y, toolbar.colorize_fg ? fg : undefined, toolbar.colorize_bg ? bg : undefined);

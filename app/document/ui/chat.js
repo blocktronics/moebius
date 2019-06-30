@@ -159,7 +159,7 @@ class ChatUI extends events.EventEmitter {
 
     join(id, nick, group, status, show_join = true) {
         if (nick) {
-            this.users[id] = {nick, group, status, element: this.create_div({text: nick, parent: $("user_list")})};
+            this.users[id] = {nick, group, status, element: this.create_div({text: group ? `${nick} <${group}>` : nick, parent: $("user_list")})};
             this.users[id].element.addEventListener("click", (event) => this.emit("goto_user", id), false);
         } else {
             this.users[id] = {nick: "Guest", undefined, status, element: this.create_div({text: "Guest", classname: "guest", parent: $("user_list")})};
@@ -191,7 +191,11 @@ class ChatUI extends events.EventEmitter {
     }
 
     chat(id, nick, group, text, time) {
-        if (this.users[id] && this.users[id].element.nick != nick) this.users[id].element.innerText = nick;
+        if (this.users[id] && (this.users[id] != nick || this.users[id].group != group)) {
+            this.users[id].nick = nick;
+            this.users[id].group = group;
+            this.users[id].element.innerText = group ? `${nick} <${group}>` : nick;
+        }
         const nick_div = this.create_div({classname: "nick", text: group ? `${nick} <${group}>` : nick});
         const text_div = this.create_div({classname: "text", text, linkify: true});
         const container = this.create_div();

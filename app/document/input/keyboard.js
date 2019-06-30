@@ -69,6 +69,15 @@ class KeyboardEvent extends events.EventEmitter {
                 this.emit("page_down");
                 event.preventDefault();
                 return;
+            case "Comma":
+                this.emit("prev_fkeys");
+                return;
+            case "Period":
+                this.emit("next_fkeys");
+                return;
+            case "Slash":
+                this.emit("default_fkeys");
+                return;
         }
     }
 

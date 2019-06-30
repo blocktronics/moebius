@@ -221,7 +221,6 @@ function colors_menu_template(win) {
 function network_menu_template(win, enabled) {
     return {
         label: "&Network", submenu: [
-            {label: "Start Server…", id: "start_server", click(item) {event.emit("start_server", {item, win});}, enabled: false},
             {label: "Connect to Server…", id: "connect_to_server", accelerator: "CmdorCtrl+Alt+S", click(item) {event.emit("show_new_connection_window");}},
             {type: "separator"},
             {label: "Toggle Chat Window", id: "chat_window_toggle", accelerator: "CmdorCtrl+[", click(item) {win.send("chat_window_toggle");}, enabled},
@@ -238,8 +237,10 @@ function debug_menu_template(win) {
     };
 }
 
-function create_menu_template(win) {
-    return [file_menu_template(win), edit_menu_template(win, false), colors_menu_template(win), view_menu_template(win), network_menu_template(win, false), debug_menu_template(win)];
+function create_menu_template(win, chat, debug) {
+    const menu_lists = [file_menu_template(win), edit_menu_template(win, chat), colors_menu_template(win), view_menu_template(win), network_menu_template(win, chat)];
+    if (debug) menu_lists.push(debug_menu_template(win));
+    return menu_lists;
 }
 
 function get_menu_item(id, name) {
@@ -444,8 +445,8 @@ class MenuEvent extends events.EventEmitter {
         if (darwin) electron.Menu.setApplicationMenu(application);
     }
 
-    chat_input_menu(win) {
-        const menu = electron.Menu.buildFromTemplate([moebius_menu, file_menu_template(win), edit_menu_template(win, true), view_menu_template(win), colors_menu_template(win), network_menu_template(win, true), window_menu_items, debug_menu_template(win), help_menu_items]);
+    chat_input_menu(win, debug) {
+        const menu = darwin ? electron.Menu.buildFromTemplate([moebius_menu, ...create_menu_template(win, true, debug), window_menu_items, help_menu_items]) : electron.Menu.buildFromTemplate([...create_menu_template(win, true, debug), help_menu_items]);
         chat_menus[win.id] = menu;
         return menu;
     }
@@ -454,8 +455,8 @@ class MenuEvent extends events.EventEmitter {
         return electron.Menu.buildFromTemplate([moebius_menu, bare_edit, window_menu_items, help_menu_items]);
     }
 
-    document_menu(win) {
-        const menu = darwin ? electron.Menu.buildFromTemplate([moebius_menu, ...create_menu_template(win), window_menu_items, help_menu_items]) : electron.Menu.buildFromTemplate([...create_menu_template(win), help_menu_items]);
+    document_menu(win, debug) {
+        const menu = darwin ? electron.Menu.buildFromTemplate([moebius_menu, ...create_menu_template(win, false, debug), window_menu_items, help_menu_items]) : electron.Menu.buildFromTemplate([...create_menu_template(win, false, debug), help_menu_items]);
         menus[win.id] = menu;
         return menu;
     }

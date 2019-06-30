@@ -215,7 +215,9 @@ class Connection extends events.EventEmitter {
         } else {
             const user = this.users[data.id];
             switch (type) {
-                case actions.JOIN: this.join(data.id, data.nick, data.group, data.status); break;
+                case actions.JOIN:
+                    this.join(data.id, data.nick, data.group, data.status);
+                    break;
                 case actions.LEAVE:
                     if (user) {
                         if (user.cursor) user.cursor.hide();
@@ -241,13 +243,20 @@ class Connection extends events.EventEmitter {
                         user.cursor.move_to(data.x, data.y);
                     }
                     break;
-                case actions.HIDE_CURSOR: if (user && user.cursor) user.cursor.hide(); break;
+                case actions.HIDE_CURSOR:
+                    if (user && user.cursor) user.cursor.hide();
+                    break;
                 case actions.DRAW:
                     doc.data[data.y * doc.columns + data.x] = Object.assign(data.block);
                     libtextmode.render_at(render, data.x, data.y, data.block);
+                    if (user) this.users[data.id].last_row = data.y;
                     break;
-                case actions.CHAT: if (user) chat.chat(data.id, data.nick, data.group, data.text, data.time); break;
-                case actions.STATUS: if (user) chat.status(data.id, data.status); break;
+                case actions.CHAT:
+                    if (user) chat.chat(data.id, data.nick, data.group, data.text, data.time);
+                    break;
+                case actions.STATUS:
+                    if (user) chat.status(data.id, data.status);
+                    break;
                 case actions.SAUCE:
                     this.emit("sauce", data.title, data.group, data.author, data.comments);
                     chat.sauce(data.id);
@@ -268,10 +277,18 @@ class Connection extends events.EventEmitter {
                     this.emit("set_canvas_size", data.columns, data.rows);
                     chat.set_canvas_size(data.id, data.columns, data.rows);
                     break;
-                case actions.PASTE_AS_SELECTION: if (user && user.cursor) user.cursor.paste_as_selection(data.blocks); break;
-                case actions.ROTATE: if (user && user.cursor) user.cursor.rotate(); break;
-                case actions.FLIP_X: if (user && user.cursor) user.cursor.flip_x(); break;
-                case actions.FLIP_Y: if (user && user.cursor) user.cursor.flip_y(); break;
+                case actions.PASTE_AS_SELECTION:
+                    if (user && user.cursor) user.cursor.paste_as_selection(data.blocks);
+                    break;
+                case actions.ROTATE:
+                    if (user && user.cursor) user.cursor.rotate();
+                    break;
+                case actions.FLIP_X:
+                    if (user && user.cursor) user.cursor.flip_x();
+                    break;
+                case actions.FLIP_Y:
+                    if (user && user.cursor) user.cursor.flip_y();
+                    break;
             }
         }
     }
@@ -309,8 +326,8 @@ class Connection extends events.EventEmitter {
         chat.on("goto_user", (id) => {
             if (id == this.id) {
                 this.emit("goto_self");
-            } else if (this.users[id].cursor) {
-                this.emit("goto_row", this.users[id].cursor.y);
+            } else if (this.users[id] && this.users[id].last_row) {
+                this.emit("goto_row", this.users[id].last_row);
             }
         });
         try {
