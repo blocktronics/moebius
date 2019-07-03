@@ -16,7 +16,7 @@ function copy(blocks) {
 
 function paste_blocks() {
     try {
-        const blocks = JSON.parse(electron.clipboard.readHTML().replace("<meta charset='utf-8'>", ""));
+        const blocks = JSON.parse(electron.clipboard.readHTML().replace(/^<[^>]+>/, ""));
         if (blocks.columns && blocks.rows && (blocks.data.length == blocks.columns * blocks.rows)) {
             return blocks;
         } else {
