@@ -43,6 +43,18 @@ class KeyboardEvent extends events.EventEmitter {
             case "KeyX":
                 this.emit("cut");
                 return;
+            case "KeyZ":
+                if (!darwin) {
+                    doc.undo();
+                    event.preventDefault();
+                }
+                return;
+            case "KeyY":
+                if (!darwin) {
+                    doc.redo();
+                    event.preventDefault();
+                }
+                return;
             case "KeyA":
                 if (!darwin) {
                     this.emit("select_all");

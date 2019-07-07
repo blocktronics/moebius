@@ -179,6 +179,7 @@ class Connection extends events.EventEmitter {
     disconnected()  {
         this.stop_away_timers();
         this.connected = false;
+        for (const id of Object.keys(this.users)) this.leave(id, false);
         this.emit("disconnected");
     }
 
@@ -189,6 +190,15 @@ class Connection extends events.EventEmitter {
             this.users[id] = {nick, group, status, cursor: new NetworkCursor()};
         }
         chat.join(id, nick, group, status, show_join);
+    }
+
+    leave(id, show_leave = true) {
+        const user = this.users[id];
+        if (user) {
+            if (user.cursor) user.cursor.hide();
+            chat.leave(id, show_leave);
+            delete this.users[id];
+        }
     }
 
     message(message) {
@@ -219,11 +229,7 @@ class Connection extends events.EventEmitter {
                     this.join(data.id, data.nick, data.group, data.status);
                     break;
                 case actions.LEAVE:
-                    if (user) {
-                        if (user.cursor) user.cursor.hide();
-                        chat.leave(data.id);
-                        delete this.users[data.id];
-                    }
+                    this.leave(data.id);
                     break;
                 case actions.CURSOR:
                     if (user && user.cursor) {
@@ -749,6 +755,10 @@ class TextModeDoc extends events.EventEmitter {
 
     undo() {
         this.undo_history.undo();
+    }
+
+    redo() {
+        this.undo_history.redo();
     }
 
     async insert_row(insert_y) {

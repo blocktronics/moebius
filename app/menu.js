@@ -97,6 +97,7 @@ function file_menu_template(win) {
         label: "&File",
         submenu: [
             {label: "New", id: "new_document", accelerator: "CmdorCtrl+N", click(item) {event.emit("new_document");}},
+            {label: "Duplicate as New Document", id: "duplicate", click(item) {win.send("duplicate");}},
             {type: "separator"},
             {label: "Open\u2026", id: "open", accelerator: "CmdorCtrl+O", click(item) {event.emit("open", win);}},
             darwin ? {role: "recentDocuments", submenu: [{role: "clearrecentdocuments"}]} : ({type: "separator"}, {label: "Settings", click(item) {event.emit("preferences");}}),
@@ -118,8 +119,8 @@ function edit_menu_template(win, chat) {
     return {
         label: "&Edit",
         submenu: [
-            chat ? {label: "Undo", accelerator: "Cmd+Z", role: "undo"} : {label: "Undo", id: "undo", accelerator: "CmdorCtrl+Z", click(item) {win.send("undo");}, enabled: false},
-            chat ? {label: "Redo", accelerator: "Cmd+Shift+Z", role: "redo"} : {label: "Redo", id: "redo", accelerator: darwin ? "Cmd+Shift+Z" : "Ctrl+Y", click(item) {win.send("redo");}, enabled: false},
+            chat ? {label: "Undo", accelerator: "Cmd+Z", role: "undo"} : {label: "Undo", id: "undo", accelerator: darwin ? "Cmd+Z" : "", click(item) {win.send("undo");}, enabled: false},
+            chat ? {label: "Redo", accelerator: "Cmd+Shift+Z", role: "redo"} : {label: "Redo", id: "redo", accelerator: darwin ? "Cmd+Shift+Z" : "", click(item) {win.send("redo");}, enabled: false},
             {type: "separator"},
             {label: "Toggle Insert Mode", id: "toggle_insert_mode", accelerator: darwin ? "" : "Insert", click(item) {win.send("insert_mode", item.checked);}, type: "checkbox", checked: false},
             {label: "Toggle Overwrite Mode", id: "overwrite_mode", accelerator: "CmdorCtrl+Alt+O", click(item) {win.send("overwrite_mode", item.checked);}, type: "checkbox", checked: false},

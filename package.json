@@ -1,6 +1,6 @@
 {
   "name": "moebius",
-  "version": "1.0.13",
+  "version": "1.0.14",
   "description": "Modern ANSI Art Editor",
   "main": "app/moebius.js",
   "scripts": {
@@ -14,7 +14,7 @@
   "author": "Andy Herbert <andy.herbert@gmail.com>",
   "license": "Apache-2.0",
   "devDependencies": {
-    "browserify": "^16.2.3",
+    "browserify": "^16.3.0",
     "electron": "^5.0.6",
     "electron-builder": "^20.44.4",
     "express": "^4.17.1"

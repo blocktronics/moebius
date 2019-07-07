@@ -95,6 +95,7 @@ function use_backup(value) {
 
 // electron.remote.getCurrentWebContents().openDevTools();
 on("new_document", (event, opts) => doc.new_document(opts));
+on("duplicate", (event, opts) => send("new_document", {columns: doc.columns, rows: doc.rows, data: doc.data, palette: doc.palette, font_name: doc.font_name, use_9px_font: doc.use_9px_font, ice_colors: doc.ice_colors}));
 on("save", (event, opts) => save());
 on("save_as", (event, opts) => save_as());
 on("open_file", (event, file) => doc.open(file));

@@ -477,11 +477,11 @@ function encode_as_ansi(doc, {utf8 = false} = {}) {
             attribs.push([53]);
             current_blink = true;
         }
-        if (fg !== current_fg) {
+        if (fg != current_fg) {
             attribs.push([51, 48 + bin_to_ansi_colour(fg)]);
             current_fg = fg;
         }
-        if (bg !== current_bg) {
+        if (bg != current_bg) {
             attribs.push([52, 48 + bin_to_ansi_colour(bg)]);
             current_bg = bg;
         }
@@ -499,7 +499,12 @@ function encode_as_ansi(doc, {utf8 = false} = {}) {
             }
         }
         if (code == 32 && bg == 0) {
-            for (let j = i; j < doc.data.length; j++) {
+            for (let j = i + 1; j < doc.data.length; j++) {
+                if (j % doc.columns == 0) {
+                    output.push(13, 10);
+                    i = j - 1;
+                    break;
+                }
                 let {code: look_ahead_code, bg: look_ahead_bg} = doc.data[j];
                 if (look_ahead_code != 32 || look_ahead_bg != 0) {
                     while (i < j) {
@@ -507,11 +512,6 @@ function encode_as_ansi(doc, {utf8 = false} = {}) {
                         i += 1;
                     }
                     i = j - 1;
-                    break;
-                }
-                if ((j + 1) % doc.columns == 0) {
-                    output.push(13, 10);
-                    i = j;
                     break;
                 }
             }

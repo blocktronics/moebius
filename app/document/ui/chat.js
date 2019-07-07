@@ -173,8 +173,8 @@ class ChatUI extends events.EventEmitter {
         delete this.users[id];
     }
 
-    leave(id) {
-        this.action(id, "left");
+    leave(id, show_leave = true) {
+        if (show_leave) this.action(id, "left");
         this.remove_user(id);
     }
 
