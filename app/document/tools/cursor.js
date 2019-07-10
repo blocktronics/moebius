@@ -4,9 +4,8 @@ const doc = require("../doc");
 const libtextmode = require("../../libtextmode/libtextmode");
 const palette = require("../palette");
 const keyboard = require("../input/keyboard");
-const {statusbar} = require("../ui/ui");
+const {statusbar, toolbar} = require("../ui/ui");
 const clipboard = require("./clipboard");
-const {toolbar} = require("../ui/ui");
 
 class Cursor {
     draw() {

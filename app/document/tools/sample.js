@@ -1,6 +1,7 @@
 const {tools, toolbar} = require("../ui/ui");
 const mouse = require("../input/mouse");
 const palette = require("../palette");
+const doc = require("../doc");
 let enabled = false;
 
 tools.on("start", (mode) => {

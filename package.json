@@ -20,8 +20,9 @@
     "express": "^4.17.1"
   },
   "dependencies": {
+    "json5": "^2.1.0",
     "linkifyjs": "^2.1.8",
     "minimist": "^1.2.0",
-    "ws": "^7.0.1"
+    "ws": "^7.1.0"
   }
 }

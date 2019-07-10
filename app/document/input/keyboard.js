@@ -2,6 +2,7 @@ const events = require("events");
 const {on} = require("../../senders");
 const darwin = (process.platform == "darwin");
 const doc = require("../doc");
+const libtextmode = require("../../libtextmode/libtextmode");
 
 class KeyboardEvent extends events.EventEmitter {
     chat(text) {
@@ -313,9 +314,9 @@ class KeyboardEvent extends events.EventEmitter {
                 return;
         }
         if (event.key.length == 1) {
-            const code = event.key.charCodeAt(0);
+            const code = libtextmode.unicode_to_cp437(event.key.charCodeAt(0));
             if (code == 32) event.preventDefault();
-            if (code >= 32 && code <= 126) this.emit("key_typed", code);
+            if (code) this.emit("key_typed", code);
         }
     }
 

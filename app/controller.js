@@ -6,6 +6,7 @@ let hourly_saver, backup_folder;
 require("./document/ui/canvas");
 require("./document/tools/select");
 require("./document/tools/brush");
+require("./document/tools/shifter");
 require("./document/tools/line");
 require("./document/tools/rectangle");
 require("./document/tools/ellipse");
@@ -45,10 +46,8 @@ function save(destroy_when_done = false) {
 function save_as(destroy_when_done = false) {
     save_box(doc.file, "ans", {filters: [{name: "ANSI Art", extensions: ["ans", "asc", "diz", "nfo", "txt"]}, {name: "XBin", extensions: ["xb"]}, {name: "Binary Text", extensions: ["bin"]}]}, async (file) => {
         if (file) {
-            if (!doc.network) {
-                doc.file = file;
-                doc.edited = false;
-            }
+            doc.file = file;
+            doc.edited = false;
             save(destroy_when_done);
         }
     });
@@ -96,7 +95,13 @@ function use_backup(value) {
 // electron.remote.getCurrentWebContents().openDevTools();
 on("new_document", (event, opts) => doc.new_document(opts));
 on("duplicate", (event, opts) => send("new_document", {columns: doc.columns, rows: doc.rows, data: doc.data, palette: doc.palette, font_name: doc.font_name, use_9px_font: doc.use_9px_font, ice_colors: doc.ice_colors}));
-on("save", (event, opts) => save());
+on("save", (event, opts) => {
+    if (doc.connection) {
+        save_as();
+    } else {
+        save();
+    }
+});
 on("save_as", (event, opts) => save_as());
 on("open_file", (event, file) => doc.open(file));
 on("check_before_closing", (event) => check_before_closing());

@@ -1,10 +1,9 @@
-const {tools} = require("../ui/ui");
 const {on, send} = require("../../senders");
 const doc = require("../doc");
 const cursor = require("./cursor");
 const keyboard = require("../input/keyboard");
 const mouse = require("../input/mouse");
-const {statusbar, toolbar} = require("../ui/ui");
+const {tools, statusbar, toolbar} = require("../ui/ui");
 let enabled = false;
 
 tools.on("start", (mode) => {

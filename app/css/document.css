@@ -46,6 +46,9 @@ body.dark .tool.selected {
 #brush_mode {
     background-image: url("../img/brush.png");
 }
+#shifter_mode {
+    background-image: url("../img/shifter.png");
+}
 #line_mode {
     background-image: url("../img/line.png");
 }
@@ -126,7 +129,6 @@ body.dark #current_colors > canvas {
     overflow: auto;
 }
 #chat {
-    float: left;
     width: calc(100% - var(--sidebar-width) -  var(--preview-width));
     height: var(--chat-height);
     max-height: calc(100% - var(--toolbar-height) - var(--statusbar-height));
@@ -186,10 +188,12 @@ body.dark #current_colors > canvas {
     outline: none;
 }
 #messages > div.welcome {
+    display: block;
     text-align: center;
     user-select: text;
 }
 #messages > div.date {
+    display: block;
     text-align: center;
     color: #aaaaaa;
 }
@@ -206,6 +210,7 @@ body.dark #current_colors > canvas {
     border-left: 1px solid var(--dark-border-color);
 }
 #messages > div {
+    display: flex;
     font-size: 12px;
     margin: 4px 6px;
 }
@@ -222,8 +227,9 @@ body.dark #current_colors > canvas {
     display: inline-block;
     color: white;
     padding-left: 4px;
-    word-wrap: break-word;
+    word-break: break-all;
     user-select: text;
+    flex: 1;
 }
 body.dark #viewport {
     border-color: var(--dark-border-color);
@@ -259,7 +265,7 @@ body.dark #preview {
 #canvas_container {
     position: relative;
     margin: 0 auto;
-    cursor: crosshair;
+    cursor: -webkit-image-set(url("../img/crosshair.png") 1x, url("../img/crosshair_2x.png") 2x) 15 15, crosshair;
 }
 #canvas_container > div {
     position: absolute;
@@ -328,6 +334,10 @@ body.dark #statusbar > div > div {
 }
 #editing_layer > canvas {
     position: absolute;
+}
+#editing_layer > canvas.border {
+    box-sizing: border-box;
+    border: 1px solid rgba(255, 255, 255, 0.8);
 }
 #editing_layer > canvas.flashing {
     box-sizing: border-box;

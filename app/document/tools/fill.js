@@ -1,6 +1,5 @@
 const doc = require("../doc");
-const {tools} = require("../ui/ui");
-const {toolbar} = require("../ui/ui");
+const {tools, toolbar} = require("../ui/ui");
 const mouse = require("../input/mouse");
 const palette = require("../palette");
 const {msg_box} = require("../../senders");

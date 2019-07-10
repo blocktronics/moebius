@@ -122,6 +122,8 @@ function edit_menu_template(win, chat) {
             chat ? {label: "Undo", accelerator: "Cmd+Z", role: "undo"} : {label: "Undo", id: "undo", accelerator: darwin ? "Cmd+Z" : "", click(item) {win.send("undo");}, enabled: false},
             chat ? {label: "Redo", accelerator: "Cmd+Shift+Z", role: "redo"} : {label: "Redo", id: "redo", accelerator: darwin ? "Cmd+Shift+Z" : "", click(item) {win.send("redo");}, enabled: false},
             {type: "separator"},
+            {label: "Change to Keyboard Mode", id: "change_to_select_mode", accelerator: "m", click(item) {win.send("change_to_select_mode");}, enabled: false},
+            {type: "separator"},
             {label: "Toggle Insert Mode", id: "toggle_insert_mode", accelerator: darwin ? "" : "Insert", click(item) {win.send("insert_mode", item.checked);}, type: "checkbox", checked: false},
             {label: "Toggle Overwrite Mode", id: "overwrite_mode", accelerator: "CmdorCtrl+Alt+O", click(item) {win.send("overwrite_mode", item.checked);}, type: "checkbox", checked: false},
             {type: "separator"},
@@ -140,6 +142,17 @@ function edit_menu_template(win, chat) {
             chat ? {label: "Select All", accelerator: "Cmd+A", role: "selectall"} : {label: "Select All", id: "select_all", accelerator: "CmdorCtrl+A", click(item) {win.send("select_all");}},
             {label: "Deselect", id: "deselect", accelerator: "Escape", click(item) {win.send("deselect");}, enabled: false},
             {type: "separator"},
+            {label: "Set Canvas Size\u2026", id: "set_canvas_size", accelerator: "CmdorCtrl+Alt+C", click(item) {win.send("get_canvas_size");}, enabled: true},
+            {type: "separator"},
+            {label: "Crop", id: "crop", accelerator: "CmdorCtrl+K", click(item) {win.send("crop");}, enabled: false},
+        ]
+    };
+}
+
+function selection_menu_template(win) {
+    return {
+        label: "&Selection",
+        submenu: [
             {label: "Move Block", id: "move_block", accelerator: "M", click(item) {win.send("move_block");}, enabled: false},
             {label: "Copy Block", id: "copy_block", accelerator: "C", click(item) {win.send("copy_block");}, enabled: false},
             {type: "separator"},
@@ -155,10 +168,6 @@ function edit_menu_template(win, chat) {
             {label: "Transparent", id: "transparent", accelerator: "T", click(item) {win.send("transparent", item.checked);}, type: "checkbox", checked: false, enabled: false},
             {label: "Over", id: "over", accelerator: "O", click(item) {win.send("over", item.checked);}, type: "checkbox", checked: false, enabled: false},
             {label: "Underneath", id: "underneath", accelerator: "U", click(item) {win.send("underneath", item.checked);}, type: "checkbox", checked: false, enabled: false},
-            {type: "separator"},
-            {label: "Set Canvas Size\u2026", id: "set_canvas_size", accelerator: "CmdorCtrl+Alt+C", click(item) {win.send("get_canvas_size");}, enabled: true},
-            {type: "separator"},
-            {label: "Crop", id: "crop", accelerator: "CmdorCtrl+K", click(item) {win.send("crop");}, enabled: false},
         ]
     };
 }
@@ -239,7 +248,7 @@ function debug_menu_template(win) {
 }
 
 function create_menu_template(win, chat, debug) {
-    const menu_lists = [file_menu_template(win), edit_menu_template(win, chat), colors_menu_template(win), view_menu_template(win), network_menu_template(win, chat)];
+    const menu_lists = [file_menu_template(win), edit_menu_template(win, chat), selection_menu_template(win), colors_menu_template(win), view_menu_template(win), network_menu_template(win, chat)];
     if (debug) menu_lists.push(debug_menu_template(win));
     return menu_lists;
 }
@@ -398,6 +407,7 @@ electron.ipcMain.on("disable_editing_shortcuts", (event, {id}) => {
     disable(id, "erase_line");
     disable(id, "paste");
     disable(id, "paste_as_selection");
+    enable(id, "change_to_select_mode");
 });
 
 electron.ipcMain.on("enable_editing_shortcuts", (event, {id}) => {
@@ -410,6 +420,7 @@ electron.ipcMain.on("enable_editing_shortcuts", (event, {id}) => {
     enable(id, "erase_line");
     enable(id, "paste");
     enable(id, "paste_as_selection");
+    disable(id, "change_to_select_mode");
 });
 
 electron.ipcMain.on("update_menu_checkboxes", (event, {id, insert_mode, overwrite_mode, use_9px_font, ice_colors, actual_size, font_name}) => {

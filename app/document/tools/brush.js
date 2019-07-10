@@ -1,7 +1,6 @@
-const {tools} = require("../ui/ui");
+const {tools, toolbar} = require("../ui/ui");
 const doc = require("../doc");
 const mouse = require("../input/mouse");
-const {toolbar} = require("../ui/ui");
 const palette = require("../palette");
 const brushes = require("./brushes");
 const {on} = require("../../senders");

@@ -1,12 +1,21 @@
 const {convert_ega_to_style} = require("../../libtextmode/libtextmode");
 
 class Overlay {
-    constructor() {
+    constructor(border = false) {
         this.destroyed = false;
         this.canvas = document.createElement("canvas");
         this.ctx = this.canvas.getContext("2d");
         document.getElementById("editing_layer").appendChild(this.canvas);
         this.canvas.style.opacity = 0.6;
+        if (border) this.canvas.classList.add("border");
+    }
+
+    hide() {
+        if (!this.canvas.classList.contains("hidden")) this.canvas.classList.add("hidden");
+    }
+
+    show() {
+        if (this.canvas.classList.contains("hidden")) this.canvas.classList.remove("hidden");
     }
 
     fill_style(font, col) {
@@ -23,7 +32,8 @@ class Overlay {
 
     destroy() {
         this.destroyed = true;
-        document.getElementById("editing_layer").removeChild(this.canvas);
+        const editing_layer = document.getElementById("editing_layer");
+        if (editing_layer.contains(this.canvas)) editing_layer.removeChild(this.canvas);
     }
 
     update(x, y, width, height) {

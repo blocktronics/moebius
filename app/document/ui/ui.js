@@ -4,25 +4,6 @@ const doc = require("../doc");
 const palette = require("../palette");
 const keyboard = require("../input/keyboard");
 const events = require("events");
-// Stolen mercilously from Pablo, thanks Curtis!
-const FKEYS = [
-    [218, 191, 192, 217, 196, 179, 195, 180, 193, 194, 32, 32],
-    [201, 187, 200, 188, 205, 186, 204, 185, 202, 203, 32, 32],
-    [213, 184, 212, 190, 205, 179, 198, 181, 207, 209, 32, 32],
-    [214, 183, 211, 189, 196, 186, 199, 182, 208, 210, 32, 32],
-    [197, 206, 216, 215, 232, 232, 155, 156, 153, 239, 32, 32],
-    [176, 177, 178, 219, 223, 220, 221, 222, 254, 250, 32, 32],
-    [1, 2, 3, 4, 5, 6, 240, 14, 15, 32, 32, 32],
-    [24, 25, 30, 31, 16, 17, 18, 29, 20, 21, 32, 32],
-    [174, 175, 242, 243, 169, 170, 253, 246, 171, 172, 32, 32],
-    [227, 241, 244, 245, 234, 157, 228, 248, 251, 252, 32, 32],
-    [224, 225, 226, 229, 230, 231, 235, 236, 237, 238, 32, 32],
-    [128, 135, 165, 164, 152, 159, 247, 249, 173, 168, 32, 32],
-    [131, 132, 133, 160, 166, 134, 142, 143, 145, 146, 32, 32],
-    [136, 137, 138, 130, 144, 140, 139, 141, 161, 158, 32, 32],
-    [147, 148, 149, 162, 167, 150, 129, 151, 163, 154, 32, 32],
-    [47, 92, 40, 41, 123, 125, 91, 93, 96, 39, 32, 32],
-];
 let interval;
 
 function $(name) {
@@ -245,6 +226,7 @@ class Tools extends events.EventEmitter {
         switch(mode) {
             case this.modes.SELECT: return $("select_mode");
             case this.modes.BRUSH: return $("brush_mode");
+            case this.modes.SHIFTER: return $("shifter_mode");
             case this.modes.LINE: return $("line_mode");
             case this.modes.RECTANGLE: return $("rectangle_mode");
             case this.modes.ELLIPSE: return $("ellipse_mode");
@@ -268,12 +250,13 @@ class Tools extends events.EventEmitter {
 
     constructor() {
         super();
-        this.modes = {SELECT: 0, BRUSH: 1, LINE: 2, RECTANGLE: 3, ELLIPSE: 5, FILL: 6, SAMPLE: 7};
+        this.modes = {SELECT: 0, BRUSH: 1, SHIFTER: 2, LINE: 3, RECTANGLE: 4, ELLIPSE: 5, FILL: 6, SAMPLE: 7};
         on("change_to_select_mode", (event) => this.start(this.modes.SELECT));
         on("change_to_brush_mode", (event) => this.start(this.modes.BRUSH));
         document.addEventListener("DOMContentLoaded", (event) => {
             $("select_mode").addEventListener("mousedown", (event) => this.start(this.modes.SELECT), true);
             $("brush_mode").addEventListener("mousedown", (event) => this.start(this.modes.BRUSH), true);
+            $("shifter_mode").addEventListener("mousedown", (event) => this.start(this.modes.SHIFTER), true);
             $("line_mode").addEventListener("mousedown", (event) => this.start(this.modes.LINE), true);
             $("rectangle_mode").addEventListener("mousedown", (event) => this.start(this.modes.RECTANGLE), true);
             $("ellipse_mode").addEventListener("mousedown", (event) => this.start(this.modes.ELLIPSE), true);
@@ -306,26 +289,26 @@ class Toolbar extends events.EventEmitter {
     }
 
     redraw_fkeys() {
-        for (let i = 0; i < 10; i++) this.draw_fkey(`f${i + 1}`, FKEYS[this.fkey_index][i]);
+        for (let i = 0; i < 10; i++) this.draw_fkey(`f${i + 1}`, this.fkeys[this.fkey_index][i]);
     }
 
     prev_fkeys() {
-        this.fkey_index = (this.fkey_index == 0) ? FKEYS.length - 1 : this.fkey_index - 1;
+        this.fkey_index = (this.fkey_index == 0) ? this.fkeys.length - 1 : this.fkey_index - 1;
         this.redraw_fkeys();
     }
 
     next_fkeys() {
-        this.fkey_index = (this.fkey_index + 1 == FKEYS.length) ? 0 : this.fkey_index + 1;
+        this.fkey_index = (this.fkey_index + 1 == this.fkeys.length) ? 0 : this.fkey_index + 1;
         this.redraw_fkeys();
     }
 
-    default_fkeys() {
-        this.fkey_index = 5;
+    use_default_fkeys() {
+        this.fkey_index = this.default_fkeys;
         this.redraw_fkeys();
     }
 
     f_key(num) {
-        return FKEYS[this.fkey_index][num];
+        return this.fkeys[this.fkey_index][num];
     }
 
     show_select() {
@@ -350,7 +333,7 @@ class Toolbar extends events.EventEmitter {
     }
 
     fkey_clicker(i) {
-        return (event) => this.emit("key_typed", FKEYS[this.fkey_index][i]);
+        return (event) => this.emit("key_typed", this.fkeys[this.fkey_index][i]);
     }
 
     change_mode(new_mode) {
@@ -394,10 +377,14 @@ class Toolbar extends events.EventEmitter {
 
     constructor() {
         super();
-        this.fkey_index = 5;
+        on("fkeys", (event, value) => this.fkeys = value);
+        on("default_fkeys", (event, value) => {
+            this.default_fkeys = value;
+            this.fkey_index = value;
+        });
         keyboard.on("next_fkeys", () => this.next_fkeys());
         keyboard.on("prev_fkeys", () => this.prev_fkeys());
-        keyboard.on("default_fkeys", () => this.default_fkeys());
+        keyboard.on("default_fkeys", () => this.use_default_fkeys());
         this.modes = {HALF_BLOCK: 0, FULL_BLOCK: 1, SHADING_BLOCK: 2, CLEAR_BLOCK: 3, COLORIZE: 4};
         this.colorize_fg = true;
         this.colorize_bg = false;
