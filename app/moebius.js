@@ -139,7 +139,7 @@ async function show_splash_screen() {
 }
 
 menu.on("show_cheatsheet", () => window.static("app/html/cheatsheet.html", {width: 640, height: 816, ...frameless}));
-menu.on("show_acknowledgements", () => window.static("app/html/acknowledgements.html", {width: 640, height: 400, ...frameless}));
+menu.on("show_acknowledgements", () => window.static("app/html/acknowledgements.html", {width: 640, height: 688, ...frameless}));
 menu.on("show_numpad_mappings", () => window.static("app/html/numpad_mappings.html", {width: 640, height: 400, ...frameless}));
 
 function has_documents_open() {
