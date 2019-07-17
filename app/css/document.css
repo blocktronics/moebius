@@ -127,6 +127,7 @@ body.dark #current_colors > canvas {
     border-left: 1px solid var(--border-color);
     background-color: var(--view-color);
     overflow: auto;
+    touch-action: none;
 }
 #chat {
     width: calc(100% - var(--sidebar-width) -  var(--preview-width));

@@ -40,7 +40,7 @@ class MouseListener extends events.EventEmitter {
     }
 
     mouse_down(event) {
-        if (!this.font) return;
+        if (!this.font || this.started || this.drawing) return;
         const {x, y, half_y} = this.get_xy(event);
         const is_legal = (x >= 0 && x < doc.columns && y >= 0 && y < doc.rows);
         if (event.altKey) {
@@ -110,9 +110,13 @@ class MouseListener extends events.EventEmitter {
         doc.on("render", () => this.set_dimensions(doc.columns, doc.rows, doc.font));
         document.addEventListener("DOMContentLoaded", (event) => {
             document.getElementById("viewport").addEventListener("mousedown", (event) => this.mouse_down(event), true);
+            document.getElementById("viewport").addEventListener("pointerdown", (event) => this.mouse_down(event), true);
             document.body.addEventListener("mousemove", (event) => this.mouse_move(event), true);
+            document.body.addEventListener("pointermove", (event) => this.mouse_move(event), true);
             document.body.addEventListener("mouseup", (event) => this.mouse_up(event), true);
+            document.body.addEventListener("pointerup", (event) => this.mouse_up(event), true);
             document.body.addEventListener("mouseout", (event) => this.mouse_out(event), true);
+            document.body.addEventListener("pointerout", (event) => this.mouse_out(event), true);
         });
     }
 }
