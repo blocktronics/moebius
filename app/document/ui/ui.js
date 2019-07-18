@@ -289,7 +289,7 @@ class Toolbar extends events.EventEmitter {
     }
 
     redraw_fkeys() {
-        for (let i = 0; i < 10; i++) this.draw_fkey(`f${i + 1}`, this.fkeys[this.fkey_index][i]);
+        for (let i = 0; i < 12; i++) this.draw_fkey(`f${i + 1}`, this.fkeys[this.fkey_index][i]);
     }
 
     prev_fkeys() {
@@ -402,7 +402,7 @@ class Toolbar extends events.EventEmitter {
             sample_block.style.margin = `${(48 - font.height * 2 - 2) / 2}px`;
         });
         document.addEventListener("DOMContentLoaded", (event) => {
-            for (let i = 0; i < 10; i++) $(`f${i + 1}`).addEventListener("mousedown", this.fkey_clicker(i), true);
+            for (let i = 0; i < 12; i++) $(`f${i + 1}`).addEventListener("mousedown", this.fkey_clicker(i), true);
             $("half_block").addEventListener("mousedown", (event) => this.change_mode(this.modes.HALF_BLOCK));
             $("full_block").addEventListener("mousedown", (event) => this.change_mode(this.modes.FULL_BLOCK));
             $("shading_block").addEventListener("mousedown", (event) => this.change_mode(this.modes.SHADING_BLOCK));

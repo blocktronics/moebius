@@ -34,10 +34,6 @@ fileAssociations:
     name: ASCII Art
     role: Editor
     icon: document_icon.icns
-  - ext: .txt
-    name: Text Art
-    role: Editor
-    icon: document_icon.icns
 mac:
   artifactName: Mœbius.dmg
   category: public.app-category.graphics-design
@@ -48,9 +44,13 @@ win:
   target:
   - target: nsis
     arch: [x64, ia32]
+  - target: portable
+    arch: [x64, ia32]
+portable:
+  artifactName: Mœbius.exe
 linux:
   artifactName: Mœbius.deb
   target: deb
-  description: Moebius is a new ANSI Editor for MacOS and Windows. The major feature that differentiates it from PabloDraw is the 'half-block' brush which allows editing in a style closer to Photoshop than a text editor, although you can still use the function and cursor keys to draw with, and you should find that most of the text editing features from PabloDraw are carried over to this editor.
+  description: Moebius is a new ANSI and ASCII Editor for Linux, MacOS, and Windows . The major feature that differentiates it from PabloDraw is the 'half-block' brush which allows editing in a style closer to Photoshop than a text editor, although you can still use the function and cursor keys to draw with, and you should find that most of the text editing features from PabloDraw are carried over to this editor.
   category: Graphics
-electronVersion: 5.0.3
+electronVersion: 5.0.7

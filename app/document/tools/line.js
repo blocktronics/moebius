@@ -87,3 +87,8 @@ mouse.on("up", (x, y, half_y, button) => {
         }
     }
 });
+
+mouse.on("out", () => {
+    if (!enabled) return;
+    overlay.destroy();
+});

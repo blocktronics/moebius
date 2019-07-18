@@ -306,11 +306,20 @@ class KeyboardEvent extends events.EventEmitter {
             case "F10":
                 this.emit("f_key", 9);
                 return;
+            case "F11":
+                this.emit("f_key", 10);
+                return;
+            case "F12":
+                this.emit("f_key", 11);
+                return;
             case "Backspace":
                 this.emit("backspace");
                 return;
             case "Delete":
                 this.emit("delete_key");
+                return;
+            case "Escape":
+                this.emit("escape");
                 return;
         }
         if (event.key.length == 1) {
