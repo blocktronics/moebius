@@ -280,7 +280,7 @@ body.dark #preview {
     height: inherit;
 }
 .hidden {
-    display: none;
+    display: none !important;
 }
 #statusbar {
     position: fixed;
