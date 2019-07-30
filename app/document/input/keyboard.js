@@ -384,7 +384,7 @@ class KeyboardEvent extends events.EventEmitter {
         on("f_key", (event, value) => this.emit("f_key", value));
         document.addEventListener("DOMContentLoaded", () => {
             this.chat_input = document.getElementById("chat_input");
-            document.body.addEventListener("keydown", () => this.keydown(event), true);
+            document.body.addEventListener("keydown", (event) => this.keydown(event), true);
         }, true);
     }
 }

@@ -248,12 +248,18 @@ class Tools extends events.EventEmitter {
         if (this.previous_mode != undefined) this.start(this.previous_mode);
     }
 
+
+    keydown(event) {
+        if (event.code == "KeyM" && this.mode != this.modes.SELECT) this.start(this.modes.SELECT);
+    }
+
     constructor() {
         super();
         this.modes = {SELECT: 0, BRUSH: 1, SHIFTER: 2, LINE: 3, RECTANGLE: 4, ELLIPSE: 5, FILL: 6, SAMPLE: 7};
         on("change_to_select_mode", (event) => this.start(this.modes.SELECT));
         on("change_to_brush_mode", (event) => this.start(this.modes.BRUSH));
         document.addEventListener("DOMContentLoaded", (event) => {
+            document.body.addEventListener("keydown", (event) => this.keydown(event), true);
             $("select_mode").addEventListener("mousedown", (event) => this.start(this.modes.SELECT), true);
             $("brush_mode").addEventListener("mousedown", (event) => this.start(this.modes.BRUSH), true);
             $("shifter_mode").addEventListener("mousedown", (event) => this.start(this.modes.SHIFTER), true);
