@@ -7,6 +7,7 @@ const path = require("path");
 const docs = {};
 let last_win_pos;
 const darwin = (process.platform == "darwin");
+const win32 = (process.platform == "win32");
 const frameless = darwin ? {frame: false, titleBarStyle: "hiddenInset"} : {frame: true};
 let prevent_splash_screen_at_startup = false;
 
@@ -242,5 +243,10 @@ electron.app.on("window-all-closed", (event) => {
         electron.app.quit();
     }
 });
+
+if (win32) {
+    app.commandLine.appendSwitch("high-dpi-support", "true");
+    app.commandLine.appendSwitch("force-device-scale-factor", "1");
+}
 
 // if (!darwin) electron.app.disableHardwareAcceleration();
