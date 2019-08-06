@@ -1,5 +1,8 @@
 const libtextmode = require("../libtextmode/libtextmode");
 const electron = require("electron");
+let konami_index = 0;
+const konami_code = ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "KeyB", "KeyA"];
+const {send} = require("../senders");
 
 function show_new_version_button() {
     const new_version = document.getElementById("new_version");
@@ -13,6 +16,18 @@ function connect(event) {
     if (server != "") electron.ipcRenderer.send("connect_to_server", {server, pass});
 }
 
+function body_key_down(params) {
+    if (event.code == konami_code[konami_index]) {
+        konami_index += 1;
+        if (konami_index == konami_code.length) {
+            konami_index = 0;
+            send("konami_code");
+        }
+    } else {
+        konami_index = 0;
+    }
+}
+
 function key_down(params) {
     if (event.code == "Enter" || event.code == "NumpadEnter") connect();
 }
@@ -24,6 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("open").addEventListener("click", (event) => electron.ipcRenderer.send("open"));
     preferences.addEventListener("click", (event) => electron.ipcRenderer.send("preferences"));
     document.getElementById("connect").addEventListener("click", connect, true);
+    document.body.addEventListener("keydown", body_key_down, true);
     document.getElementById("server").addEventListener("keydown", key_down, true);
     document.getElementById("pass").addEventListener("keydown", key_down, true);
     libtextmode.animate({file: `${process.resourcesPath}/ans/MB4K.ans`, ctx: document.getElementById("splash_terminal").getContext("2d")});

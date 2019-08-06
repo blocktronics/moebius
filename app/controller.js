@@ -74,6 +74,12 @@ function export_as_png() {
     });
 }
 
+function export_as_apng() {
+    save_box(doc.file, "png", {filters: [{name: "Animated Portable Network Graphics ", extensions: ["png"]}]}, (file) => {
+        if (file) doc.export_as_apng(file);
+    });
+}
+
 function hourly_save() {
     if (doc.connection && !doc.connection.connected) return;
     const file = (doc.connection) ? `${doc.connection.server}.ans` : (doc.file ? doc.file : "Untitled.ans");
@@ -107,6 +113,7 @@ on("open_file", (event, file) => doc.open(file));
 on("check_before_closing", (event) => check_before_closing());
 on("export_as_utf8", (event) => export_as_utf8());
 on("export_as_png", (event) => export_as_png());
+on("export_as_apng", (event) => export_as_apng());
 on("connect_to_server", (event, {server, pass}) => doc.connect_to_server(server, pass));
 on("backup_folder", (event, folder) => backup_folder = folder);
 on("use_backup", (event, value) => use_backup(value));

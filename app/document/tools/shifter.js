@@ -1,6 +1,8 @@
 const {tools, toolbar} = require("../ui/ui");
 const doc = require("../doc");
 const mouse = require("../input/mouse");
+const keyboard = require("../input/keyboard");
+const palette = require("../palette");
 const {Overlay} = require("./overlay");
 let overlay;
 let enabled = false;
@@ -54,4 +56,9 @@ mouse.on("down", (x, y, half_y, is_legal, button, shift_key) => {
         doc.change_data(x, y, button == mouse.buttons.LEFT ? 219 : 32, block.fg, block.bg);
         break;
     }
+});
+
+keyboard.on("escape", () => {
+    if (!enabled) return;
+    palette.select_attribute();
 });

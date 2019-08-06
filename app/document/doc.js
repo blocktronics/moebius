@@ -621,7 +621,7 @@ class TextModeDoc extends events.EventEmitter {
         return {x, y, text_y, is_blocky, is_vertically_blocky, upper_block_color, lower_block_color, left_block_color, right_block_color, is_top, fg: block.fg, bg: block.bg};
     }
 
-    send_black_to_back(x, y) {
+    optimize_block(x, y) {
         const block = this.at(x, y);
         if (block.fg == 0) {
             if (block.bg == 0 || block.code == 219) {
@@ -630,6 +630,19 @@ class TextModeDoc extends events.EventEmitter {
                 switch (block.code) {
                     case 220: this.change_data(x, y, 223, block.bg, block.fg); break;
                     case 223: this.change_data(x, y, 220, block.bg, block.fg); break;
+                }
+            }
+        } else if (block.fg < 8 && block.bg >= 8) {
+            const half_block = this.get_half_block(x, y);
+            if (half_block.is_blocky) {
+                switch (block.code) {
+                    case 220: this.change_data(x, y, 223, block.bg, block.fg); break;
+                    case 223: this.change_data(x, y, 220, block.bg, block.fg); break;
+                }
+            } else if (half_block.is_vertically_blocky) {
+                switch (block.code) {
+                    case 221: this.change_data(x, y, 222, block.bg, block.fg); break;
+                    case 222: this.change_data(x, y, 221, block.bg, block.fg); break;
                 }
             }
         }
@@ -653,7 +666,7 @@ class TextModeDoc extends events.EventEmitter {
                 this.change_data(x, block.text_y, 220, col, block.bg);
             }
         }
-        this.send_black_to_back(block.x, block.text_y);
+        this.optimize_block(block.x, block.text_y);
     }
 
     resize(columns, rows) {
@@ -911,6 +924,10 @@ class TextModeDoc extends events.EventEmitter {
 
     export_as_png(file) {
         libtextmode.export_as_png(this, render, file);
+    }
+
+    export_as_apng(file) {
+        libtextmode.export_as_apng(render, file);
     }
 
     constructor() {

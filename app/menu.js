@@ -39,6 +39,13 @@ const moebius_menu = {
     ]
 };
 
+const bare_file = {
+    label: "File",
+    submenu: [
+        {role: "close"}
+    ]
+};
+
 const bare_edit = {
     label: "Edit",
     submenu: [
@@ -108,6 +115,8 @@ function file_menu_template(win) {
             {label: "Save As\u2026", id: "save_as", accelerator: "CmdorCtrl+Shift+S", click(item) {win.send("save_as");}},
             {type: "separator"},
             {label: "Export As PNG\u2026", id: "export_as_png", accelerator: "CmdorCtrl+Shift+E", click(item) {win.send("export_as_png");}},
+            {label: "Export As Animated PNG\u2026", id: "export_as_apng", accelerator: "CmdorCtrl+Shift+A", click(item) {win.send("export_as_apng");}},
+            {type: "separator"},
             {label: "Export As UTF-8\u2026", id: "export_as_utf8", accelerator: "CmdorCtrl+Shift+U", click(item) {win.send("export_as_utf8");}},
             {type: "separator"},
             {role: "close", accelerator: darwin ? "Cmd+W" : "Alt+F4"}
@@ -140,7 +149,7 @@ function edit_menu_template(win, chat) {
             {label: "Erase Line", id: "erase_line", accelerator: "Alt+E", click(item) {win.send("erase_line");}, enabled: true},
             {type: "separator"},
             chat ? {label: "Select All", accelerator: "Cmd+A", role: "selectall"} : {label: "Select All", id: "select_all", accelerator: "CmdorCtrl+A", click(item) {win.send("select_all");}},
-            {label: "Deselect", id: "deselect", accelerator: "Escape", click(item) {win.send("deselect");}, enabled: false},
+            {label: "Deselect", id: "deselect", accelerator: "Escape", click(item) {}, enabled: false},
             {type: "separator"},
             {label: "Set Canvas Size\u2026", id: "set_canvas_size", accelerator: "CmdorCtrl+Alt+C", click(item) {win.send("get_canvas_size");}, enabled: true},
             {type: "separator"},
@@ -464,7 +473,7 @@ class MenuEvent extends events.EventEmitter {
     }
 
     get modal_menu() {
-        return electron.Menu.buildFromTemplate([moebius_menu, bare_edit, window_menu_items, help_menu_items]);
+        return electron.Menu.buildFromTemplate([moebius_menu, bare_file, bare_edit, window_menu_items, help_menu_items]);
     }
 
     document_menu(win, debug) {

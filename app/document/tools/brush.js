@@ -1,6 +1,7 @@
 const {tools, toolbar} = require("../ui/ui");
 const doc = require("../doc");
 const mouse = require("../input/mouse");
+const keyboard = require("../input/keyboard");
 const palette = require("../palette");
 const brushes = require("./brushes");
 const {on} = require("../../senders");
@@ -46,3 +47,8 @@ on("chunked_undo", (event, value) => chunked_undo = value);
 
 mouse.on("down", mouse_handler(false));
 mouse.on("draw", mouse_handler(true));
+
+keyboard.on("escape", () => {
+    if (!enabled) return;
+    palette.select_attribute();
+});

@@ -16,7 +16,7 @@ function send(channel, opts) {
 
 function msg_box(message, detail, opts = {}) {
     send("close_modal");
-    return electron.remote.dialog.showMessageBox(win, {message, detail, ...opts});
+    return electron.remote.dialog.showMessageBoxSync(win, {message, detail, ...opts});
 }
 
 function open_box(opts, callback) {

@@ -5,6 +5,7 @@ const keyboard = require("../input/keyboard");
 const mouse = require("../input/mouse");
 const {tools, statusbar, toolbar} = require("../ui/ui");
 let enabled = false;
+const palette = require("../palette");
 
 tools.on("start", (mode) => {
     enabled = (mode == tools.modes.SELECT);
@@ -77,3 +78,12 @@ function mouse_move(x, y) {
 mouse.on("down", mouse_down);
 mouse.on("to", mouse_to);
 mouse.on("move", mouse_move);
+
+keyboard.on("escape", () => {
+    if (!enabled) return;
+    if (cursor.mode != cursor.modes.EDITING) {
+        cursor.deselect();
+    } else {
+        palette.select_attribute();
+    }
+});

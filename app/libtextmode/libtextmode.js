@@ -8,6 +8,7 @@ const path = require("path");
 const {current_date, resize_canvas} = require("./textmode");
 const {cp437_to_unicode, cp437_to_unicode_bytes, unicode_to_cp437} = require("./encodings");
 const fs = require("fs");
+const upng = require("upng-js");
 
 function read_bytes(bytes, file) {
     switch (path.extname(file).toLowerCase()) {
@@ -408,4 +409,11 @@ function export_as_png(doc, render, file) {
     fs.writeFileSync(file, base64_string, "base64");
 }
 
-module.exports = {read_bytes, read_file, write_file, animate, render, render_split, render_at, new_document, resize_canvas, cp437_to_unicode, cp437_to_unicode_bytes, unicode_to_cp437, render_blocks, merge_blocks, flip_code_x, flip_x, flip_y, rotate, get_data_url, convert_ega_to_style, compress, uncompress, get_blocks, export_as_png};
+function export_as_apng(render, file) {
+    const blink_off = join_canvases(render.blink_off_collection).getContext("2d").getImageData(0, 0, render.width, render.height).data;
+    const blink_on = join_canvases(render.blink_on_collection).getContext("2d").getImageData(0, 0, render.width, render.height).data;
+    const bytes = upng.encode([blink_off.buffer, blink_on.buffer], render.width, render.height, 16, [200, 200]);
+    fs.writeFileSync(file, Buffer.from(bytes));
+}
+
+module.exports = {read_bytes, read_file, write_file, animate, render, render_split, render_at, new_document, resize_canvas, cp437_to_unicode, cp437_to_unicode_bytes, unicode_to_cp437, render_blocks, merge_blocks, flip_code_x, flip_x, flip_y, rotate, get_data_url, convert_ega_to_style, compress, uncompress, get_blocks, export_as_png, export_as_apng};

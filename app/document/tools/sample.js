@@ -1,5 +1,6 @@
 const {tools, toolbar} = require("../ui/ui");
 const mouse = require("../input/mouse");
+const keyboard = require("../input/keyboard");
 const palette = require("../palette");
 const doc = require("../doc");
 let enabled = false;
@@ -20,4 +21,9 @@ mouse.on("down", (x, y, half_y, is_legal) => {
 mouse.on("move", (x, y, half_y, is_legal) => {
     if (!enabled || !is_legal) return;
     toolbar.set_sample(x, y);
+});
+
+keyboard.on("escape", () => {
+    if (!enabled) return;
+    palette.select_attribute();
 });

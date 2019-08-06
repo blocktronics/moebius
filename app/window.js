@@ -2,7 +2,7 @@ const electron = require("electron");
 const darwin = (process.platform == "darwin");
 const menu = require("./menu");
 const static_wins = {};
-const modal_prefs = darwin ? {modal: true, transparent: true, vibrancy: "dark"} : {modal: true, maximizable: false, resizable: false, backgroundColor: "#292c33"};
+const modal_prefs = {maximizable: false, resizable: false, backgroundColor: "#292c33"};
 
 async function new_win(file, options, touchbar, touchbar_opts) {
     return new Promise((resolve) => {
@@ -41,5 +41,7 @@ async function static(file, window_opts, touchbar, touchbar_opts) {
 function close_static(name) {
     if (static_wins[name]) static_wins[name].close();
 }
+
+// electron.ipcMain.on("konami_code", (event, opts) => console.log("Konami!"));
 
 module.exports = {new_doc, new_modal, static, close_static};

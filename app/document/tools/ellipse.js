@@ -1,6 +1,7 @@
 const doc = require("../doc");
 const {tools, toolbar} = require("../ui/ui");
 const mouse = require("../input/mouse");
+const keyboard = require("../input/keyboard");
 const brushes = require("./brushes");
 const palette = require("../palette");
 const {Overlay} = require("./overlay");
@@ -173,4 +174,13 @@ mouse.on("up", (x, y, half_y, button) => {
 mouse.on("out", () => {
     if (!enabled) return;
     overlay.destroy();
+});
+
+keyboard.on("escape", () => {
+    if (!enabled) return;
+    if (mouse.started) {
+        mouse.escape();
+    } else {
+        palette.select_attribute();
+    }
 });

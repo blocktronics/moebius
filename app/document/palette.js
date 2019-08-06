@@ -1,7 +1,7 @@
 const doc = require("./doc");
 const libtextmode = require("../libtextmode/libtextmode");
 const keyboard = require("./input/keyboard");
-const {on} = require("../senders");
+const {on, send} = require("../senders");
 const events = require("events");
 
 class PaletteChooser extends events.EventEmitter {
@@ -92,6 +92,10 @@ class PaletteChooser extends events.EventEmitter {
         }
     }
 
+    select_attribute() {
+        send("select_attribute", {fg: this.fg, bg: this.bg, palette: doc.palette});
+    }
+
     constructor() {
         super();
         this.fg_value = 7;
@@ -107,6 +111,8 @@ class PaletteChooser extends events.EventEmitter {
         on("next_background_color", (event) => this.next_background_color());
         on("default_color", (event) => this.default_color());
         on("switch_foreground_background", (event) => this.switch_foreground_background());
+        on("set_fg", (event, new_fg) => this.fg = new_fg);
+        on("set_bg", (event, new_bg) => this.bg = new_bg);
         keyboard.on("toggle_fg", (num) => this.toggle_fg(num));
         keyboard.on("toggle_bg", (num) => this.toggle_bg(num));
     }

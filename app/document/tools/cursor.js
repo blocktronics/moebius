@@ -471,7 +471,6 @@ class Cursor {
         this.flashing = false;
         this.selection = {sx: 0, sy: 0, dx: 0, dy: 0};
         this.scroll_document_with_cursor = false;
-        on("deselect", (event) => this.deselect());
         on("use_flashing_cursor", (event, value) => this.set_flashing(value));
         on("fill", (event) => this.fill());
         on("erase", (event) => this.erase());

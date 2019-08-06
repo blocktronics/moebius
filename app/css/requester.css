@@ -77,12 +77,14 @@ input[type=number] {
 }
 
 button {
-    border: 1px solid var(--mid-color);
-    border-radius: 6px;
+    position: absolute;
+    bottom: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 4px;
     background: none;
     color: var(--text);
-    padding: 4px 16px;
-    margin: 8px;
+    padding: 6px 10px;
+    margin: 6px;
     outline: none;
     transition-property: background-color;
     transition-duration: 20ms;
@@ -96,9 +98,9 @@ button:active {
 }
 
 #cancel {
-    float: left;
+    left: 0px;
 }
 
 #ok {
-    float: right;
+    right: 0px;
 }

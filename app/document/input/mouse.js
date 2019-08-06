@@ -3,7 +3,6 @@ const doc = require("../doc");
 const buttons = {NONE: 0, LEFT: 1, RIGHT: 2};
 const {toolbar} = require("../ui/ui");
 const palette = require("../palette");
-const keyboard = require("../input/keyboard");
 
 class MouseListener extends events.EventEmitter {
     set_dimensions(columns, rows, font) {
@@ -116,7 +115,6 @@ class MouseListener extends events.EventEmitter {
         this.started = false;
         this.drawing = false;
         doc.on("render", () => this.set_dimensions(doc.columns, doc.rows, doc.font));
-        keyboard.on("escape", () => this.escape());
         document.addEventListener("DOMContentLoaded", (event) => {
             document.getElementById("viewport").addEventListener("pointerdown", (event) => this.mouse_down(event), true);
             document.body.addEventListener("pointermove", (event) => this.mouse_move(event), true);
