@@ -8,6 +8,7 @@ const statuses = {ACTIVE: 0, IDLE: 1, AWAY: 2, WEB: 3};
 const modes = {EDITING: 0, SELECTION: 1, OPERATION: 2};
 let nick, group;
 let connection;
+const SIXTEEN_COLORS_API_KEY = "mirebitqv2ualog65ifv2p1a5076soh9";
 
 on("nick", (event, value) => nick = value);
 on("group", (event, value) => group = value);
@@ -912,6 +913,20 @@ class TextModeDoc extends events.EventEmitter {
         if (!this.file) return;
         await libtextmode.write_file(this, this.file);
         if (!connection) send("set_file", {file: this.file});
+    }
+
+    async share_online() {
+        const default_palette = libtextmode.has_default_palette(doc.palette);
+        const bytes = default_palette ? libtextmode.encode_as_ansi(doc) : libtextmode.encode_as_xbin(doc);
+        const req = await fetch(`https://api.16colo.rs/v1/paste?key=${SIXTEEN_COLORS_API_KEY}&extension=${default_palette ? "ans" : "xb"}&retention=86400`, {
+            body: `file=${Buffer.from(bytes).toString("base64")}`,
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            method: "POST"
+        });
+        const resp = await req.json();
+        if (resp.results) return resp.results.gallery;
     }
 
     async save_backup(file) {

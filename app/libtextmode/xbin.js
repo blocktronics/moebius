@@ -42,7 +42,7 @@ class XBin extends Textmode {
         }
         this.columns = (this.bytes[6] << 8) + this.bytes[5];
         this.rows = (this.bytes[8] << 8) + this.bytes[7];
-        this.font_height = this.bytes[9];
+        this.font_height = this.bytes[9] || 16;
         const flags = this.bytes[10];
         const palette_flag = (flags & 1) == 1;
         const font_flag = (flags >> 1 & 1) == 1;

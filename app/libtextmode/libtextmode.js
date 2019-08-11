@@ -3,7 +3,7 @@ const {create_canvas, join_canvases} = require("./canvas");
 const {Ansi, encode_as_ansi} = require("./ansi");
 const {BinaryText, encode_as_bin} = require("./binary_text");
 const {XBin, encode_as_xbin} = require("./xbin");
-const {ega, convert_ega_to_style} = require("./palette");
+const {ega, convert_ega_to_style, has_default_palette} = require("./palette");
 const path = require("path");
 const {current_date, resize_canvas} = require("./textmode");
 const {cp437_to_unicode, cp437_to_unicode_bytes, unicode_to_cp437} = require("./encodings");
@@ -416,4 +416,4 @@ function export_as_apng(render, file) {
     fs.writeFileSync(file, Buffer.from(bytes));
 }
 
-module.exports = {read_bytes, read_file, write_file, animate, render, render_split, render_at, new_document, resize_canvas, cp437_to_unicode, cp437_to_unicode_bytes, unicode_to_cp437, render_blocks, merge_blocks, flip_code_x, flip_x, flip_y, rotate, get_data_url, convert_ega_to_style, compress, uncompress, get_blocks, export_as_png, export_as_apng};
+module.exports = {read_bytes, read_file, write_file, animate, render, render_split, render_at, new_document, resize_canvas, cp437_to_unicode, cp437_to_unicode_bytes, unicode_to_cp437, render_blocks, merge_blocks, flip_code_x, flip_x, flip_y, rotate, get_data_url, convert_ega_to_style, compress, uncompress, get_blocks, export_as_png, export_as_apng, has_default_palette, encode_as_bin, encode_as_xbin, encode_as_ansi};

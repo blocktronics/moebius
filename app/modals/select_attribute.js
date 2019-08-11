@@ -1,5 +1,6 @@
 const electron = require("electron");
 const libtextmode = require("../libtextmode/libtextmode");
+const {on} = require("../senders");
 let fg = 0;
 let bg = 0;
 let palette = [];
@@ -40,28 +41,36 @@ function update_canvas() {
     ctx.fillRect(bg * 20 + 8, fg * 20 + 8, 24, 24);
 }
 
+function previous_foreground_color() {
+    fg = (fg == 0) ? 15 : fg - 1;
+    send_parent("set_fg", fg);
+    update_canvas();
+}
+
+function next_foreground_color() {
+    fg = (fg == 15) ? 0 : fg + 1;
+    send_parent("set_fg", fg);
+    update_canvas();
+}
+
+function previous_background_color() {
+    bg = (bg == 0) ? 15 : bg - 1;
+    send_parent("set_bg", bg);
+    update_canvas();
+}
+
+function next_background_color() {
+    bg = (bg == 15) ? 0 : bg + 1;
+    send_parent("set_bg", bg);
+    update_canvas();
+}
+
 function key_down(event) {
     switch (event.code) {
-        case "ArrowUp":
-            fg = (fg == 0) ? 15 : fg - 1;
-            send_parent("set_fg", fg);
-            update_canvas();
-            break;
-        case "ArrowDown":
-            fg = (fg == 15) ? 0 : fg + 1;
-            send_parent("set_fg", fg);
-            update_canvas();
-            break;
-        case "ArrowLeft":
-            bg = (bg == 0) ? 15 : bg - 1;
-            send_parent("set_bg", bg);
-            update_canvas();
-            break;
-        case "ArrowRight":
-            bg = (bg == 15) ? 0 : bg + 1;
-            send_parent("set_bg", bg);
-            update_canvas();
-            break;
+        case "ArrowUp": previous_foreground_color(); break;
+        case "ArrowDown": next_foreground_color(); break;
+        case "ArrowLeft": previous_background_color(); break;
+        case "ArrowRight": next_background_color(); break;
         case "Escape":
         case "Enter":
         case "NumpadEnter":
@@ -102,3 +111,9 @@ electron.ipcRenderer.on("select_attribute", (event, opts) => {
     ({fg, bg, palette} = opts);
     update_canvas();
 });
+
+on("previous_foreground_color", (event) => previous_foreground_color());
+on("next_foreground_color", (event) => next_foreground_color());
+on("previous_background_color", (event) => previous_background_color());
+on("next_background_color", (event) => next_background_color());
+on("cancel", (event) => send("close_modal"));

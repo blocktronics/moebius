@@ -106,6 +106,15 @@ function draw_shaded_block_ellipse(sx, sy, dx, dy, fg, bg, reduce) {
     for (const coord of coords) brushes.shading_block(coord.x, coord.y, fg, bg, reduce);
 }
 
+function draw_replace_color_block_ellipse(sx, sy, dx, dy, to, from) {
+    const coords = ellipse_coords(sx, sy, dx, dy);
+    if (!coords) return;
+    for (const coord of coords) {
+        const block = doc.at(coord.x, coord.y);
+        if (block && (block.fg == from || block.bg == from)) doc.change_data(coord.x, coord.y, block.code, (block.fg == from) ? to : block.fg, (block.bg == from) ? to : block.bg);
+    }
+}
+
 function draw_colorize_block_ellipse(sx, sy, dx, dy, fg, bg) {
     const coords = ellipse_coords(sx, sy, dx, dy);
     if (!coords) return;
@@ -163,6 +172,9 @@ mouse.on("up", (x, y, half_y, button) => {
             case toolbar.modes.SHADING_BLOCK:
                 const reduce = (button != mouse.buttons.LEFT);
                 draw_shaded_block_ellipse(mouse.start.x, mouse.start.y, x, y, fg, bg, reduce);
+                break;
+            case toolbar.modes.REPLACE_COLOR:
+                draw_replace_color_block_ellipse(mouse.start.x, mouse.start.y, x, y, fg, bg);
                 break;
             case toolbar.modes.COLORIZE:
                 draw_colorize_block_ellipse(mouse.start.x, mouse.start.y, x, y, toolbar.colorize_fg ? fg : undefined, toolbar.colorize_bg ? bg : undefined);

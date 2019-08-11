@@ -35,6 +35,9 @@ function mouse_handler(skip_first) {
                 case toolbar.modes.SHADING_BLOCK:
                     brushes.shading_block_line(mouse.x, mouse.y, x, y, fg, bg, button != mouse.buttons.LEFT, skip_first);
                     break;
+                case toolbar.modes.REPLACE_COLOR:
+                    brushes.replace_color_line(mouse.x, mouse.y, x, y, fg, bg, skip_first);
+                    break;
                 case toolbar.modes.COLORIZE:
                     brushes.colorize_line(mouse.x, mouse.y, x, y, toolbar.colorize_fg ? fg : undefined, toolbar.colorize_bg ? bg : undefined, skip_first);
                     break;

@@ -1,7 +1,11 @@
 {
   "name": "moebius",
-  "version": "1.0.17",
+  "version": "1.0.18",
   "description": "Modern ANSI Art Editor",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/blocktronics/moebius.git"
+  },
   "main": "app/moebius.js",
   "scripts": {
     "start": "electron .",
@@ -14,8 +18,8 @@
   "author": "Andy Herbert <andy.herbert@gmail.com>",
   "license": "Apache-2.0",
   "devDependencies": {
-    "browserify": "^16.3.0",
-    "electron": "^6.0.0",
+    "browserify": "^16.5.0",
+    "electron": "^6.0.1",
     "electron-builder": "^21.2.0",
     "express": "^4.17.1"
   },

@@ -1,3 +1,4 @@
+const electron = require("electron");
 const {on, send, send_sync, msg_box, save_box} = require("./senders");
 const doc = require("./document/doc");
 const {tools} = require("./document/ui/ui");
@@ -51,6 +52,11 @@ function save_as(destroy_when_done = false) {
             save(destroy_when_done);
         }
     });
+}
+
+async function share_online() {
+    const url = await doc.share_online();
+    if (url) electron.shell.openExternal(url);
 }
 
 function check_before_closing() {
@@ -109,6 +115,7 @@ on("save", (event, opts) => {
     }
 });
 on("save_as", (event, opts) => save_as());
+on("share_online", (event, opts) => share_online());
 on("open_file", (event, file) => doc.open(file));
 on("check_before_closing", (event) => check_before_closing());
 on("export_as_utf8", (event) => export_as_utf8());

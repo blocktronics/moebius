@@ -47,7 +47,7 @@ function create_touch_bars(win) {
                 new electron.TouchBar.TouchBarButton({label: "Prev. Foreground", click() {win.send("previous_foreground_color");}}),
                 new electron.TouchBar.TouchBarButton({label: "Next Foreground", click() {win.send("next_foreground_color");}}),
                 new electron.TouchBar.TouchBarSpacer({size: "flexible"}),
-                new electron.TouchBar.TouchBarButton({label: "Prev. Background", click() {win.send("next_background_color");}}),
+                new electron.TouchBar.TouchBarButton({label: "Prev. Background", click() {win.send("previous_background_color");}}),
                 new electron.TouchBar.TouchBarButton({label: "Next Background", click() {win.send("next_background_color");}}),
             ],
             escapeItem: new electron.TouchBar.TouchBarButton({label: "Edit", click() {win.send("change_to_select_mode");}})
@@ -113,9 +113,23 @@ function splash_screen(win, {preferences, new_document, open}) {
     }));
 }
 
+function select_attribute(win) {
+    win.setTouchBar(new electron.TouchBar({
+        items: [
+            new electron.TouchBar.TouchBarSpacer({size: "flexible"}),
+            new electron.TouchBar.TouchBarButton({label: "Prev. Foreground", click() {win.send("previous_foreground_color");}}),
+            new electron.TouchBar.TouchBarButton({label: "Next Foreground", click() {win.send("next_foreground_color");}}),
+            new electron.TouchBar.TouchBarSpacer({size: "flexible"}),
+            new electron.TouchBar.TouchBarButton({label: "Prev. Background", click() {win.send("previous_background_color");}}),
+            new electron.TouchBar.TouchBarButton({label: "Next Background", click() {win.send("next_background_color");}}),
+        ],
+        escapeItem: new electron.TouchBar.TouchBarButton({label: "Cancel", click() {win.send("cancel");}})
+    }));
+}
+
 electron.ipcMain.on("show_editing_touchbar", (event, {id}) => touchbars[id].win.setTouchBar(touchbars[id].touchbar.editing));
 electron.ipcMain.on("show_selection_touchbar", (event, {id}) => touchbars[id].win.setTouchBar(touchbars[id].touchbar.selection));
 electron.ipcMain.on("show_operation_touchbar", (event, {id}) => touchbars[id].win.setTouchBar(touchbars[id].touchbar.operation));
 electron.ipcMain.on("show_brush_touchbar", (event, {id}) => touchbars[id].win.setTouchBar(touchbars[id].touchbar.brush));
 
-module.exports = {create_touch_bars, get_sauce_info, get_canvas_size, new_connection, splash_screen};
+module.exports = {create_touch_bars, get_sauce_info, get_canvas_size, select_attribute, new_connection, splash_screen};

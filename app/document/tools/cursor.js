@@ -206,6 +206,7 @@ class Cursor {
         this.selection = {sx: this.x, sy: this.y};
         this.canvas.classList.add("selection");
         this.mode = modes.SELECTION;
+        this.draw();
         send("enable_selection_menu_items");
         send("show_selection_touchbar");
     }

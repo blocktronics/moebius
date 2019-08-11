@@ -349,6 +349,7 @@ class Toolbar extends events.EventEmitter {
         $("shading_block").classList.remove("brush_mode_selected");
         $("full_block").classList.remove("brush_mode_selected");
         $("clear_block").classList.remove("brush_mode_selected");
+        $("replace_color").classList.remove("brush_mode_selected");
         $("colorize_fg").classList.add("brush_mode_ghosted");
         $("colorize_fg").classList.remove("brush_mode_selected");
         $("colorize_bg").classList.add("brush_mode_ghosted");
@@ -358,6 +359,7 @@ class Toolbar extends events.EventEmitter {
             case this.modes.FULL_BLOCK: $("full_block").classList.add("brush_mode_selected"); break;
             case this.modes.SHADING_BLOCK: $("shading_block").classList.add("brush_mode_selected"); break;
             case this.modes.CLEAR_BLOCK: $("clear_block").classList.add("brush_mode_selected"); break;
+            case this.modes.REPLACE_COLOR: $("replace_color").classList.add("brush_mode_selected"); break;
             case this.modes.COLORIZE: $("colorize").classList.add("brush_mode_selected");
                 $("colorize_fg").classList.remove("brush_mode_ghosted");
                 $("colorize_bg").classList.remove("brush_mode_ghosted");
@@ -391,7 +393,7 @@ class Toolbar extends events.EventEmitter {
         keyboard.on("next_fkeys", () => this.next_fkeys());
         keyboard.on("prev_fkeys", () => this.prev_fkeys());
         keyboard.on("default_fkeys", () => this.use_default_fkeys());
-        this.modes = {HALF_BLOCK: 0, FULL_BLOCK: 1, SHADING_BLOCK: 2, CLEAR_BLOCK: 3, COLORIZE: 4};
+        this.modes = {HALF_BLOCK: 0, FULL_BLOCK: 1, SHADING_BLOCK: 2, CLEAR_BLOCK: 3, REPLACE_COLOR: 4, COLORIZE: 5};
         this.colorize_fg = true;
         this.colorize_bg = false;
         on("show_toolbar", (event, visible) => set_var_px("toolbar-height", visible ? 48 : 0));
@@ -413,6 +415,7 @@ class Toolbar extends events.EventEmitter {
             $("full_block").addEventListener("mousedown", (event) => this.change_mode(this.modes.FULL_BLOCK));
             $("shading_block").addEventListener("mousedown", (event) => this.change_mode(this.modes.SHADING_BLOCK));
             $("clear_block").addEventListener("mousedown", (event) => this.change_mode(this.modes.CLEAR_BLOCK));
+            $("replace_color").addEventListener("mousedown", (event) => this.change_mode(this.modes.REPLACE_COLOR));
             $("colorize").addEventListener("mousedown", (event) => this.change_mode(this.modes.COLORIZE));
             $("colorize_fg").addEventListener("mousedown", (event) => {
                 this.colorize_fg = !this.colorize_fg;

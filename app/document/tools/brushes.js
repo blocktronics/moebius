@@ -67,6 +67,14 @@ function clear_block_line(sx, sy, dx, dy, skip_first = false) {
     for (const coord of coords) doc.change_data(coord.x, coord.y, 32, 7, 0);
 }
 
+function replace_color_line(sx, sy, dx, dy, to, from, skip_first = false) {
+    const coords = line(sx, sy, dx, dy, skip_first);
+    for (const coord of coords) {
+        const block = doc.at(coord.x, coord.y);
+        if (block && (block.fg == from || block.bg == from)) doc.change_data(coord.x, coord.y, block.code, (block.fg == from) ? to : block.fg, (block.bg == from) ? to : block.bg);
+    }
+}
+
 function colorize_line(sx, sy, dx, dy, fg, bg, skip_first = false) {
     const coords = line(sx, sy, dx, dy, skip_first);
     for (const coord of coords) {
@@ -75,4 +83,4 @@ function colorize_line(sx, sy, dx, dy, fg, bg, skip_first = false) {
     }
 }
 
-module.exports = {half_block_line, full_block_line, shading_block, shading_block_line, clear_block_line, colorize_line, line};
+module.exports = {half_block_line, full_block_line, shading_block, shading_block_line, clear_block_line, replace_color_line, colorize_line, line};

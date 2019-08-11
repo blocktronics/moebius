@@ -41,4 +41,10 @@ function convert_ega_to_style(rgb) {
     return convert_rgb_to_style(convert_ega_to_vga(rgb));
 }
 
-module.exports = {white, bright_white, ega, get_rgba, convert_ega_to_vga, convert_ega_to_style};
+function has_default_palette(palette) {
+    for (let i = 0; i < palette.length; i++) {
+        if (palette[i].r != ega[i].r || palette[i].g != ega[i].g || palette[i].b != ega[i].b) return false;
+    }
+    return true;
+}
+module.exports = {white, bright_white, ega, get_rgba, convert_ega_to_vga, convert_ega_to_style, has_default_palette};

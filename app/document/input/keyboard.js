@@ -12,28 +12,28 @@ class KeyboardEvent extends events.EventEmitter {
     ctrl_key(event) {
         switch (event.code) {
             case "Digit0":
-                this.emit("toggle_bg", 0);
+                this.emit("toggle_fg", 0);
                 return;
             case "Digit1":
-                this.emit("toggle_bg", 1);
+                this.emit("toggle_fg", 1);
                 return;
             case "Digit2":
-                this.emit("toggle_bg", 2);
+                this.emit("toggle_fg", 2);
                 return;
             case "Digit3":
-                this.emit("toggle_bg", 3);
+                this.emit("toggle_fg", 3);
                 return;
             case "Digit4":
-                this.emit("toggle_bg", 4);
+                this.emit("toggle_fg", 4);
                 return;
             case "Digit5":
-                this.emit("toggle_bg", 5);
+                this.emit("toggle_fg", 5);
                 return;
             case "Digit6":
-                this.emit("toggle_bg", 6);
+                this.emit("toggle_fg", 6);
                 return;
             case "Digit7":
-                this.emit("toggle_bg", 7);
+                this.emit("toggle_fg", 7);
                 return;
             case "KeyC":
                 this.emit("copy");
@@ -62,26 +62,6 @@ class KeyboardEvent extends events.EventEmitter {
                     event.preventDefault();
                 }
                 return;
-            case "ArrowLeft":
-                if (event.shiftKey) this.emit("start_selection");
-                this.emit("start_of_row");
-                event.preventDefault();
-                return;
-            case "ArrowUp":
-                if (event.shiftKey) this.emit("start_selection");
-                this.emit("page_up");
-                event.preventDefault();
-                return;
-            case "ArrowRight":
-                if (event.shiftKey) this.emit("start_selection");
-                this.emit("end_of_row");
-                event.preventDefault();
-                return;
-            case "ArrowDown":
-                if (event.shiftKey) this.emit("start_selection");
-                this.emit("page_down");
-                event.preventDefault();
-                return;
             case "Comma":
                 this.emit("prev_fkeys");
                 return;
@@ -97,28 +77,28 @@ class KeyboardEvent extends events.EventEmitter {
     alt_key(event) {
         switch (event.code) {
             case "Digit0":
-                this.emit("toggle_fg", 0);
+                this.emit("toggle_bg", 0);
                 return;
             case "Digit1":
-                this.emit("toggle_fg", 1);
+                this.emit("toggle_bg", 1);
                 return;
             case "Digit2":
-                this.emit("toggle_fg", 2);
+                this.emit("toggle_bg", 2);
                 return;
             case "Digit3":
-                this.emit("toggle_fg", 3);
+                this.emit("toggle_bg", 3);
                 return;
             case "Digit4":
-                this.emit("toggle_fg", 4);
+                this.emit("toggle_bg", 4);
                 return;
             case "Digit5":
-                this.emit("toggle_fg", 5);
+                this.emit("toggle_bg", 5);
                 return;
             case "Digit6":
-                this.emit("toggle_fg", 6);
+                this.emit("toggle_bg", 6);
                 return;
             case "Digit7":
-                this.emit("toggle_fg", 7);
+                this.emit("toggle_bg", 7);
                 return;
             case "ArrowLeft":
                 this.emit("previous_background_color");
@@ -135,6 +115,9 @@ class KeyboardEvent extends events.EventEmitter {
             case "ArrowDown":
                 this.emit("next_foreground_color");
                 event.preventDefault();
+                return;
+            case "KeyB":
+                this.emit("start_selection");
                 return;
             case "KeyI":
                 if (event.shiftKey) {

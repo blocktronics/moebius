@@ -86,6 +86,9 @@ mouse.on("up", (x, y, half_y, button) => {
                 const reduce = (button != mouse.buttons.LEFT);
                 for (let y = sy; y <= dy; y++) brushes.shading_block_line(sx, y, dx, y, fg, bg, reduce);
                 break;
+            case toolbar.modes.REPLACE_COLOR:
+                for (let y = sy; y <= dy; y++) brushes.replace_color_line(sx, y, dx, y, fg, bg);
+                break;
             case toolbar.modes.COLORIZE:
                 for (let y = sy; y <= dy; y++) brushes.colorize_line(sx, y, dx, y, toolbar.colorize_fg ? fg : undefined, toolbar.colorize_bg ? bg : undefined);
                 break;
