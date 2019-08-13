@@ -268,9 +268,9 @@ electron.app.on("window-all-closed", (event) => {
     }
 });
 
-if (win32) {
-    electron.app.commandLine.appendSwitch("high-dpi-support", "true");
-    electron.app.commandLine.appendSwitch("force-device-scale-factor", "1");
-}
+// if (win32) {
+//     electron.app.commandLine.appendSwitch("high-dpi-support", "true");
+//     electron.app.commandLine.appendSwitch("force-device-scale-factor", "1");
+// }
 
 if (linux) electron.app.disableHardwareAcceleration();
