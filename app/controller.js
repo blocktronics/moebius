@@ -32,7 +32,10 @@ doc.on("disconnected", () => {
     if (choice == 1) send("destroy");
     doc.connect_to_server(doc.connection.server, doc.connection.pass);
 });
-doc.on("ready", () => tools.start(tools.modes.SELECT));
+doc.on("ready", () => {
+    send("ready");
+    tools.start(tools.modes.SELECT);
+});
 
 function save(destroy_when_done = false) {
     if (doc.file) {

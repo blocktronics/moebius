@@ -1,7 +1,7 @@
 const events = require("events");
 const doc = require("../doc");
 const buttons = {NONE: 0, LEFT: 1, RIGHT: 2};
-const {toolbar} = require("../ui/ui");
+const {toolbar, zoom_in, zoom_out} = require("../ui/ui");
 const palette = require("../palette");
 
 class MouseListener extends events.EventEmitter {
@@ -107,6 +107,23 @@ class MouseListener extends events.EventEmitter {
         this.escape();
     }
 
+    wheel(event) {
+        if (event.ctrlKey) {
+            event.preventDefault();
+            if (this.listening_to_wheel) {
+                if (event.deltaY > 5) {
+                    zoom_out();
+                } else if (event.deltaY < 5) {
+                    zoom_in();
+                }
+                this.listening_to_wheel = false;
+                setTimeout(() => {
+                    this.listening_to_wheel = true;
+                }, 50);
+            }
+        }
+    }
+
     constructor() {
         super();
         this.buttons = buttons;
@@ -114,12 +131,14 @@ class MouseListener extends events.EventEmitter {
         this.start = {x: 0, y: 0, half_y: 0};
         this.started = false;
         this.drawing = false;
+        this.listening_to_wheel = true;
         doc.on("render", () => this.set_dimensions(doc.columns, doc.rows, doc.font));
         document.addEventListener("DOMContentLoaded", (event) => {
             document.getElementById("viewport").addEventListener("pointerdown", (event) => this.mouse_down(event), true);
             document.body.addEventListener("pointermove", (event) => this.mouse_move(event), true);
             document.body.addEventListener("pointerup", (event) => this.mouse_up(event), true);
             document.body.addEventListener("pointerout", (event) => this.mouse_out(event), true);
+            document.body.addEventListener("wheel", (event) => this.wheel(event), {passive: false});
         });
     }
 }

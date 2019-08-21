@@ -107,7 +107,7 @@ function file_menu_template(win) {
             {label: "Duplicate as New Document", id: "duplicate", click(item) {win.send("duplicate");}},
             {type: "separator"},
             {label: "Open\u2026", id: "open", accelerator: "CmdorCtrl+O", click(item) {event.emit("open", win);}},
-            darwin ? {role: "recentDocuments", submenu: [{role: "clearrecentdocuments"}]} : ({type: "separator"}, {label: "Settings", click(item) {event.emit("preferences");}}),
+            darwin ? {role: "recentDocuments", submenu: [{role: "clearRecentDocuments"}]} : ({type: "separator"}, {label: "Settings", click(item) {event.emit("preferences");}}),
             {type: "separator"},
             {label: "Edit Sauce Info\u2026", id: "edit_sauce_info", accelerator: "CmdorCtrl+I", click(item) {win.send("get_sauce_info");}},
             {type: "separator"},

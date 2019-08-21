@@ -11,6 +11,7 @@ const win32 = (process.platform == "win32");
 const linux = (process.platform == "linux");
 const frameless = darwin ? {frame: false, titleBarStyle: "hiddenInset"} : {frame: true};
 let prevent_splash_screen_at_startup = false;
+let splash_screen;
 
 function cleanup(id) {
     menu.cleanup(id);
@@ -21,7 +22,6 @@ function cleanup(id) {
 
 async function new_document_window() {
     const win = await window.new_doc();
-    if (darwin) window.close_static("app/html/splash_screen.html");
     if (last_win_pos) {
         const display = electron.screen.getPrimaryDisplay();
         const [max_x, max_y] = [display.workArea.width + display.workArea.x - 1280, display.workArea.height + display.workArea.y - 800];
@@ -103,7 +103,9 @@ function open_in_new_window(win) {
 }
 
 function open(win) {
+    if (darwin && win) electron.Menu.setApplicationMenu(menu.modal_menu);
     electron.dialog.showOpenDialog(open_in_new_window(win) ? undefined : win, {filters: [{name: "TextArt", extensions: ["ans", "xb", "bin", "diz", "asc", "txt", "nfo"]}, {name: "All Files", extensions: ["*"]}], properties: ["openFile", "multiSelections"]}, (files) => {
+        if (darwin && win) electron.Menu.setApplicationMenu(docs[win.id].menu);
         if (!files) return;
         for (const file of files) {
             if (win && !check_if_file_is_already_open(file) && !open_in_new_window(win)) {
@@ -120,7 +122,7 @@ menu.on("open", open);
 electron.ipcMain.on("open", (event) => open());
 
 async function preferences() {
-    const preferences = await window.static("app/html/preferences.html", {width: 480, height: 510});
+    const preferences = await window.static("app/html/preferences.html", {width: 480, height: 545});
     preferences.send("prefs", prefs.get_all());
 }
 menu.on("preferences", preferences);
@@ -137,7 +139,7 @@ async function connect_to_server(server, pass = "") {
 electron.ipcMain.on("connect_to_server", (event, {server, pass}) => connect_to_server(server, pass));
 
 async function show_splash_screen() {
-    window.static("app/html/splash_screen.html", {width: 720, height: 600, ...frameless}, touchbar.splash_screen, {preferences, new_document, open});
+    splash_screen = await window.static("app/html/splash_screen.html", {width: 720, height: 600, ...frameless}, touchbar.splash_screen, {preferences, new_document, open});
 }
 
 menu.on("show_cheatsheet", () => window.static("app/html/cheatsheet.html", {width: 640, height: 816, ...frameless}));
@@ -206,6 +208,14 @@ electron.ipcMain.on("chat_input_blur", (event, {id}) => {
     }
 });
 
+electron.ipcMain.on("set_modal_menu", (event, {id}) => {
+    if (darwin) electron.Menu.setApplicationMenu(menu.modal_menu);
+});
+
+electron.ipcMain.on("set_doc_menu", (event, {id}) => {
+    if (darwin) electron.Menu.setApplicationMenu(docs[id].menu);
+});
+
 electron.ipcMain.on("get_sauce_info", async (event, {id, title, author, group, comments}) => {
     docs[id].modal = await window.new_modal("app/html/sauce.html", {width: 350, height: 340, parent: docs[id].win, ...get_centered_xy(id, 350, 340)}, touchbar.get_sauce_info);
     docs[id].modal.on("close", (event) => close_modal(id));
@@ -233,6 +243,10 @@ electron.ipcMain.on("select_attribute", async (event, {id, fg, bg, palette}) => 
     docs[id].modal = await window.new_modal("app/html/select_attribute.html", {width: 340, height: 340, parent: docs[id].win, frame: false, ...get_centered_xy(id, 340, 340)}, touchbar.select_attribute);
     docs[id].modal.send("select_attribute", {fg, bg, palette});
     if (darwin) electron.Menu.setApplicationMenu(menu.modal_menu);
+});
+
+electron.ipcMain.on("ready", async (event, {id}) => {
+    if (splash_screen && !splash_screen.isDestroyed()) splash_screen.close();
 });
 
 if (darwin) {
@@ -268,9 +282,9 @@ electron.app.on("window-all-closed", (event) => {
     }
 });
 
-// if (win32) {
-//     electron.app.commandLine.appendSwitch("high-dpi-support", "true");
-//     electron.app.commandLine.appendSwitch("force-device-scale-factor", "1");
-// }
+if (win32 && prefs.get("ignore_hdpi")) {
+    electron.app.commandLine.appendSwitch("high-dpi-support", "true");
+    electron.app.commandLine.appendSwitch("force-device-scale-factor", "1");
+}
 
 if (linux) electron.app.disableHardwareAcceleration();

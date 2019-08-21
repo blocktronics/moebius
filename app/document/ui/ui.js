@@ -430,4 +430,4 @@ class Toolbar extends events.EventEmitter {
     }
 }
 
-module.exports = {statusbar: new StatusBar(), tools: new Tools(), toolbar: new Toolbar()};
+module.exports = {statusbar: new StatusBar(), tools: new Tools(), toolbar: new Toolbar(), zoom_in, zoom_out};

@@ -413,6 +413,7 @@ class Cursor {
     stamp() {
         const blocks = this.operation_blocks.underneath ? libtextmode.merge_blocks(this.operation_blocks, this.get_blocks_in_operation()) : this.operation_blocks;
         doc.place(blocks, this.x, this.y, this.operation_blocks.is_move_operation);
+        if (this.operation_blocks.is_move_operation) this.operation_blocks.is_move_operation = false;
     }
 
     place() {

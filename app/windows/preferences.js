@@ -6,7 +6,7 @@ function $(name) {
     return document.getElementById(name);
 }
 
-function prefs({nick, group, use_numpad, chunked_undo, use_flashing_cursor, use_pixel_aliasing, hide_scrollbars, unsaved_changes, scroll_margin, new_document_rows, smallscale_guide, debug, use_backup, backup_folder}) {
+function prefs({nick, group, use_numpad, chunked_undo, use_flashing_cursor, use_pixel_aliasing, hide_scrollbars, unsaved_changes, scroll_margin, new_document_rows, smallscale_guide, debug, ignore_hdpi, use_backup, backup_folder}) {
     $("nick").value = nick;
     $("group").value = group;
     $("use_numpad").checked = use_numpad;
@@ -19,6 +19,7 @@ function prefs({nick, group, use_numpad, chunked_undo, use_flashing_cursor, use_
     $("new_document_rows").value = new_document_rows;
     $("smallscale_guide").checked = smallscale_guide;
     $("debug").checked = debug;
+    $("ignore_hdpi").checked = ignore_hdpi;
     $("use_backup").checked = use_backup;
     backup_folder_value = backup_folder;
     $("backup_folder").innerText = (backup_folder == "") ? "No Backup Folder Set" : backup_folder;
@@ -72,6 +73,10 @@ function smallscale_guide() {
     update("smallscale_guide", $("smallscale_guide").checked);
 }
 
+function ignore_hdpi() {
+    update("ignore_hdpi", $("ignore_hdpi").checked);
+}
+
 function debug() {
     update("debug", $("debug").checked);
 }
@@ -112,6 +117,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
     $("new_document_rows").addEventListener("keydown", override_submit, true);
     $("smallscale_guide").addEventListener("change", (event) => smallscale_guide(), true);
     $("debug").addEventListener("change", (event) => debug(), true);
+    $("ignore_hdpi").addEventListener("change", (event) => ignore_hdpi(), true);
     $("use_backup").addEventListener("change", (event) => use_backup(), true);
     $("backup_choose").addEventListener("click", (event) => {
         choose_folder();

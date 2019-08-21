@@ -14,6 +14,7 @@ const default_values = {
     new_document_rows: 25,
     smallscale_guide: false,
     debug: false,
+    ignore_hdpi: false,
     use_backup: false,
     backup_folder: "",
     fkeys: [ // Stolen mercilously from Pablo, thanks Curtis!
