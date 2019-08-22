@@ -89,6 +89,9 @@ mouse.on("up", (x, y, half_y, button) => {
             case toolbar.modes.REPLACE_COLOR:
                 for (let y = sy; y <= dy; y++) brushes.replace_color_line(sx, y, dx, y, fg, bg);
                 break;
+            case toolbar.modes.BLINK:
+                for (let y = sy; y <= dy; y++) brushes.blink_line(sx, y, dx, y, button != mouse.buttons.LEFT);
+                break;
             case toolbar.modes.COLORIZE:
                 for (let y = sy; y <= dy; y++) brushes.colorize_line(sx, y, dx, y, toolbar.colorize_fg ? fg : undefined, toolbar.colorize_bg ? bg : undefined);
                 break;

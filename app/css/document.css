@@ -354,7 +354,7 @@ body.dark #statusbar > div > div {
 #editing_layer > canvas.selection {
     border: 1px solid;
     border-image: url("../img/selection_border.gif") 1 repeat;
-    border-image-width: 1px;
+    border-image-width: 2px;
     box-sizing: border-box;
 }
 #reference_image {
@@ -362,13 +362,13 @@ body.dark #statusbar > div > div {
     background-repeat: no-repeat;
     opacity: 0.4;
 }
-#smallscale_guide.hidden {
+#guide.hidden {
     display: none;
 }
-#smallscale_guide.guide_column {
+#guide.guide_column {
     border-right: rgba(255, 255, 255, 0.4) 1px dashed;
 }
-#smallscale_guide.guide_row {
+#guide.guide_row {
     border-bottom: rgba(255, 255, 255, 0.4) 1px dashed;
 }
 #zoom {

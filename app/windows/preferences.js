@@ -6,10 +6,11 @@ function $(name) {
     return document.getElementById(name);
 }
 
-function prefs({nick, group, use_numpad, chunked_undo, use_flashing_cursor, use_pixel_aliasing, hide_scrollbars, unsaved_changes, scroll_margin, new_document_rows, smallscale_guide, debug, ignore_hdpi, use_backup, backup_folder}) {
+function prefs({nick, group, use_numpad, use_shift, chunked_undo, use_flashing_cursor, use_pixel_aliasing, hide_scrollbars, unsaved_changes, scroll_margin, new_document_rows, smallscale_guide, debug, ignore_hdpi, use_backup, backup_folder}) {
     $("nick").value = nick;
     $("group").value = group;
     $("use_numpad").checked = use_numpad;
+    $("use_shift").checked = use_shift;
     $("chunked_undo").checked = chunked_undo;
     $("use_flashing_cursor").checked = use_flashing_cursor;
     $("use_pixel_aliasing").checked = use_pixel_aliasing;
@@ -39,6 +40,10 @@ function group() {
 
 function use_numpad() {
     update("use_numpad", $("use_numpad").checked);
+}
+
+function use_shift() {
+    update("use_shift", $("use_shift").checked);
 }
 
 function chunked_undo() {
@@ -106,6 +111,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
     $("group").addEventListener("keydown", override_submit, true);
     $("group").addEventListener("input", (event) => group(), true);
     $("use_numpad").addEventListener("change", (event) => use_numpad(), true);
+    $("use_shift").addEventListener("change", (event) => use_shift(), true);
     $("chunked_undo").addEventListener("change", (event) => chunked_undo(), true);
     $("use_flashing_cursor").addEventListener("change", (event) => use_flashing_cursor(), true);
     $("hide_scrollbars").addEventListener("change", (event) => hide_scrollbars(), true);

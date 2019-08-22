@@ -122,7 +122,7 @@ menu.on("open", open);
 electron.ipcMain.on("open", (event) => open());
 
 async function preferences() {
-    const preferences = await window.static("app/html/preferences.html", {width: 480, height: 545});
+    const preferences = await window.static("app/html/preferences.html", {width: 480, height: 590});
     preferences.send("prefs", prefs.get_all());
 }
 menu.on("preferences", preferences);

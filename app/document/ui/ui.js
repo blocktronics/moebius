@@ -4,7 +4,7 @@ const doc = require("../doc");
 const palette = require("../palette");
 const keyboard = require("../input/keyboard");
 const events = require("events");
-let interval;
+let interval, guide_columns, guide_rows;
 
 function $(name) {
     return document.getElementById(name);
@@ -45,36 +45,81 @@ function set_text(name, text) {
     $(name).textContent = text;
 }
 
+
 function toggle_smallscale_guide(visible) {
+    send("uncheck_all_guides");
     if (visible) {
-        $("smallscale_guide").classList.remove("hidden");
+        guide_columns = 80;
+        guide_rows = 25;
+        rescale_guide();
+        $("guide").classList.remove("hidden");
         send("check_smallscale_guide");
     } else {
-        $("smallscale_guide").classList.add("hidden");
-        send("uncheck_smallscale_guide");
+        $("guide").classList.add("hidden");
     }
 }
 
-function rescale_smallscale_guide() {
-    $("smallscale_guide").style.width = `${doc.render.font.width * Math.min(doc.columns, 80)}px`;
-    $("smallscale_guide").style.height = `${doc.render.font.height * Math.min(doc.rows, 25)}px`;
-    if (doc.columns >= 80) {
-        $("smallscale_guide").classList.add("guide_column");
+function toggle_square_guide(visible) {
+    send("uncheck_all_guides");
+    if (visible) {
+        guide_columns = 80;
+        guide_rows = 40;
+        rescale_guide();
+        $("guide").classList.remove("hidden");
+        send("check_square_guide");
     } else {
-        $("smallscale_guide").classList.remove("guide_column");
-    }
-    if (doc.rows >= 25) {
-        $("smallscale_guide").classList.add("guide_row");
-    } else {
-        $("smallscale_guide").classList.remove("guide_row");
+        $("guide").classList.add("hidden");
     }
 }
 
+function toggle_instagram_guide(visible) {
+    send("uncheck_all_guides");
+    if (visible) {
+        guide_columns = 80;
+        guide_rows = 50;
+        rescale_guide();
+        $("guide").classList.remove("hidden");
+        send("check_instagram_guide");
+    } else {
+        $("guide").classList.add("hidden");
+    }
+}
+
+function toggle_file_id_guide(visible) {
+    send("uncheck_all_guides");
+    if (visible) {
+        guide_columns = 44;
+        guide_rows = 22;
+        rescale_guide();
+        $("guide").classList.remove("hidden");
+        send("check_file_id_guide");
+    } else {
+        $("guide").classList.add("hidden");
+    }
+}
+
+function rescale_guide() {
+    $("guide").style.width = `${doc.render.font.width * Math.min(doc.columns, guide_columns)}px`;
+    $("guide").style.height = `${doc.render.font.height * Math.min(doc.rows, guide_rows)}px`;
+    if (doc.columns >= guide_columns) {
+        $("guide").classList.add("guide_column");
+    } else {
+        $("guide").classList.remove("guide_column");
+    }
+    if (doc.rows >= guide_rows) {
+        $("guide").classList.add("guide_row");
+    } else {
+        $("guide").classList.remove("guide_row");
+    }
+}
+
+on("smallscale_guide", (event, visible) => toggle_smallscale_guide(visible));
 on("toggle_smallscale_guide", (event, visible) => toggle_smallscale_guide(visible));
-on("smallscale_guide", (event, visible) => {
-    toggle_smallscale_guide(visible);
-});
-doc.on("render", () => rescale_smallscale_guide());
+on("toggle_square_guide", (event, visible) => toggle_square_guide(visible));
+on("toggle_instagram_guide", (event, visible) => toggle_instagram_guide(visible));
+on("toggle_file_id_guide", (event, visible) => toggle_file_id_guide(visible));
+
+doc.on("render", () => rescale_guide());
 
 class StatusBar {
     status_bar_info(columns, rows) {
@@ -350,6 +395,7 @@ class Toolbar extends events.EventEmitter {
         $("full_block").classList.remove("brush_mode_selected");
         $("clear_block").classList.remove("brush_mode_selected");
         $("replace_color").classList.remove("brush_mode_selected");
+        $("blink").classList.remove("brush_mode_selected");
         $("colorize_fg").classList.add("brush_mode_ghosted");
         $("colorize_fg").classList.remove("brush_mode_selected");
         $("colorize_bg").classList.add("brush_mode_ghosted");
@@ -360,6 +406,7 @@ class Toolbar extends events.EventEmitter {
             case this.modes.SHADING_BLOCK: $("shading_block").classList.add("brush_mode_selected"); break;
             case this.modes.CLEAR_BLOCK: $("clear_block").classList.add("brush_mode_selected"); break;
             case this.modes.REPLACE_COLOR: $("replace_color").classList.add("brush_mode_selected"); break;
+            case this.modes.BLINK: $("blink").classList.add("brush_mode_selected"); break;
             case this.modes.COLORIZE: $("colorize").classList.add("brush_mode_selected");
                 $("colorize_fg").classList.remove("brush_mode_ghosted");
                 $("colorize_bg").classList.remove("brush_mode_ghosted");
@@ -393,7 +440,7 @@ class Toolbar extends events.EventEmitter {
         keyboard.on("next_fkeys", () => this.next_fkeys());
         keyboard.on("prev_fkeys", () => this.prev_fkeys());
         keyboard.on("default_fkeys", () => this.use_default_fkeys());
-        this.modes = {HALF_BLOCK: 0, FULL_BLOCK: 1, SHADING_BLOCK: 2, CLEAR_BLOCK: 3, REPLACE_COLOR: 4, COLORIZE: 5};
+        this.modes = {HALF_BLOCK: 0, FULL_BLOCK: 1, SHADING_BLOCK: 2, CLEAR_BLOCK: 3, REPLACE_COLOR: 4, BLINK: 5, COLORIZE: 6};
         this.colorize_fg = true;
         this.colorize_bg = false;
         on("show_toolbar", (event, visible) => set_var_px("toolbar-height", visible ? 48 : 0));
@@ -416,6 +463,7 @@ class Toolbar extends events.EventEmitter {
             $("shading_block").addEventListener("mousedown", (event) => this.change_mode(this.modes.SHADING_BLOCK));
             $("clear_block").addEventListener("mousedown", (event) => this.change_mode(this.modes.CLEAR_BLOCK));
             $("replace_color").addEventListener("mousedown", (event) => this.change_mode(this.modes.REPLACE_COLOR));
+            $("blink").addEventListener("mousedown", (event) => this.change_mode(this.modes.BLINK));
             $("colorize").addEventListener("mousedown", (event) => this.change_mode(this.modes.COLORIZE));
             $("colorize_fg").addEventListener("mousedown", (event) => {
                 this.colorize_fg = !this.colorize_fg;

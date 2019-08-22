@@ -85,6 +85,9 @@ mouse.on("up", (x, y, half_y, button) => {
             case toolbar.modes.REPLACE_COLOR:
                 brushes.replace_color_line(mouse.start.x, mouse.start.y, x, y, fg, bg);
                 break;
+            case toolbar.modes.BLINK:
+                brushes.blink_line(mouse.start.x, mouse.start.y, x, y, button != mouse.buttons.LEFT);
+                break;
             case toolbar.modes.COLORIZE:
                 brushes.colorize_line(mouse.start.x, mouse.start.y, x, y, toolbar.colorize_fg ? fg : undefined, toolbar.colorize_bg ? bg : undefined);
                 break;

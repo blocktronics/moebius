@@ -75,6 +75,14 @@ function replace_color_line(sx, sy, dx, dy, to, from, skip_first = false) {
     }
 }
 
+function blink_line(sx, sy, dx, dy, unblink, skip_first = false) {
+    const coords = line(sx, sy, dx, dy, skip_first);
+    for (const coord of coords) {
+        const block = doc.at(coord.x, coord.y);
+        if (block && ((!unblink && block.bg < 8) || (unblink && block.bg >= 8))) doc.change_data(coord.x, coord.y, block.code, block.fg, unblink ? block.bg - 8 : block.bg + 8);
+    }
+}
+
 function colorize_line(sx, sy, dx, dy, fg, bg, skip_first = false) {
     const coords = line(sx, sy, dx, dy, skip_first);
     for (const coord of coords) {
@@ -83,4 +91,4 @@ function colorize_line(sx, sy, dx, dy, fg, bg, skip_first = false) {
     }
 }
 
-module.exports = {half_block_line, full_block_line, shading_block, shading_block_line, clear_block_line, replace_color_line, colorize_line, line};
+module.exports = {half_block_line, full_block_line, shading_block, shading_block_line, clear_block_line, replace_color_line, blink_line, colorize_line, line};

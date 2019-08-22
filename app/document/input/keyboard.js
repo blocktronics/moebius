@@ -3,6 +3,7 @@ const {on} = require("../../senders");
 const darwin = (process.platform == "darwin");
 const doc = require("../doc");
 const libtextmode = require("../../libtextmode/libtextmode");
+let use_shift = true;
 
 class KeyboardEvent extends events.EventEmitter {
     chat(text) {
@@ -140,22 +141,22 @@ class KeyboardEvent extends events.EventEmitter {
         if (darwin) {
             switch (event.code) {
                 case "ArrowLeft":
-                    if (event.shiftKey) this.emit("start_selection");
+                    if (event.shiftKey && use_shift) this.emit("start_selection");
                     this.emit("start_of_row");
                     event.preventDefault();
                     return;
                 case "ArrowUp":
-                    if (event.shiftKey) this.emit("start_selection");
+                    if (event.shiftKey && use_shift) this.emit("start_selection");
                     this.emit("page_up");
                     event.preventDefault();
                     return;
                 case "ArrowRight":
-                    if (event.shiftKey) this.emit("start_selection");
+                    if (event.shiftKey && use_shift) this.emit("start_selection");
                     this.emit("end_of_row");
                     event.preventDefault();
                     return;
                 case "ArrowDown":
-                    if (event.shiftKey) this.emit("start_selection");
+                    if (event.shiftKey && use_shift) this.emit("start_selection");
                     this.emit("page_down");
                     event.preventDefault();
                     return;
@@ -209,42 +210,42 @@ class KeyboardEvent extends events.EventEmitter {
         }
         switch (event.code) {
             case "Home":
-                if (event.shiftKey) this.emit("start_selection");
+                if (event.shiftKey && use_shift) this.emit("start_selection");
                 this.emit("start_of_row");
                 event.preventDefault();
                 return;
             case "End":
-                if (event.shiftKey) this.emit("start_selection");
+                if (event.shiftKey && use_shift) this.emit("start_selection");
                 this.emit("end_of_row");
                 event.preventDefault();
                 return;
             case "ArrowLeft":
-                if (event.shiftKey) this.emit("start_selection");
+                if (event.shiftKey && use_shift) this.emit("start_selection");
                 this.emit("left");
                 event.preventDefault();
                 return;
             case "ArrowUp":
-                if (event.shiftKey) this.emit("start_selection");
+                if (event.shiftKey && use_shift) this.emit("start_selection");
                 this.emit("up");
                 event.preventDefault();
                 return;
             case "ArrowRight":
-                if (event.shiftKey) this.emit("start_selection");
+                if (event.shiftKey && use_shift) this.emit("start_selection");
                 this.emit("right");
                 event.preventDefault();
                 return;
             case "ArrowDown":
-                if (event.shiftKey) this.emit("start_selection");
+                if (event.shiftKey && use_shift) this.emit("start_selection");
                 this.emit("down");
                 event.preventDefault();
                 return;
             case "PageUp":
-                if (event.shiftKey) this.emit("start_selection");
+                if (event.shiftKey && use_shift) this.emit("start_selection");
                 this.emit("page_up");
                 event.preventDefault();
                 return;
             case "PageDown":
-                if (event.shiftKey) this.emit("start_selection");
+                if (event.shiftKey && use_shift) this.emit("start_selection");
                 this.emit("page_down");
                 event.preventDefault();
                 return;
@@ -371,5 +372,7 @@ class KeyboardEvent extends events.EventEmitter {
         }, true);
     }
 }
+
+on("use_shift", (event, value) => use_shift = value);
 
 module.exports = new KeyboardEvent();

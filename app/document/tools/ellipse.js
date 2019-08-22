@@ -115,6 +115,15 @@ function draw_replace_color_block_ellipse(sx, sy, dx, dy, to, from) {
     }
 }
 
+function draw_blink_ellipse(sx, sy, dx, dy, unblink) {
+    const coords = ellipse_coords(sx, sy, dx, dy);
+    if (!coords) return;
+    for (const coord of coords) {
+        const block = doc.at(coord.x, coord.y);
+        if (block && ((!unblink && block.bg < 8) || (unblink && block.bg >= 8))) doc.change_data(coord.x, coord.y, block.code, block.fg, unblink ? block.bg - 8 : block.bg + 8);
+    }
+}
+
 function draw_colorize_block_ellipse(sx, sy, dx, dy, fg, bg) {
     const coords = ellipse_coords(sx, sy, dx, dy);
     if (!coords) return;
@@ -175,6 +184,9 @@ mouse.on("up", (x, y, half_y, button) => {
                 break;
             case toolbar.modes.REPLACE_COLOR:
                 draw_replace_color_block_ellipse(mouse.start.x, mouse.start.y, x, y, fg, bg);
+                break;
+            case toolbar.modes.BLINK:
+                draw_blink_ellipse(mouse.start.x, mouse.start.y, x, y, button != mouse.buttons.LEFT);
                 break;
             case toolbar.modes.COLORIZE:
                 draw_colorize_block_ellipse(mouse.start.x, mouse.start.y, x, y, toolbar.colorize_fg ? fg : undefined, toolbar.colorize_bg ? bg : undefined);

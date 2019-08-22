@@ -164,6 +164,8 @@ function selection_menu_template(win) {
     return {
         label: "&Selection",
         submenu: [
+            {label: "Start Selection", id: "start_selection", accelerator: "Alt+B", click(item) {}, enabled: false},
+            {type: "separator"},
             {label: "Move Block", id: "move_block", accelerator: "M", click(item) {win.send("move_block");}, enabled: false},
             {label: "Copy Block", id: "copy_block", accelerator: "C", click(item) {win.send("copy_block");}, enabled: false},
             {type: "separator"},
@@ -207,7 +209,12 @@ function view_menu_template(win) {
             {type: "separator"},
             {label: "Change Font", submenu: font_menu_items(win)},
             {type: "separator"},
-            {label: "Toggle 80×25 Guides", id: "smallscale_guide", click(item) {win.send("toggle_smallscale_guide", item.checked);}, type: "checkbox", checked: false},
+            {label: "Guides", submenu: [
+                {label: "Smallscale (80×25)", id: "smallscale_guide", click(item) {win.send("toggle_smallscale_guide", item.checked);}, type: "checkbox", checked: false},
+                {label: "Square (80×40)", id: "square_guide", click(item) {win.send("toggle_square_guide", item.checked);}, type: "checkbox", checked: false},
+                {label: "Instagram (80×50)", id: "instagram_guide", click(item) {win.send("toggle_instagram_guide", item.checked);}, type: "checkbox", checked: false},
+                {label: "File ID (44×22)", id: "file_id_guide", click(item) {win.send("toggle_file_id_guide", item.checked);}, type: "checkbox", checked: false},
+            ]},
             {type: "separator"},
             {label: "Open Reference Image\u2026", id: "open_reference_image", accelerator: "CmdorCtrl+Shift+O", click(item) {win.send("open_reference_image");}},
             {label: "Toggle Reference Image", id: "toggle_reference_image", accelerator: "Ctrl+Tab", click(item) {win.send("toggle_reference_image", item.checked);}, enabled: false, type: "checkbox", checked: true},
@@ -340,6 +347,7 @@ electron.ipcMain.on("enable_selection_menu_items", (event, {id}) => {
     disable(id, "center_line");
     disable(id, "erase_line");
     disable(id, "use_attribute_under_cursor");
+    disable(id, "start_selection");
 });
 
 function disable_selection_menu_items(id) {
@@ -358,6 +366,7 @@ function disable_selection_menu_items(id) {
     enable(id, "center_line");
     enable(id, "erase_line");
     enable(id, "use_attribute_under_cursor");
+    enable(id, "start_selection");
 }
 
 electron.ipcMain.on("disable_selection_menu_items", (event, {id}) => disable_selection_menu_items(id));
@@ -386,6 +395,7 @@ electron.ipcMain.on("enable_operation_menu_items", (event, {id}) => {
     disable(id, "paste");
     disable(id, "paste_as_selection");
     disable(id, "use_attribute_under_cursor");
+    disable(id, "start_selection");
 });
 
 function disable_operation_menu_items(id) {
@@ -419,6 +429,7 @@ electron.ipcMain.on("disable_editing_shortcuts", (event, {id}) => {
     disable(id, "paste");
     disable(id, "paste_as_selection");
     enable(id, "change_to_select_mode");
+    disable(id, "start_selection");
 });
 
 electron.ipcMain.on("enable_editing_shortcuts", (event, {id}) => {
@@ -432,6 +443,7 @@ electron.ipcMain.on("enable_editing_shortcuts", (event, {id}) => {
     enable(id, "paste");
     enable(id, "paste_as_selection");
     disable(id, "change_to_select_mode");
+    enable(id, "start_selection");
 });
 
 electron.ipcMain.on("update_menu_checkboxes", (event, {id, insert_mode, overwrite_mode, use_9px_font, ice_colors, actual_size, font_name}) => {
@@ -455,8 +467,16 @@ electron.ipcMain.on("check_underneath", (event, {id}) => check(id, "underneath")
 electron.ipcMain.on("uncheck_over", (event, {id}) => uncheck(id, "over"));
 electron.ipcMain.on("check_over", (event, {id}) => check(id, "over"));
 
-electron.ipcMain.on("uncheck_smallscale_guide", (event, {id}) => uncheck(id, "smallscale_guide"));
 electron.ipcMain.on("check_smallscale_guide", (event, {id}) => check(id, "smallscale_guide"));
+electron.ipcMain.on("check_square_guide", (event, {id}) => check(id, "square_guide"));
+electron.ipcMain.on("check_instagram_guide", (event, {id}) => check(id, "instagram_guide"));
+electron.ipcMain.on("check_file_id_guide", (event, {id}) => check(id, "file_id_guide"));
+electron.ipcMain.on("uncheck_all_guides", (event, {id}) => {
+    uncheck(id, "smallscale_guide");
+    uncheck(id, "square_guide");
+    uncheck(id, "instagram_guide");
+    uncheck(id, "file_id_guide");
+});
 
 electron.ipcMain.on("enable_chat_window_toggle", (event, {id}) => {
     enable(id, "chat_window_toggle");

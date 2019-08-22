@@ -381,7 +381,11 @@ class Cursor {
     }
 
     delete_key() {
-        if (this.hidden || this.mode != modes.EDITING) return;
+        if (this.hidden || this.mode == modes.OPERATION) return;
+        if (this.mode == this.modes.SELECTION) {
+            this.erase();
+            return;
+        }
         doc.start_undo();
         for (let x = this.x; x < doc.columns - 1; x++) {
             const block = doc.at(x + 1, this.y);

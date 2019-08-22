@@ -38,6 +38,9 @@ function mouse_handler(skip_first) {
                 case toolbar.modes.REPLACE_COLOR:
                     brushes.replace_color_line(mouse.x, mouse.y, x, y, fg, bg, skip_first);
                     break;
+                case toolbar.modes.BLINK:
+                    brushes.blink_line(mouse.x, mouse.y, x, y, button != mouse.buttons.LEFT, skip_first);
+                    break;
                 case toolbar.modes.COLORIZE:
                     brushes.colorize_line(mouse.x, mouse.y, x, y, toolbar.colorize_fg ? fg : undefined, toolbar.colorize_bg ? bg : undefined, skip_first);
                     break;

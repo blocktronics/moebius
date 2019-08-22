@@ -44,7 +44,7 @@ body.dark .panel > div {
     float: left;
     line-height: 30px;
     color: rgba(255, 255, 255, 0.3);
-    padding: 0px 16px;
+    padding: 0px 12px;
     height: 30px;
     margin: 8px;
     border: 1px solid rgba(0, 0, 0, 0.6);
@@ -58,7 +58,7 @@ body.dark .panel > div {
     border-bottom-left-radius: 4px;
 }
 
-#full_block, #shading_block, #clear_block, #replace_color {
+#full_block, #shading_block, #clear_block, #replace_color, #blink {
     margin-left: 0px;
     margin-right: 0px;
     border-right: none;

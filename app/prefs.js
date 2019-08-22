@@ -7,6 +7,7 @@ const default_values = {
     use_flashing_cursor: false,
     use_pixel_aliasing: false,
     use_numpad: false,
+    use_shift: true,
     chunked_undo: true,
     hide_scrollbars: false,
     unsaved_changes: true,
