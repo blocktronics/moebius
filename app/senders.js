@@ -21,17 +21,17 @@ function msg_box(message, detail, opts = {}) {
 
 function open_box(opts, callback) {
     send("set_modal_menu");
-    return electron.remote.dialog.showOpenDialog(win, opts, () => {
+    return electron.remote.dialog.showOpenDialog(win, opts, (files) => {
         send("set_doc_menu");
-        callback();
+        callback(files);
     });
 }
 
 function save_box(file, ext, opts, callback) {
     send("set_modal_menu");
-    return electron.remote.dialog.showSaveDialog(win, {defaultPath: `${file ? path.parse(file).name : "Untitled"}.${ext}`, ...opts}, () => {
+    return electron.remote.dialog.showSaveDialog(win, {defaultPath: `${file ? path.parse(file).name : "Untitled"}.${ext}`, ...opts}, (file) => {
         send("set_doc_menu");
-        callback();
+        callback(file);
     });
 }
 

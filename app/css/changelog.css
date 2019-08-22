@@ -1,0 +1,12 @@
+body {
+    background-color: black;
+    overflow: hidden;
+}
+
+body div:first-child {
+    margin: 0px auto;
+    width: 352px;
+    height: 576px;
+    -webkit-app-region: drag;
+    overflow-y: scroll;
+}

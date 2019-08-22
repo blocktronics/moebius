@@ -79,6 +79,8 @@ const help_menu_items = {
         {label: "Mœbius Homepage", id: "show_homepage", click(item) {electron.shell.openExternal("http://www.andyh.org/moebius/");}},
         {label: "Source Code at GitHub", id: "show_repo", click(item) {electron.shell.openExternal("https://github.com/blocktronics/moebius");}},
         {label: "Raise an Issue at GitHub", id: "show_issues", click(item) {electron.shell.openExternal("https://github.com/blocktronics/moebius/issues");}},
+        {type: "separator"},
+        {label: "Changelog", id: "changelog", click(item) {event.emit("show_changelog");}},
     ]
 };
 
