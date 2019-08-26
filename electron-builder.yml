@@ -4,7 +4,6 @@ directories:
 appId: org.andyherbert.moebius
 productName: Mœbius
 copyright: Copyright © 2019 Andy Herbert
-buildVersion: '0001'
 extraResources:
   - from: build/ans
     to: ans

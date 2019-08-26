@@ -152,7 +152,7 @@ function has_documents_open() {
 }
 
 electron.ipcMain.on("get_canvas_size", async (event, {id, columns, rows}) => {
-    docs[id].modal = await window.new_modal("app/html/resize.html", {width: 300, height: 190, parent: docs[id].win, ...get_centered_xy(id, 300, 190)}, touchbar.get_canvas_size);
+    docs[id].modal = await window.new_modal("app/html/resize.html", {width: 300, height: 190, parent: docs[id].win, frame: false, ...get_centered_xy(id, 300, 190)}, touchbar.get_canvas_size);
     docs[id].modal.send("set_canvas_size", {columns, rows});
     if (darwin) electron.Menu.setApplicationMenu(menu.modal_menu);
 });
@@ -175,13 +175,13 @@ electron.ipcMain.on("update_prefs", (event, {key, value}) => {
 });
 
 electron.ipcMain.on("show_rendering_modal", async (event, {id}) => {
-    docs[id].modal = await window.new_modal("app/html/rendering.html", {width: 200, height: 80, parent: docs[id].win, ...get_centered_xy(id, 200, 80)});
+    docs[id].modal = await window.new_modal("app/html/rendering.html", {width: 200, height: 80, parent: docs[id].win, frame: false, ...get_centered_xy(id, 200, 80)});
     if (darwin) electron.Menu.setApplicationMenu(menu.modal_menu);
     event.returnValue = true;
 });
 
 electron.ipcMain.on("show_connecting_modal", async (event, {id}) => {
-    docs[id].modal = await window.new_modal("app/html/connecting.html", {width: 200, height: 80, parent: docs[id].win, ...get_centered_xy(id, 200, 80)});
+    docs[id].modal = await window.new_modal("app/html/connecting.html", {width: 200, height: 80, parent: docs[id].win, frame: false, ...get_centered_xy(id, 200, 80)});
     if (darwin) electron.Menu.setApplicationMenu(menu.modal_menu);
     event.returnValue = true;
 });
@@ -218,7 +218,7 @@ electron.ipcMain.on("set_doc_menu", (event, {id}) => {
 });
 
 electron.ipcMain.on("get_sauce_info", async (event, {id, title, author, group, comments}) => {
-    docs[id].modal = await window.new_modal("app/html/sauce.html", {width: 350, height: 340, parent: docs[id].win, ...get_centered_xy(id, 350, 340)}, touchbar.get_sauce_info);
+    docs[id].modal = await window.new_modal("app/html/sauce.html", {width: 350, height: 340, parent: docs[id].win, frame: false, ...get_centered_xy(id, 350, 340)}, touchbar.get_sauce_info);
     docs[id].modal.on("close", (event) => close_modal(id));
     docs[id].modal.send("set_sauce_info", {title, author, group, comments});
     if (darwin) electron.Menu.setApplicationMenu(menu.modal_menu);
@@ -231,8 +231,8 @@ electron.ipcMain.on("update_sauce", (event, {id, title, author, group, comments}
 function get_centered_xy(id, width, height) {
     const pos = docs[id].win.getPosition();
     const size = docs[id].win.getSize();
-    const x = pos[0] + (size[0] - width) / 2;
-    const y = pos[1] + (size[1] - height) / 2;
+    const x = pos[0] + Math.floor((size[0] - width) / 2);
+    const y = pos[1] + Math.floor((size[1] - height) / 2);
     return {x, y};
 }
 
