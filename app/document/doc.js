@@ -9,9 +9,11 @@ const modes = {EDITING: 0, SELECTION: 1, OPERATION: 2};
 let nick, group;
 let connection;
 const SIXTEEN_COLORS_API_KEY = "mirebitqv2ualog65ifv2p1a5076soh9";
+let retention = "8035200";
 
 on("nick", (event, value) => nick = value);
 on("group", (event, value) => group = value);
+on("retention", (event, value) => retention = value);
 
 class NetworkCursor {
     draw() {
@@ -568,7 +570,7 @@ class TextModeDoc extends events.EventEmitter {
         return libtextmode.get_blocks(doc, sx, sy, dx, dy, opts);
     }
 
-    change_data(x, y, code, fg, bg, prev_cursor, cursor, mirrored = false) {
+    change_data(x, y, code, fg, bg, prev_cursor, cursor, mirrored = true) {
         if (x < 0 || x >= doc.columns || y < 0 || y >= doc.rows) return;
         const i = doc.columns * y + x;
         if (prev_cursor) {
@@ -579,9 +581,9 @@ class TextModeDoc extends events.EventEmitter {
         doc.data[i] = {code, fg, bg};
         libtextmode.render_at(render, x, y, doc.data[i]);
         if (connection) connection.draw(x, y, doc.data[i]);
-        if (this.mirror_mode && !mirrored) {
+        if (this.mirror_mode && mirrored) {
             const opposing_x = Math.floor(doc.columns / 2) - (x - Math.ceil(doc.columns / 2)) - 1;
-            this.change_data(opposing_x, y, libtextmode.flip_code_x(code), fg, bg, undefined, undefined, true);
+            this.change_data(opposing_x, y, libtextmode.flip_code_x(code), fg, bg, undefined, undefined, false);
         }
     }
 
@@ -736,12 +738,24 @@ class TextModeDoc extends events.EventEmitter {
         for (let x = 0; x < doc.columns; x++) this.change_data(x, y, 32, 7, 0);
     }
 
+    erase_to_start_of_line(x, y) {
+        this.undo_history.start_chunk();
+        for (let dx = 0; dx <= x; dx++) this.change_data(dx, y, 32, 7, 0);
+    }
+
+    erase_to_end_of_line(x, y) {
+        this.undo_history.start_chunk();
+        for (let dx = x; dx < doc.columns; dx++) this.change_data(dx, y, 32, 7, 0);
+    }
+
     place(blocks, dx, dy, single_undo) {
+        const mid_point = Math.floor(doc.columns / 2);
+        const dont_mirror = dx < mid_point && dx + blocks.columns > mid_point;
         if (!single_undo) this.undo_history.start_chunk();
         for (let y = 0; y + dy < doc.rows && y < blocks.rows; y++) {
             for (let x = 0; x + dx < doc.columns && x < blocks.columns; x++) {
                 const block = blocks.data[y * blocks.columns + x];
-                if (!blocks.transparent || block.code != 32 || block.bg != 0) this.change_data(dx + x, dy + y, block.code, block.fg, block.bg);
+                if (!blocks.transparent || block.code != 32 || block.bg != 0) this.change_data(dx + x, dy + y, block.code, block.fg, block.bg, undefined, undefined, !dont_mirror);
             }
         }
     }
@@ -918,7 +932,7 @@ class TextModeDoc extends events.EventEmitter {
     async share_online() {
         const default_palette = libtextmode.has_default_palette(doc.palette);
         const bytes = default_palette ? libtextmode.encode_as_ansi(doc) : libtextmode.encode_as_xbin(doc);
-        const req = await fetch(`https://api.16colo.rs/v1/paste?key=${SIXTEEN_COLORS_API_KEY}&extension=${default_palette ? "ans" : "xb"}&retention=86400`, {
+        const req = await fetch(`https://api.16colo.rs/v1/paste?key=${SIXTEEN_COLORS_API_KEY}&extension=${default_palette ? "ans" : "xb"}&retention=${retention}`, {
             body: `file=${Buffer.from(bytes).toString("base64")}`,
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded",

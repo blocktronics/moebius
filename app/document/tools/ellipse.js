@@ -5,6 +5,7 @@ const keyboard = require("../input/keyboard");
 const brushes = require("./brushes");
 const palette = require("../palette");
 const {Overlay} = require("./overlay");
+const {on} = require("../../senders");
 let enabled = false;
 let overlay;
 let clear = false;
@@ -207,4 +208,9 @@ keyboard.on("escape", () => {
     } else {
         palette.select_attribute();
     }
+});
+
+on("select_attribute", (event) => {
+    if (!enabled) return;
+    palette.select_attribute();
 });

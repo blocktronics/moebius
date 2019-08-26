@@ -54,12 +54,20 @@ function add_comments_bytes(comments, sauce_bytes) {
     return merged_bytes;
 }
 
+function pad(text, length) {
+    const text_bytes = Buffer.from(text, "utf-8");
+    const out_bytes = new Uint8Array(length);
+    out_bytes.fill(32);
+    out_bytes.set(text_bytes, 0);
+    return out_bytes;
+}
+
 function add_sauce_bytes({doc, data_type, file_type, bytes: file_bytes}) {
     let bytes = new Uint8Array(128);
     add_text(bytes, 0, "SAUCE00", 7);
-    bytes.set(Buffer.from(doc.title, "utf-8"), 7);
-    bytes.set(Buffer.from(doc.author, "utf-8"), 42);
-    bytes.set(Buffer.from(doc.group, "utf-8"), 62);
+    bytes.set(pad(doc.title, 35), 7);
+    bytes.set(pad(doc.author, 20), 42);
+    bytes.set(pad(doc.group, 20), 62);
     add_text(bytes, 82, current_date(), 8);
     bytes[90] = file_bytes.length & 0xff;
     bytes[91] = (file_bytes.length >> 8) & 0xff;

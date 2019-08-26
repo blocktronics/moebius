@@ -412,7 +412,7 @@ function export_as_png(doc, render, file) {
 function export_as_apng(render, file) {
     const blink_off = join_canvases(render.blink_off_collection).getContext("2d").getImageData(0, 0, render.width, render.height).data;
     const blink_on = join_canvases(render.blink_on_collection).getContext("2d").getImageData(0, 0, render.width, render.height).data;
-    const bytes = upng.encode([blink_off.buffer, blink_on.buffer], render.width, render.height, 16, [200, 200]);
+    const bytes = upng.encode([blink_off.buffer, blink_on.buffer], render.width, render.height, 16, [300, 300]);
     fs.writeFileSync(file, Buffer.from(bytes));
 }
 

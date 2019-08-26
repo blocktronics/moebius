@@ -43,6 +43,24 @@
             <label class="number_box" for="new_document_rows">Rows for New Documents:</label><input type="number" name="new_document_rows" id="new_document_rows">
         </div>
         <div>
+            <label for="retention">Retain Files Pasted Online For:</label>
+            <select name="retention" id="retention">
+                <option value="300">5 Minutes</option>
+                <option value="900">15 Minutes</option>
+                <option value="3600">1 Hour</option>
+                <option value="7200">2 Hours</option>
+                <option value="43200">12 Hours</option>
+                <option value="86400">1 Day</option>
+                <option value="172800">2 Days</option>
+                <option value="604800">1 Week</option>
+                <option value="1209600">2 Weeks</option>
+                <option value="2678400">1 Month</option>
+                <option value="8035200" selected>3 Months</option>
+                <option value="31536000">1 Year</option>
+                <option value="0">Forever</option>
+            </select>
+        </div>
+        <div>
             <label for="smallscale_guide">80×25 Guide Turned on by Default:</label><input type="checkbox" name="smallscale_guide" id="smallscale_guide">
         </div>
         <div>

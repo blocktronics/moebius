@@ -113,7 +113,6 @@ function rescale_guide() {
     }
 }
 
-on("smallscale_guide", (event, visible) => toggle_smallscale_guide(visible));
 on("toggle_smallscale_guide", (event, visible) => toggle_smallscale_guide(visible));
 on("toggle_square_guide", (event, visible) => toggle_square_guide(visible));
 on("toggle_instagram_guide", (event, visible) => toggle_instagram_guide(visible));
@@ -144,6 +143,10 @@ class StatusBar {
 
     show_cursor_position() {
         $("cursor_position").style.opacity = 1;
+    }
+
+    constructor() {
+        doc.on("render", () => this.use_canvas_size_for_status_bar());
     }
 }
 
@@ -295,7 +298,7 @@ class Tools extends events.EventEmitter {
 
 
     keydown(event) {
-        if (event.code == "KeyM" && this.mode != this.modes.SELECT) this.start(this.modes.SELECT);
+        if (event.code == "KeyM" && !event.altKey && !event.ctrlKey && !event.metaKey && this.mode != this.modes.SELECT) this.start(this.modes.SELECT);
     }
 
     constructor() {
@@ -478,4 +481,4 @@ class Toolbar extends events.EventEmitter {
     }
 }
 
-module.exports = {statusbar: new StatusBar(), tools: new Tools(), toolbar: new Toolbar(), zoom_in, zoom_out};
+module.exports = {statusbar: new StatusBar(), tools: new Tools(), toolbar: new Toolbar(), zoom_in, zoom_out, actual_size};

@@ -88,7 +88,7 @@ document.addEventListener("keydown", (event) => {
 }, true);
 
 function strip_trailing_spaces(text) {
-    return text.replace(/ +$/, "");
+    return text.replace(/[ \u0000]+$/, "");
 }
 
 electron.ipcRenderer.on("set_sauce_info", (event, {title, author, group, comments}) => {

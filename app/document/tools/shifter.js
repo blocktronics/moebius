@@ -4,6 +4,7 @@ const mouse = require("../input/mouse");
 const keyboard = require("../input/keyboard");
 const palette = require("../palette");
 const {Overlay} = require("./overlay");
+const {on} = require("../../senders");
 let overlay;
 let enabled = false;
 
@@ -41,7 +42,8 @@ mouse.on("down", (x, y, half_y, is_legal, button, shift_key) => {
     switch (block.code) {
     case 0: case 32: case 255:
         doc.start_undo();
-        doc.change_data(x, y, button == mouse.buttons.LEFT ? 222 : 221, block.fg, block.bg);
+        const {fg} = palette;
+        doc.change_data(x, y, button == mouse.buttons.LEFT ? 222 : 221, fg, block.bg);
         break;
     case 219: case 220: case 223:
         doc.start_undo();
@@ -58,7 +60,10 @@ mouse.on("down", (x, y, half_y, is_legal, button, shift_key) => {
     }
 });
 
-keyboard.on("escape", () => {
+function select_attribute() {
     if (!enabled) return;
     palette.select_attribute();
-});
+}
+
+keyboard.on("escape", () => select_attribute());
+on("select_attribute", (event) => select_attribute());

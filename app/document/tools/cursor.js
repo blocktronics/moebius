@@ -41,49 +41,49 @@ class Cursor {
     }
 
     left() {
-        if (this.x > 0) this.move_to(this.x - 1, this.y);
+        this.move_to(Math.max(this.x - 1, 0), this.y);
         if (this.scroll_document_with_cursor) this.scroll(-1, 0);
     }
 
     up() {
-        if (this.y > 0) this.move_to(this.x, this.y - 1);
+        this.move_to(this.x, Math.max(this.y - 1, 0));
         if (this.scroll_document_with_cursor) this.scroll(0, -1);
     }
 
     right() {
-        if (this.x < doc.columns - 1) this.move_to(this.x + 1, this.y);
+        this.move_to(Math.min(this.x + 1, doc.columns - 1), this.y);
         if (this.scroll_document_with_cursor) this.scroll(1, 0);
     }
 
     down() {
-        if (this.y < doc.rows - 1) this.move_to(this.x, this.y + 1);
+        this.move_to(this.x, Math.min(this.y + 1, doc.rows - 1));
         if (this.scroll_document_with_cursor) this.scroll(0, 1);
     }
 
     page_up() {
         const characters_in_screen_height = Math.floor(document.getElementById("viewport").getBoundingClientRect().height / this.height);
-        if (this.y > 0) this.move_to(this.x, Math.max(this.y - characters_in_screen_height, 0));
+        this.move_to(this.x, Math.max(this.y - characters_in_screen_height, 0));
         if (this.scroll_document_with_cursor) this.scroll(0, -characters_in_screen_height);
     }
 
     page_down() {
         const characters_in_screen_height = Math.floor(document.getElementById("viewport").getBoundingClientRect().height / this.height);
-        if (this.y < doc.rows - 1) this.move_to(this.x, Math.min(this.y + characters_in_screen_height, doc.rows - 1));
+        this.move_to(this.x, Math.min(this.y + characters_in_screen_height, doc.rows - 1));
         if (this.scroll_document_with_cursor) this.scroll(0, characters_in_screen_height);
     }
 
     tab() {
-        if (this.x < doc.columns - 1) this.move_to(Math.min(doc.columns - 1, this.x + 8), this.y);
+        this.move_to(Math.min(doc.columns - 1, this.x + 8), this.y);
         if (this.scroll_document_with_cursor) this.scroll(8, 0);
     }
 
     reverse_tab() {
-        if (this.x > 0) this.move_to(Math.max(0, this.x - 8), this.y);
+        this.move_to(Math.max(0, this.x - 8), this.y);
         if (this.scroll_document_with_cursor) this.scroll(-8, 0);
     }
 
     start_of_row() {
-        if (this.x > 0) this.move_to(0, this.y);
+        this.move_to(0, this.y);
     }
 
     end_of_row() {
@@ -91,12 +91,12 @@ class Cursor {
             const {sx, dx} = this.reorientate_selection();
             const right_justified_x = doc.columns - (dx - sx + 1);
             if (this.x == right_justified_x) {
-                if (this.x < doc.columns - 1) this.move_to(doc.columns - 1, this.y);
+                this.move_to(doc.columns - 1, this.y);
             } else {
                 this.move_to(right_justified_x, this.y);
             }
         } else {
-            if (this.x < doc.columns - 1) this.move_to(doc.columns - 1, this.y);
+            this.move_to(doc.columns - 1, this.y);
         }
     }
 
@@ -364,6 +364,7 @@ class Cursor {
         const x = this.x;
         if (!keyboard.overwrite_mode) this.right();
         doc.change_data(x, this.y, code, palette.fg, palette.bg, {prev_x: x, prev_y: this.y}, this);
+        this.draw();
     }
 
     f_key(num) {
@@ -398,6 +399,13 @@ class Cursor {
         if (this.mode == modes.EDITING) this.start_selection_mode();
     }
 
+    start_selection_hotkey() {
+        if (this.mode == modes.EDITING) {
+            this.start_selection_mode();
+            this.move_to(this.x, this.y);
+        }
+    }
+
     left_justify_line() {
         if (this.mode == modes.EDITING) doc.left_justify_line(this.y);
     }
@@ -411,7 +419,24 @@ class Cursor {
     }
 
     erase_line() {
-        if (this.mode == modes.EDITING) doc.erase_line(this.y);
+        if (this.mode == modes.EDITING) {
+            doc.erase_line(this.y);
+            this.draw();
+        }
+    }
+
+    erase_to_start_of_line() {
+        if (this.mode == modes.EDITING) {
+            doc.erase_to_start_of_line(this.x, this.y);
+            this.draw();
+        }
+    }
+
+    erase_to_end_of_line() {
+        if (this.mode == modes.EDITING) {
+            doc.erase_to_end_of_line(this.x, this.y);
+            this.draw();
+        }
     }
 
     stamp() {
@@ -477,9 +502,9 @@ class Cursor {
         this.flashing = false;
         this.selection = {sx: 0, sy: 0, dx: 0, dy: 0};
         this.scroll_document_with_cursor = false;
+        on("deselect", (event) => this.deselect());
         on("use_flashing_cursor", (event, value) => this.set_flashing(value));
         on("fill", (event) => this.fill());
-        on("erase", (event) => this.erase());
         on("copy_block", (event) => this.start_operation_mode(false));
         on("move_block", (event) => this.start_operation_mode(true));
         on("scroll_document_with_cursor", (event, value) => this.scroll_document_with_cursor = value);
@@ -495,6 +520,8 @@ class Cursor {
         on("right_justify_line", (event, value) => this.right_justify_line());
         on("center_line", (event, value) => this.center_line());
         on("erase_line", (event, value) => this.erase_line());
+        on("erase_to_start_of_line", (event, value) => this.erase_to_start_of_line());
+        on("erase_to_end_of_line", (event, value) => this.erase_to_end_of_line());
         keyboard.on("insert_row", () => doc.insert_row(this.y));
         keyboard.on("delete_row", () => doc.delete_row(this.y));
         keyboard.on("insert_column", () => doc.insert_column(this.x));
@@ -514,6 +541,7 @@ class Cursor {
         keyboard.on("delete_key", () => this.delete_key());
         keyboard.on("f_key", (num) => this.f_key(num));
         keyboard.on("start_selection", () => this.start_selection());
+        on("start_selection", (event) => this.start_selection_hotkey());
         keyboard.on("new_line", () => this.new_line());
         keyboard.on("cut", () => this.cut());
         keyboard.on("copy", () => this.copy());
@@ -525,6 +553,8 @@ class Cursor {
         on("scroll_margin", (event, value) => this.use_scroll_margin(value));
         doc.undo_history.on("move_to", (x, y) => this.undo_move_to(x, y));
         doc.on("render", () => this.new_render());
+        on("undo", (event) => this.draw());
+        on("redo", (event) => this.draw());
     }
 }
 

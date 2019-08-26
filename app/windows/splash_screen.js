@@ -3,6 +3,8 @@ const electron = require("electron");
 let konami_index = 0;
 const konami_code = ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "KeyB", "KeyA"];
 const {send} = require("../senders");
+const dev = require("electron-is-dev");
+const ans_path = dev ? "./build/ans/" : `${process.resourcesPath}/ans/`;
 
 function show_new_version_button() {
     const new_version = document.getElementById("new_version");
@@ -42,7 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.body.addEventListener("keydown", body_key_down, true);
     document.getElementById("server").addEventListener("keydown", key_down, true);
     document.getElementById("pass").addEventListener("keydown", key_down, true);
-    libtextmode.animate({file: `${process.resourcesPath}/ans/MB4K.ans`, ctx: document.getElementById("splash_terminal").getContext("2d")});
+    libtextmode.animate({file: `${ans_path}MB4K.ans`, ctx: document.getElementById("splash_terminal").getContext("2d")});
     fetch("http://www.andyh.org/moebius/latest.json", {cache: "no-cache"}).then((response) => response.json()).then((json) => {
         if (electron.remote.app.getVersion() != json.version) show_new_version_button();
     });

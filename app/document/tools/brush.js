@@ -54,7 +54,10 @@ on("chunked_undo", (event, value) => chunked_undo = value);
 mouse.on("down", mouse_handler(false));
 mouse.on("draw", mouse_handler(true));
 
-keyboard.on("escape", () => {
+function select_attribute() {
     if (!enabled) return;
     palette.select_attribute();
-});
+}
+
+keyboard.on("escape", () => select_attribute());
+on("select_attribute", (event) => select_attribute());

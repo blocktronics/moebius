@@ -122,7 +122,7 @@ menu.on("open", open);
 electron.ipcMain.on("open", (event) => open());
 
 async function preferences() {
-    const preferences = await window.static("app/html/preferences.html", {width: 480, height: 590});
+    const preferences = await window.static("app/html/preferences.html", {width: 480, height: 620});
     preferences.send("prefs", prefs.get_all());
 }
 menu.on("preferences", preferences);
@@ -248,6 +248,7 @@ electron.ipcMain.on("select_attribute", async (event, {id, fg, bg, palette}) => 
 
 electron.ipcMain.on("ready", async (event, {id}) => {
     if (splash_screen && !splash_screen.isDestroyed()) splash_screen.close();
+    if (prefs.get("smallscale_guide")) docs[id].win.send("toggle_smallscale_guide", true);
 });
 
 if (darwin) {
@@ -286,6 +287,11 @@ electron.app.on("window-all-closed", (event) => {
 if (win32 && prefs.get("ignore_hdpi")) {
     electron.app.commandLine.appendSwitch("high-dpi-support", "true");
     electron.app.commandLine.appendSwitch("force-device-scale-factor", "1");
+}
+
+if (darwin) {
+    electron.systemPreferences.setUserDefault("NSDisabledDictationMenuItem", "boolean", true);
+    electron.systemPreferences.setUserDefault("NSDisabledCharacterPaletteMenuItem", "boolean", true);
 }
 
 if (linux) electron.app.disableHardwareAcceleration();

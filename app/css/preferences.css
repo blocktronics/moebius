@@ -72,9 +72,17 @@ input[type="text"]:focus, input[type="number"]:focus {
 
 input[type="checkbox"] {
     position: relative;
-    top: 1px;
+    top: 4px;
     width: 16px;
     height: 16px;
+    line-height: 16px;
+}
+
+select {
+    line-height: 24px;
+    width: 90px;
+    height: 24px;
+    outline: none;
 }
 
 #timestamp_box {

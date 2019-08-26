@@ -117,9 +117,6 @@ class KeyboardEvent extends events.EventEmitter {
                 this.emit("next_foreground_color");
                 event.preventDefault();
                 return;
-            case "KeyB":
-                this.emit("start_selection");
-                return;
             case "KeyI":
                 if (event.shiftKey) {
                     this.emit("insert_column");

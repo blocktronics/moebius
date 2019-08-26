@@ -13,6 +13,7 @@ const default_values = {
     unsaved_changes: true,
     scroll_margin: 0,
     new_document_rows: 25,
+    retention: "8035200",
     smallscale_guide: false,
     debug: false,
     ignore_hdpi: false,

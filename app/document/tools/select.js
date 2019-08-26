@@ -87,3 +87,8 @@ keyboard.on("escape", () => {
         palette.select_attribute();
     }
 });
+
+on("select_attribute", (event) => {
+    if (!enabled) return;
+    if (cursor.mode == cursor.modes.EDITING) palette.select_attribute();
+});

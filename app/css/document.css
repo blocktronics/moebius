@@ -366,10 +366,10 @@ body.dark #statusbar > div > div {
     display: none;
 }
 #guide.guide_column {
-    border-right: rgba(255, 255, 255, 0.4) 1px dashed;
+    border-right: rgba(100, 100, 100) 1px dashed;
 }
 #guide.guide_row {
-    border-bottom: rgba(255, 255, 255, 0.4) 1px dashed;
+    border-bottom: rgba(100, 100, 100) 1px dashed;
 }
 #zoom {
     font-size: 30px;

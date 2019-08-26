@@ -1,7 +1,7 @@
 const events = require("events");
 const doc = require("../doc");
 const buttons = {NONE: 0, LEFT: 1, RIGHT: 2};
-const {toolbar, zoom_in, zoom_out} = require("../ui/ui");
+const {toolbar, zoom_in, zoom_out, actual_size} = require("../ui/ui");
 const palette = require("../palette");
 
 class MouseListener extends events.EventEmitter {
@@ -41,6 +41,10 @@ class MouseListener extends events.EventEmitter {
 
     mouse_down(event) {
         if (!this.font || this.started || this.drawing) return;
+        if (event.button == 1) {
+            actual_size();
+            return;
+        }
         const {x, y, half_y} = this.get_xy(event);
         const is_legal = (x >= 0 && x < doc.columns && y >= 0 && y < doc.rows);
         if (event.altKey) {
