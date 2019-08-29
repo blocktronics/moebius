@@ -58,10 +58,10 @@ class MouseListener extends events.EventEmitter {
             return;
         }
         this.store(x, y, half_y);
-        if (event.button == 0) {
-            this.button = buttons.LEFT;
-        } else if (event.button == 2) {
+        if (event.button == 2 || event.ctrlKey) {
             this.button = buttons.RIGHT;
+        } else if (event.button == 0) {
+            this.button = buttons.LEFT;
         }
         this.emit("down", x, y, half_y, is_legal, this.button, event.shiftKey);
         this.last = {x, y, half_y};

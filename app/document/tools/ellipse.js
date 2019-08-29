@@ -121,7 +121,7 @@ function draw_blink_ellipse(sx, sy, dx, dy, unblink) {
     if (!coords) return;
     for (const coord of coords) {
         const block = doc.at(coord.x, coord.y);
-        if (block && ((!unblink && block.bg < 8) || (unblink && block.bg >= 8))) doc.change_data(coord.x, coord.y, block.code, block.fg, unblink ? block.bg - 8 : block.bg + 8);
+        if (block && ((!unblink && block.bg < 8) || (unblink && block.bg >= 8)) && (block.code != 0 && block.code != 32 && block.code != 255)) doc.change_data(coord.x, coord.y, block.code, block.fg, unblink ? block.bg - 8 : block.bg + 8);
     }
 }
 
@@ -166,7 +166,7 @@ mouse.on("up", (x, y, half_y, button) => {
     const {fg, bg} = palette;
     if (toolbar.mode == toolbar.modes.HALF_BLOCK) {
         if (clear) {
-            draw_half_block_ellipse(mouse.start.x, mouse.start.half_y, x, half_y, (button == mouse.buttons.LEFT) ? fg : bg);
+            draw_half_block_ellipse(mouse.start.x, mouse.start.half_y, x, half_y, 0);
         } else {
             draw_half_block_ellipse(mouse.start.x, mouse.start.half_y, x, half_y, (button == mouse.buttons.LEFT) ? fg : bg);
         }

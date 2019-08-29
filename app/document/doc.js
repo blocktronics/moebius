@@ -10,6 +10,7 @@ let nick, group;
 let connection;
 const SIXTEEN_COLORS_API_KEY = "mirebitqv2ualog65ifv2p1a5076soh9";
 let retention = "8035200";
+const undo_types = {INDIVIDUAL: 0, RESIZE: 1, INSERT_ROW: 2, DELETE_ROW: 3, INSERT_COLUMN: 4, DELETE_COLUMN: 5, SCROLL_CANVAS_UP: 6, SCROLL_CANVAS_DOWN: 7, SCROLL_CANVAS_LEFT: 8, SCROLL_CANVAS_RIGHT: 9};
 
 on("nick", (event, value) => nick = value);
 on("group", (event, value) => group = value);
@@ -375,68 +376,241 @@ class UndoHistory extends events.EventEmitter {
         this.reset_redos();
     }
 
-    start_chunk() {
+    start_chunk(type = undo_types.INDIVIDUAL, data = []) {
         this.reset_redos();
-        this.undo_buffer.push([]);
+        this.undo_buffer.push({type, data});
         send("enable_undo");
         if (!connection) send("document_changed");
     }
 
+    push_resize() {
+        this.start_chunk(undo_types.RESIZE, libtextmode.get_all_blocks(doc));
+    }
+
+    undo_individual(undos) {
+        const redos = [];
+        for (let undo_i = undos.length - 1; undo_i >= 0; undo_i--) {
+            const undo = undos[undo_i];
+            const block = doc.data[doc.columns * undo.y + undo.x];
+            if (undo.cursor) {
+                redos.push({...Object.assign(block), x: undo.x, y: undo.y, cursor: Object.assign(undo.cursor)});
+            } else {
+                redos.push({...Object.assign(block), x: undo.x, y: undo.y});
+            }
+            block.code = undo.code;
+            block.fg = undo.fg;
+            block.bg = undo.bg;
+            libtextmode.render_at(render, undo.x, undo.y, block);
+            if (connection) connection.draw(undo.x, undo.y, block);
+            if (undo.cursor) this.emit("move_to", undo.cursor.prev_x, undo.cursor.prev_y);
+        }
+        this.redo_buffer.push({type: undo_types.INDIVIDUAL, data: redos});
+    }
+
+    redo_individual(redos) {
+        const undos = [];
+        for (let redo_i = redos.length - 1; redo_i >= 0; redo_i--) {
+            const redo = redos[redo_i];
+            const block = doc.data[doc.columns * redo.y + redo.x];
+            if (redo.cursor) {
+                undos.push({...Object.assign(block), x: redo.x, y: redo.y, cursor: Object.assign(redo.cursor)});
+            } else {
+                undos.push({...Object.assign(block), x: redo.x, y: redo.y});
+            }
+            block.code = redo.code;
+            block.fg = redo.fg;
+            block.bg = redo.bg;
+            libtextmode.render_at(render, redo.x, redo.y, block);
+            if (connection) connection.draw(redo.x, redo.y, block);
+            if (redo.cursor) this.emit("move_to", redo.cursor.post_x, redo.cursor.post_y);
+        }
+        this.undo_buffer.push({type: undo_types.INDIVIDUAL, data: undos});
+    }
+
+    copy_blocks(blocks) {
+        doc.columns = blocks.columns;
+        doc.rows = blocks.rows;
+        doc.data = new Array(doc.columns * doc.rows);
+        for (let i = 0; i < doc.data.length; i++) doc.data[i] = Object.assign(blocks.data[i]);
+    }
+
+    undo_resize(blocks) {
+        this.redo_buffer.push({type: undo_types.RESIZE, data: libtextmode.get_all_blocks(doc)});
+        this.copy_blocks(blocks);
+        this.emit("resize");
+    }
+
+    redo_resize(blocks) {
+        this.undo_buffer.push({type: undo_types.RESIZE, data: libtextmode.get_all_blocks(doc)});
+        this.copy_blocks(blocks);
+        this.emit("resize");
+    }
+
+    push_insert_row(y, blocks) {
+        this.start_chunk(undo_types.INSERT_ROW, {y, blocks});
+    }
+
+    push_delete_row(y, blocks) {
+        this.start_chunk(undo_types.DELETE_ROW, {y, blocks});
+    }
+
+    push_insert_column(x, blocks) {
+        this.start_chunk(undo_types.INSERT_COLUMN, {x, blocks});
+    }
+
+    push_delete_column(x, blocks) {
+        this.start_chunk(undo_types.DELETE_COLUMN, {x, blocks});
+    }
+
+    push_scroll_canvas_up() {
+        this.start_chunk(undo_types.SCROLL_CANVAS_UP);
+    }
+
+    push_scroll_canvas_down() {
+        this.start_chunk(undo_types.SCROLL_CANVAS_DOWN);
+    }
+
+    push_scroll_canvas_left() {
+        this.start_chunk(undo_types.SCROLL_CANVAS_LEFT);
+    }
+
+    push_scroll_canvas_right() {
+        this.start_chunk(undo_types.SCROLL_CANVAS_RIGHT);
+    }
+
+    undo_insert_row(data) {
+        this.redo_buffer.push({type: undo_types.DELETE_ROW, data: {y: data.y, blocks: libtextmode.delete_row(doc, data.y, data.blocks)}});
+        libtextmode.render_delete_row(doc, data.y, render);
+    }
+
+    undo_delete_row(data) {
+        this.redo_buffer.push({type: undo_types.INSERT_ROW, data: {y: data.y, blocks: libtextmode.insert_row(doc, data.y, data.blocks)}});
+        libtextmode.render_insert_row(doc, data.y, render);
+    }
+
+    undo_insert_column(data) {
+        this.redo_buffer.push({type: undo_types.DELETE_COLUMN, data: {x: data.x, blocks: libtextmode.delete_column(doc, data.x, data.blocks)}});
+        libtextmode.render_delete_column(doc, data.x, render);
+    }
+
+    undo_delete_column(data) {
+        this.redo_buffer.push({type: undo_types.INSERT_COLUMN, data: {x: data.x, blocks: libtextmode.insert_column(doc, data.x, data.blocks)}});
+        libtextmode.render_insert_column(doc, data.x, render);
+    }
+
+    undo_scroll_canvas_up() {
+        libtextmode.scroll_canvas_down(doc);
+        this.redo_buffer.push({type: undo_types.SCROLL_CANVAS_DOWN, data: []});
+        libtextmode.render_scroll_canvas_down(doc, render);
+    }
+
+    undo_scroll_canvas_down() {
+        libtextmode.scroll_canvas_up(doc);
+        this.redo_buffer.push({type: undo_types.SCROLL_CANVAS_UP, data: []});
+        libtextmode.render_scroll_canvas_up(doc, render);
+    }
+
+    undo_scroll_canvas_left() {
+        libtextmode.scroll_canvas_right(doc);
+        this.redo_buffer.push({type: undo_types.SCROLL_CANVAS_RIGHT, data: []});
+        libtextmode.render_scroll_canvas_right(doc, render);
+    }
+
+    undo_scroll_canvas_right() {
+        libtextmode.scroll_canvas_left(doc);
+        this.redo_buffer.push({type: undo_types.SCROLL_CANVAS_LEFT, data: []});
+        libtextmode.render_scroll_canvas_left(doc, render);
+    }
+
+    redo_scroll_canvas_up() {
+        libtextmode.scroll_canvas_down(doc);
+        this.undo_buffer.push({type: undo_types.SCROLL_CANVAS_DOWN, data: []});
+        libtextmode.render_scroll_canvas_down(doc, render);
+    }
+
+    redo_scroll_canvas_down() {
+        libtextmode.scroll_canvas_up(doc);
+        this.undo_buffer.push({type: undo_types.SCROLL_CANVAS_UP, data: []});
+        libtextmode.render_scroll_canvas_up(doc, render);
+    }
+
+    redo_scroll_canvas_left() {
+        libtextmode.scroll_canvas_right(doc);
+        this.undo_buffer.push({type: undo_types.SCROLL_CANVAS_RIGHT, data: []});
+        libtextmode.render_scroll_canvas_right(doc, render);
+    }
+
+    redo_scroll_canvas_right() {
+        libtextmode.scroll_canvas_left(doc);
+        this.undo_buffer.push({type: undo_types.SCROLL_CANVAS_LEFT, data: []});
+        libtextmode.render_scroll_canvas_left(doc, render);
+    }
+
+    redo_insert_row(data) {
+        this.undo_buffer.push({type: undo_types.DELETE_ROW, data: {y: data.y, blocks: libtextmode.delete_row(doc, data.y, data.blocks)}});
+        libtextmode.render_delete_row(doc, data.y, render);
+    }
+
+    redo_delete_row(data) {
+        this.undo_buffer.push({type: undo_types.INSERT_ROW, data: {y: data.y, blocks: libtextmode.insert_row(doc, data.y, data.blocks)}});
+        libtextmode.render_insert_row(doc, data.y, render);
+    }
+
+    redo_insert_column(data) {
+        this.undo_buffer.push({type: undo_types.DELETE_COLUMN, data: {x: data.x, blocks: libtextmode.delete_column(doc, data.x, data.blocks)}});
+        libtextmode.render_delete_column(doc, data.x, render);
+    }
+
+    redo_delete_column(data) {
+        this.undo_buffer.push({type: undo_types.INSERT_COLUMN, data: {x: data.x, blocks: libtextmode.insert_column(doc, data.x, data.blocks)}});
+        libtextmode.render_insert_column(doc, data.x, render);
+    }
+
     undo() {
         if (this.undo_buffer.length) {
-            const redos = [];
-            const undos = this.undo_buffer.pop();
-            for (let undo_i = undos.length - 1; undo_i >= 0; undo_i--) {
-                const undo = undos[undo_i];
-                const block = doc.data[doc.columns * undo.y + undo.x];
-                if (undo.cursor) {
-                    redos.push({...Object.assign(block), x: undo.x, y: undo.y, cursor: Object.assign(undo.cursor)});
-                } else {
-                    redos.push({...Object.assign(block), x: undo.x, y: undo.y});
-                }
-                block.code = undo.code;
-                block.fg = undo.fg;
-                block.bg = undo.bg;
-                libtextmode.render_at(render, undo.x, undo.y, block);
-                if (connection) connection.draw(undo.x, undo.y, block);
-                if (undo.cursor) this.emit("move_to", undo.cursor.prev_x, undo.cursor.prev_y);
+            const undo = this.undo_buffer.pop();
+            switch(undo.type) {
+                case undo_types.INDIVIDUAL: this.undo_individual(undo.data); break;
+                case undo_types.RESIZE: this.undo_resize(undo.data); break;
+                case undo_types.INSERT_ROW: this.undo_insert_row(undo.data); break;
+                case undo_types.DELETE_ROW: this.undo_delete_row(undo.data); break;
+                case undo_types.INSERT_COLUMN: this.undo_insert_column(undo.data); break;
+                case undo_types.DELETE_COLUMN: this.undo_delete_column(undo.data); break;
+                case undo_types.SCROLL_CANVAS_UP: this.undo_scroll_canvas_up(); break;
+                case undo_types.SCROLL_CANVAS_DOWN: this.undo_scroll_canvas_down(); break;
+                case undo_types.SCROLL_CANVAS_LEFT: this.undo_scroll_canvas_left(); break;
+                case undo_types.SCROLL_CANVAS_RIGHT: this.undo_scroll_canvas_right(); break;
             }
-            this.redo_buffer.push(redos);
             send("enable_redo");
-            if (!this.undo_buffer.length) send("disable_undo");
+            if (this.undo_buffer.length == 0) send("disable_undo");
         }
     }
 
     redo() {
         if (this.redo_buffer.length) {
-            const undos = [];
-            const redos = this.redo_buffer.pop();
-            for (let redo_i = redos.length - 1; redo_i >= 0; redo_i--) {
-                const redo = redos[redo_i];
-                const block = doc.data[doc.columns * redo.y + redo.x];
-                if (redo.cursor) {
-                    undos.push({...Object.assign(block), x: redo.x, y: redo.y, cursor: Object.assign(redo.cursor)});
-                } else {
-                    undos.push({...Object.assign(block), x: redo.x, y: redo.y});
-                }
-                block.code = redo.code;
-                block.fg = redo.fg;
-                block.bg = redo.bg;
-                libtextmode.render_at(render, redo.x, redo.y, block);
-                if (connection) connection.draw(redo.x, redo.y, block);
-                if (redo.cursor) this.emit("move_to", redo.cursor.post_x, redo.cursor.post_y);
+            const redo = this.redo_buffer.pop();
+            switch(redo.type) {
+                case undo_types.INDIVIDUAL: this.redo_individual(redo.data); break;
+                case undo_types.RESIZE: this.redo_resize(redo.data); break;
+                case undo_types.INSERT_ROW: this.redo_insert_row(redo.data); break;
+                case undo_types.DELETE_ROW: this.redo_delete_row(redo.data); break;
+                case undo_types.INSERT_COLUMN: this.redo_insert_column(redo.data); break;
+                case undo_types.DELETE_COLUMN: this.redo_delete_column(redo.data); break;
+                case undo_types.SCROLL_CANVAS_UP: this.redo_scroll_canvas_up(); break;
+                case undo_types.SCROLL_CANVAS_DOWN: this.redo_scroll_canvas_down(); break;
+                case undo_types.SCROLL_CANVAS_LEFT: this.redo_scroll_canvas_left(); break;
+                case undo_types.SCROLL_CANVAS_RIGHT: this.redo_scroll_canvas_right(); break;
             }
-            this.undo_buffer.push(undos);
             send("enable_undo");
-            if (!this.redo_buffer.length) send("disable_redo");
+            if (this.redo_buffer.length == 0) send("disable_redo");
         }
     }
 
     push(x, y, block, cursor) {
         if (cursor) {
-            this.undo_buffer[this.undo_buffer.length - 1].push({x, y, ...Object.assign(block), cursor: Object.assign(cursor)});
+            this.undo_buffer[this.undo_buffer.length - 1].data.push({x, y, ...Object.assign(block), cursor: Object.assign(cursor)});
         } else {
-            this.undo_buffer[this.undo_buffer.length - 1].push({x, y, ...Object.assign(block)});
+            this.undo_buffer[this.undo_buffer.length - 1].data.push({x, y, ...Object.assign(block)});
         }
     }
 
@@ -448,10 +622,6 @@ class UndoHistory extends events.EventEmitter {
         this.undo_buffer = [];
         this.redo_buffer = [];
     }
-}
-
-async function next_frame() {
-    return new Promise((resolve) => window.requestAnimationFrame(resolve));
 }
 
 class TextModeDoc extends events.EventEmitter {
@@ -673,7 +843,11 @@ class TextModeDoc extends events.EventEmitter {
     }
 
     resize(columns, rows) {
-        this.undo_history.reset_undos();
+        if (!connection) {
+            this.undo_history.push_resize();
+        } else {
+            this.undo_history.reset_undos();
+        }
         libtextmode.resize_canvas(doc, columns, rows);
         this.start_rendering();
         if (connection) connection.set_canvas_size(columns, rows);
@@ -748,6 +922,21 @@ class TextModeDoc extends events.EventEmitter {
         for (let dx = x; dx < doc.columns; dx++) this.change_data(dx, y, 32, 7, 0);
     }
 
+    erase_column(x) {
+        this.undo_history.start_chunk();
+        for (let y = 0; y < doc.rows; y++) this.change_data(x, y, 32, 7, 0);
+    }
+
+    erase_to_start_of_column(x, y) {
+        this.undo_history.start_chunk();
+        for (let dy = 0; dy <= y; dy++) this.change_data(x, dy, 32, 7, 0);
+    }
+
+    erase_to_end_of_column(x, y) {
+        this.undo_history.start_chunk();
+        for (let dy = y; dy < doc.rows; dy++) this.change_data(x, dy, 32, 7, 0);
+    }
+
     place(blocks, dx, dy, single_undo) {
         const mid_point = Math.floor(doc.columns / 2);
         const dont_mirror = dx < mid_point && dx + blocks.columns > mid_point;
@@ -789,128 +978,56 @@ class TextModeDoc extends events.EventEmitter {
         this.undo_history.redo();
     }
 
-    async insert_row(insert_y) {
-        await next_frame();
-        if (insert_y >= 25) return;
-        this.undo_history.start_chunk();
-        const max_x = Math.min(doc.columns, 80);
-        const max_y = Math.min(doc.rows, 25);
-        for (let y = max_y - 1; y > insert_y; y--) {
-            for (let x = 0; x < max_x; x++) {
-                const block = this.at(x, y - 1);
-                this.change_data(x, y, block.code, block.fg, block.bg);
-            }
-        }
-        for (let x = 0; x < max_x; x++) this.change_data(x, insert_y, 32, 7, 0);
+    insert_row(y) {
+        if (connection) return;
+        this.undo_history.push_insert_row(y, libtextmode.insert_row(doc, y));
+        libtextmode.render_insert_row(doc, y, render);
     }
 
-    async delete_row(delete_y) {
-        await next_frame();
-        if (delete_y >= 25) return;
-        this.undo_history.start_chunk();
-        const max_x = Math.min(doc.columns, 80);
-        const max_y = Math.min(doc.rows, 25);
-        for (let y = delete_y; y < max_y - 1; y++) {
-            for (let x = 0; x < max_x; x++) {
-                const block = this.at(x, y + 1);
-                this.change_data(x, y, block.code, block.fg, block.bg);
-            }
-        }
-        for (let x = 0; x < max_x; x++) this.change_data(x, max_y - 1, 32, 7, 0);
+    delete_row(y) {
+        if (connection) return;
+        this.undo_history.push_delete_row(y, libtextmode.delete_row(doc, y));
+        libtextmode.render_delete_row(doc, y, render);
     }
 
-    async insert_column(insert_x) {
-        await next_frame();
-        if (insert_x >= 80) return;
-        this.undo_history.start_chunk();
-        const max_x = Math.min(doc.columns, 80);
-        const max_y = Math.min(doc.rows, 25);
-        for (let x = max_x - 1; x > insert_x; x--) {
-            for (let y = 0; y < max_y; y++) {
-                const block = this.at(x - 1, y);
-                this.change_data(x, y, block.code, block.fg, block.bg);
-            }
-        }
-        for (let y = 0; y < max_y; y++) this.change_data(insert_x, y, 32, 7, 0);
+    insert_column(x) {
+        if (connection) return;
+        this.undo_history.push_insert_column(x, libtextmode.insert_column(doc, x));
+        libtextmode.render_insert_column(doc, x, render);
     }
 
-    async delete_column(delete_x) {
-        await next_frame();
-        if (delete_x >= 80) return;
-        this.undo_history.start_chunk();
-        const max_x = Math.min(doc.columns, 80);
-        const max_y = Math.min(doc.rows, 25);
-        for (let x = delete_x; x < max_x - 1; x++) {
-            for (let y = 0; y < max_y; y++) {
-                const block = this.at(x + 1, y);
-                this.change_data(x, y, block.code, block.fg, block.bg);
-            }
-        }
-        for (let y = 0; y < max_y; y++) this.change_data(max_x - 1, y, 32, 7, 0);
+    delete_column(x) {
+        if (connection) return;
+        this.undo_history.push_delete_column(x, libtextmode.delete_column(doc, x));
+        libtextmode.render_delete_column(doc, x, render);
     }
 
-    async scroll_left() {
-        await next_frame();
-        this.undo_history.start_chunk();
-        const max_x = Math.min(doc.columns, 80);
-        const max_y = Math.min(doc.rows, 25);
-        const store = new Array(max_y);
-        for (let y = 0; y < max_y; y++) store[y] = Object.assign(doc.data[y * doc.columns]);
-        for (let x = 0; x < max_x - 1; x++) {
-            for (let y = 0; y < max_y; y++) {
-                const block = this.at(x + 1, y);
-                this.change_data(x, y, block.code, block.fg, block.bg);
-            }
-        }
-        for (let y = 0; y < max_y; y++) this.change_data(max_x - 1, y, store[y].code, store[y].fg, store[y].bg);
+    scroll_canvas_up() {
+        if (connection) return;
+        libtextmode.scroll_canvas_up(doc);
+        libtextmode.render_scroll_canvas_up(doc, render);
+        this.undo_history.push_scroll_canvas_up();
     }
 
-    async scroll_up() {
-        await next_frame();
-        this.undo_history.start_chunk();
-        const max_x = Math.min(doc.columns, 80);
-        const max_y = Math.min(doc.rows, 25);
-        const store = new Array(max_x);
-        for (let x = 0; x < max_x; x++) store[x] = Object.assign(doc.data[x]);
-        for (let y = 0; y < max_y - 1; y++) {
-            for (let x = 0; x < max_x; x++) {
-                const block = this.at(x, y + 1);
-                this.change_data(x, y, block.code, block.fg, block.bg);
-            }
-        }
-        for (let x = 0; x < max_x; x++) this.change_data(x, max_y - 1, store[x].code, store[x].fg, store[x].bg);
+    scroll_canvas_down() {
+        if (connection) return;
+        libtextmode.scroll_canvas_down(doc);
+        libtextmode.render_scroll_canvas_down(doc, render);
+        this.undo_history.push_scroll_canvas_down();
     }
 
-    async scroll_right() {
-        await next_frame();
-        this.undo_history.start_chunk();
-        const max_x = Math.min(doc.columns, 80);
-        const max_y = Math.min(doc.rows, 25);
-        const store = new Array(max_y);
-        for (let y = 0; y < max_y; y++) store[y] = Object.assign(doc.data[y * doc.columns + max_x - 1]);
-        for (let x = max_x - 1; x > 0; x--) {
-            for (let y = 0; y < max_y; y++) {
-                const block = this.at(x - 1, y);
-                this.change_data(x, y, block.code, block.fg, block.bg);
-            }
-        }
-        for (let y = 0; y < max_y; y++) this.change_data(0, y, store[y].code, store[y].fg, store[y].bg);
+    scroll_canvas_left() {
+        if (connection) return;
+        libtextmode.scroll_canvas_left(doc);
+        libtextmode.render_scroll_canvas_left(doc, render);
+        this.undo_history.push_scroll_canvas_left();
     }
 
-    async scroll_down() {
-        await next_frame();
-        this.undo_history.start_chunk();
-        const max_x = Math.min(doc.columns, 80);
-        const max_y = Math.min(doc.rows, 25);
-        const store = new Array(max_x);
-        for (let x = 0; x < max_x; x++) store[x] = Object.assign(doc.data[(max_y - 1) * doc.columns + x]);
-        for (let y = max_y - 1; y > 0; y--) {
-            for (let x = 0; x < max_x; x++) {
-                const block = this.at(x, y - 1);
-                this.change_data(x, y, block.code, block.fg, block.bg);
-            }
-        }
-        for (let x = 0; x < max_x; x++) this.change_data(x, 0, store[x].code, store[x].fg, store[x].bg);
+    scroll_canvas_right() {
+        if (connection) return;
+        libtextmode.scroll_canvas_right(doc);
+        libtextmode.render_scroll_canvas_right(doc, render);
+        this.undo_history.push_scroll_canvas_right();
     }
 
     async open(file) {
@@ -964,6 +1081,7 @@ class TextModeDoc extends events.EventEmitter {
         this.init = false;
         this.mirror_mode = false;
         this.undo_history = new UndoHistory();
+        this.undo_history.on("resize", () => this.start_rendering());
         on("ice_colors", (event, value) => this.ice_colors = value);
         on("use_9px_font", (event, value) => this.use_9px_font = value);
         on("change_font", (event, font_name) => this.font_name = font_name);

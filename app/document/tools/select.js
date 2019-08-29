@@ -1,9 +1,10 @@
-const {on, send} = require("../../senders");
+const {on, send, open_box, save_box} = require("../../senders");
 const doc = require("../doc");
 const cursor = require("./cursor");
 const keyboard = require("../input/keyboard");
 const mouse = require("../input/mouse");
 const {tools, statusbar, toolbar} = require("../ui/ui");
+const libtextmode = require("../../libtextmode/libtextmode");
 let enabled = false;
 const palette = require("../palette");
 
@@ -91,4 +92,21 @@ keyboard.on("escape", () => {
 on("select_attribute", (event) => {
     if (!enabled) return;
     if (cursor.mode == cursor.modes.EDITING) palette.select_attribute();
+});
+
+on("import_selection", async (event) => {
+    const file = open_box({filters: [{name: "TextArt", extensions: ["ans", "xb", "bin", "diz", "asc", "txt", "nfo"]}, {name: "All Files", extensions: ["*"]}], properties: ["openFile"]});
+    if (file) {
+        if (!enabled) tools.start(tools.modes.SELECT);
+        const blocks = await libtextmode.read_file(file[0]);
+        cursor.set_operation_mode(blocks);
+    }
+});
+
+on("export_selection", async (event) => {
+    if (!enabled || cursor.mode == cursor.modes.EDITING) return;
+    const {sx, sy, dx, dy} = cursor.reorientate_selection();
+    const selection_doc = libtextmode.new_document({...doc.get_blocks(sx, sy, dx, dy)});
+    const file = save_box(doc.file, "ans", {filters: [{name: "ANSI Art", extensions: ["ans", "asc", "diz", "nfo", "txt"]}, {name: "XBin", extensions: ["xb"]}, {name: "Binary Text", extensions: ["bin"]}]});
+    if (file) await libtextmode.write_file(selection_doc, file);
 });

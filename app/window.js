@@ -2,7 +2,7 @@ const electron = require("electron");
 const darwin = (process.platform == "darwin");
 const menu = require("./menu");
 const static_wins = {};
-const modal_prefs = {maximizable: false, resizable: false, backgroundColor: "#292c33"};
+const modal_prefs = {maximizable: false, resizable: false, fullscreenable: false, backgroundColor: "#292c33"};
 
 async function new_win(file, options, touchbar, touchbar_opts) {
     return new Promise((resolve) => {

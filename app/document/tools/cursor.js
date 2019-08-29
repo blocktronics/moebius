@@ -193,13 +193,9 @@ class Cursor {
     }
 
     new_render() {
+        this.move_to(Math.min(this.x, doc.columns - 1), Math.min(this.y, doc.rows - 1));
         this.resize_to_font();
         if (this.mode == modes.OPERATION) this.redraw_operation_blocks();
-        if (this.x >= doc.columns || this.y >= doc.rows) {
-            this.move_to(Math.min(this.x, doc.columns - 1), Math.min(this.y, doc.rows - 1));
-        } else {
-            this.draw();
-        }
     }
 
     start_selection_mode() {
@@ -218,7 +214,8 @@ class Cursor {
         }
         send("enable_editing_shortcuts");
         this.mode = modes.EDITING;
-        this.canvas.classList.remove("selection");
+        if (this.canvas.classList.contains("selection")) this.canvas.classList.remove("selection");
+        if (this.canvas.classList.contains("operation")) this.canvas.classList.remove("operation");
         this.resize_to_font();
         statusbar.use_canvas_size_for_status_bar();
         send("show_editing_touchbar");
@@ -231,10 +228,10 @@ class Cursor {
 
     redraw_operation_blocks() {
         const font = doc.font;
-        this.canvas.width = this.operation_blocks.columns * font.width - 2; this.canvas.height = this.operation_blocks.rows * font.height - 2;
+        this.canvas.width = this.operation_blocks.columns * font.width - 4; this.canvas.height = this.operation_blocks.rows * font.height - 4;
         this.canvas.style.width = `${this.canvas.width + 2}px`; this.canvas.style.height = `${this.canvas.height + 2}px`;
         const canvas = libtextmode.render_blocks(this.operation_blocks, doc.font);
-        this.ctx.drawImage(canvas, 0, 0, canvas.width - 2, canvas.height - 2, -1, -1, canvas.width - 2, canvas.height - 2);
+        this.ctx.drawImage(canvas, 0, 0, canvas.width - 4, canvas.height - 4, -2, -2, canvas.width - 2, canvas.height - 2);
     }
 
     set_operation_mode(blocks) {
@@ -246,6 +243,7 @@ class Cursor {
         send("enable_operation_menu_items");
         send("show_operation_touchbar");
         statusbar.use_canvas_size_for_status_bar();
+        this.canvas.classList.add("operation");
     }
 
     start_operation_mode(is_move_operation) {
@@ -439,6 +437,75 @@ class Cursor {
         }
     }
 
+    erase_column() {
+        if (this.mode == modes.EDITING) {
+            doc.erase_column(this.x);
+            this.draw();
+        }
+    }
+
+    erase_to_start_of_column() {
+        if (this.mode == modes.EDITING) {
+            doc.erase_to_start_of_column(this.x, this.y);
+            this.draw();
+        }
+    }
+
+    erase_to_end_of_column() {
+        if (this.mode == modes.EDITING) {
+            doc.erase_to_end_of_column(this.x, this.y);
+            this.draw();
+        }
+    }
+
+    insert_row(y) {
+        if (this.hidden || this.mode != modes.EDITING) return;
+        doc.insert_row(y);
+        this.draw();
+    }
+
+    delete_row(y) {
+        if (this.hidden || this.mode != modes.EDITING) return;
+        doc.delete_row(y);
+        this.draw();
+    }
+
+    insert_column(x) {
+        if (this.hidden || this.mode != modes.EDITING) return;
+        doc.insert_column(x);
+        this.draw();
+    }
+
+    delete_column(x) {
+        if (this.hidden || this.mode != modes.EDITING) return;
+        doc.delete_column(x);
+        this.draw();
+    }
+
+    scroll_canvas_up() {
+        if (this.hidden || this.mode != modes.EDITING) return;
+        doc.scroll_canvas_up();
+        this.draw();
+    }
+
+    scroll_canvas_down() {
+        if (this.hidden || this.mode != modes.EDITING) return;
+        doc.scroll_canvas_down();
+        this.draw();
+    }
+
+    scroll_canvas_left() {
+        if (this.hidden || this.mode != modes.EDITING) return;
+        doc.scroll_canvas_left();
+        this.draw();
+    }
+
+    scroll_canvas_right() {
+        if (this.hidden || this.mode != modes.EDITING) return;
+        doc.scroll_canvas_right();
+        this.draw();
+    }
+
     stamp() {
         const blocks = this.operation_blocks.underneath ? libtextmode.merge_blocks(this.operation_blocks, this.get_blocks_in_operation()) : this.operation_blocks;
         doc.place(blocks, this.x, this.y, this.operation_blocks.is_move_operation);
@@ -522,10 +589,21 @@ class Cursor {
         on("erase_line", (event, value) => this.erase_line());
         on("erase_to_start_of_line", (event, value) => this.erase_to_start_of_line());
         on("erase_to_end_of_line", (event, value) => this.erase_to_end_of_line());
-        keyboard.on("insert_row", () => doc.insert_row(this.y));
-        keyboard.on("delete_row", () => doc.delete_row(this.y));
-        keyboard.on("insert_column", () => doc.insert_column(this.x));
-        keyboard.on("delete_column", () => doc.delete_column(this.x));
+        on("erase_column", (event, value) => this.erase_column());
+        on("erase_to_start_of_column", (event, value) => this.erase_to_start_of_column());
+        on("erase_to_end_of_column", (event, value) => this.erase_to_end_of_column());
+        on("insert_row", (event) => this.insert_row(this.y));
+        on("delete_row", (event) => this.delete_row(this.y));
+        on("insert_column", (event) => this.insert_column(this.x));
+        on("delete_column", (event) => this.delete_column(this.x));
+        keyboard.on("insert_row", () => this.insert_row(this.y));
+        keyboard.on("delete_row", () => this.delete_row(this.y));
+        keyboard.on("insert_column", () => this.insert_column(this.x));
+        keyboard.on("delete_column", () => this.delete_column(this.x));
+        on("scroll_canvas_up", (event) => this.scroll_canvas_up());
+        on("scroll_canvas_down", (event) => this.scroll_canvas_down());
+        on("scroll_canvas_left", (event) => this.scroll_canvas_left());
+        on("scroll_canvas_right", (event) => this.scroll_canvas_right());
         ["left", "right", "up", "down", "page_up", "page_down", "start_of_row", "end_of_row", "tab", "reverse_tab"].map((event) => {
             keyboard.on(event, () => {
                 if (!this.hidden) this[event]();

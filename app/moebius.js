@@ -104,18 +104,17 @@ function open_in_new_window(win) {
 
 function open(win) {
     if (darwin && win) electron.Menu.setApplicationMenu(menu.modal_menu);
-    electron.dialog.showOpenDialog(open_in_new_window(win) ? undefined : win, {filters: [{name: "TextArt", extensions: ["ans", "xb", "bin", "diz", "asc", "txt", "nfo"]}, {name: "All Files", extensions: ["*"]}], properties: ["openFile", "multiSelections"]}, (files) => {
-        if (darwin && win) electron.Menu.setApplicationMenu(docs[win.id].menu);
-        if (!files) return;
-        for (const file of files) {
-            if (win && !check_if_file_is_already_open(file) && !open_in_new_window(win)) {
-                win.send("open_file", file);
-                docs[win.id].file = file;
-            } else {
-                open_file(file);
-            }
+    const files = electron.dialog.showOpenDialogSync(open_in_new_window(win) ? undefined : win, {filters: [{name: "TextArt", extensions: ["ans", "xb", "bin", "diz", "asc", "txt", "nfo"]}, {name: "All Files", extensions: ["*"]}], properties: ["openFile", "multiSelections"]});
+    if (darwin && win) electron.Menu.setApplicationMenu(docs[win.id].menu);
+    if (!files) return;
+    for (const file of files) {
+        if (win && !check_if_file_is_already_open(file) && !open_in_new_window(win)) {
+            win.send("open_file", file);
+            docs[win.id].file = file;
+        } else {
+            open_file(file);
         }
-    });
+    }
 }
 
 menu.on("open", open);
@@ -153,8 +152,8 @@ function has_documents_open() {
 
 electron.ipcMain.on("get_canvas_size", async (event, {id, columns, rows}) => {
     docs[id].modal = await window.new_modal("app/html/resize.html", {width: 300, height: 190, parent: docs[id].win, frame: false, ...get_centered_xy(id, 300, 190)}, touchbar.get_canvas_size);
+    if (darwin) add_darwin_window_menu_handler(id);
     docs[id].modal.send("set_canvas_size", {columns, rows});
-    if (darwin) electron.Menu.setApplicationMenu(menu.modal_menu);
 });
 
 electron.ipcMain.on("document_changed", (event, {id}) => {
@@ -176,23 +175,18 @@ electron.ipcMain.on("update_prefs", (event, {key, value}) => {
 
 electron.ipcMain.on("show_rendering_modal", async (event, {id}) => {
     docs[id].modal = await window.new_modal("app/html/rendering.html", {width: 200, height: 80, parent: docs[id].win, frame: false, ...get_centered_xy(id, 200, 80)});
-    if (darwin) electron.Menu.setApplicationMenu(menu.modal_menu);
+    if (darwin) add_darwin_window_menu_handler(id);
     event.returnValue = true;
 });
 
 electron.ipcMain.on("show_connecting_modal", async (event, {id}) => {
     docs[id].modal = await window.new_modal("app/html/connecting.html", {width: 200, height: 80, parent: docs[id].win, frame: false, ...get_centered_xy(id, 200, 80)});
-    if (darwin) electron.Menu.setApplicationMenu(menu.modal_menu);
+    if (darwin) add_darwin_window_menu_handler(id);
     event.returnValue = true;
 });
 
-function close_modal(id) {
-    if (darwin) electron.Menu.setApplicationMenu(docs[id].menu);
-}
-
 electron.ipcMain.on("close_modal", (event, {id}) => {
     if (docs[id].modal && !docs[id].modal.isDestroyed()) docs[id].modal.close();
-    close_modal(id);
 });
 
 electron.ipcMain.on("chat_input_focus", (event, {id}) => {
@@ -210,18 +204,22 @@ electron.ipcMain.on("chat_input_blur", (event, {id}) => {
 });
 
 electron.ipcMain.on("set_modal_menu", (event, {id}) => {
-    if (darwin) electron.Menu.setApplicationMenu(menu.modal_menu);
+    if (darwin && docs[id]) electron.Menu.setApplicationMenu(menu.modal_menu);
 });
 
 electron.ipcMain.on("set_doc_menu", (event, {id}) => {
-    if (darwin) electron.Menu.setApplicationMenu(docs[id].menu);
+    if (darwin && docs[id]) electron.Menu.setApplicationMenu(docs[id].menu);
 });
+
+function add_darwin_window_menu_handler(id) {
+    docs[id].modal.on("close", () => electron.Menu.setApplicationMenu(docs[id].menu));
+    electron.Menu.setApplicationMenu(menu.modal_menu);
+}
 
 electron.ipcMain.on("get_sauce_info", async (event, {id, title, author, group, comments}) => {
     docs[id].modal = await window.new_modal("app/html/sauce.html", {width: 350, height: 340, parent: docs[id].win, frame: false, ...get_centered_xy(id, 350, 340)}, touchbar.get_sauce_info);
-    docs[id].modal.on("close", (event) => close_modal(id));
+    if (darwin) add_darwin_window_menu_handler(id);
     docs[id].modal.send("set_sauce_info", {title, author, group, comments});
-    if (darwin) electron.Menu.setApplicationMenu(menu.modal_menu);
 });
 
 electron.ipcMain.on("update_sauce", (event, {id, title, author, group, comments}) => {
@@ -242,8 +240,8 @@ electron.ipcMain.on("select_attribute", async (event, {id, fg, bg, palette}) => 
         return;
     }
     docs[id].modal = await window.new_modal("app/html/select_attribute.html", {width: 340, height: 340, parent: docs[id].win, frame: false, ...get_centered_xy(id, 340, 340)}, touchbar.select_attribute);
+    if (darwin) add_darwin_window_menu_handler(id);
     docs[id].modal.send("select_attribute", {fg, bg, palette});
-    if (darwin) electron.Menu.setApplicationMenu(menu.modal_menu);
 });
 
 electron.ipcMain.on("ready", async (event, {id}) => {

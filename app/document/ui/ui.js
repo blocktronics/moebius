@@ -19,13 +19,12 @@ function set_var_px(name, value) {
 }
 
 function open_reference_image() {
-    open_box({filters: [{name: "Images", extensions: ["png", "jpg"]}]}, (files) => {
-        if (files) {
-            $("reference_image").style.backgroundImage = `url(${electron.nativeImage.createFromPath(files[0]).toDataURL()})`;
-            $("reference_image").style.opacity = 0.4;
-            send("enable_reference_image");
-        }
-    });
+    const files = open_box({filters: [{name: "Images", extensions: ["png", "jpg", "jpeg"]}]});
+    if (files) {
+        $("reference_image").style.backgroundImage = `url(${electron.nativeImage.createFromPath(files[0]).toDataURL()})`;
+        $("reference_image").style.opacity = 0.4;
+        send("enable_reference_image");
+    }
 }
 
 function toggle_reference_image(visible) {

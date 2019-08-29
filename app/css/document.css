@@ -128,6 +128,7 @@ body.dark #current_colors > canvas {
     background-color: var(--view-color);
     overflow: auto;
     touch-action: none;
+    cursor: -webkit-image-set(url("../img/crosshair.png") 1x, url("../img/crosshair_2x.png") 2x) 15 15, crosshair;
 }
 #chat {
     width: calc(100% - var(--sidebar-width) -  var(--preview-width));
@@ -250,7 +251,7 @@ body.dark #viewport {
     display: block;
     width: calc(var(--preview-width) - 40px);
     margin: 0px 20px;
-    image-rendering: -webkit-optimize-contrast;
+    image-rendering: optimize-contrast;
     pointer-events: none;
 }
 #view_frame {
@@ -266,7 +267,6 @@ body.dark #preview {
 #canvas_container {
     position: relative;
     margin: 0 auto;
-    cursor: -webkit-image-set(url("../img/crosshair.png") 1x, url("../img/crosshair_2x.png") 2x) 15 15, crosshair;
 }
 #canvas_container canvas {
     display: block;
@@ -352,8 +352,13 @@ body.dark #statusbar > div > div {
     0% {border-color: rgb(170, 170, 170);} 50% {border-color: black;}
 }
 #editing_layer > canvas.selection {
-    border: 1px solid;
+    border: 2px solid;
     border-image: url("../img/selection_border.gif") 1 repeat;
+    border-image-width: 2px;
+    box-sizing: border-box;
+}
+#editing_layer > canvas.selection.operation {
+    border-image: url("../img/selection_border_operation.gif") 1 repeat;
     border-image-width: 2px;
     box-sizing: border-box;
 }

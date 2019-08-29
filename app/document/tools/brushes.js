@@ -79,7 +79,7 @@ function blink_line(sx, sy, dx, dy, unblink, skip_first = false) {
     const coords = line(sx, sy, dx, dy, skip_first);
     for (const coord of coords) {
         const block = doc.at(coord.x, coord.y);
-        if (block && ((!unblink && block.bg < 8) || (unblink && block.bg >= 8))) doc.change_data(coord.x, coord.y, block.code, block.fg, unblink ? block.bg - 8 : block.bg + 8);
+        if (block && ((!unblink && block.bg < 8) || (unblink && block.bg >= 8)) && (block.code != 0 && block.code != 32 && block.code != 255)) doc.change_data(coord.x, coord.y, block.code, block.fg, unblink ? block.bg - 8 : block.bg + 8);
     }
 }
 

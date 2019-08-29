@@ -102,34 +102,20 @@ class KeyboardEvent extends events.EventEmitter {
                 this.emit("toggle_bg", 7);
                 return;
             case "ArrowLeft":
-                this.emit("previous_background_color");
+                this.emit("delete_column");
                 event.preventDefault();
                 return;
             case "ArrowUp":
-                this.emit("previous_foreground_color");
+                this.emit("delete_row");
                 event.preventDefault();
                 return;
             case "ArrowRight":
-                this.emit("next_background_color");
+                this.emit("insert_column");
                 event.preventDefault();
                 return;
             case "ArrowDown":
-                this.emit("next_foreground_color");
+                this.emit("insert_row");
                 event.preventDefault();
-                return;
-            case "KeyI":
-                if (event.shiftKey) {
-                    this.emit("insert_column");
-                } else {
-                    this.emit("insert_row");
-                }
-                return;
-            case "KeyY":
-                if (event.shiftKey) {
-                    this.emit("delete_column");
-                } else {
-                    this.emit("delete_row");
-                }
                 return;
             }
     }
@@ -310,27 +296,6 @@ class KeyboardEvent extends events.EventEmitter {
         }
     }
 
-    ctrl_and_alt(event) {
-        switch (event.code) {
-            case "ArrowLeft":
-                doc.scroll_left();
-                event.preventDefault();
-                return;
-            case "ArrowUp":
-                doc.scroll_up();
-                event.preventDefault();
-                return;
-            case "ArrowRight":
-                doc.scroll_right();
-                event.preventDefault();
-                return;
-            case "ArrowDown":
-                doc.scroll_down();
-                event.preventDefault();
-                return;
-        }
-    }
-
     keydown(event) {
         if (document.activeElement == this.chat_input) {
             if (event.code == "Enter" || event.code == "NumpadEnter" && this.chat_input.value){
@@ -343,8 +308,6 @@ class KeyboardEvent extends events.EventEmitter {
             this.alt_key(event);
         } else if (event.metaKey && !event.ctrlKey && !event.altKey) {
             this.meta_key(event);
-        } else if (event.ctrlKey && event.altKey && !event.metaKey) {
-            this.ctrl_and_alt(event);
         } else if (!event.ctrlKey && !event.altKey && !event.metaKey) {
             this.key_typed(event);
         }

@@ -193,6 +193,88 @@ function render_at(render, x, y, block) {
     }
 }
 
+function render_insert_column(doc, x, render) {
+    const sx = x * render.font.width;
+    const width = render.width - x * render.font.width - render.font.width;
+    const dx = sx + render.font.width;
+    for (let i = 0; i < render.ice_color_collection.length; i++) {
+        render.ice_color_collection[i].getContext("2d").drawImage(render.ice_color_collection[i], sx, 0, width, render.ice_color_collection[i].height, dx, 0, width, render.ice_color_collection[i].height);
+        render.preview_collection[i].getContext("2d").drawImage(render.preview_collection[i], sx, 0, width, render.preview_collection[i].height, dx, 0, width, render.preview_collection[i].height);
+        render.blink_on_collection[i].getContext("2d").drawImage(render.blink_on_collection[i], sx, 0, width, render.blink_on_collection[i].height, dx, 0, width, render.blink_on_collection[i].height);
+        render.blink_off_collection[i].getContext("2d").drawImage(render.blink_off_collection[i], sx, 0, width, render.blink_off_collection[i].height, dx, 0, width, render.blink_off_collection[i].height);
+    }
+    for (let y = 0; y < doc.rows; y++) render_at(render, x, y, doc.data[y * doc.columns + x]);
+}
+
+function render_delete_column(doc, x, render) {
+    const sx = x * render.font.width + render.font.width;
+    const width = render.width - x * render.font.width - render.font.width;
+    const dx = sx - render.font.width;
+    for (let i = 0; i < render.ice_color_collection.length; i++) {
+        render.ice_color_collection[i].getContext("2d").drawImage(render.ice_color_collection[i], sx, 0, width, render.ice_color_collection[i].height, dx, 0, width, render.ice_color_collection[i].height);
+        render.preview_collection[i].getContext("2d").drawImage(render.preview_collection[i], sx, 0, width, render.preview_collection[i].height, dx, 0, width, render.preview_collection[i].height);
+        render.blink_on_collection[i].getContext("2d").drawImage(render.blink_on_collection[i], sx, 0, width, render.blink_on_collection[i].height, dx, 0, width, render.blink_on_collection[i].height);
+        render.blink_off_collection[i].getContext("2d").drawImage(render.blink_off_collection[i], sx, 0, width, render.blink_off_collection[i].height, dx, 0, width, render.blink_off_collection[i].height);
+    }
+    for (let y = 0; y < doc.rows; y++) render_at(render, doc.columns - 1, y, doc.data[y * doc.columns + doc.columns - 1]);
+}
+
+function render_insert_row(doc, y, render) {
+    const canvas_row = Math.floor(y / render.maximum_rows);
+    for (let i = render.ice_color_collection.length - 1; i > canvas_row; i--) {
+        const ice_color_ctx = render.ice_color_collection[i].getContext("2d");
+        const preview_collection_ctx = render.preview_collection[i].getContext("2d");
+        const blink_on_ctx = render.blink_on_collection[i].getContext("2d");
+        const blink_off_ctx = render.blink_off_collection[i].getContext("2d");
+        ice_color_ctx.drawImage(render.ice_color_collection[i], 0, 0, render.ice_color_collection[i].width, render.ice_color_collection[i].height - render.font.height, 0, render.font.height, render.ice_color_collection[i].width, render.ice_color_collection[i].height - render.font.height);
+        ice_color_ctx.drawImage(render.ice_color_collection[i - 1], 0, render.ice_color_collection[i - 1].height - render.font.height, render.ice_color_collection[i - 1].width, render.font.height, 0, 0, render.ice_color_collection[i].width, render.font.height);
+        preview_collection_ctx.drawImage(render.preview_collection[i], 0, 0, render.preview_collection[i].width, render.preview_collection[i].height - render.font.height, 0, render.font.height, render.preview_collection[i].width, render.preview_collection[i].height - render.font.height);
+        preview_collection_ctx.drawImage(render.preview_collection[i - 1], 0, render.preview_collection[i - 1].height - render.font.height, render.preview_collection[i - 1].width, render.font.height, 0, 0, render.preview_collection[i].width, render.font.height);
+        blink_on_ctx.drawImage(render.blink_on_collection[i], 0, 0, render.blink_on_collection[i].width, render.blink_on_collection[i].height - render.font.height, 0, render.font.height, render.blink_on_collection[i].width, render.blink_on_collection[i].height - render.font.height);
+        blink_on_ctx.drawImage(render.blink_on_collection[i - 1], 0, render.blink_on_collection[i - 1].height - render.font.height, render.blink_on_collection[i - 1].width, render.font.height, 0, 0, render.blink_on_collection[i].width, render.font.height);
+        blink_off_ctx.drawImage(render.blink_off_collection[i], 0, 0, render.blink_off_collection[i].width, render.blink_off_collection[i].height - render.font.height, 0, render.font.height, render.blink_off_collection[i].width, render.blink_off_collection[i].height - render.font.height);
+        blink_off_ctx.drawImage(render.blink_off_collection[i - 1], 0, render.blink_off_collection[i - 1].height - render.font.height, render.blink_off_collection[i - 1].width, render.font.height, 0, 0, render.blink_off_collection[i].width, render.font.height);
+    }
+    const sy = (y % render.maximum_rows) * render.font.height;
+    const height = render.ice_color_collection[canvas_row].height - sy - render.font.height;
+    render.ice_color_collection[canvas_row].getContext("2d").drawImage(render.ice_color_collection[canvas_row], 0, sy, render.ice_color_collection[canvas_row].width, height, 0, sy + render.font.height, render.ice_color_collection[canvas_row].width, height);
+    render.preview_collection[canvas_row].getContext("2d").drawImage(render.preview_collection[canvas_row], 0, sy, render.preview_collection[canvas_row].width, height, 0, sy + render.font.height, render.preview_collection[canvas_row].width, height);
+    render.blink_on_collection[canvas_row].getContext("2d").drawImage(render.blink_on_collection[canvas_row], 0, sy, render.blink_on_collection[canvas_row].width, height, 0, sy + render.font.height, render.blink_on_collection[canvas_row].width, height);
+    render.blink_off_collection[canvas_row].getContext("2d").drawImage(render.blink_off_collection[canvas_row], 0, sy, render.blink_off_collection[canvas_row].width, height, 0, sy + render.font.height, render.blink_off_collection[canvas_row].width, height);
+    for (let x = 0; x < doc.columns; x++) render_at(render, x, y, doc.data[y * doc.columns + x]);
+}
+
+function render_delete_row(doc, y, render) {
+    const canvas_row = Math.floor(y / render.maximum_rows);
+    if ((y % render.maximum_rows) + 1 < render.maximum_rows) {
+        const sy = (y % render.maximum_rows) * render.font.height + render.font.height;
+        const height = render.ice_color_collection[canvas_row].height - sy;
+        render.ice_color_collection[canvas_row].getContext("2d").drawImage(render.ice_color_collection[canvas_row], 0, sy, render.ice_color_collection[canvas_row].width, height, 0, sy - render.font.height, render.ice_color_collection[canvas_row].width, height);
+        render.preview_collection[canvas_row].getContext("2d").drawImage(render.preview_collection[canvas_row], 0, sy, render.preview_collection[canvas_row].width, height, 0, sy - render.font.height, render.preview_collection[canvas_row].width, height);
+        render.blink_on_collection[canvas_row].getContext("2d").drawImage(render.blink_on_collection[canvas_row], 0, sy, render.blink_on_collection[canvas_row].width, height, 0, sy - render.font.height, render.blink_on_collection[canvas_row].width, height);
+        render.blink_off_collection[canvas_row].getContext("2d").drawImage(render.blink_off_collection[canvas_row], 0, sy, render.blink_off_collection[canvas_row].width, height, 0, sy - render.font.height, render.blink_off_collection[canvas_row].width, height);
+    }
+    if (canvas_row < render.ice_color_collection.length - 1) {
+        render.ice_color_collection[canvas_row].getContext("2d").drawImage(render.ice_color_collection[canvas_row + 1], 0, 0, render.ice_color_collection[canvas_row + 1].width, render.font.height, 0, render.ice_color_collection[canvas_row].height - render.font.height, render.ice_color_collection[canvas_row].width, render.font.height);
+        render.preview_collection[canvas_row].getContext("2d").drawImage(render.preview_collection[canvas_row + 1], 0, 0, render.preview_collection[canvas_row + 1].width, render.font.height, 0, render.preview_collection[canvas_row].height - render.font.height, render.preview_collection[canvas_row].width, render.font.height);
+        render.blink_on_collection[canvas_row].getContext("2d").drawImage(render.blink_on_collection[canvas_row + 1], 0, 0, render.blink_on_collection[canvas_row + 1].width, render.font.height, 0, render.blink_on_collection[canvas_row].height - render.font.height, render.blink_on_collection[canvas_row].width, render.font.height);
+        render.blink_off_collection[canvas_row].getContext("2d").drawImage(render.blink_off_collection[canvas_row + 1], 0, 0, render.blink_off_collection[canvas_row + 1].width, render.font.height, 0, render.blink_off_collection[canvas_row].height - render.font.height, render.blink_off_collection[canvas_row].width, render.font.height);
+    }
+    for (let i = canvas_row + 1; i < render.ice_color_collection.length; i++) {
+        render.ice_color_collection[i].getContext("2d").drawImage(render.ice_color_collection[i], 0, render.font.height, render.ice_color_collection[i].width, render.ice_color_collection[i].height - render.font.height, 0, 0, render.ice_color_collection[i].width, render.ice_color_collection[i].height - render.font.height);
+        render.preview_collection[i].getContext("2d").drawImage(render.preview_collection[i], 0, render.font.height, render.preview_collection[i].width, render.preview_collection[i].height - render.font.height, 0, 0, render.preview_collection[i].width, render.preview_collection[i].height - render.font.height);
+        render.blink_on_collection[i].getContext("2d").drawImage(render.blink_on_collection[i], 0, render.font.height, render.blink_on_collection[i].width, render.blink_on_collection[i].height - render.font.height, 0, 0, render.blink_on_collection[i].width, render.blink_on_collection[i].height - render.font.height);
+        render.blink_off_collection[i].getContext("2d").drawImage(render.blink_off_collection[i], 0, render.font.height, render.blink_off_collection[i].width, render.blink_off_collection[i].height - render.font.height, 0, 0, render.blink_off_collection[i].width, render.blink_off_collection[i].height - render.font.height);
+        if (i < render.ice_color_collection.length - 1) {
+            render.ice_color_collection[i].getContext("2d").drawImage(render.ice_color_collection[i + 1], 0, 0, render.ice_color_collection[i + 1].width, render.font.height, 0, render.ice_color_collection[i].height - render.font.height, render.ice_color_collection[i].width, render.font.height);
+            render.preview_collection[i].getContext("2d").drawImage(render.preview_collection[i + 1], 0, 0, render.preview_collection[i + 1].width, render.font.height, 0, render.preview_collection[i].height - render.font.height, render.preview_collection[i].width, render.font.height);
+            render.blink_on_collection[i].getContext("2d").drawImage(render.blink_on_collection[i + 1], 0, 0, render.blink_on_collection[i + 1].width, render.font.height, 0, render.blink_on_collection[i].height - render.font.height, render.blink_on_collection[i].width, render.font.height);
+            render.blink_off_collection[i].getContext("2d").drawImage(render.blink_off_collection[i + 1], 0, 0, render.blink_off_collection[i + 1].width, render.font.height, 0, render.blink_off_collection[i].height - render.font.height, render.blink_off_collection[i].width, render.font.height);
+        }
+    }
+    for (let x = 0; x < doc.columns; x++) render_at(render, x, doc.rows - 1, doc.data[(doc.rows - 1) * doc.columns + x]);
+}
+
 function flip_code_x(code) {
     switch (code) {
         case 40: return 41;
@@ -321,6 +403,158 @@ function rotate(blocks) {
     return blocks;
 }
 
+function insert_row(doc, insert_y, blocks) {
+    const removed_blocks = new Array(doc.columns);
+    for (let x = 0; x < doc.columns; x++) removed_blocks[x] = Object.assign(doc.data[(doc.rows - 1) * doc.columns + x]);
+    for (let y = doc.rows - 1; y > insert_y; y--) {
+        for (let x = 0; x < doc.columns; x++) {
+            const i = y * doc.columns + x;
+            doc.data[i] = Object.assign(doc.data[i - doc.columns]);
+        }
+    }
+    for (let x = 0; x < doc.columns; x++) doc.data[insert_y * doc.columns + x] = blocks ? Object.assign(blocks[x]) : {fg: 7, bg: 0, code: 32};
+    return removed_blocks;
+}
+
+function delete_row(doc, delete_y, blocks) {
+    const removed_blocks = new Array(doc.columns);
+    for (let x = 0; x < doc.columns; x++) removed_blocks[x] = Object.assign(doc.data[delete_y * doc.columns + x]);
+    for (let y = delete_y; y < doc.rows - 1; y++) {
+        for (let x = 0; x < doc.columns; x++) {
+            const i = y * doc.columns + x;
+            doc.data[i] = Object.assign(doc.data[i + doc.columns]);
+        }
+    }
+    for (let x = 0; x < doc.columns; x++) doc.data[(doc.rows - 1) * doc.columns + x] = blocks ? Object.assign(blocks[x]) : {fg: 7, bg: 0, code: 32};
+    return removed_blocks;
+}
+
+function insert_column(doc, insert_x, blocks) {
+    const removed_blocks = new Array(doc.rows);
+    for (let y = 0; y < doc.rows; y++) removed_blocks[y] = Object.assign(doc.data[y * doc.columns + doc.columns - 1]);
+    for (let x = doc.columns - 1; x > insert_x; x--) {
+        for (let y = 0; y < doc.rows; y++) {
+            const i = y * doc.columns + x;
+            doc.data[i] = Object.assign(doc.data[i - 1]);
+        }
+    }
+    for (let y = 0; y < doc.rows; y++) doc.data[y * doc.columns + insert_x] = blocks ? Object.assign(blocks[y]) : {fg: 7, bg: 0, code: 32};
+    return removed_blocks;
+}
+
+function delete_column(doc, delete_x, blocks) {
+    const removed_blocks = new Array(doc.rows);
+    for (let y = 0; y < doc.rows; y++) removed_blocks[y] = Object.assign(doc.data[y * doc.columns + delete_x]);
+    for (let x = delete_x; x < doc.columns - 1; x++) {
+        for (let y = 0; y < doc.rows; y++) {
+            const i = y * doc.columns + x;
+            doc.data[i] = Object.assign(doc.data[i + 1]);
+        }
+    }
+    for (let y = 0; y < doc.rows; y++) doc.data[y * doc.columns + doc.columns - 1] = blocks ? Object.assign(blocks[y]) : {fg: 7, bg: 0, code: 32};
+    return removed_blocks;
+}
+
+function scroll_canvas_up(doc) {
+    for (let x = 0; x < doc.columns; x++) {
+        const overwritten_block = Object.assign(doc.data[x]);
+        for (let y = 0; y < doc.rows - 1; y++) {
+            const i = y * doc.columns + x;
+            doc.data[i] = Object.assign(doc.data[i + doc.columns]);
+        }
+        doc.data[(doc.rows - 1) * doc.columns + x] = Object.assign(overwritten_block);
+    }
+}
+
+function scroll_canvas_down(doc) {
+    for (let x = 0; x < doc.columns; x++) {
+        const overwritten_block = Object.assign(doc.data[(doc.rows - 1) * doc.columns + x]);
+        for (let y = doc.rows; y > 0; y--) {
+            const i = y * doc.columns + x;
+            doc.data[i] = Object.assign(doc.data[i - doc.columns]);
+        }
+        doc.data[x] = Object.assign(overwritten_block);
+    }
+}
+
+function scroll_canvas_left(doc) {
+    for (let y = 0; y < doc.rows; y++) {
+        const overwritten_block = Object.assign(doc.data[y * doc.columns]);
+        for (let x = 0; x < doc.columns - 1; x++) {
+            const i = y * doc.columns + x;
+            doc.data[i] = Object.assign(doc.data[i + 1]);
+        }
+        doc.data[y * doc.columns + doc.columns - 1] = Object.assign(overwritten_block);
+    }
+}
+
+function scroll_canvas_right(doc) {
+    for (let y = 0; y < doc.rows; y++) {
+        const overwritten_block = Object.assign(doc.data[y * doc.columns + doc.columns - 1]);
+        for (let x = doc.columns - 1; x > 0; x--) {
+            const i = y * doc.columns + x;
+            doc.data[i] = Object.assign(doc.data[i - 1]);
+        }
+        doc.data[y * doc.columns] = Object.assign(overwritten_block);
+    }
+}
+
+function render_scroll_canvas_up(doc, render) {
+    for (let i = 0; i < render.ice_color_collection.length; i++) {
+        render.ice_color_collection[i].getContext("2d").drawImage(render.ice_color_collection[i], 0, render.font.height, render.ice_color_collection[i].width, render.ice_color_collection[i].height - render.font.height, 0, 0, render.ice_color_collection[i].width, render.ice_color_collection[i].height - render.font.height);
+        render.preview_collection[i].getContext("2d").drawImage(render.preview_collection[i], 0, render.font.height, render.preview_collection[i].width, render.preview_collection[i].height - render.font.height, 0, 0, render.preview_collection[i].width, render.preview_collection[i].height - render.font.height);
+        render.blink_on_collection[i].getContext("2d").drawImage(render.blink_on_collection[i], 0, render.font.height, render.blink_on_collection[i].width, render.blink_on_collection[i].height - render.font.height, 0, 0, render.blink_on_collection[i].width, render.blink_on_collection[i].height - render.font.height);
+        render.blink_off_collection[i].getContext("2d").drawImage(render.blink_off_collection[i], 0, render.font.height, render.blink_off_collection[i].width, render.blink_off_collection[i].height - render.font.height, 0, 0, render.blink_off_collection[i].width, render.blink_off_collection[i].height - render.font.height);
+        if (i < render.ice_color_collection.length - 1) {
+            render.ice_color_collection[i].getContext("2d").drawImage(render.ice_color_collection[i + 1], 0, 0, render.ice_color_collection[i + 1].width, render.font.height, 0, render.ice_color_collection[i].height - render.font.height, render.ice_color_collection[i].width, render.font.height);
+            render.preview_collection[i].getContext("2d").drawImage(render.preview_collection[i + 1], 0, 0, render.preview_collection[i + 1].width, render.font.height, 0, render.preview_collection[i].height - render.font.height, render.preview_collection[i].width, render.font.height);
+            render.blink_on_collection[i].getContext("2d").drawImage(render.blink_on_collection[i + 1], 0, 0, render.blink_on_collection[i + 1].width, render.font.height, 0, render.blink_on_collection[i].height - render.font.height, render.blink_on_collection[i].width, render.font.height);
+            render.blink_off_collection[i].getContext("2d").drawImage(render.blink_off_collection[i + 1], 0, 0, render.blink_off_collection[i + 1].width, render.font.height, 0, render.blink_off_collection[i].height - render.font.height, render.blink_off_collection[i].width, render.font.height);
+        }
+    }
+    for (let x = 0; x < doc.columns; x++) render_at(render, x, doc.rows - 1, doc.data[(doc.rows - 1) * doc.columns + x]);
+}
+
+function render_scroll_canvas_down(doc, render) {
+    for (let i = render.ice_color_collection.length - 1; i >= 0; i--) {
+        const ice_color_ctx = render.ice_color_collection[i].getContext("2d");
+        const preview_collection_ctx = render.preview_collection[i].getContext("2d");
+        const blink_on_ctx = render.blink_on_collection[i].getContext("2d");
+        const blink_off_ctx = render.blink_off_collection[i].getContext("2d");
+        ice_color_ctx.drawImage(render.ice_color_collection[i], 0, 0, render.ice_color_collection[i].width, render.ice_color_collection[i].height - render.font.height, 0, render.font.height, render.ice_color_collection[i].width, render.ice_color_collection[i].height - render.font.height);
+        preview_collection_ctx.drawImage(render.preview_collection[i], 0, 0, render.preview_collection[i].width, render.preview_collection[i].height - render.font.height, 0, render.font.height, render.preview_collection[i].width, render.preview_collection[i].height - render.font.height);
+        blink_on_ctx.drawImage(render.blink_on_collection[i], 0, 0, render.blink_on_collection[i].width, render.blink_on_collection[i].height - render.font.height, 0, render.font.height, render.blink_on_collection[i].width, render.blink_on_collection[i].height - render.font.height);
+        blink_off_ctx.drawImage(render.blink_off_collection[i], 0, 0, render.blink_off_collection[i].width, render.blink_off_collection[i].height - render.font.height, 0, render.font.height, render.blink_off_collection[i].width, render.blink_off_collection[i].height - render.font.height);
+        if (i > 0) {
+            ice_color_ctx.drawImage(render.ice_color_collection[i - 1], 0, render.ice_color_collection[i - 1].height - render.font.height, render.ice_color_collection[i - 1].width, render.font.height, 0, 0, render.ice_color_collection[i].width, render.font.height);
+            preview_collection_ctx.drawImage(render.preview_collection[i - 1], 0, render.preview_collection[i - 1].height - render.font.height, render.preview_collection[i - 1].width, render.font.height, 0, 0, render.preview_collection[i].width, render.font.height);
+            blink_on_ctx.drawImage(render.blink_on_collection[i - 1], 0, render.blink_on_collection[i - 1].height - render.font.height, render.blink_on_collection[i - 1].width, render.font.height, 0, 0, render.blink_on_collection[i].width, render.font.height);
+            blink_off_ctx.drawImage(render.blink_off_collection[i - 1], 0, render.blink_off_collection[i - 1].height - render.font.height, render.blink_off_collection[i - 1].width, render.font.height, 0, 0, render.blink_off_collection[i].width, render.font.height);
+        }
+    }
+    for (let x = 0; x < doc.columns; x++) render_at(render, x, 0, doc.data[x]);
+}
+
+function render_scroll_canvas_left(doc, render) {
+    for (let i = 0; i < render.ice_color_collection.length; i++) {
+        render.ice_color_collection[i].getContext("2d").drawImage(render.ice_color_collection[i], render.font.width, 0, render.ice_color_collection[i].width - render.font.width, render.ice_color_collection[i].height, 0, 0, render.ice_color_collection[i].width - render.font.width, render.ice_color_collection[i].height);
+        render.preview_collection[i].getContext("2d").drawImage(render.preview_collection[i], render.font.width, 0, render.preview_collection[i].width - render.font.width, render.preview_collection[i].height, 0, 0, render.preview_collection[i].width - render.font.width, render.preview_collection[i].height);
+        render.blink_on_collection[i].getContext("2d").drawImage(render.blink_on_collection[i], render.font.width, 0, render.blink_on_collection[i].width - render.font.width, render.blink_on_collection[i].height, 0, 0, render.blink_on_collection[i].width - render.font.width, render.blink_on_collection[i].height);
+        render.blink_off_collection[i].getContext("2d").drawImage(render.blink_off_collection[i], render.font.width, 0, render.blink_off_collection[i].width - render.font.width, render.blink_off_collection[i].height, 0, 0, render.blink_off_collection[i].width - render.font.width, render.blink_off_collection[i].height);
+    }
+    for (let y = 0; y < doc.rows; y++) render_at(render, doc.columns - 1, y, doc.data[y * doc.columns + doc.columns - 1]);
+}
+
+function render_scroll_canvas_right(doc, render) {
+    for (let i = 0; i < render.ice_color_collection.length; i++) {
+        render.ice_color_collection[i].getContext("2d").drawImage(render.ice_color_collection[i], 0, 0, render.ice_color_collection[i].width - render.font.width, render.ice_color_collection[i].height, render.font.width, 0, render.ice_color_collection[i].width - render.font.width, render.ice_color_collection[i].height);
+        render.preview_collection[i].getContext("2d").drawImage(render.preview_collection[i], 0, 0, render.preview_collection[i].width - render.font.width, render.preview_collection[i].height, render.font.width, 0, render.preview_collection[i].width - render.font.width, render.preview_collection[i].height);
+        render.blink_on_collection[i].getContext("2d").drawImage(render.blink_on_collection[i], 0, 0, render.blink_on_collection[i].width - render.font.width, render.blink_on_collection[i].height, render.font.width, 0, render.blink_on_collection[i].width - render.font.width, render.blink_on_collection[i].height);
+        render.blink_off_collection[i].getContext("2d").drawImage(render.blink_off_collection[i], 0, 0, render.blink_off_collection[i].width - render.font.width, render.blink_off_collection[i].height, render.font.width, 0, render.blink_off_collection[i].width - render.font.width, render.blink_off_collection[i].height);
+    }
+    for (let y = 0; y < doc.rows; y++) render_at(render, 0, y, doc.data[y * doc.columns]);
+}
+
 function new_document({columns = 80, rows = 100, title = "", author = "", group = "", date = "", palette = ega, font_name = "IBM VGA", ice_colors = false, use_9px_font = false, comments = "", data} = {}) {
     const doc = {columns, rows, title, author, group, date: (date != "") ? date : current_date(), palette, font_name, ice_colors, use_9px_font, comments};
     if (!data || data.length != columns * rows) {
@@ -330,6 +564,10 @@ function new_document({columns = 80, rows = 100, title = "", author = "", group 
         doc.data = data;
     }
     return doc;
+}
+
+function clone_document(doc) {
+    return new_document({columns: doc.columns, rows: doc.rows, title: doc.title, author: doc.author, group: doc.group, date: doc.data, palette: doc.palette, font_name: doc.font_name, ice_colors: doc.ice_colors, use_9px_font: doc.use_9px_font, comments: doc.comments, data: doc.data});
 }
 
 function get_data_url(canvases) {
@@ -390,7 +628,7 @@ function uncompress(doc) {
     return doc;
 }
 
-function get_blocks(doc, sx, sy, dx, dy, opts) {
+function get_blocks(doc, sx, sy, dx, dy, opts = {}) {
     dx = Math.min(doc.columns - 1, dx);
     dy = Math.min(doc.rows - 1, dy);
     const columns = dx - sx + 1;
@@ -402,6 +640,10 @@ function get_blocks(doc, sx, sy, dx, dy, opts) {
         }
     }
     return blocks;
+}
+
+function get_all_blocks(doc) {
+    return get_blocks(doc, 0, 0, doc.columns - 1, doc.rows -1);
 }
 
 function export_as_png(doc, render, file) {
@@ -416,4 +658,4 @@ function export_as_apng(render, file) {
     fs.writeFileSync(file, Buffer.from(bytes));
 }
 
-module.exports = {read_bytes, read_file, write_file, animate, render, render_split, render_at, new_document, resize_canvas, cp437_to_unicode, cp437_to_unicode_bytes, unicode_to_cp437, render_blocks, merge_blocks, flip_code_x, flip_x, flip_y, rotate, get_data_url, convert_ega_to_style, compress, uncompress, get_blocks, export_as_png, export_as_apng, has_default_palette, encode_as_bin, encode_as_xbin, encode_as_ansi};
+module.exports = {read_bytes, read_file, write_file, animate, render, render_split, render_at, render_insert_column, render_delete_column, render_insert_row, render_delete_row, new_document, clone_document, resize_canvas, cp437_to_unicode, cp437_to_unicode_bytes, unicode_to_cp437, render_blocks, merge_blocks, flip_code_x, flip_x, flip_y, rotate, insert_column, insert_row, delete_column, delete_row, scroll_canvas_up, scroll_canvas_down, scroll_canvas_left, scroll_canvas_right, render_scroll_canvas_up, render_scroll_canvas_down, render_scroll_canvas_left, render_scroll_canvas_right, get_data_url, convert_ega_to_style, compress, uncompress, get_blocks, get_all_blocks, export_as_png, export_as_apng, has_default_palette, encode_as_bin, encode_as_xbin, encode_as_ansi};

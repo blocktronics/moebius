@@ -153,9 +153,24 @@ function edit_menu_template(win, chat) {
             {label: "Right Justify Line", id: "right_justify_line", accelerator: "Alt+R", click(item) {win.send("right_justify_line");}, enabled: true},
             {label: "Center Line", id: "center_line", accelerator: "Alt+C", click(item) {win.send("center_line");}, enabled: true},
             {type: "separator"},
-            {label: "Erase Line", id: "erase_line", accelerator: "Alt+E", click(item) {win.send("erase_line");}, enabled: true},
-            {label: "Erase to Start of Line", id: "erase_to_start_of_line", accelerator: "Alt+Home", click(item) {win.send("erase_to_start_of_line");}, enabled: true},
-            {label: "Erase to End of Line", id: "erase_to_end_of_line", accelerator: "Alt+End", click(item) {win.send("erase_to_end_of_line");}, enabled: true},
+            {label: "Insert Row", id: "insert_row", accelerator: "Alt+Up", click(item) {win.send("insert_row");}, enabled: true},
+            {label: "Delete Row", id: "delete_row", accelerator: "Alt+Down", click(item) {win.send("delete_row");}, enabled: true},
+            {type: "separator"},
+            {label: "Insert Column", id: "insert_column", accelerator: "Alt+Right", click(item) {win.send("insert_column");}, enabled: true},
+            {label: "Delete Column", id: "delete_column", accelerator: "Alt+Left", click(item) {win.send("delete_column");}, enabled: true},
+            {type: "separator"},
+            {label: "Erase Row", id: "erase_line", accelerator: "Alt+E", click(item) {win.send("erase_line");}, enabled: true},
+            {label: "Erase to Start of Row", id: "erase_to_start_of_line", accelerator: "Alt+Home", click(item) {win.send("erase_to_start_of_line");}, enabled: true},
+            {label: "Erase to End of Row", id: "erase_to_end_of_line", accelerator: "Alt+End", click(item) {win.send("erase_to_end_of_line");}, enabled: true},
+            {type: "separator"},
+            {label: "Erase Column", id: "erase_column", accelerator: "Alt+Shift+E", click(item) {win.send("erase_column");}, enabled: true},
+            {label: "Erase to Start of Column", id: "erase_to_start_of_column", accelerator: "Alt+PageUp", click(item) {win.send("erase_to_start_of_column");}, enabled: true},
+            {label: "Erase to End of Column", id: "erase_to_end_of_column", accelerator: "Alt+PageDown", click(item) {win.send("erase_to_end_of_column");}, enabled: true},
+            {type: "separator"},
+            {label: "Scroll Canvas Up", id: "scroll_canvas_up", accelerator: "Ctrl+Alt+Up", click(item) {win.send("scroll_canvas_up");}, enabled: true},
+            {label: "Scroll Canvas Down", id: "scroll_canvas_down", accelerator: "Ctrl+Alt+Down", click(item) {win.send("scroll_canvas_down");}, enabled: true},
+            {label: "Scroll Canvas Right", id: "scroll_canvas_right", accelerator: "Ctrl+Alt+Right", click(item) {win.send("scroll_canvas_right");}, enabled: true},
+            {label: "Scroll Canvas Left", id: "scroll_canvas_left", accelerator: "Ctrl+Alt+Left", click(item) {win.send("scroll_canvas_left");}, enabled: true},
             {type: "separator"},
             {label: "Set Canvas Size\u2026", id: "set_canvas_size", accelerator: "CmdorCtrl+Alt+C", click(item) {win.send("get_canvas_size");}, enabled: true},
         ]
@@ -168,6 +183,9 @@ function selection_menu_template(win, chat) {
         submenu: [
             chat ? {label: "Select All", accelerator: "Cmd+A", role: "selectall"} : {label: "Select All", id: "select_all", accelerator: "CmdorCtrl+A", click(item) {win.send("select_all");}},
             {label: "Deselect", id: "deselect", click(item) {win.send("deselect");}, enabled: false},
+            {type: "separator"},
+            {label: "Import\u2026", id: "import_selection", click(item) {win.send("import_selection");}},
+            {label: "Export\u2026", id: "export_selection", click(item) {win.send("export_selection");}, enabled: false},
             {type: "separator"},
             {label: "Start Selection", id: "start_selection", accelerator: "Alt+B", click(item) {win.send("start_selection");}, enabled: false},
             {type: "separator"},
@@ -240,11 +258,11 @@ function colors_menu_template(win) {
         submenu: [
             {label: "Select Attribute", id: "select_attribute", accelerator: "Alt+A", click(item) {win.send("select_attribute");}},
             {type: "separator"},
-            {label: "Previous Foreground Color", id: "previous_foreground_color", accelerator: darwin ? "Alt+Up" : "Ctrl+Up", click(item) {win.send("previous_foreground_color");}},
-            {label: "Next Foreground Color", id: "next_foreground_color", accelerator: darwin ? "Alt+Down" : "Ctrl+Down", click(item) {win.send("next_foreground_color");}},
+            {label: "Previous Foreground Color", id: "previous_foreground_color", accelerator: "Ctrl+Up", click(item) {win.send("previous_foreground_color");}},
+            {label: "Next Foreground Color", id: "next_foreground_color", accelerator: "Ctrl+Down", click(item) {win.send("next_foreground_color");}},
             {type: "separator"},
-            {label: "Previous Background Color", id: "previous_background_colour", accelerator: darwin ? "Alt+Left" : "Ctrl+Left", click(item) {win.send("previous_background_color");}},
-            {label: "Next Background Color", id: "next_background_color", accelerator: darwin ? "Alt+Right" : "Ctrl+Right", click(item) {win.send("next_background_color");}},
+            {label: "Previous Background Color", id: "previous_background_colour", accelerator: "Ctrl+Left", click(item) {win.send("previous_background_color");}},
+            {label: "Next Background Color", id: "next_background_color", accelerator: "Ctrl+Right", click(item) {win.send("next_background_color");}},
             {type: "separator"},
             {label: "Use Attribute Under Cursor", id: "use_attribute_under_cursor", accelerator: "Alt+U", click(item) {win.send("use_attribute_under_cursor");}},
             {label: "Default Color", id: "default_color", accelerator: "CmdorCtrl+D", click(item) {win.send("default_color");}},
@@ -355,12 +373,24 @@ electron.ipcMain.on("enable_selection_menu_items", (event, {id}) => {
     enable(id, "move_block");
     enable(id, "copy_block");
     enable(id, "crop");
+    enable(id, "export_selection");
     disable(id, "left_justify_line");
     disable(id, "right_justify_line");
     disable(id, "center_line");
     disable(id, "erase_line");
     disable(id, "erase_to_start_of_line");
     disable(id, "erase_to_end_of_line");
+    disable(id, "erase_column");
+    disable(id, "erase_to_start_of_column");
+    disable(id, "erase_to_end_of_column");
+    disable(id, "insert_row");
+    disable(id, "delete_row");
+    disable(id, "insert_column");
+    disable(id, "delete_column");
+    disable(id, "scroll_canvas_up");
+    disable(id, "scroll_canvas_down");
+    disable(id, "scroll_canvas_left");
+    disable(id, "scroll_canvas_right");
     disable(id, "use_attribute_under_cursor");
     disable(id, "start_selection");
     disable(id, "select_attribute");
@@ -375,6 +405,7 @@ function disable_selection_menu_items(id) {
     disable(id, "move_block");
     disable(id, "copy_block");
     disable(id, "crop");
+    disable(id, "export_selection");
     enable(id, "paste");
     enable(id, "paste_as_selection");
     enable(id, "left_justify_line");
@@ -383,6 +414,17 @@ function disable_selection_menu_items(id) {
     enable(id, "erase_line");
     enable(id, "erase_to_start_of_line");
     enable(id, "erase_to_end_of_line");
+    enable(id, "erase_column");
+    enable(id, "erase_to_start_of_column");
+    enable(id, "erase_to_end_of_column");
+    enable(id, "insert_row");
+    enable(id, "delete_row");
+    enable(id, "insert_column");
+    enable(id, "delete_column");
+    enable(id, "scroll_canvas_up");
+    enable(id, "scroll_canvas_down");
+    enable(id, "scroll_canvas_left");
+    enable(id, "scroll_canvas_right");
     enable(id, "use_attribute_under_cursor");
     enable(id, "start_selection");
 }
@@ -393,6 +435,7 @@ electron.ipcMain.on("disable_selection_menu_items_except_deselect_and_crop", (ev
     disable_selection_menu_items(id);
     enable(id, "deselect");
     enable(id, "crop");
+    enable(id, "export_selection");
 });
 
 electron.ipcMain.on("enable_operation_menu_items", (event, {id}) => {
@@ -412,6 +455,17 @@ electron.ipcMain.on("enable_operation_menu_items", (event, {id}) => {
     disable(id, "erase_line");
     disable(id, "erase_to_start_of_line");
     disable(id, "erase_to_end_of_line");
+    disable(id, "erase_column");
+    disable(id, "erase_to_start_of_column");
+    disable(id, "erase_to_end_of_column");
+    disable(id, "insert_row");
+    disable(id, "delete_row");
+    disable(id, "insert_column");
+    disable(id, "delete_column");
+    disable(id, "scroll_canvas_up");
+    disable(id, "scroll_canvas_down");
+    disable(id, "scroll_canvas_left");
+    disable(id, "scroll_canvas_right");
     disable(id, "paste");
     disable(id, "paste_as_selection");
     disable(id, "use_attribute_under_cursor");
@@ -448,6 +502,17 @@ electron.ipcMain.on("disable_editing_shortcuts", (event, {id}) => {
     disable(id, "erase_line");
     disable(id, "erase_to_start_of_line");
     disable(id, "erase_to_end_of_line");
+    disable(id, "erase_column");
+    disable(id, "erase_to_start_of_column");
+    disable(id, "erase_to_end_of_column");
+    disable(id, "insert_row");
+    disable(id, "delete_row");
+    disable(id, "insert_column");
+    disable(id, "delete_column");
+    disable(id, "scroll_canvas_up");
+    disable(id, "scroll_canvas_down");
+    disable(id, "scroll_canvas_left");
+    disable(id, "scroll_canvas_right");
     disable(id, "paste");
     disable(id, "paste_as_selection");
     enable(id, "change_to_select_mode");
@@ -464,6 +529,17 @@ electron.ipcMain.on("enable_editing_shortcuts", (event, {id}) => {
     enable(id, "erase_line");
     enable(id, "erase_to_start_of_line");
     enable(id, "erase_to_end_of_line");
+    enable(id, "erase_column");
+    enable(id, "erase_to_start_of_column");
+    enable(id, "erase_to_end_of_column");
+    enable(id, "insert_row");
+    enable(id, "delete_row");
+    enable(id, "insert_column");
+    enable(id, "delete_column");
+    enable(id, "scroll_canvas_up");
+    enable(id, "scroll_canvas_down");
+    enable(id, "scroll_canvas_left");
+    enable(id, "scroll_canvas_right");
     enable(id, "paste");
     enable(id, "paste_as_selection");
     disable(id, "change_to_select_mode");

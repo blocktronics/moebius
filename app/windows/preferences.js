@@ -97,13 +97,12 @@ function use_backup() {
 
 function choose_folder() {
     const defaultPath = (backup_folder_value && backup_folder_value != "") ? backup_folder_value : electron.remote.app.getPath("documents");
-    open_box({defaultPath, properties: ["openDirectory", "createDirectory"]}, (files) => {
-        if (files) {
-            const folder = files[0];
-            $("backup_folder").innerText = folder;
-            update("backup_folder", folder);
-        }
-    });
+    const files = open_box({defaultPath, properties: ["openDirectory", "createDirectory"]});
+    if (files) {
+        const folder = files[0];
+        $("backup_folder").innerText = folder;
+        update("backup_folder", folder);
+    }
 }
 
 function override_submit(event) {

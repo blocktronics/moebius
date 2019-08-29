@@ -36,10 +36,10 @@ class PaletteChooser extends events.EventEmitter {
             const div = document.createElement("div");
             div.style.backgroundColor = libtextmode.convert_ega_to_style(rgb);
             div.addEventListener("mousedown", (event) => {
-                if (event.button == 0) {
-                    this.fg = i;
-                } else if (event.button == 2) {
+                if (event.button == 2 || event.ctrlKey) {
                     this.bg = i;
+                } else if (event.button == 0) {
+                    this.fg = i;
                 }
             });
             return div;

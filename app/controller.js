@@ -48,13 +48,12 @@ function save(destroy_when_done = false) {
 }
 
 function save_as(destroy_when_done = false) {
-    save_box(doc.file, "ans", {filters: [{name: "ANSI Art", extensions: ["ans", "asc", "diz", "nfo", "txt"]}, {name: "XBin", extensions: ["xb"]}, {name: "Binary Text", extensions: ["bin"]}]}, async (file) => {
-        if (file) {
-            doc.file = file;
-            doc.edited = false;
-            save(destroy_when_done);
-        }
-    });
+    const file = save_box(doc.file, "ans", {filters: [{name: "ANSI Art", extensions: ["ans", "asc", "diz", "nfo", "txt"]}, {name: "XBin", extensions: ["xb"]}, {name: "Binary Text", extensions: ["bin"]}]});
+    if (file) {
+        doc.file = file;
+        doc.edited = false;
+        save(destroy_when_done);
+    }
 }
 
 async function share_online() {
@@ -72,21 +71,18 @@ function check_before_closing() {
 }
 
 function export_as_utf8() {
-    save_box(doc.file, "utf8ans", {filters: [{name: "ANSI Art ", extensions: ["utf8ans"]}]}, (file) => {
-        if (file) doc.export_as_utf8(file);
-    });
+    const file = save_box(doc.file, "utf8ans", {filters: [{name: "ANSI Art ", extensions: ["utf8ans"]}]});
+    if (file) doc.export_as_utf8(file);
 }
 
 function export_as_png() {
-    save_box(doc.file, "png", {filters: [{name: "Portable Network Graphics ", extensions: ["png"]}]}, (file) => {
-        if (file) doc.export_as_png(file);
-    });
+    const file = save_box(doc.file, "png", {filters: [{name: "Portable Network Graphics ", extensions: ["png"]}]});
+    if (file) doc.export_as_png(file);
 }
 
 function export_as_apng() {
-    save_box(doc.file, "png", {filters: [{name: "Animated Portable Network Graphics ", extensions: ["png"]}]}, (file) => {
-        if (file) doc.export_as_apng(file);
-    });
+    const file = save_box(doc.file, "png", {filters: [{name: "Animated Portable Network Graphics ", extensions: ["png"]}]});
+    if (file) doc.export_as_apng(file);
 }
 
 function hourly_save() {

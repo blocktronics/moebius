@@ -19,20 +19,18 @@ function msg_box(message, detail, opts = {}) {
     return electron.remote.dialog.showMessageBoxSync(win, {message, detail, ...opts});
 }
 
-function open_box(opts, callback) {
+function open_box(opts) {
     send("set_modal_menu");
-    return electron.remote.dialog.showOpenDialog(win, opts, (files) => {
-        send("set_doc_menu");
-        callback(files);
-    });
+    const files = electron.remote.dialog.showOpenDialogSync(win, opts);
+    send("set_doc_menu");
+    return files;
 }
 
-function save_box(file, ext, opts, callback) {
+function save_box(default_file, ext, opts) {
     send("set_modal_menu");
-    return electron.remote.dialog.showSaveDialog(win, {defaultPath: `${file ? path.parse(file).name : "Untitled"}.${ext}`, ...opts}, (file) => {
-        send("set_doc_menu");
-        callback(file);
-    });
+    const file = electron.remote.dialog.showSaveDialogSync(win, {defaultPath: `${default_file ? path.parse(default_file).name : "Untitled"}.${ext}`, ...opts});
+    send("set_doc_menu");
+    return file;
 }
 
 module.exports = {on, send_sync, send, msg_box, open_box, save_box};
