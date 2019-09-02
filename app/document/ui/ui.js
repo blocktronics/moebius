@@ -296,17 +296,17 @@ class Tools extends events.EventEmitter {
     }
 
 
-    keydown(event) {
-        if (event.code == "KeyM" && !event.altKey && !event.ctrlKey && !event.metaKey && this.mode != this.modes.SELECT) this.start(this.modes.SELECT);
-    }
-
     constructor() {
         super();
         this.modes = {SELECT: 0, BRUSH: 1, SHIFTER: 2, LINE: 3, RECTANGLE: 4, ELLIPSE: 5, FILL: 6, SAMPLE: 7};
         on("change_to_select_mode", (event) => this.start(this.modes.SELECT));
         on("change_to_brush_mode", (event) => this.start(this.modes.BRUSH));
+        on("change_to_shifter_mode", (event) => this.start(this.modes.SHIFTER));
+        on("change_to_line_mode", (event) => this.start(this.modes.LINE));
+        on("change_to_rectangle_mode", (event) => this.start(this.modes.RECTANGLE));
+        on("change_to_ellipse_mode", (event) => this.start(this.modes.ELLIPSE));
+        on("change_to_fill_mode", (event) => this.start(this.modes.FILL));
         document.addEventListener("DOMContentLoaded", (event) => {
-            document.body.addEventListener("keydown", (event) => this.keydown(event), true);
             $("select_mode").addEventListener("mousedown", (event) => this.start(this.modes.SELECT), true);
             $("brush_mode").addEventListener("mousedown", (event) => this.start(this.modes.BRUSH), true);
             $("shifter_mode").addEventListener("mousedown", (event) => this.start(this.modes.SHIFTER), true);
@@ -342,22 +342,26 @@ class Toolbar extends events.EventEmitter {
     }
 
     redraw_fkeys() {
+        if (!doc.render) return;
         for (let i = 0; i < 12; i++) this.draw_fkey(`f${i + 1}`, this.fkeys[this.fkey_index][i]);
+        $("fkey_chooser_num").textContent = `${this.fkey_index + 1}`;
     }
 
-    prev_fkeys() {
-        this.fkey_index = (this.fkey_index == 0) ? this.fkeys.length - 1 : this.fkey_index - 1;
+    change_fkeys(num) {
+        this.fkey_index = num;
         this.redraw_fkeys();
     }
 
-    next_fkeys() {
-        this.fkey_index = (this.fkey_index + 1 == this.fkeys.length) ? 0 : this.fkey_index + 1;
-        this.redraw_fkeys();
+    previous_character_set() {
+        this.change_fkeys((this.fkey_index == 0) ? this.fkeys.length - 1 : this.fkey_index - 1);
     }
 
-    use_default_fkeys() {
-        this.fkey_index = this.default_fkeys;
-        this.redraw_fkeys();
+    next_character_set() {
+        this.change_fkeys((this.fkey_index + 1 == this.fkeys.length) ? 0 : this.fkey_index + 1);
+    }
+
+    default_character_set() {
+        this.change_fkeys(this.default_fkeys);
     }
 
     f_key(num) {
@@ -387,6 +391,10 @@ class Toolbar extends events.EventEmitter {
 
     fkey_clicker(i) {
         return (event) => this.emit("key_typed", this.fkeys[this.fkey_index][i]);
+    }
+
+    fkey_pref_clicker(num) {
+        return (event) => send("fkey_prefs", {num, fkey_index: this.fkey_index, current: this.fkeys[this.fkey_index][num], bitmask: doc.font.bitmask, use_9px_font: doc.font.use_9px_font, font_height: doc.font.height});
     }
 
     change_mode(new_mode) {
@@ -434,14 +442,19 @@ class Toolbar extends events.EventEmitter {
 
     constructor() {
         super();
-        on("fkeys", (event, value) => this.fkeys = value);
+        this.fkey_index = 0;
+        on("fkeys", (event, value) => {
+            this.fkeys = value;
+            this.redraw_fkeys();
+        });
         on("default_fkeys", (event, value) => {
             this.default_fkeys = value;
             this.fkey_index = value;
         });
-        keyboard.on("next_fkeys", () => this.next_fkeys());
-        keyboard.on("prev_fkeys", () => this.prev_fkeys());
-        keyboard.on("default_fkeys", () => this.use_default_fkeys());
+        on("next_character_set", () => this.next_character_set());
+        on("previous_character_set", () => this.previous_character_set());
+        on("default_character_set", () => this.default_character_set());
+        keyboard.on("change_fkeys", (num) => this.change_fkeys(num));
         this.modes = {HALF_BLOCK: 0, FULL_BLOCK: 1, SHADING_BLOCK: 2, CLEAR_BLOCK: 3, REPLACE_COLOR: 4, BLINK: 5, COLORIZE: 6};
         this.colorize_fg = true;
         this.colorize_bg = false;
@@ -460,6 +473,9 @@ class Toolbar extends events.EventEmitter {
         });
         document.addEventListener("DOMContentLoaded", (event) => {
             for (let i = 0; i < 12; i++) $(`f${i + 1}`).addEventListener("mousedown", this.fkey_clicker(i), true);
+            for (let i = 0; i < 12; i++) $(`f${i + 1}_pref`).addEventListener("mousedown", this.fkey_pref_clicker(i), true);
+            $("fkey_chooser_left").addEventListener("mousedown", (event) => this.previous_character_set(), true);
+            $("fkey_chooser_right").addEventListener("mousedown", (event) => this.next_character_set(), true);
             $("half_block").addEventListener("mousedown", (event) => this.change_mode(this.modes.HALF_BLOCK));
             $("full_block").addEventListener("mousedown", (event) => this.change_mode(this.modes.FULL_BLOCK));
             $("shading_block").addEventListener("mousedown", (event) => this.change_mode(this.modes.SHADING_BLOCK));

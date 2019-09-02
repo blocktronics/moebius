@@ -25,7 +25,7 @@ class Cursor {
         case modes.OPERATION:
             if (this.operation_blocks.underneath) {
                 const canvas = libtextmode.render_blocks(libtextmode.merge_blocks(this.operation_blocks, this.get_blocks_in_operation()), doc.font);
-                this.ctx.drawImage(canvas, 0, 0, canvas.width - 2, canvas.height - 2, -1, -1, canvas.width - 2, canvas.height - 2);
+                this.ctx.drawImage(canvas, 2, 2, canvas.width - 4, canvas.height - 4, 0, 0, canvas.width - 4, canvas.height - 4);
             }
             break;
         }
@@ -151,8 +151,8 @@ class Cursor {
                 const {sx, sy, dx, dy} = this.reorientate_selection();
                 this.canvas.style.left = `${sx * this.width}px`;
                 this.canvas.style.top = `${sy * this.height}px`;
-                this.canvas.style.width = `${(dx - sx + 1) * this.width}px`;
-                this.canvas.style.height = `${(dy - sy + 1) * this.height}px`;
+                this.canvas.style.width = `${(dx - sx + 1) * this.width - 4}px`;
+                this.canvas.style.height = `${(dy - sy + 1) * this.height - 4}px`;
                 statusbar.status_bar_info(dx - sx + 1, dy - sy + 1);
                 if (doc.connection) doc.connection.selection(this.x, this.y);
                 break;
@@ -229,9 +229,9 @@ class Cursor {
     redraw_operation_blocks() {
         const font = doc.font;
         this.canvas.width = this.operation_blocks.columns * font.width - 4; this.canvas.height = this.operation_blocks.rows * font.height - 4;
-        this.canvas.style.width = `${this.canvas.width + 2}px`; this.canvas.style.height = `${this.canvas.height + 2}px`;
+        this.canvas.style.width = `${this.canvas.width}px`; this.canvas.style.height = `${this.canvas.height}px`;
         const canvas = libtextmode.render_blocks(this.operation_blocks, doc.font);
-        this.ctx.drawImage(canvas, 0, 0, canvas.width - 4, canvas.height - 4, -2, -2, canvas.width - 2, canvas.height - 2);
+        this.ctx.drawImage(canvas, 2, 2, canvas.width - 4, canvas.height - 4, 0, 0, canvas.width - 4, canvas.height - 4);
     }
 
     set_operation_mode(blocks) {

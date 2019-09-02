@@ -18,10 +18,10 @@ function cancel() {
 }
 
 function override_submit(event) {
-    if (event.key == "Enter" || event.key == "NumpadEnter") {
+    if (event.code == "Enter" || event.code == "NumpadEnter") {
         event.preventDefault();
         ok();
-    } else if (event.key == "Escape") {
+    } else if (event.code == "Escape") {
         cancel();
     }
 }

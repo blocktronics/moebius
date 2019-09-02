@@ -1,0 +1,15 @@
+#fkey_prefs_selector {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: 16px;
+    border-width: 2px;
+    border-style: solid;
+    box-sizing: border-box;
+    animation: blink 0.3s steps(1, end) infinite;
+    pointer-events: none;
+}
+
+@keyframes blink {
+    0% {border-color: white;} 50% {opacity: 0;}
+}

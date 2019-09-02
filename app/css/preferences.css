@@ -114,3 +114,17 @@ button:active {
     color: white;
     border-color: white;
 }
+
+#reset_fkeys_container {
+    position: absolute;
+    bottom: 8px;
+    left: calc((100% - 250px) / 2);
+}
+
+#reset_fkeys {
+    position: relative;
+    display: block;
+    float: none;
+    margin: 0px auto;
+    width: 250px;
+}

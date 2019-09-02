@@ -36,12 +36,18 @@ const default_values = {
         [136, 137, 138, 130, 144, 140, 139, 141, 161, 158, 32, 32],
         [147, 148, 149, 162, 167, 150, 129, 151, 163, 154, 32, 32],
         [47, 92, 40, 41, 123, 125, 91, 93, 96, 39, 32, 32],
+        [32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32],
+        [32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32],
+        [32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32],
+        [32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32],
     ],
     default_fkeys: 5
 };
 const fs = require("fs");
 const JSON5 = require("json5");
 const prefs = (fs.existsSync(file)) ? JSON5.parse(fs.readFileSync(file, "utf-8")) : default_values;
+
+if (prefs.fkeys.length == 16) prefs.fkeys = default_values.fkeys;
 
 function set(key, value) {
     prefs[key] = value;

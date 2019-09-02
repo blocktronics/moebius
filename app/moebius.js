@@ -121,7 +121,7 @@ menu.on("open", open);
 electron.ipcMain.on("open", (event) => open());
 
 async function preferences() {
-    const preferences = await window.static("app/html/preferences.html", {width: 480, height: 620});
+    const preferences = await window.static("app/html/preferences.html", {width: 480, height: 670});
     preferences.send("prefs", prefs.get_all());
 }
 menu.on("preferences", preferences);
@@ -168,10 +168,12 @@ electron.ipcMain.on("destroy", (event, {id}) => {
     docs[id].win.close();
 });
 
-electron.ipcMain.on("update_prefs", (event, {key, value}) => {
+function update_prefs(key, value) {
     prefs.set(key, value);
     for (const id of Object.keys(docs)) docs[id].win.send(key, value);
-});
+}
+
+electron.ipcMain.on("update_prefs", (event, {key, value}) => update_prefs(key, value));
 
 electron.ipcMain.on("show_rendering_modal", async (event, {id}) => {
     docs[id].modal = await window.new_modal("app/html/rendering.html", {width: 200, height: 80, parent: docs[id].win, frame: false, ...get_centered_xy(id, 200, 80)});
@@ -244,6 +246,24 @@ electron.ipcMain.on("select_attribute", async (event, {id, fg, bg, palette}) => 
     docs[id].modal.send("select_attribute", {fg, bg, palette});
 });
 
+electron.ipcMain.on("fkey_prefs", async (event, {id, num, fkey_index, current, bitmask, font_height}) => {
+    if (docs[id].modal && !docs[id].modal.isDestroyed()) {
+        docs[id].modal.close();
+        return;
+    }
+    const width = 16 * 8 * 2;
+    const height = 16 * font_height * 2;
+    docs[id].modal = await window.new_modal("app/html/fkey_prefs.html", {width, height, parent: docs[id].win, frame: false, ...get_centered_xy(id, width, height)});
+    if (darwin) add_darwin_window_menu_handler(id);
+    docs[id].modal.send("fkey_prefs", {num, fkey_index, current, bitmask, font_height});
+});
+
+electron.ipcMain.on("set_fkey", async (event, {id, num, fkey_index, code}) => {
+    const fkeys = prefs.get("fkeys");
+    fkeys[fkey_index][num] = code;
+    update_prefs("fkeys", fkeys);
+});
+
 electron.ipcMain.on("ready", async (event, {id}) => {
     if (splash_screen && !splash_screen.isDestroyed()) splash_screen.close();
     if (prefs.get("smallscale_guide")) docs[id].win.send("toggle_smallscale_guide", true);
@@ -292,4 +312,4 @@ if (darwin) {
     electron.systemPreferences.setUserDefault("NSDisabledCharacterPaletteMenuItem", "boolean", true);
 }
 
-if (linux) electron.app.disableHardwareAcceleration();
+// if (linux) electron.app.disableHardwareAcceleration();

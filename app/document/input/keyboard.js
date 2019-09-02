@@ -63,20 +63,41 @@ class KeyboardEvent extends events.EventEmitter {
                     event.preventDefault();
                 }
                 return;
-            case "Comma":
-                this.emit("prev_fkeys");
-                return;
-            case "Period":
-                this.emit("next_fkeys");
-                return;
-            case "Slash":
-                this.emit("default_fkeys");
-                return;
         }
     }
 
     alt_key(event) {
         switch (event.code) {
+            case "F1":
+                this.emit("change_fkeys", event.shiftKey ? 10 : 0);
+                return;
+            case "F2":
+                this.emit("change_fkeys", event.shiftKey ? 11 : 1);
+                return;
+            case "F3":
+                this.emit("change_fkeys", event.shiftKey ? 12 : 2);
+                return;
+            case "F4":
+                this.emit("change_fkeys", event.shiftKey ? 13 : 3);
+                return;
+            case "F5":
+                this.emit("change_fkeys", event.shiftKey ? 14 : 4);
+                return;
+            case "F6":
+                this.emit("change_fkeys", event.shiftKey ? 15 : 5);
+                return;
+            case "F7":
+                this.emit("change_fkeys", event.shiftKey ? 16 : 6);
+                return;
+            case "F8":
+                this.emit("change_fkeys", event.shiftKey ? 17 : 7);
+                return;
+            case "F9":
+                this.emit("change_fkeys", event.shiftKey ? 18 : 8);
+                return;
+            case "F10":
+                this.emit("change_fkeys", event.shiftKey ? 19 : 9);
+                return;
             case "Digit0":
                 this.emit("toggle_bg", 0);
                 return;
@@ -240,8 +261,10 @@ class KeyboardEvent extends events.EventEmitter {
                 this.emit("new_line");
                 return;
             case "Insert":
-                this.insert_mode = !this.insert_mode;
-                this.emit("insert", this.insert_mode);
+                if (darwin) {
+                    this.insert_mode = !this.insert_mode;
+                    this.emit("insert", this.insert_mode);
+                }
                 return;
             case "F1":
                 this.emit("f_key", 0);

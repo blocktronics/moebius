@@ -1,6 +1,6 @@
 {
   "name": "moebius",
-  "version": "1.0.22",
+  "version": "1.0.23",
   "description": "Modern ANSI Art Editor",
   "repository": {
     "type": "git",
@@ -19,7 +19,7 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "browserify": "^16.5.0",
-    "electron": "^6.0.5",
+    "electron": "^6.0.7",
     "electron-builder": "^21.2.0",
     "express": "^4.17.1"
   },

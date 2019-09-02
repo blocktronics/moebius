@@ -105,6 +105,7 @@ function mouse_down(event) {
     if (event.button == 0) {
         mouse_button = true;
         update_with_mouse_pos(event.clientX, event.clientY);
+        $("preview").classList.add("grabbing");
     }
 }
 
@@ -113,7 +114,10 @@ function mouse_move(event) {
 }
 
 function unregister_button(event) {
-    if (mouse_button) mouse_button = false;
+    if (mouse_button) {
+        mouse_button = false;
+        $("preview").classList.remove("grabbing");
+    }
 }
 
 window.addEventListener("DOMContentLoaded", (event) => {
@@ -121,8 +125,8 @@ window.addEventListener("DOMContentLoaded", (event) => {
     window.addEventListener("resize", event => update_frame(), true);
     $("preview").addEventListener("mousedown", mouse_down, true);
     $("preview").addEventListener("mousemove", mouse_move, true);
-    preview.addEventListener("mouseup", unregister_button, true);
-    preview.addEventListener("mouseout", unregister_button, true);
+    $("preview").addEventListener("mouseup", unregister_button, true);
+    $("preview").addEventListener("mouseout", unregister_button, true);
 }, true);
 
 function goto_row(row) {

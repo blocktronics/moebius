@@ -18,6 +18,43 @@ body.dark .panel > div {
     color: rgba(255, 255, 255, 0.3);
 }
 
+#fkey_chooser {
+    float: right;
+}
+
+#fkey_chooser > div {
+    float: left;
+    line-height: 48px;
+    text-align: center;
+}
+
+#fkey_chooser_left, #fkey_chooser_right {
+    opacity: 0.7;
+    color: rgba(255, 255, 255, 0.6);
+    height: 48px;
+    width: 30px;
+    font-size: 12px;
+    cursor: pointer;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: 15px 24px;
+}
+
+#fkey_chooser_left {
+    background-image: url("../img/arrow_left.png");
+}
+
+#fkey_chooser_right {
+    background-image: url("../img/arrow_right.png");
+}
+
+#fkey_chooser_num {
+    text-shadow: 0px 1px 1px rgba(0, 0, 0, 0.1);
+    color: rgba(255, 255, 255, 0.3);
+    width: 30px;
+    font-size: 20px;
+}
+
 .panel > div > canvas {
     display: inline-block;
     border: 1px solid black;
@@ -28,6 +65,21 @@ body.dark .panel > div {
 .panel > div > div {
     display: inline-block;
     text-align: right;
+}
+
+.fkey_pref_text {
+    color: rgba(255, 255, 255, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+}
+
+.fkey_pref_text:hover {
+    color: rgba(255, 255, 255, 0.6);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.panel > div > div > canvas {
+    cursor: pointer;
 }
 
 #sample_fg, #sample_bg {
@@ -49,6 +101,7 @@ body.dark .panel > div {
     margin: 8px;
     border: 1px solid rgba(0, 0, 0, 0.6);
     background-image: -webkit-linear-gradient(top, rgb(34, 37, 43), rgb(30, 31, 35));
+    cursor: pointer;
 }
 
 #half_block {

@@ -58,6 +58,7 @@ class MouseListener extends events.EventEmitter {
             return;
         }
         this.store(x, y, half_y);
+        this.start = {x, y, half_y};
         if (event.button == 2 || event.ctrlKey) {
             this.button = buttons.RIGHT;
         } else if (event.button == 0) {
@@ -94,7 +95,7 @@ class MouseListener extends events.EventEmitter {
         if (!this.font) return;
         const {x, y, half_y} = this.get_xy(event);
         if (this.drawing || this.started) {
-            this.emit("up", x, y, half_y, this.button);
+            this.emit("up", x, y, half_y, this.button, this.start.x == x && this.start.y == y && this.start.half_y == half_y, event.shiftKey);
             this.end();
         }
     }
