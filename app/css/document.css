@@ -257,7 +257,7 @@ body.dark #viewport {
     display: block;
     width: calc(var(--preview-width) - 40px);
     margin: 0px 20px;
-    image-rendering: smooth;
+    image-rendering: auto !important;
     pointer-events: none;
 }
 #view_frame {
