@@ -257,7 +257,7 @@ body.dark #viewport {
     display: block;
     width: calc(var(--preview-width) - 40px);
     margin: 0px 20px;
-    image-rendering: optimize-contrast;
+    image-rendering: smooth;
     pointer-events: none;
 }
 #view_frame {
@@ -353,7 +353,7 @@ body.dark #statusbar > div > div {
 #editing_layer > canvas.flashing {
     box-sizing: border-box;
     border: 1px solid white;
-    animation: blink 0.1s steps(1, end) infinite;
+    animation: blink 0.3s steps(1, end) infinite;
 }
 @keyframes blink {
     0% {border-color: rgb(170, 170, 170);} 50% {border-color: black;}

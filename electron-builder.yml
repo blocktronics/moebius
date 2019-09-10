@@ -42,9 +42,9 @@ win:
   artifactName: Mœbius Setup.exe
   target:
   - target: nsis
-    arch: [x64, ia32]
+    arch: [x64, ia32, arm64]
   - target: portable
-    arch: [x64, ia32]
+    arch: [x64, ia32, arm64]
 portable:
   artifactName: Mœbius.exe
 linux:
@@ -52,4 +52,4 @@ linux:
   target: deb
   description: Moebius is a new ANSI and ASCII Editor for Linux, MacOS, and Windows. The major feature that differentiates it from PabloDraw is the 'half-block' brush which allows editing in a style closer to Photoshop than a text editor, although you can still use the function and cursor keys to draw with, and you should find that most of the text editing features from PabloDraw are carried over to this editor.
   category: Graphics
-electronVersion: 6.0.7
+electronVersion: 6.0.8
