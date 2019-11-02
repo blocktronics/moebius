@@ -161,13 +161,13 @@ Several binaries and packages are available for download enabling you to merely 
    - Copyright 2019 - [Andy Herbert](https://github.com/andyherbert)
 
 2. Contributors
-   - Moebius includes fonts from, and has a fantastic splash screen drawn by members of the following groups
-     - Blocktronics
+   - Artwork: Moebius includes fonts from, and has a fantastic splash screen drawn by members of the following groups
+     - [Blocktronics](https://github.com/blocktronics)
        - [AlphaKing](https://github.com/christianvozar)
      - Fuel
        - burps
    - Documentation
-     - [tallship](https://github.com/tallship) 12:2/104 & 1337:3/116 (V'Ger)
+     - [tallship](https://github.com/tallship) [12:2/104 & 1337:3/116 (V'Ger)](https://Vger.Cloud)
 
 3. License
    - Licensed under terms of the [Apache License, version 2.0](https://github.com/blocktronics/moebius/blob/master/LICENSE.txt)
