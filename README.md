@@ -150,12 +150,12 @@ Several binaries and packages are available for download enabling you to merely 
 
 2. Contributors
    - Moebius includes fonts from, and has a fantastic splash screen drawn by members of the following groups
-     - Blocktronics'
-       - AlphaKing
-     - Fuel's
+     - Blocktronics
+       - [AlphaKing](https://github.com/christianvozar)
+     - Fuel
        - burps
    - Documentation
-     - tallship 12:2/104 & 1337:3/116 (V'Ger)
+     - [tallship](https://github.com/tallship) 12:2/104 & 1337:3/116 (V'Ger)
 
 3. License
    - Licensed under terms of the [Apache License, version 2.0](https://github.com/blocktronics/moebius/blob/master/LICENSE.txt)
