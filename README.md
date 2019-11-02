@@ -114,6 +114,18 @@ $ npm start
 ```
 
 
+## Updates
+
+* In most cases, you should just be able to issue:
+
+```
+$ cd ~/projects/moebius
+$ git pull
+$ npm install
+$ npm start
+```
+
+
 # Download Packages and Executables:
 
 Several binaries and packages are available for download enabling you to merely install for your OS and run *Moebius*.
