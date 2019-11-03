@@ -167,7 +167,7 @@ Several binaries and packages are available for download enabling you to merely 
      - Fuel
        - burps
    - Documentation
-     - [tallship](https://github.com/tallship) SysOp of [12:2/104 & 1337:3/116 (V'Ger)](https://Vger.Cloud)
+     - [tallship](https://github.com/tallship)
 
 3. License
    - Licensed under terms of the [Apache License, version 2.0](https://github.com/blocktronics/moebius/blob/master/LICENSE.txt)
