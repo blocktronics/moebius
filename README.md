@@ -140,19 +140,9 @@ Several binaries and packages are available for download enabling you to merely 
 
 ### ToDo
 
-- [x] Table of contents with links
-- [x] Convert plain text to nice, shiney README.md markdown doc
-- [x] Introduction
-- [x] Building from source - prereqs & deps
-- [x] Building from source - cloning *Moebius* repo and building with npm
-- [x] Downloads section
-- [x] Acknowledgements
-- [ ] Create docs/ dir and separate document for building/installing dependencies, prerequisites, and Nginx proxy for *Node.js*
-- [ ] Brief Documentation in this section with links to complete docs & user manual in docs/
-- [ ] Initialize Wiki and duplicate *some* documentation there (NOTE: Wiki's aren't part of a clone or a mirror repo)
-- [ ] Specify and clarify the particular OSes and respective versioning that *Moebius* is supported under (for binary d/l's)
-- [ ] Create packages for Arch, Slackware, SuSE, and CentOS
-- [ ] Other foshizzles TBD.
+
+- [ ] Brief Documentation in this section with links to complete docs & user manual in docs/ ???
+- [ ] Initialize Wiki and duplicate *some* documentation there (NOTE: Wiki's aren't part of a clone or a mirror repo) ???
 
 
 # Acknowledgements:
