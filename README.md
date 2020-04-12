@@ -24,12 +24,17 @@ Moebius uses a modified version of Google's Material Icons. https://material.io/
 
 ## Docker
 
+**AKA: How to run a Moebius server?**
+
 In order to make things simpler and to be able to run the Moebius server, there's a `Dockerfile` ready to be used:
 
 ```
 $ docker build . -t moebius
-$ docker run --rm -it -p 8000:8000 -v /tmp:/tmp --name moe moebius node server
+$ docker run --rm -it -p 8000:8000 -v /tmp:/tmp --name moe moebius \
+             node server --web-port 8000 --file /tmp/filito.asc --pass sumthin
 ```
+
+Note: It _needs_ to run on port 8000.
 
 ## To build and install Moebius from source
 
