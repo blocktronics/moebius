@@ -22,6 +22,15 @@ Moebius uses a modified version of Google's Material Icons. https://material.io/
 
 # Info: Installing from Source
 
+## Docker
+
+In order to make things simpler and to be able to run the Moebius server, there's a `Dockerfile` ready to be used:
+
+```
+$ docker build . -t moebius
+$ docker run --rm -it -p 8000:8000 -v /tmp:/tmp --name moe moebius node server
+```
+
 ## To build and install Moebius from source
 
 ### Prerequisites
