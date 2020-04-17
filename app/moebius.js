@@ -239,11 +239,13 @@ function get_centered_xy(id, width, height) {
 electron.ipcMain.on("select_attribute", async (event, {id, fg, bg, palette}) => {
     if (docs[id].modal && !docs[id].modal.isDestroyed()) {
         docs[id].modal.close();
+        event.returnValue = true;
         return;
     }
     docs[id].modal = await window.new_modal("app/html/select_attribute.html", {width: 340, height: 340, parent: docs[id].win, frame: false, ...get_centered_xy(id, 340, 340)}, touchbar.select_attribute);
     if (darwin) add_darwin_window_menu_handler(id);
     docs[id].modal.send("select_attribute", {fg, bg, palette});
+    event.returnValue = true;
 });
 
 electron.ipcMain.on("fkey_prefs", async (event, {id, num, fkey_index, current, bitmask, font_height}) => {
