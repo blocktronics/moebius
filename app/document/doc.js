@@ -2,6 +2,7 @@ const libtextmode = require("../libtextmode/libtextmode");
 const {on, send} = require("../senders");
 const events = require("events");
 const chat = require("./ui/chat");
+const path = require("path");;
 let doc, render;
 const actions =  {CONNECTED: 0, REFUSED: 1, JOIN: 2, LEAVE: 3, CURSOR: 4, SELECTION: 5, RESIZE_SELECTION: 6, OPERATION: 7, HIDE_CURSOR: 8, DRAW: 9, CHAT: 10, STATUS: 11, SAUCE: 12, ICE_COLORS: 13, USE_9PX_FONT: 14, CHANGE_FONT: 15, SET_CANVAS_SIZE: 16, PASTE_AS_SELECTION: 17, ROTATE: 18, FLIP_X: 19, FLIP_Y: 20};
 const statuses = {ACTIVE: 0, IDLE: 1, AWAY: 2, WEB: 3};
@@ -1049,7 +1050,9 @@ class TextModeDoc extends events.EventEmitter {
     async share_online() {
         const default_palette = libtextmode.has_default_palette(doc.palette);
         const bytes = default_palette ? libtextmode.encode_as_ansi(doc) : libtextmode.encode_as_xbin(doc);
-        const req = await fetch(`https://api.16colo.rs/v1/paste?key=${SIXTEEN_COLORS_API_KEY}&extension=${default_palette ? "ans" : "xb"}&retention=${retention}`, {
+        const extension = (default_palette) ? "ans" : "xb";
+        const filename = (this.file) ? path.basename(this.file) : "unknown" + '.' + extension;
+        const req = await fetch(`https://api.16colo.rs/v1/paste?key=${SIXTEEN_COLORS_API_KEY}&extension=${extension}&retention=${retention}&filename=${filename}`, {
             body: `file=${Buffer.from(bytes).toString("base64")}`,
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
