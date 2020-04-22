@@ -25,8 +25,7 @@ function ok() {
     const comments_value = document.getElementById("comments").value;
     const comments_value_length = Buffer.from(comments_value, "utf-8").length;
     const comments = fill_string(comments_value, Math.min(Math.ceil(comments_value_length / 64) * 64, 64 * 255));
-    const ignore_sauce = document.getElementById("ignore_sauce").checked ? true : false;
-    if (title != undefined && author != undefined && group != undefined && comments != undefined) send_parent("set_sauce_info", {title, author, group, comments, ignore_sauce});
+    if (title != undefined && author != undefined && group != undefined && comments != undefined) send_parent("set_sauce_info", {title, author, group, comments});
 }
 
 function cancel() {
@@ -92,13 +91,12 @@ function strip_trailing_spaces(text) {
     return text.replace(/[ \u0000]+$/, "");
 }
 
-electron.ipcRenderer.on("set_sauce_info", (event, {title, author, group, comments, ignore_sauce}) => {
+electron.ipcRenderer.on("set_sauce_info", (event, {title, author, group, comments}) => {
     document.getElementById("title").value = strip_trailing_spaces(title);
     document.getElementById("author").value = strip_trailing_spaces(author);
     document.getElementById("group").value = strip_trailing_spaces(group);
     document.getElementById("comments").value = strip_trailing_spaces(comments);
     comments_input();
-    if (ignore_sauce == true) document.getElementById("ignore_sauce").checked = true;
 });
 
 electron.ipcRenderer.on("ok", (event) => ok());
