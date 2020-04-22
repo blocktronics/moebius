@@ -63,6 +63,7 @@ function pad(text, length) {
 }
 
 function add_sauce_bytes({doc, data_type, file_type, bytes: file_bytes}) {
+    if (doc.ignore_sauce == true) return file_bytes;
     let bytes = new Uint8Array(128);
     add_text(bytes, 0, "SAUCE00", 7);
     bytes.set(pad(doc.title, 35), 7);
