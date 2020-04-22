@@ -705,12 +705,14 @@ class TextModeDoc extends events.EventEmitter {
     get use_9px_font() {return doc.use_9px_font;}
     get data() {return doc.data;}
 
-    set_sauce(title, author, group, comments) {
+    set_sauce(title, author, group, comments, ignore_sauce = false) {
         doc.title = title;
         doc.author = author;
         doc.group = group;
         doc.comments = comments;
-        send("update_sauce", {title, author, group, comments});
+        doc.ignore_sauce = ignore_sauce;
+        this.ignore_sauce = ignore_sauce;
+        send("update_sauce", {title, author, group, comments, ignore_sauce});
         if (connection) connection.sauce(doc.title, doc.author, doc.group, doc.comments);
     }
 
@@ -1083,15 +1085,16 @@ class TextModeDoc extends events.EventEmitter {
         super();
         this.init = false;
         this.mirror_mode = false;
+        this.ignore_sauce = false;
         this.undo_history = new UndoHistory();
         this.undo_history.on("resize", () => this.start_rendering());
         on("ice_colors", (event, value) => this.ice_colors = value);
         on("use_9px_font", (event, value) => this.use_9px_font = value);
         on("change_font", (event, font_name) => this.font_name = font_name);
-        on("get_sauce_info", (event) => send("get_sauce_info", {title: doc.title, author: doc.author, group: doc.group, comments: doc.comments}));
+        on("get_sauce_info", (event) => send("get_sauce_info", {title: doc.title, author: doc.author, group: doc.group, comments: doc.comments, ignore_sauce: doc.ignore_sauce}));
         on("get_canvas_size", (event) => send("get_canvas_size", {columns: doc.columns, rows: doc.rows}));
         on("set_canvas_size", (event, {columns, rows}) => this.resize(columns, rows));
-        on("set_sauce_info", (event, {title, author, group, comments}) => this.set_sauce(title, author, group, comments));
+        on("set_sauce_info", (event, {title, author, group, comments, ignore_sauce}) => this.set_sauce(title, author, group, comments, ignore_sauce));
         on("mirror_mode", (event, value) => this.mirror_mode = value);
         chat.on("goto_row", (line_no) => this.emit("goto_row", line_no));
     }
