@@ -1,7 +1,7 @@
 const doc = require("./doc");
 const libtextmode = require("../libtextmode/libtextmode");
 const keyboard = require("./input/keyboard");
-const {on, send} = require("../senders");
+const {on, send_sync} = require("../senders");
 const events = require("events");
 
 class PaletteChooser extends events.EventEmitter {
@@ -93,7 +93,7 @@ class PaletteChooser extends events.EventEmitter {
     }
 
     select_attribute() {
-        send("select_attribute", {fg: this.fg, bg: this.bg, palette: doc.palette});
+        send_sync("select_attribute", {fg: this.fg, bg: this.bg, palette: doc.palette});
     }
 
     constructor() {
