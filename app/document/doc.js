@@ -2,6 +2,7 @@ const libtextmode = require("../libtextmode/libtextmode");
 const {on, send} = require("../senders");
 const events = require("events");
 const chat = require("./ui/chat");
+const path = require("path");;
 let doc, render;
 const actions =  {CONNECTED: 0, REFUSED: 1, JOIN: 2, LEAVE: 3, CURSOR: 4, SELECTION: 5, RESIZE_SELECTION: 6, OPERATION: 7, HIDE_CURSOR: 8, DRAW: 9, CHAT: 10, STATUS: 11, SAUCE: 12, ICE_COLORS: 13, USE_9PX_FONT: 14, CHANGE_FONT: 15, SET_CANVAS_SIZE: 16, PASTE_AS_SELECTION: 17, ROTATE: 18, FLIP_X: 19, FLIP_Y: 20};
 const statuses = {ACTIVE: 0, IDLE: 1, AWAY: 2, WEB: 3};
@@ -704,12 +705,14 @@ class TextModeDoc extends events.EventEmitter {
     get use_9px_font() {return doc.use_9px_font;}
     get data() {return doc.data;}
 
-    set_sauce(title, author, group, comments) {
+    set_sauce(title, author, group, comments, ignore_sauce = false) {
         doc.title = title;
         doc.author = author;
         doc.group = group;
         doc.comments = comments;
-        send("update_sauce", {title, author, group, comments});
+        doc.ignore_sauce = ignore_sauce;
+        this.ignore_sauce = ignore_sauce;
+        send("update_sauce", {title, author, group, comments, ignore_sauce});
         if (connection) connection.sauce(doc.title, doc.author, doc.group, doc.comments);
     }
 
@@ -1049,7 +1052,9 @@ class TextModeDoc extends events.EventEmitter {
     async share_online() {
         const default_palette = libtextmode.has_default_palette(doc.palette);
         const bytes = default_palette ? libtextmode.encode_as_ansi(doc) : libtextmode.encode_as_xbin(doc);
-        const req = await fetch(`https://api.16colo.rs/v1/paste?key=${SIXTEEN_COLORS_API_KEY}&extension=${default_palette ? "ans" : "xb"}&retention=${retention}`, {
+        const extension = (default_palette) ? "ans" : "xb";
+        const filename = (this.file) ? path.basename(this.file) : "unknown" + '.' + extension;
+        const req = await fetch(`https://api.16colo.rs/v1/paste?key=${SIXTEEN_COLORS_API_KEY}&extension=${extension}&retention=${retention}&filename=${filename}`, {
             body: `file=${Buffer.from(bytes).toString("base64")}`,
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
@@ -1080,15 +1085,16 @@ class TextModeDoc extends events.EventEmitter {
         super();
         this.init = false;
         this.mirror_mode = false;
+        this.ignore_sauce = false;
         this.undo_history = new UndoHistory();
         this.undo_history.on("resize", () => this.start_rendering());
         on("ice_colors", (event, value) => this.ice_colors = value);
         on("use_9px_font", (event, value) => this.use_9px_font = value);
         on("change_font", (event, font_name) => this.font_name = font_name);
-        on("get_sauce_info", (event) => send("get_sauce_info", {title: doc.title, author: doc.author, group: doc.group, comments: doc.comments}));
+        on("get_sauce_info", (event) => send("get_sauce_info", {title: doc.title, author: doc.author, group: doc.group, comments: doc.comments, ignore_sauce: doc.ignore_sauce}));
         on("get_canvas_size", (event) => send("get_canvas_size", {columns: doc.columns, rows: doc.rows}));
         on("set_canvas_size", (event, {columns, rows}) => this.resize(columns, rows));
-        on("set_sauce_info", (event, {title, author, group, comments}) => this.set_sauce(title, author, group, comments));
+        on("set_sauce_info", (event, {title, author, group, comments, ignore_sauce}) => this.set_sauce(title, author, group, comments, ignore_sauce));
         on("mirror_mode", (event, value) => this.mirror_mode = value);
         chat.on("goto_row", (line_no) => this.emit("goto_row", line_no));
     }
