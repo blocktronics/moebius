@@ -15,7 +15,11 @@ function show_new_version_button() {
 function connect(event) {
     const server = document.getElementById("server").value;
     const pass = document.getElementById("pass").value;
-    if (server != "") electron.ipcRenderer.send("connect_to_server", {server, pass});
+    if (server != "") {
+        update("server", server);
+        update("pass", pass);
+        electron.ipcRenderer.send("connect_to_server", {server, pass});
+    }
 }
 
 function body_key_down(params) {
@@ -34,6 +38,10 @@ function key_down(params) {
     if (event.code == "Enter" || event.code == "NumpadEnter") connect();
 }
 
+function update(key, value) {
+    electron.ipcRenderer.send("update_prefs", {key, value});
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     const preferences = document.getElementById("preferences");
     if (process.platform != "darwin") preferences.innerText = "Settings";
@@ -48,4 +56,9 @@ document.addEventListener("DOMContentLoaded", () => {
     fetch("http://www.andyh.org/moebius/latest.json", {cache: "no-cache"}).then((response) => response.json()).then((json) => {
         if (electron.remote.app.getVersion() != json.version) show_new_version_button();
     });
+});
+
+electron.ipcRenderer.on("saved_server", (event, {server, pass}) => {
+    document.getElementById("server").value = server;
+    document.getElementById("pass").value = pass;
 });
