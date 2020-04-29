@@ -127,7 +127,16 @@ async function preferences() {
 menu.on("preferences", preferences);
 electron.ipcMain.on("preferences", (event) => preferences());
 
-menu.on("show_new_connection_window", async () => await window.static("app/html/new_connection.html", {width: 480, height: 160}, touchbar.new_connection));
+async function show_new_connection() {
+    const newconnection = await window.static("app/html/new_connection.html", {width: 480, height: 160}, touchbar.new_connection);
+    const server = prefs.get('server');
+    const pass = prefs.get('pass');
+    if (server) {
+        newconnection.send("saved_server", {server, pass});
+    }
+}
+menu.on("show_new_connection_window", show_new_connection);
+electron.ipcMain.on("show_new_connection_window", (event) => show_new_connection());
 
 async function connect_to_server(server, pass = "") {
     const win = await new_document_window();
@@ -139,6 +148,11 @@ electron.ipcMain.on("connect_to_server", (event, {server, pass}) => connect_to_s
 
 async function show_splash_screen() {
     splash_screen = await window.static("app/html/splash_screen.html", {width: 720, height: 600, ...frameless}, touchbar.splash_screen, {preferences, new_document, open});
+    const server = prefs.get('server');
+    const pass = prefs.get('pass');
+    if (server) {
+        splash_screen.send("saved_server", {server, pass});
+    }
 }
 
 menu.on("show_cheatsheet", () => window.static("app/html/cheatsheet.html", {width: 640, height: 816, ...frameless}));
