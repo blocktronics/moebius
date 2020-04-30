@@ -123,6 +123,9 @@ class Cursor {
 
     new_line() {
         if (this.mode != modes.EDITING) return;
+        if (keyboard.insert_mode && this.y < doc.rows - 1) {
+            this.insert_row(this.y + 1);
+        }
         const old_x = this.x;
         this.move_to(0, Math.min(doc.rows - 1, this.y + 1));
         if (this.scroll_document_with_cursor) this.scroll(-old_x, 1);
