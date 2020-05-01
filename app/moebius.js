@@ -99,7 +99,7 @@ async function open_file(file) {
 }
 
 function open_in_new_window(win) {
-    if (docs[win.id].open_in_current_window) {
+    if (win && docs[win.id].open_in_current_window) {
         return false;
     }
     return !win || docs[win.id].network || docs[win.id].file || docs[win.id].edited;
