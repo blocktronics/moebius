@@ -31,7 +31,7 @@ async function new_document_window() {
     const win_pos = win.getPosition();
     last_win_pos = win_pos;
     const debug = prefs.get("debug");
-    docs[win.id] = {win, menu: menu.document_menu(win, debug), chat_input_menu: menu.chat_input_menu(win, debug), edited: false, win_pos, destroyed: false};
+    docs[win.id] = {win, menu: menu.document_menu(win, debug), chat_input_menu: menu.chat_input_menu(win, debug), edited: false, win_pos, destroyed: false, open_in_current_window: false};
     touchbar.create_touch_bars(win);
     prefs.send(win);
     win.on("focus", (event) => {
@@ -99,6 +99,9 @@ async function open_file(file) {
 }
 
 function open_in_new_window(win) {
+    if (win && docs[win.id].open_in_current_window) {
+        return false;
+    }
     return !win || docs[win.id].network || docs[win.id].file || docs[win.id].edited;
 }
 
@@ -119,6 +122,11 @@ function open(win) {
 
 menu.on("open", open);
 electron.ipcMain.on("open", (event) => open());
+
+menu.on("open_in_current_window", (win) => {
+    docs[win.id].open_in_current_window = true;
+    open(win);
+});
 
 async function preferences() {
     const preferences = await window.static("app/html/preferences.html", {width: 480, height: 670});

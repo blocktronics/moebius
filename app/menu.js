@@ -112,6 +112,7 @@ function file_menu_template(win) {
             {label: "Duplicate as New Document", id: "duplicate", click(item) {win.send("duplicate");}},
             {type: "separator"},
             {label: "Open\u2026", id: "open", accelerator: "CmdorCtrl+O", click(item) {event.emit("open", win);}},
+            {label: "Open in Current Window\u2026", id: "open_in_current_window", accelerator: "CmdorCtrl+Shift+O", click(item) {event.emit("open_in_current_window", win);}},
             darwin ? {role: "recentDocuments", submenu: [{role: "clearRecentDocuments"}]} : ({type: "separator"}, {label: "Settings", click(item) {event.emit("preferences");}}),
             {type: "separator"},
             {label: "Revert to Last Save", id: "revert_to_last_save", click(item) {win.send("revert_to_last_save");}, enabled: false},
