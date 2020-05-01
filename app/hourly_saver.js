@@ -10,11 +10,21 @@ function files_match(file_1, file_2) {
 class HourlySaver extends events.EventEmitter {
     filename(backup_folder, file) {
         if (backup_folder == undefined) return;
-        const date = new Date();
-        const hours = date.getHours();
         const parsed_file = path.parse(file);
-        const hour = `${hours > 12 ? hours - 12 : hours}${hours > 12 ? "pm" : "am"}`;
-        return path.join(backup_folder, `${parsed_file.name} - ${date.toDateString()} - ${hour}${parsed_file.ext}`);
+        const date = new Date();
+        const year = date.getFullYear();
+        let month = date.getMonth() + 1;
+        let day =  date.getDate();
+        let hour = date.getHours();
+        let min = date.getMinutes();
+        let sec = date.getSeconds();
+        month = (month < 10) ? '0' + month : month;
+        day = (day < 10) ? '0' + day : day;
+        hour = (hour < 10) ? '0' + hour : hour;
+        min = (min < 10) ? '0' + min : min;
+        sec = (sec < 10) ? '0' + sec : sec;
+        const timestamp = year + '-' + month + '-' + day + 'T' + hour + min + sec;
+        return path.join(backup_folder, `${parsed_file.name} - ${timestamp}${parsed_file.ext}`);
     }
 
     keep_if_changes(file) {

@@ -16,9 +16,7 @@ body {
 }
 
 #sauce_requester {
-    width: 390px;
-    padding-left: 20px;
-    padding-right: 20px;
+    width: 350px;
 }
 
 form {
@@ -63,7 +61,7 @@ input, textarea {
     color: white;
 }
 
-input, textarea {
+input {
     margin: 4px;
     padding: 4px;
     border: 1px solid var(--mid-color);

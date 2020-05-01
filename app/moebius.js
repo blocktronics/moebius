@@ -31,7 +31,7 @@ async function new_document_window() {
     const win_pos = win.getPosition();
     last_win_pos = win_pos;
     const debug = prefs.get("debug");
-    docs[win.id] = {win, menu: menu.document_menu(win, debug), chat_input_menu: menu.chat_input_menu(win, debug), edited: false, win_pos, destroyed: false};
+    docs[win.id] = {win, menu: menu.document_menu(win, debug), chat_input_menu: menu.chat_input_menu(win, debug), edited: false, win_pos, destroyed: false, open_in_current_window: false};
     touchbar.create_touch_bars(win);
     prefs.send(win);
     win.on("focus", (event) => {
@@ -99,6 +99,9 @@ async function open_file(file) {
 }
 
 function open_in_new_window(win) {
+    if (win && docs[win.id].open_in_current_window) {
+        return false;
+    }
     return !win || docs[win.id].network || docs[win.id].file || docs[win.id].edited;
 }
 
@@ -119,6 +122,11 @@ function open(win) {
 
 menu.on("open", open);
 electron.ipcMain.on("open", (event) => open());
+
+menu.on("open_in_current_window", (win) => {
+    docs[win.id].open_in_current_window = true;
+    open(win);
+});
 
 async function preferences() {
     const preferences = await window.static("app/html/preferences.html", {width: 480, height: 670});
@@ -232,14 +240,14 @@ function add_darwin_window_menu_handler(id) {
     electron.Menu.setApplicationMenu(menu.modal_menu);
 }
 
-electron.ipcMain.on("get_sauce_info", async (event, {id, title, author, group, comments, ignore_sauce}) => {
-    docs[id].modal = await window.new_modal("app/html/sauce.html", {width: 390, height: 380, parent: docs[id].win, frame: false, ...get_centered_xy(id, 350, 340)}, touchbar.get_sauce_info);
+electron.ipcMain.on("get_sauce_info", async (event, {id, title, author, group, comments}) => {
+    docs[id].modal = await window.new_modal("app/html/sauce.html", {width: 350, height: 340, parent: docs[id].win, frame: false, ...get_centered_xy(id, 350, 340)}, touchbar.get_sauce_info);
     if (darwin) add_darwin_window_menu_handler(id);
-    docs[id].modal.send("set_sauce_info", {title, author, group, comments, ignore_sauce});
+    docs[id].modal.send("set_sauce_info", {title, author, group, comments});
 });
 
-electron.ipcMain.on("update_sauce", (event, {id, title, author, group, comments, ignore_sauce}) => {
-    if (docs[id] && docs[id].modal && !docs[id].modal.isDestroyed()) docs[id].modal.send("set_sauce_info", {title, author, group, comments, ignore_sauce});
+electron.ipcMain.on("update_sauce", (event, {id, title, author, group, comments}) => {
+    if (docs[id] && docs[id].modal && !docs[id].modal.isDestroyed()) docs[id].modal.send("set_sauce_info", {title, author, group, comments});
 });
 
 function get_centered_xy(id, width, height) {
