@@ -1,6 +1,6 @@
 {
   "name": "moebius",
-  "version": "1.0.24",
+  "version": "1.0.25",
   "description": "Modern ANSI Art Editor",
   "repository": {
     "type": "git",
@@ -18,17 +18,20 @@
   "author": "Andy Herbert <andy.herbert@gmail.com>",
   "license": "Apache-2.0",
   "devDependencies": {
-    "browserify": "^16.5.0",
-    "electron": "^7.0.1",
-    "electron-builder": "^21.2.0",
+    "browserify": "^16.5.1",
+    "electron": "^8.2.5",
+    "electron-builder": "^22.6.0",
     "express": "^4.17.1"
   },
   "dependencies": {
-    "electron-is-dev": "^1.1.0",
-    "json5": "^2.1.0",
-    "linkifyjs": "^2.1.8",
-    "minimist": "^1.2.3",
+    "electron-is-dev": "^1.2.0",
+    "jquery": "^3.5.0",
+    "json5": "^2.1.3",
+    "linkifyjs": "^2.1.9",
+    "minimist": "^1.2.5",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
     "upng-js": "^2.1.0",
-    "ws": "^7.1.2"
+    "ws": "^7.2.5"
   }
 }
