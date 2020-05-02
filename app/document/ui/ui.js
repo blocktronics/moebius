@@ -168,18 +168,18 @@ function hide_scrollbars(value) {
 }
 
 function current_zoom_factor() {
-    return parseFloat(electron.remote.getCurrentWebContents().getZoomFactor().toFixed(1));
+    return parseFloat(electron.remote.getCurrentWebContents().zoomFactor.toFixed(1));
 }
 
 function set_zoom(factor) {
     const zoom_element = $("zoom");
-    electron.remote.getCurrentWebContents().setZoomFactor(factor);
+    electron.remote.getCurrentWebContents().zoomFactor = factor;
     zoom_element.textContent = `${Math.ceil(factor * 10) * 10}%`;
     zoom_element.classList.remove("fade");
     document.body.removeChild(zoom_element);
     document.body.appendChild(zoom_element);
     zoom_element.classList.add("fade");
-    send("update_menu_checkboxes", {actual_size: (electron.remote.getCurrentWebContents().getZoomFactor() == 1)});
+    send("update_menu_checkboxes", {actual_size: (electron.remote.getCurrentWebContents().zoomFactor == 1)});
 }
 
 function zoom_in() {
