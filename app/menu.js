@@ -71,6 +71,7 @@ const window_menu_items = {
 
 const help_menu_items = {
     label: "Help", role: "help", submenu: [
+        {label: "How to Start a Server", id: "show_repo", click(item) {electron.shell.openExternal("https://github.com/blocktronics/moebius/blob/master/README.md#moebius-server");}},
         {label: "Enable Function Keys on MacOS", id: "enable_function_keys", click(item) {electron.shell.openExternal("file:///System/Library/PreferencePanes/Keyboard.prefPane/");}, enabled: darwin},
         {type: "separator"},
         {label: "Cheatsheet", id: "show_cheatsheet", click(item) {event.emit("show_cheatsheet");}},

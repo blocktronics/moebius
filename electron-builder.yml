@@ -42,9 +42,9 @@ win:
   artifactName: Moebius Setup.exe
   target:
   - target: nsis
-    arch: [x64, ia32, arm64]
+    arch: [x64, ia32]
   - target: portable
-    arch: [x64, ia32, arm64]
+    arch: [x64, ia32]
 portable:
   artifactName: Moebius.exe
 linux:
