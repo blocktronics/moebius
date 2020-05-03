@@ -1,5 +1,5 @@
 const libtextmode = require("../libtextmode/libtextmode");
-const {on, send} = require("../senders");
+const {on, send, send_sync} = require("../senders");
 const events = require("events");
 const chat = require("./ui/chat");
 const path = require("path");;
@@ -1088,8 +1088,8 @@ class TextModeDoc extends events.EventEmitter {
         on("ice_colors", (event, value) => this.ice_colors = value);
         on("use_9px_font", (event, value) => this.use_9px_font = value);
         on("change_font", (event, font_name) => this.font_name = font_name);
-        on("get_sauce_info", (event) => send("get_sauce_info", {title: doc.title, author: doc.author, group: doc.group, comments: doc.comments}));
-        on("get_canvas_size", (event) => send("get_canvas_size", {columns: doc.columns, rows: doc.rows}));
+        on("get_sauce_info", (event) => send_sync("get_sauce_info", {title: doc.title, author: doc.author, group: doc.group, comments: doc.comments}));
+        on("get_canvas_size", (event) => send_sync("get_canvas_size", {columns: doc.columns, rows: doc.rows}));
         on("set_canvas_size", (event, {columns, rows}) => this.resize(columns, rows));
         on("set_sauce_info", (event, {title, author, group, comments}) => this.set_sauce(title, author, group, comments));
         on("mirror_mode", (event, value) => this.mirror_mode = value);
