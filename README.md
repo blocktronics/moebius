@@ -33,7 +33,7 @@ To start a server:
 ```
 git clone git@github.com:blocktronics/moebius.git
 npm install
-nodes ./server.js
+node ./server.js
 ```
 
 This will start a server with default settings. In this case a password will not be set and any value entered in the Moebius client will be accepted by the server. The server runs on port 8000, as the port can't be modified by Moebius clients this is also not configurable.
