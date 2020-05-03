@@ -63,7 +63,7 @@ function write_file(doc, file, {utf8 = false} = {}) {
         default:
         bytes = encode_as_ansi(doc, {utf8});
     }
-    fs.writeFileSync(file, bytes);
+    fs.writeFileSync(file, bytes, "binary");
 }
 
 function create_canvases(width, height, maximum_height) {
