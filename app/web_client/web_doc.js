@@ -123,7 +123,6 @@ class TextModeDoc extends events.EventEmitter {
             this.emit("sauce", title, author, group, comments);
         });
         connection.on("set_canvas_size", (columns, rows) => {
-            this.undo_history.reset_undos();
             libtextmode.resize_canvas(doc, columns, rows);
             this.start_rendering();
         });

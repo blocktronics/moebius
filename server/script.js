@@ -1892,7 +1892,7 @@ function export_as_apng(render, file) {
     fs.writeFileSync(file, Buffer.from(bytes));
 }
 
-module.exports = {read_bytes, read_file, write_file, animate, render, render_split, render_at, render_insert_column, render_delete_column, render_insert_row, render_delete_row, new_document, clone_document, resize_canvas, cp437_to_unicode, cp437_to_unicode_bytes, unicode_to_cp437, render_blocks, merge_blocks, flip_code_x, flip_x, flip_y, rotate, insert_column, insert_row, delete_column, delete_row, scroll_canvas_up, scroll_canvas_down, scroll_canvas_left, scroll_canvas_right, render_scroll_canvas_up, render_scroll_canvas_down, render_scroll_canvas_left, render_scroll_canvas_right, get_data_url, convert_ega_to_style, compress, uncompress, get_blocks, get_all_blocks, export_as_png, export_as_apng, has_default_palette, encode_as_bin, encode_as_xbin, encode_as_ansi};
+module.exports = {Font, read_bytes, read_file, write_file, animate, render, render_split, render_at, render_insert_column, render_delete_column, render_insert_row, render_delete_row, new_document, clone_document, resize_canvas, cp437_to_unicode, cp437_to_unicode_bytes, unicode_to_cp437, render_blocks, merge_blocks, flip_code_x, flip_x, flip_y, rotate, insert_column, insert_row, delete_column, delete_row, scroll_canvas_up, scroll_canvas_down, scroll_canvas_left, scroll_canvas_right, render_scroll_canvas_up, render_scroll_canvas_down, render_scroll_canvas_left, render_scroll_canvas_right, get_data_url, convert_ega_to_style, compress, uncompress, get_blocks, get_all_blocks, export_as_png, export_as_apng, has_default_palette, encode_as_bin, encode_as_xbin, encode_as_ansi};
 
 }).call(this,require("buffer").Buffer)
 },{"./ansi":1,"./binary_text":2,"./canvas":3,"./encodings":4,"./font":5,"./palette":7,"./textmode":8,"./xbin":9,"buffer":15,"fs":14,"path":45,"upng-js":47}],7:[function(require,module,exports){
@@ -2538,7 +2538,6 @@ class TextModeDoc extends events.EventEmitter {
             this.emit("sauce", title, author, group, comments);
         });
         connection.on("set_canvas_size", (columns, rows) => {
-            this.undo_history.reset_undos();
             libtextmode.resize_canvas(doc, columns, rows);
             this.start_rendering();
         });
