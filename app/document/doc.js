@@ -1041,9 +1041,9 @@ class TextModeDoc extends events.EventEmitter {
         send("set_file", {file: this.file});
     }
 
-    async save() {
+    async save(save_without_sauce) {
         if (!this.file) return;
-        await libtextmode.write_file(this, this.file);
+        await libtextmode.write_file(this, this.file, {save_without_sauce});
         if (!connection) send("set_file", {file: this.file});
     }
 

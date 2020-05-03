@@ -75,7 +75,7 @@ class XBin extends Textmode {
     }
 }
 
-function encode_as_xbin(doc) {
+function encode_as_xbin(doc, save_without_sauce) {
     let bin_bytes = encode_as_bin(doc);
     let header = [88, 66, 73, 78, 26, doc.columns & 255, doc.columns >> 8, doc.rows & 255, doc.rows >> 8, doc.font_height, 0];
     if (doc.palette) {
@@ -102,7 +102,10 @@ function encode_as_xbin(doc) {
     let bytes = new Uint8Array(header.length + bin_bytes.length);
     bytes.set(header, 0);
     bytes.set(bin_bytes, header.length);
-    return add_sauce_for_xbin({doc, bytes});
+    if (!save_without_sauce) {
+        return add_sauce_for_xbin({doc, bytes});
+    }
+    return bytes;
 }
 
 module.exports = {XBin, encode_as_xbin};

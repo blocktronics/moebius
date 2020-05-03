@@ -50,18 +50,18 @@ async function animate({file, ctx}) {
     }
 }
 
-function write_file(doc, file, {utf8 = false} = {}) {
+function write_file(doc, file, {utf8 = false, save_without_sauce = false} = {}) {
     let bytes;
     switch (path.extname(file).toLowerCase()) {
         case ".bin":
-        bytes = encode_as_bin(doc);
+        bytes = encode_as_bin(doc, save_without_sauce);
         break;
         case ".xb":
-        bytes = encode_as_xbin(doc);
+        bytes = encode_as_xbin(doc, save_without_sauce);
         break;
         case ".ans":
         default:
-        bytes = encode_as_ansi(doc, {utf8});
+        bytes = encode_as_ansi(doc, save_without_sauce, {utf8});
     }
     fs.writeFileSync(file, bytes, "binary");
 }

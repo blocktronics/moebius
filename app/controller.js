@@ -37,10 +37,10 @@ doc.on("ready", () => {
     tools.start(tools.modes.SELECT);
 });
 
-function save(destroy_when_done = false) {
+function save(destroy_when_done = false, save_without_sauce = false) {
     if (doc.file) {
         doc.edited = false;
-        doc.save();
+        doc.save(save_without_sauce);
         if (destroy_when_done) send("destroy");
     } else {
         save_as(destroy_when_done);
@@ -53,6 +53,15 @@ function save_as(destroy_when_done = false) {
         doc.file = file;
         doc.edited = false;
         save(destroy_when_done);
+    }
+}
+
+function save_without_sauce() {
+    const file = save_box(doc.file, "ans", {filters: [{name: "ANSI Art", extensions: ["ans", "asc", "diz", "nfo", "txt"]}, {name: "XBin", extensions: ["xb"]}, {name: "Binary Text", extensions: ["bin"]}]});
+    if (file) {
+        doc.file = file;
+        doc.edited = false;
+        save(false, true);
     }
 }
 
@@ -116,6 +125,7 @@ on("save", (event, opts) => {
     }
 });
 on("save_as", (event, opts) => save_as());
+on("save_without_sauce", (event, opts) => save_without_sauce());
 on("share_online", (event, opts) => share_online());
 on("open_file", (event, file) => doc.open(file));
 on("check_before_closing", (event) => check_before_closing());

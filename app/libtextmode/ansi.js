@@ -432,7 +432,7 @@ function bin_to_ansi_colour(bin_colour) {
     }
 }
 
-function encode_as_ansi(doc, {utf8 = false} = {}) {
+function encode_as_ansi(doc, save_without_sauce, {utf8 = false} = {}) {
     let output = [27, 91, 48, 109];
     let bold = false;
     let blink = false;
@@ -523,7 +523,10 @@ function encode_as_ansi(doc, {utf8 = false} = {}) {
     }
     const bytes = new Uint8Array(output);
     if (utf8) return bytes;
-    return add_sauce_for_ans({doc, bytes});
+    if (!save_without_sauce) {
+        return add_sauce_for_ans({doc, bytes});
+    }
+    return bytes;
 }
 
 module.exports = {Ansi, encode_as_ansi};

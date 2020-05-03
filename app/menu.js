@@ -123,6 +123,7 @@ function file_menu_template(win) {
             {type: "separator"},
             {label: "Save", id: "save", accelerator: "CmdorCtrl+S", click(item) {win.send("save");}},
             {label: "Save As\u2026", id: "save_as", accelerator: "CmdorCtrl+Shift+S", click(item) {win.send("save_as");}},
+            {label: "Save Without Sauce Info\u2026", id: "save_without_sauce", click(item) {win.send("save_without_sauce");}},
             {type: "separator"},
             {label: "Share Online", id: "share_online", click(item) {win.send("share_online");}},
             {type: "separator"},

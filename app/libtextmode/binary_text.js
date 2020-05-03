@@ -17,7 +17,7 @@ class BinaryText extends Textmode {
     }
 }
 
-function encode_as_bin(doc) {
+function encode_as_bin(doc, save_without_sauce) {
     if (doc.columns % 2 != 0) {
         throw("Cannot save in Binary Text format with an odd number of columns.");
     }
@@ -26,7 +26,10 @@ function encode_as_bin(doc) {
         bytes[j] = doc.data[i].code;
         bytes[j + 1] = (doc.data[i].bg << 4) + doc.data[i].fg;
     }
-    return add_sauce_for_bin({doc, bytes});
+    if (!save_without_sauce) {
+        return add_sauce_for_bin({doc, bytes});
+    }
+    return bytes;
 }
 
 module.exports = {BinaryText, encode_as_bin};
