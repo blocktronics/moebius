@@ -8,6 +8,7 @@ const font_list = {
     "Amiga": {"Amiga Topaz 1": 16, "Amiga Topaz 1+": 16, "Amiga Topaz 2": 16, "Amiga Topaz 2+": 16, "Amiga P0T-NOoDLE": 16, "Amiga MicroKnight": 16, "Amiga MicroKnight+": 16, "Amiga mOsOul": 16},
     "Arabic": {"IBM VGA50 864": 8, "IBM EGA 864": 14, "IBM VGA 864": 16},
     "Baltic Rim": {"IBM VGA50 775": 8, "IBM EGA 775": 14, "IBM VGA 775": 16},
+    "C64": {"C64 PETSCII unshifted": 8, "C64 PETSCII shifted": 8},
     "Cyrillic": {"IBM VGA50 866": 8, "IBM EGA 866": 14, "IBM VGA 866": 16, "IBM VGA50 855": 8, "IBM EGA 855": 14, "IBM VGA 855": 16},
     "French Canadian": {"IBM VGA50 863": 8, "IBM EGA 863": 14, "IBM VGA 863": 16, "IBM VGA25G 863": 19},
     "Greek": {"IBM VGA50 737": 8, "IBM EGA 737": 14, "IBM VGA 737": 16, "IBM VGA50 869": 8, "IBM EGA 869": 14, "IBM VGA 869": 16, "IBM VGA50 851": 8, "IBM EGA 851": 14, "IBM VGA 851": 16, "IBM VGA25G 851": 19},

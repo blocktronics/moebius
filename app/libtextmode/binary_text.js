@@ -1,4 +1,4 @@
-const {ega} = require("./palette");
+const {ega, c64} = require("./palette");
 const {bytes_to_blocks, Textmode, add_sauce_for_bin} = require("./textmode");
 
 class BinaryText extends Textmode {
@@ -12,7 +12,11 @@ class BinaryText extends Textmode {
             throw("Error parsing BinaryText file: unexpected number of rows");
         }
         this.rows = rows;
-        this.palette = ega;
+        if (this.font_name == "C64 PETSCII unshifted" || this.font_name == "C64 PETSCII shifted") {
+            this.palette = c64;
+        } else {
+            this.palette = ega;
+        }
         this.data = bytes_to_blocks({columns: this.columns, rows: this.rows, bytes: this.bytes.subarray(0, this.filesize)});
     }
 }

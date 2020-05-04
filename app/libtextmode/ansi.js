@@ -1,4 +1,4 @@
-const {ega} = require("./palette");
+const {ega, c64} = require("./palette");
 const {Textmode, add_sauce_for_ans} = require("./textmode");
 const {cp437_to_unicode_bytes} = require("./encodings");
 
@@ -416,7 +416,11 @@ class Ansi extends Textmode {
         } else if (this.rows < screen.rows) {
             screen.rows = this.rows;
         }
-        this.palette = ega;
+        if (this.font_name == "C64 PETSCII unshifted" || this.font_name == "C64 PETSCII shifted") {
+            this.palette = c64;
+        } else {
+            this.palette = ega;
+        }
         this.custom_colors = screen.unique_custom_colors();
         this.data = screen.trim_data();
     }

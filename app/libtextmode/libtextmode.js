@@ -3,7 +3,7 @@ const {create_canvas, join_canvases} = require("./canvas");
 const {Ansi, encode_as_ansi} = require("./ansi");
 const {BinaryText, encode_as_bin} = require("./binary_text");
 const {XBin, encode_as_xbin} = require("./xbin");
-const {ega, convert_ega_to_style, has_default_palette} = require("./palette");
+const {ega, c64, convert_ega_to_style, has_ansi_palette, has_c64_palette} = require("./palette");
 const path = require("path");
 const {current_date, resize_canvas} = require("./textmode");
 const {cp437_to_unicode, cp437_to_unicode_bytes, unicode_to_cp437} = require("./encodings");
@@ -658,4 +658,4 @@ function export_as_apng(render, file) {
     fs.writeFileSync(file, Buffer.from(bytes));
 }
 
-module.exports = {Font, read_bytes, read_file, write_file, animate, render, render_split, render_at, render_insert_column, render_delete_column, render_insert_row, render_delete_row, new_document, clone_document, resize_canvas, cp437_to_unicode, cp437_to_unicode_bytes, unicode_to_cp437, render_blocks, merge_blocks, flip_code_x, flip_x, flip_y, rotate, insert_column, insert_row, delete_column, delete_row, scroll_canvas_up, scroll_canvas_down, scroll_canvas_left, scroll_canvas_right, render_scroll_canvas_up, render_scroll_canvas_down, render_scroll_canvas_left, render_scroll_canvas_right, get_data_url, convert_ega_to_style, compress, uncompress, get_blocks, get_all_blocks, export_as_png, export_as_apng, has_default_palette, encode_as_bin, encode_as_xbin, encode_as_ansi};
+module.exports = {Font, read_bytes, read_file, write_file, animate, render, render_split, render_at, render_insert_column, render_delete_column, render_insert_row, render_delete_row, new_document, clone_document, resize_canvas, cp437_to_unicode, cp437_to_unicode_bytes, unicode_to_cp437, render_blocks, merge_blocks, flip_code_x, flip_x, flip_y, rotate, insert_column, insert_row, delete_column, delete_row, scroll_canvas_up, scroll_canvas_down, scroll_canvas_left, scroll_canvas_right, render_scroll_canvas_up, render_scroll_canvas_down, render_scroll_canvas_left, render_scroll_canvas_right, get_data_url, ega, c64, convert_ega_to_style, compress, uncompress, get_blocks, get_all_blocks, export_as_png, export_as_apng, has_ansi_palette, has_c64_palette, encode_as_bin, encode_as_xbin, encode_as_ansi};

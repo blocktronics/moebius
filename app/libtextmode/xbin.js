@@ -64,6 +64,7 @@ class XBin extends Textmode {
             this.palette = ega;
         }
         if (font_flag) {
+            this.font_name = "Custom";
             this.font_bytes = this.bytes.subarray(i, i + 256 * this.font_height);
             i += 256 * this.font_height;
         }

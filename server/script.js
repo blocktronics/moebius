@@ -1,5 +1,5 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
-const {ega} = require("./palette");
+const {ega, c64} = require("./palette");
 const {Textmode, add_sauce_for_ans} = require("./textmode");
 const {cp437_to_unicode_bytes} = require("./encodings");
 
@@ -417,7 +417,11 @@ class Ansi extends Textmode {
         } else if (this.rows < screen.rows) {
             screen.rows = this.rows;
         }
-        this.palette = ega;
+        if (this.font_name == "C64 PETSCII unshifted" || this.font_name == "C64 PETSCII shifted") {
+            this.palette = c64;
+        } else {
+            this.palette = ega;
+        }
         this.custom_colors = screen.unique_custom_colors();
         this.data = screen.trim_data();
     }
@@ -433,7 +437,7 @@ function bin_to_ansi_colour(bin_colour) {
     }
 }
 
-function encode_as_ansi(doc, {utf8 = false} = {}) {
+function encode_as_ansi(doc, save_without_sauce, {utf8 = false} = {}) {
     let output = [27, 91, 48, 109];
     let bold = false;
     let blink = false;
@@ -524,13 +528,16 @@ function encode_as_ansi(doc, {utf8 = false} = {}) {
     }
     const bytes = new Uint8Array(output);
     if (utf8) return bytes;
-    return add_sauce_for_ans({doc, bytes});
+    if (!save_without_sauce) {
+        return add_sauce_for_ans({doc, bytes});
+    }
+    return bytes;
 }
 
 module.exports = {Ansi, encode_as_ansi};
 
 },{"./encodings":4,"./palette":7,"./textmode":8}],2:[function(require,module,exports){
-const {ega} = require("./palette");
+const {ega, c64} = require("./palette");
 const {bytes_to_blocks, Textmode, add_sauce_for_bin} = require("./textmode");
 
 class BinaryText extends Textmode {
@@ -544,12 +551,16 @@ class BinaryText extends Textmode {
             throw("Error parsing BinaryText file: unexpected number of rows");
         }
         this.rows = rows;
-        this.palette = ega;
+        if (this.font_name == "C64 PETSCII unshifted" || this.font_name == "C64 PETSCII shifted") {
+            this.palette = c64;
+        } else {
+            this.palette = ega;
+        }
         this.data = bytes_to_blocks({columns: this.columns, rows: this.rows, bytes: this.bytes.subarray(0, this.filesize)});
     }
 }
 
-function encode_as_bin(doc) {
+function encode_as_bin(doc, save_without_sauce) {
     if (doc.columns % 2 != 0) {
         throw("Cannot save in Binary Text format with an odd number of columns.");
     }
@@ -558,7 +569,10 @@ function encode_as_bin(doc) {
         bytes[j] = doc.data[i].code;
         bytes[j + 1] = (doc.data[i].bg << 4) + doc.data[i].fg;
     }
-    return add_sauce_for_bin({doc, bytes});
+    if (!save_without_sauce) {
+        return add_sauce_for_bin({doc, bytes});
+    }
+    return bytes;
 }
 
 module.exports = {BinaryText, encode_as_bin};
@@ -1158,8 +1172,8 @@ function lookup_url(font_name) {
     case "Amiga MicroKnight":     return "../fonts/amiga/MicroKnight.F16";
     case "Amiga MicroKnight+":    return "../fonts/amiga/MicroKnightPlus.F16";
     case "Amiga mOsOul":          return "../fonts/amiga/mO'sOul.F16";
-    case "C64 PETSCII unshifted": return "../fonts/c64/unshifted.F08";
-    case "C64 PETSCII shifted":   return "../fonts/c64/shifted.F08";
+    case "C64 PETSCII unshifted": return "../fonts/c64/PETSCII unshifted.F08";
+    case "C64 PETSCII shifted":   return "../fonts/c64/PETSCII shifted.F08";
     case "Atari ATASCII":         return "../fonts/atari/atascii.F08";
     default:                      return "../fonts/ibm/CP437.F16";
     }
@@ -1237,7 +1251,7 @@ const {create_canvas, join_canvases} = require("./canvas");
 const {Ansi, encode_as_ansi} = require("./ansi");
 const {BinaryText, encode_as_bin} = require("./binary_text");
 const {XBin, encode_as_xbin} = require("./xbin");
-const {ega, convert_ega_to_style, has_default_palette} = require("./palette");
+const {ega, c64, convert_ega_to_style, has_ansi_palette, has_c64_palette} = require("./palette");
 const path = require("path");
 const {current_date, resize_canvas} = require("./textmode");
 const {cp437_to_unicode, cp437_to_unicode_bytes, unicode_to_cp437} = require("./encodings");
@@ -1284,20 +1298,20 @@ async function animate({file, ctx}) {
     }
 }
 
-function write_file(doc, file, {utf8 = false} = {}) {
+function write_file(doc, file, {utf8 = false, save_without_sauce = false} = {}) {
     let bytes;
     switch (path.extname(file).toLowerCase()) {
         case ".bin":
-        bytes = encode_as_bin(doc);
+        bytes = encode_as_bin(doc, save_without_sauce);
         break;
         case ".xb":
-        bytes = encode_as_xbin(doc);
+        bytes = encode_as_xbin(doc, save_without_sauce);
         break;
         case ".ans":
         default:
-        bytes = encode_as_ansi(doc, {utf8});
+        bytes = encode_as_ansi(doc, save_without_sauce, {utf8});
     }
-    fs.writeFileSync(file, bytes);
+    fs.writeFileSync(file, bytes, "binary");
 }
 
 function create_canvases(width, height, maximum_height) {
@@ -1892,7 +1906,7 @@ function export_as_apng(render, file) {
     fs.writeFileSync(file, Buffer.from(bytes));
 }
 
-module.exports = {Font, read_bytes, read_file, write_file, animate, render, render_split, render_at, render_insert_column, render_delete_column, render_insert_row, render_delete_row, new_document, clone_document, resize_canvas, cp437_to_unicode, cp437_to_unicode_bytes, unicode_to_cp437, render_blocks, merge_blocks, flip_code_x, flip_x, flip_y, rotate, insert_column, insert_row, delete_column, delete_row, scroll_canvas_up, scroll_canvas_down, scroll_canvas_left, scroll_canvas_right, render_scroll_canvas_up, render_scroll_canvas_down, render_scroll_canvas_left, render_scroll_canvas_right, get_data_url, convert_ega_to_style, compress, uncompress, get_blocks, get_all_blocks, export_as_png, export_as_apng, has_default_palette, encode_as_bin, encode_as_xbin, encode_as_ansi};
+module.exports = {Font, read_bytes, read_file, write_file, animate, render, render_split, render_at, render_insert_column, render_delete_column, render_insert_row, render_delete_row, new_document, clone_document, resize_canvas, cp437_to_unicode, cp437_to_unicode_bytes, unicode_to_cp437, render_blocks, merge_blocks, flip_code_x, flip_x, flip_y, rotate, insert_column, insert_row, delete_column, delete_row, scroll_canvas_up, scroll_canvas_down, scroll_canvas_left, scroll_canvas_right, render_scroll_canvas_up, render_scroll_canvas_down, render_scroll_canvas_left, render_scroll_canvas_right, get_data_url, ega, c64, convert_ega_to_style, compress, uncompress, get_blocks, get_all_blocks, export_as_png, export_as_apng, has_ansi_palette, has_c64_palette, encode_as_bin, encode_as_xbin, encode_as_ansi};
 
 }).call(this,require("buffer").Buffer)
 },{"./ansi":1,"./binary_text":2,"./canvas":3,"./encodings":4,"./font":5,"./palette":7,"./textmode":8,"./xbin":9,"buffer":15,"fs":14,"path":45,"upng-js":47}],7:[function(require,module,exports){
@@ -1913,7 +1927,25 @@ const bright_magenta = {r: 63, g: 21, b: 63};
 const bright_yellow = {r: 63, g: 63, b: 21};
 const bright_white = {r: 63, g: 63, b: 63};
 
+const c64_black = {r: 0, g: 0, b: 0};
+const c64_white = {r: 63, g: 63, b: 63};
+const c64_red = {r: 32, g: 13, b: 14};
+const c64_cyan = {r: 29, g: 52, b: 50};
+const c64_violet = {r: 36, g: 15, b: 38};
+const c64_green = {r: 22, g: 43, b: 19};
+const c64_blue = {r: 12, g: 11, b: 39};
+const c64_yellow = {r: 59, g: 60, b: 28};
+const c64_orange = {r: 36, g: 20, b: 10};
+const c64_brown = {r: 21, g: 14, b: 0};
+const c64_light_red = {r: 49, g: 26, b: 28};
+const c64_dark_grey = {r: 19, g: 19, b: 19};
+const c64_grey = {r: 31, g: 31, b: 31};
+const c64_light_green = {r: 42, g: 63, b: 40};
+const c64_light_blue = {r: 28, g: 27, b: 59};
+const c64_light_grey = {r: 45, g: 45, b: 45};
+
 const ega = [black, blue, green, cyan, red, magenta, yellow, white, bright_black, bright_blue, bright_green, bright_cyan, bright_red, bright_magenta, bright_yellow, bright_white];
+const c64 = [c64_black, c64_white, c64_red, c64_cyan, c64_violet, c64_green, c64_blue, c64_yellow, c64_orange, c64_brown, c64_light_red, c64_dark_grey, c64_grey, c64_light_green, c64_light_blue, c64_light_grey];
 
 function get_rgba(rgb) {
     return new Uint8Array([rgb.r, rgb.g, rgb.b, 255]);
@@ -1939,13 +1971,21 @@ function convert_ega_to_style(rgb) {
     return convert_rgb_to_style(convert_ega_to_vga(rgb));
 }
 
-function has_default_palette(palette) {
+function has_ansi_palette(palette) {
     for (let i = 0; i < palette.length; i++) {
         if (palette[i].r != ega[i].r || palette[i].g != ega[i].g || palette[i].b != ega[i].b) return false;
     }
     return true;
 }
-module.exports = {white, bright_white, ega, get_rgba, convert_ega_to_vga, convert_ega_to_style, has_default_palette};
+
+function has_c64_palette(palette) {
+    for (let i = 0; i < palette.length; i++) {
+        if (palette[i].r != c64[i].r || palette[i].g != c64[i].g || palette[i].b != c64[i].b) return false;
+    }
+    return true;
+}
+
+module.exports = {white, bright_white, ega, c64, get_rgba, convert_ega_to_vga, convert_ega_to_style, has_ansi_palette, has_c64_palette};
 
 },{}],8:[function(require,module,exports){
 (function (Buffer){
@@ -2212,6 +2252,7 @@ class XBin extends Textmode {
             this.palette = ega;
         }
         if (font_flag) {
+            this.font_name = "Custom";
             this.font_bytes = this.bytes.subarray(i, i + 256 * this.font_height);
             i += 256 * this.font_height;
         }
@@ -2223,7 +2264,7 @@ class XBin extends Textmode {
     }
 }
 
-function encode_as_xbin(doc) {
+function encode_as_xbin(doc, save_without_sauce) {
     let bin_bytes = encode_as_bin(doc);
     let header = [88, 66, 73, 78, 26, doc.columns & 255, doc.columns >> 8, doc.rows & 255, doc.rows >> 8, doc.font_height, 0];
     if (doc.palette) {
@@ -2250,7 +2291,10 @@ function encode_as_xbin(doc) {
     let bytes = new Uint8Array(header.length + bin_bytes.length);
     bytes.set(header, 0);
     bytes.set(bin_bytes, header.length);
-    return add_sauce_for_xbin({doc, bytes});
+    if (!save_without_sauce) {
+        return add_sauce_for_xbin({doc, bytes});
+    }
+    return bytes;
 }
 
 module.exports = {XBin, encode_as_xbin};
@@ -2528,6 +2572,17 @@ class TextModeDoc extends events.EventEmitter {
         });
         connection.on("change_font", (font_name) => {
             doc.font_name = font_name;
+            if (font_name == "C64 PETSCII unshifted" || font_name == "C64 PETSCII shifted") {
+                if (libtextmode.has_ansi_palette(doc.palette)) {
+                    doc.palette = libtextmode.c64;
+                    this.emit("update_swatches");
+                }
+            } else {
+                if (libtextmode.has_c64_palette(doc.palette)) {
+                    doc.palette = libtextmode.ega;
+                    this.emit("update_swatches");
+                }
+            }
             this.start_rendering().then(() => this.emit("change_font", doc.font_name));
         });
         connection.on("sauce", (title, author, group, comments) => {

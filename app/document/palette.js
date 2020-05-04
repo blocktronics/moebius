@@ -101,6 +101,7 @@ class PaletteChooser extends events.EventEmitter {
         this.fg_value = 7;
         this.bg_value = 0;
         doc.on("new_document", () => this.update_swatches());
+        doc.on("update_swatches", () => this.update_swatches());
         keyboard.on("previous_foreground_color", () => this.previous_foreground_color());
         keyboard.on("next_foreground_color", () => this.next_foreground_color());
         keyboard.on("previous_background_color", () => this.previous_background_color());

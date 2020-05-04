@@ -113,6 +113,17 @@ class TextModeDoc extends events.EventEmitter {
         });
         connection.on("change_font", (font_name) => {
             doc.font_name = font_name;
+            if (font_name == "C64 PETSCII unshifted" || font_name == "C64 PETSCII shifted") {
+                if (libtextmode.has_ansi_palette(doc.palette)) {
+                    doc.palette = libtextmode.c64;
+                    this.emit("update_swatches");
+                }
+            } else {
+                if (libtextmode.has_c64_palette(doc.palette)) {
+                    doc.palette = libtextmode.ega;
+                    this.emit("update_swatches");
+                }
+            }
             this.start_rendering().then(() => this.emit("change_font", doc.font_name));
         });
         connection.on("sauce", (title, author, group, comments) => {

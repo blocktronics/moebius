@@ -672,6 +672,17 @@ class TextModeDoc extends events.EventEmitter {
         });
         connection.on("change_font", (font_name) => {
             doc.font_name = font_name;
+            if (font_name == "C64 PETSCII unshifted" || font_name == "C64 PETSCII shifted") {
+                if (libtextmode.has_ansi_palette(doc.palette)) {
+                    doc.palette = libtextmode.c64;
+                    this.emit("update_swatches");
+                }
+            } else {
+                if (libtextmode.has_c64_palette(doc.palette)) {
+                    doc.palette = libtextmode.ega;
+                    this.emit("update_swatches");
+                }
+            }
             this.start_rendering().then(() => this.emit("change_font", doc.font_name));
         });
         connection.on("sauce", (title, author, group, comments) => {
@@ -693,6 +704,8 @@ class TextModeDoc extends events.EventEmitter {
     get connection() {return connection;}
     get render() {return render;}
     get font() {return render.font;}
+    get font_bytes() {return render.font.bitmask;}
+    get font_height() {return render.font.height;}
     get columns() {return doc.columns;}
     get rows() {return doc.rows;}
     get title() {return doc.title;}
@@ -716,6 +729,18 @@ class TextModeDoc extends events.EventEmitter {
 
     set font_name(font_name) {
         doc.font_name = font_name;
+        doc.font_bytes = undefined;
+        if (font_name == "C64 PETSCII unshifted" || font_name == "C64 PETSCII shifted") {
+            if (libtextmode.has_ansi_palette(doc.palette)) {
+                doc.palette = libtextmode.c64;
+                this.emit("update_swatches");
+            }
+        } else {
+            if (libtextmode.has_c64_palette(doc.palette)) {
+                doc.palette = libtextmode.ega;
+                this.emit("update_swatches");
+            }
+        }
         this.start_rendering().then(() => this.emit("change_font", doc.font_name));
         if (connection) connection.change_font(doc.font_name);
     }
@@ -1048,7 +1073,7 @@ class TextModeDoc extends events.EventEmitter {
     }
 
     async share_online() {
-        const default_palette = libtextmode.has_default_palette(doc.palette);
+        const default_palette = libtextmode.has_ansi_palette(doc.palette);
         const bytes = default_palette ? libtextmode.encode_as_ansi(doc) : libtextmode.encode_as_xbin(doc);
         const extension = (default_palette) ? "ans" : "xb";
         const filename = (this.file) ? path.basename(this.file) : "unknown" + '.' + extension;
