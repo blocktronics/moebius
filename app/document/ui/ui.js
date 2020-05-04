@@ -1,5 +1,5 @@
 const electron = require("electron");
-const {on, send, open_box} = require("../../senders");
+const {on, send, send_sync, open_box} = require("../../senders");
 const doc = require("../doc");
 const palette = require("../palette");
 const keyboard = require("../input/keyboard");
@@ -394,7 +394,7 @@ class Toolbar extends events.EventEmitter {
     }
 
     fkey_pref_clicker(num) {
-        return (event) => send("fkey_prefs", {num, fkey_index: this.fkey_index, current: this.fkeys[this.fkey_index][num], bitmask: doc.font.bitmask, use_9px_font: doc.font.use_9px_font, font_height: doc.font.height});
+        return (event) => send_sync("fkey_prefs", {num, fkey_index: this.fkey_index, current: this.fkeys[this.fkey_index][num], bitmask: doc.font.bitmask, use_9px_font: doc.font.use_9px_font, font_height: doc.font.height});
     }
 
     change_mode(new_mode) {
