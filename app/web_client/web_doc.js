@@ -34,7 +34,7 @@ class Connection extends events.EventEmitter {
             switch (type) {
                 case actions.DRAW:
                     doc.data[data.y * doc.columns + data.x] = Object.assign(data.block);
-                    libtextmode.render_at(render, data.x, data.y, data.block);
+                    libtextmode.render_at(render, data.x, data.y, data.block, doc.c64_background);
                     break;
                 case actions.SAUCE:
                     this.emit("sauce", data.title, data.author, data.group, data.comments);

@@ -104,7 +104,7 @@ class NetworkCursor {
         this.canvas.height = blocks.rows * render.font.height;
         this.canvas.style.width = `${this.canvas.width}px`;
         this.canvas.style.height = `${this.canvas.height}px`;
-        this.ctx.drawImage(libtextmode.render_blocks(blocks, render.font), 0, 0);
+        this.ctx.drawImage(libtextmode.render_blocks(blocks, render.font, doc.c64_background), 0, 0);
         this.operation_blocks = blocks;
         this.mode = modes.OPERATION;
     }
@@ -259,7 +259,7 @@ class Connection extends events.EventEmitter {
                     break;
                 case actions.DRAW:
                     doc.data[data.y * doc.columns + data.x] = Object.assign(data.block);
-                    libtextmode.render_at(render, data.x, data.y, data.block);
+                    libtextmode.render_at(render, data.x, data.y, data.block, doc.c64_background);
                     if (user) this.users[data.id].last_row = data.y;
                     break;
                 case actions.CHAT:
@@ -401,7 +401,7 @@ class UndoHistory extends events.EventEmitter {
             block.code = undo.code;
             block.fg = undo.fg;
             block.bg = undo.bg;
-            libtextmode.render_at(render, undo.x, undo.y, block);
+            libtextmode.render_at(render, undo.x, undo.y, block, doc.c64_background);
             if (connection) connection.draw(undo.x, undo.y, block);
             if (undo.cursor) this.emit("move_to", undo.cursor.prev_x, undo.cursor.prev_y);
         }
@@ -421,7 +421,7 @@ class UndoHistory extends events.EventEmitter {
             block.code = redo.code;
             block.fg = redo.fg;
             block.bg = redo.bg;
-            libtextmode.render_at(render, redo.x, redo.y, block);
+            libtextmode.render_at(render, redo.x, redo.y, block, doc.c64_background);
             if (connection) connection.draw(redo.x, redo.y, block);
             if (redo.cursor) this.emit("move_to", redo.cursor.post_x, redo.cursor.post_y);
         }
@@ -717,6 +717,8 @@ class TextModeDoc extends events.EventEmitter {
     get ice_colors() {return doc.ice_colors;}
     get use_9px_font() {return doc.use_9px_font;}
     get data() {return doc.data;}
+    get c64_background() {return doc.c64_background;}
+    set c64_background(value) {doc.c64_background = value;}
 
     set_sauce(title, author, group, comments) {
         doc.title = title;
@@ -775,7 +777,7 @@ class TextModeDoc extends events.EventEmitter {
             this.undo_history.push(x, y, doc.data[i]);
         }
         doc.data[i] = {code, fg, bg};
-        libtextmode.render_at(render, x, y, doc.data[i]);
+        libtextmode.render_at(render, x, y, doc.data[i], doc.c64_background);
         if (connection) connection.draw(x, y, doc.data[i]);
         if (this.mirror_mode && mirrored) {
             const opposing_x = Math.floor(doc.columns / 2) - (x - Math.ceil(doc.columns / 2)) - 1;

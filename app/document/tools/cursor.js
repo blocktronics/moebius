@@ -24,7 +24,7 @@ class Cursor {
             break;
         case modes.OPERATION:
             if (this.operation_blocks.underneath) {
-                const canvas = libtextmode.render_blocks(libtextmode.merge_blocks(this.operation_blocks, this.get_blocks_in_operation()), doc.font);
+                const canvas = libtextmode.render_blocks(libtextmode.merge_blocks(this.operation_blocks, this.get_blocks_in_operation()), doc.font, doc.c64_background);
                 this.ctx.drawImage(canvas, 2, 2, canvas.width - 4, canvas.height - 4, 0, 0, canvas.width - 4, canvas.height - 4);
             }
             break;
@@ -233,7 +233,7 @@ class Cursor {
         const font = doc.font;
         this.canvas.width = this.operation_blocks.columns * font.width - 4; this.canvas.height = this.operation_blocks.rows * font.height - 4;
         this.canvas.style.width = `${this.canvas.width}px`; this.canvas.style.height = `${this.canvas.height}px`;
-        const canvas = libtextmode.render_blocks(this.operation_blocks, doc.font);
+        const canvas = libtextmode.render_blocks(this.operation_blocks, doc.font, doc.c64_background);
         this.ctx.drawImage(canvas, 2, 2, canvas.width - 4, canvas.height - 4, 0, 0, canvas.width - 4, canvas.height - 4);
     }
 

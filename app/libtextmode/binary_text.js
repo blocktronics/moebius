@@ -26,9 +26,16 @@ function encode_as_bin(doc, save_without_sauce) {
         throw("Cannot save in Binary Text format with an odd number of columns.");
     }
     const bytes = new Uint8Array(doc.data.length * 2);
-    for (let i = 0, j = 0; i < doc.data.length; i++, j += 2) {
-        bytes[j] = doc.data[i].code;
-        bytes[j + 1] = (doc.data[i].bg << 4) + doc.data[i].fg;
+    if (doc.c64_background == undefined) {
+        for (let i = 0, j = 0; i < doc.data.length; i++, j += 2) {
+            bytes[j] = doc.data[i].code;
+            bytes[j + 1] = (doc.data[i].bg << 4) + doc.data[i].fg;
+        }
+    } else {
+        for (let i = 0, j = 0; i < doc.data.length; i++, j += 2) {
+            bytes[j] = doc.data[i].code;
+            bytes[j + 1] = (doc.c64_background << 4) + doc.data[i].fg;
+        }
     }
     if (!save_without_sauce) {
         return add_sauce_for_bin({doc, bytes});

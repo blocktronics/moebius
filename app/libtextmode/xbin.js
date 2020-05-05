@@ -1,4 +1,4 @@
-const {ega} = require("./palette");
+const {ega, has_c64_palette} = require("./palette");
 const {bytes_to_utf8, bytes_to_blocks, Textmode, add_sauce_for_xbin} = require("./textmode");
 const repeating = {NONE: 0, CHARACTERS: 1, ATTRIBUTES: 2, BOTH_CHARACTERS_AND_ATTRIBUTES: 3};
 const {encode_as_bin} = require("./binary_text");
@@ -97,7 +97,7 @@ function encode_as_xbin(doc, save_without_sauce) {
         }
         header = header.concat(font_bytes);
     }
-    if (doc.ice_colors) {
+    if (doc.ice_colors || doc.c64_background != undefined) {
         header[10] += 1 << 3;
     }
     let bytes = new Uint8Array(header.length + bin_bytes.length);

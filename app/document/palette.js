@@ -23,6 +23,10 @@ class PaletteChooser extends events.EventEmitter {
         document.getElementById("bg").style.backgroundColor = this.divs[value].style.backgroundColor;
         this.bg_value = value;
         this.emit("set_bg", this.bg_value);
+        if (libtextmode.has_c64_palette(doc.palette)) {
+            doc.c64_background = this.bg_value;
+            doc.start_rendering();
+        }
     }
 
     get bg() {
@@ -47,6 +51,20 @@ class PaletteChooser extends events.EventEmitter {
         for (const div of this.divs) swatches.appendChild(div);
         this.fg = this.fg_value;
         this.bg = this.bg_value;
+        if (libtextmode.has_c64_palette(doc.palette)) {
+            doc.c64_background = this.bg_value;
+        } else {
+            doc.c64_background = undefined;
+        }
+    }
+
+    new_document() {
+        if (libtextmode.has_c64_palette(doc.palette)) {
+            this.bg_value = doc.get_blocks(0, 0, 0, 0).data[0].bg;
+            this.emit("set_bg", this.bg_value);
+            doc.c64_background = this.bg_value;
+        }
+        this.update_swatches();
     }
 
     previous_foreground_color() {
@@ -100,7 +118,7 @@ class PaletteChooser extends events.EventEmitter {
         super();
         this.fg_value = 7;
         this.bg_value = 0;
-        doc.on("new_document", () => this.update_swatches());
+        doc.on("new_document", () => this.new_document());
         doc.on("update_swatches", () => this.update_swatches());
         keyboard.on("previous_foreground_color", () => this.previous_foreground_color());
         keyboard.on("next_foreground_color", () => this.next_foreground_color());

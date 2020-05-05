@@ -259,8 +259,10 @@ class Font {
         this.cursor = coloured_background(this.width, 2, convert_ega_to_vga(bright_white));
     }
 
-    draw(ctx, block, x, y) {
-        if (block.bg_rgb) {
+    draw(ctx, block, x, y, c64_background) {
+        if (c64_background != undefined) {
+            ctx.drawImage(this.backgrounds[c64_background], x, y);
+        } else if (block.bg_rgb) {
             ctx.drawImage(coloured_background(this.width, this.height, block.bg_rgb), x, y);
         } else {
             ctx.drawImage(this.backgrounds[block.bg], x, y);
