@@ -1,6 +1,6 @@
 const ws = require("ws");
 const libtextmode = require("./libtextmode/libtextmode");
-const action =  {CONNECTED: 0, REFUSED: 1, JOIN: 2, LEAVE: 3, CURSOR: 4, SELECTION: 5, RESIZE_SELECTION: 6, OPERATION: 7, HIDE_CURSOR: 8, DRAW: 9, CHAT: 10, STATUS: 11, SAUCE: 12, ICE_COLORS: 13, USE_9PX_FONT: 14, CHANGE_FONT: 15, SET_CANVAS_SIZE: 16};
+const action =  {CONNECTED: 0, REFUSED: 1, JOIN: 2, LEAVE: 3, CURSOR: 4, SELECTION: 5, RESIZE_SELECTION: 6, OPERATION: 7, HIDE_CURSOR: 8, DRAW: 9, CHAT: 10, STATUS: 11, SAUCE: 12, ICE_COLORS: 13, USE_9PX_FONT: 14, CHANGE_FONT: 15, SET_CANVAS_SIZE: 16, SET_BG: 21};
 const status_types = {ACTIVE: 0, IDLE: 1, AWAY: 2, WEB: 3};
 const os = require("os");
 const url = require("url");
@@ -117,6 +117,10 @@ class Joint {
             libtextmode.resize_canvas(this.doc, msg.data.columns, msg.data.rows);
             this.send_all_including_guests(ws, msg.type, msg.data);
             this.log(`changed canvas: ${msg.data.columns}/${msg.data.rows}`, ip);
+            break;
+        case action.SET_BG:
+            this.doc.c64_background = msg.data.value;
+            this.send_all_including_guests(ws, msg.type, msg.data);
             break;
         default:
             this.send_all(ws, msg.type, msg.data);

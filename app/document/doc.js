@@ -4,7 +4,7 @@ const events = require("events");
 const chat = require("./ui/chat");
 const path = require("path");;
 let doc, render;
-const actions =  {CONNECTED: 0, REFUSED: 1, JOIN: 2, LEAVE: 3, CURSOR: 4, SELECTION: 5, RESIZE_SELECTION: 6, OPERATION: 7, HIDE_CURSOR: 8, DRAW: 9, CHAT: 10, STATUS: 11, SAUCE: 12, ICE_COLORS: 13, USE_9PX_FONT: 14, CHANGE_FONT: 15, SET_CANVAS_SIZE: 16, PASTE_AS_SELECTION: 17, ROTATE: 18, FLIP_X: 19, FLIP_Y: 20};
+const actions =  {CONNECTED: 0, REFUSED: 1, JOIN: 2, LEAVE: 3, CURSOR: 4, SELECTION: 5, RESIZE_SELECTION: 6, OPERATION: 7, HIDE_CURSOR: 8, DRAW: 9, CHAT: 10, STATUS: 11, SAUCE: 12, ICE_COLORS: 13, USE_9PX_FONT: 14, CHANGE_FONT: 15, SET_CANVAS_SIZE: 16, PASTE_AS_SELECTION: 17, ROTATE: 18, FLIP_X: 19, FLIP_Y: 20, SET_BG: 21};
 const statuses = {ACTIVE: 0, IDLE: 1, AWAY: 2, WEB: 3};
 const modes = {EDITING: 0, SELECTION: 1, OPERATION: 2};
 let nick, group;
@@ -300,6 +300,9 @@ class Connection extends events.EventEmitter {
                 case actions.FLIP_Y:
                     if (user && user.cursor) user.cursor.flip_y();
                     break;
+                case actions.SET_BG:
+                    this.emit("set_bg", data.value);
+                    break;
             }
         }
     }
@@ -327,6 +330,7 @@ class Connection extends events.EventEmitter {
             if (this.users[id].cursor) this.users[id].cursor.resize_cursor();
         }
     }
+    set_bg(value) {this.send(actions.SET_BG, {value});}
 
     constructor(server, pass, web = false) {
         super();
@@ -699,6 +703,7 @@ class TextModeDoc extends events.EventEmitter {
         });
         connection.on("goto_row", (line_no) => this.emit("goto_row", line_no));
         connection.on("goto_self", (line_no) => this.emit("goto_self"));
+        connection.on("set_bg", (value) => this.emit("set_bg", value));
     }
 
     get connection() {return connection;}

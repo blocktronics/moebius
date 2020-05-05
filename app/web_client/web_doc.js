@@ -1,7 +1,7 @@
 const libtextmode = require("../libtextmode/libtextmode");
 const events = require("events");
 let doc, render;
-const actions =  {CONNECTED: 0, REFUSED: 1, JOIN: 2, LEAVE: 3, CURSOR: 4, SELECTION: 5, RESIZE_SELECTION: 6, OPERATION: 7, HIDE_CURSOR: 8, DRAW: 9, CHAT: 10, STATUS: 11, SAUCE: 12, ICE_COLORS: 13, USE_9PX_FONT: 14, CHANGE_FONT: 15, SET_CANVAS_SIZE: 16, PASTE_AS_SELECTION: 17, ROTATE: 18, FLIP_X: 19, FLIP_Y: 20};
+const actions =  {CONNECTED: 0, REFUSED: 1, JOIN: 2, LEAVE: 3, CURSOR: 4, SELECTION: 5, RESIZE_SELECTION: 6, OPERATION: 7, HIDE_CURSOR: 8, DRAW: 9, CHAT: 10, STATUS: 11, SAUCE: 12, ICE_COLORS: 13, USE_9PX_FONT: 14, CHANGE_FONT: 15, SET_CANVAS_SIZE: 16, PASTE_AS_SELECTION: 17, ROTATE: 18, FLIP_X: 19, FLIP_Y: 20, SET_BG: 21};
 let connection;
 
 class Connection extends events.EventEmitter {
@@ -50,6 +50,9 @@ class Connection extends events.EventEmitter {
                     break;
                 case actions.SET_CANVAS_SIZE:
                     this.emit("set_canvas_size", data.columns, data.rows);
+                    break;
+                case actions.SET_BG:
+                    this.emit("set_bg", data.value);
                     break;
             }
         }
@@ -135,6 +138,10 @@ class TextModeDoc extends events.EventEmitter {
         });
         connection.on("set_canvas_size", (columns, rows) => {
             libtextmode.resize_canvas(doc, columns, rows);
+            this.start_rendering();
+        });
+        connection.on("set_bg", (value) => {
+            doc.c64_background = value;
             this.start_rendering();
         });
     }
