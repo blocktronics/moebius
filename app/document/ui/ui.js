@@ -97,6 +97,19 @@ function toggle_file_id_guide(visible) {
     }
 }
 
+function toggle_petscii_guide(visible) {
+    send("uncheck_all_guides");
+    if (visible) {
+        guide_columns = 40;
+        guide_rows = 25;
+        rescale_guide();
+        $("guide").classList.remove("hidden");
+        send("check_petscii_guide");
+    } else {
+        $("guide").classList.add("hidden");
+    }
+}
+
 function rescale_guide() {
     $("guide").style.width = `${doc.render.font.width * Math.min(doc.columns, guide_columns)}px`;
     $("guide").style.height = `${doc.render.font.height * Math.min(doc.rows, guide_rows)}px`;
@@ -116,6 +129,7 @@ on("toggle_smallscale_guide", (event, visible) => toggle_smallscale_guide(visibl
 on("toggle_square_guide", (event, visible) => toggle_square_guide(visible));
 on("toggle_instagram_guide", (event, visible) => toggle_instagram_guide(visible));
 on("toggle_file_id_guide", (event, visible) => toggle_file_id_guide(visible));
+on("toggle_petscii_guide", (event, visible) => toggle_petscii_guide(visible));
 
 doc.on("render", () => rescale_guide());
 
