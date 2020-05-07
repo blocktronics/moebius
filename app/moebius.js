@@ -136,11 +136,12 @@ menu.on("preferences", preferences);
 electron.ipcMain.on("preferences", (event) => preferences());
 
 async function show_new_connection() {
-    const newconnection = await window.static("app/html/new_connection.html", {width: 480, height: 160}, touchbar.new_connection);
-    const server = prefs.get('server');
-    const pass = prefs.get('pass');
+    const new_connection = await window.static("app/html/new_connection.html", {width: 480, height: 340}, touchbar.new_connection);
+    const server = prefs.get("server");
+    const pass = prefs.get("pass");
+    const saved_servers = prefs.get("saved_servers");
     if (server) {
-        newconnection.send("saved_server", {server, pass});
+        new_connection.send("saved_servers", {server, pass, saved_servers});
     }
 }
 menu.on("show_new_connection_window", show_new_connection);
