@@ -12,6 +12,7 @@ const linux = (process.platform == "linux");
 const frameless = darwin ? {frame: false, titleBarStyle: "hiddenInset"} : {frame: true};
 let prevent_splash_screen_at_startup = false;
 let splash_screen;
+const discord = require("./discord");
 
 function cleanup(id) {
     menu.cleanup(id);
@@ -129,7 +130,7 @@ menu.on("open_in_current_window", (win) => {
 });
 
 async function preferences() {
-    const preferences = await window.static("app/html/preferences.html", {width: 480, height: 670});
+    const preferences = await window.static("app/html/preferences.html", {width: 480, height: 690});
     preferences.send("prefs", prefs.get_all());
 }
 menu.on("preferences", preferences);
@@ -198,6 +199,15 @@ function update_prefs(key, value) {
 }
 
 electron.ipcMain.on("update_prefs", (event, {key, value}) => update_prefs(key, value));
+
+electron.ipcMain.on("discord", (event, {value}) => {
+    prefs.set("discord", value);
+    if (value) {
+        discord.login();
+    } else {
+        discord.destroy();
+    }
+});
 
 electron.ipcMain.on("show_rendering_modal", async (event, {id}) => {
     docs[id].modal = await window.new_modal("app/html/rendering.html", {width: 200, height: 80, parent: docs[id].win, frame: false, ...get_centered_xy(id, 200, 80)});
@@ -321,6 +331,9 @@ electron.app.on("ready", (event) => {
         if (!prevent_splash_screen_at_startup) show_splash_screen();
     }
     if (darwin) electron.app.dock.setMenu(menu.dock_menu);
+    if (prefs.get("discord")) {
+        discord.login();
+    }
 });
 
 electron.app.on("window-all-closed", (event) => {
