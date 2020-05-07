@@ -4,18 +4,15 @@ DiscordRPC.register(client_id);
 let rpc;
 
 function login() {
-    if (!rpc) {
-        rpc = new DiscordRPC.Client({transport: "ipc"});
-        rpc.on("ready", () => {
-            rpc.setActivity({details: "Pushing blocks", largeImageKey: "default", largeImageText: "Mœbius"});
-        });
-        rpc.login({clientId: client_id});
-    }
+    rpc = new DiscordRPC.Client({transport: "ipc"});
+    rpc.on("ready", () => {
+        rpc.setActivity({details: "Pushing blocks", largeImageKey: "default", largeImageText: "Mœbius"});
+    });
+    rpc.login({clientId: client_id}).catch((e) => {});
 }
 
 function destroy() {
-    rpc.destroy();
-    rpc = undefined;
+    rpc.destroy().catch((e) => {});
 }
 
 module.exports = {login, destroy};
