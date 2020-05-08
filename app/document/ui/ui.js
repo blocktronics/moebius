@@ -374,6 +374,16 @@ class Toolbar extends events.EventEmitter {
         this.change_fkeys((this.fkey_index + 1 == this.fkeys.length) ? 0 : this.fkey_index + 1);
     }
 
+    increase_brush_size() {
+        this.brush_size = Math.min(this.brush_size + 1, 9);
+        $("brush_size_num").innerText = this.brush_size;
+    }
+
+    decrease_brush_size() {
+        this.brush_size = Math.max(this.brush_size - 1, 1);
+        $("brush_size_num").innerText = this.brush_size;
+    }
+
     default_character_set() {
         this.change_fkeys(this.default_fkeys);
     }
@@ -472,6 +482,7 @@ class Toolbar extends events.EventEmitter {
         this.modes = {HALF_BLOCK: 0, FULL_BLOCK: 1, SHADING_BLOCK: 2, CLEAR_BLOCK: 3, REPLACE_COLOR: 4, BLINK: 5, COLORIZE: 6};
         this.colorize_fg = true;
         this.colorize_bg = false;
+        this.brush_size = 1;
         on("show_toolbar", (event, visible) => set_var_px("toolbar-height", visible ? 48 : 0));
         palette.on("set_fg", () => this.redraw_fkeys());
         palette.on("set_bg", () => this.redraw_fkeys());
@@ -490,6 +501,9 @@ class Toolbar extends events.EventEmitter {
             for (let i = 0; i < 12; i++) $(`f${i + 1}_pref`).addEventListener("mousedown", this.fkey_pref_clicker(i), true);
             $("fkey_chooser_left").addEventListener("mousedown", (event) => this.previous_character_set(), true);
             $("fkey_chooser_right").addEventListener("mousedown", (event) => this.next_character_set(), true);
+            $("brush_size_left").addEventListener("mousedown", (event) => this.decrease_brush_size(), true);
+            $("brush_size_right").addEventListener("mousedown", (event) => this.increase_brush_size(), true);
+            $("brush_size_num").innerText = this.brush_size;
             $("half_block").addEventListener("mousedown", (event) => this.change_mode(this.modes.HALF_BLOCK));
             $("full_block").addEventListener("mousedown", (event) => this.change_mode(this.modes.FULL_BLOCK));
             $("shading_block").addEventListener("mousedown", (event) => this.change_mode(this.modes.SHADING_BLOCK));
