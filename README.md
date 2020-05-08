@@ -18,7 +18,7 @@ npm install
 npm start
 ```
 
-Moebius packakges can be built easily with [electron-builder](https://github.com/electron-userland/electron-builder). Note that a build for MacOS must be made on MacOS and that MacOS Catalina currently will not build WIN32 executables (as opposed to Mojave).
+Moebius packakges can be built easily with [electron-builder](https://github.com/electron-userland/electron-builder). Note that a build for MacOS must be made on MacOS.
 
 ```
 npm run-script build-mac
