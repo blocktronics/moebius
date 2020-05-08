@@ -241,6 +241,10 @@ function view_menu_template(win) {
             {label: "Next Character Set", id: "next_character_set", accelerator: "Ctrl+.", click(item) {win.send("next_character_set");}, enabled: true},
             {label: "Default Character Set", id: "default_character_set", accelerator: "Ctrl+/", click(item) {win.send("default_character_set");}, enabled: true},
             {type: "separator"},
+            {label: "Increase Brush Size", id: "increase_brush_size", accelerator: "Alt+=", click(item) {win.send("increase_brush_size");}, enabled: false},
+            {label: "Decrease Brush Size", id: "decrease_brush_size", accelerator: "Alt+-", click(item) {win.send("decrease_brush_size");}, enabled: false},
+            {label: "Reset Brush Size", id: "reset_brush_size", accelerator: "Alt+0", click(item) {win.send("reset_brush_size");}, enabled: false},
+            {type: "separator"},
             {label: "Use 9px Font", id: "use_9px_font", accelerator: "CmdorCtrl+F", click(item) {win.send("use_9px_font", item.checked);}, type: "checkbox", checked: false},
             {type: "separator"},
             {label: "Actual Size", id: "actual_size", accelerator: "CmdorCtrl+Alt+0", click(item) {win.send("actual_size");}, type: "checkbox", checked: false},
@@ -613,6 +617,18 @@ electron.ipcMain.on("uncheck_all_guides", (event, {id}) => {
 electron.ipcMain.on("enable_chat_window_toggle", (event, {id}) => {
     enable(id, "chat_window_toggle");
     check(id, "chat_window_toggle");
+});
+
+electron.ipcMain.on("enable_brush_size_shortcuts", (event, {id}) => {
+    enable(id, "increase_brush_size");
+    enable(id, "decrease_brush_size");
+    enable(id, "reset_brush_size");
+});
+
+electron.ipcMain.on("disable_brush_size_shortcuts", (event, {id}) => {
+    disable(id, "increase_brush_size");
+    disable(id, "decrease_brush_size");
+    disable(id, "reset_brush_size");
 });
 
 class MenuEvent extends events.EventEmitter {

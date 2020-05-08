@@ -384,6 +384,11 @@ class Toolbar extends events.EventEmitter {
         $("brush_size_num").innerText = this.brush_size;
     }
 
+    reset_brush_size() {
+        this.brush_size = 1;
+        $("brush_size_num").innerText = this.brush_size;
+    }
+
     default_character_set() {
         this.change_fkeys(this.default_fkeys);
     }
@@ -394,6 +399,7 @@ class Toolbar extends events.EventEmitter {
 
     show_select() {
         send("show_editing_touchbar");
+        send("disable_brush_size_shortcuts");
         $("select_panel").classList.remove("hidden");
         $("brush_panel").classList.add("hidden");
         $("sample_panel").classList.add("hidden");
@@ -401,6 +407,7 @@ class Toolbar extends events.EventEmitter {
 
     show_brush() {
         send("show_brush_touchbar");
+        send("enable_brush_size_shortcuts");
         $("select_panel").classList.add("hidden");
         $("brush_panel").classList.remove("hidden");
         $("sample_panel").classList.add("hidden");
@@ -408,6 +415,7 @@ class Toolbar extends events.EventEmitter {
 
     show_sample() {
         send("show_brush_touchbar");
+        send("disable_brush_size_shortcuts");
         $("select_panel").classList.add("hidden");
         $("brush_panel").classList.add("hidden");
         $("sample_panel").classList.remove("hidden");
@@ -478,6 +486,9 @@ class Toolbar extends events.EventEmitter {
         on("next_character_set", () => this.next_character_set());
         on("previous_character_set", () => this.previous_character_set());
         on("default_character_set", () => this.default_character_set());
+        on("increase_brush_size", () => this.increase_brush_size());
+        on("decrease_brush_size", () => this.decrease_brush_size());
+        on("reset_brush_size", () => this.reset_brush_size());
         keyboard.on("change_fkeys", (num) => this.change_fkeys(num));
         this.modes = {HALF_BLOCK: 0, FULL_BLOCK: 1, SHADING_BLOCK: 2, CLEAR_BLOCK: 3, REPLACE_COLOR: 4, BLINK: 5, COLORIZE: 6};
         this.colorize_fg = true;
