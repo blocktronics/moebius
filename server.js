@@ -16,8 +16,7 @@ if (argv.web) {
     });
     app.use(express.static("./server/"));
     app.use("/fonts/", express.static("./app/fonts/"));
-  app.use((req, resp) => resp.sendStatus(404));
-  console.log(`Started webserver on port ${argv.web_port}`)
+    app.use((req, resp) => resp.sendStatus(404));
     const express_server = app.listen(argv.web_port, () => console.log(`Started webserver on port ${argv.web_port}`));
     process.on("SIGINT", () => express_server.close());
 }
