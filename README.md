@@ -45,6 +45,17 @@ The following parameters can be set:
 * `--path=pathname` set a path for this server: users and webviewers would connect to hostname.tld/path
 * `--quiet=true/false` suppress console output after the server has been started
 
+
+### Docker
+
+In order to make things simpler and to be able to run the Moebius server, there's a `Dockerfile` ready to be used:
+
+```
+$ docker build . -t moebius
+$ docker run --rm -it -p 8000:8000 -v /tmp:/tmp --name moe moebius \
+             node server --web-port 8000 --file /tmp/filito.asc --pass sumthin
+```
+
 ## Acknowledgements
 * Uses modified Google's Material Icons. https://material.io/icons/
 * Contains ANSI art by Alpha King (Blocktronics), Filth (Blocktronics) and burps (FUEL)
