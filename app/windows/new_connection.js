@@ -76,6 +76,9 @@ function list_servers() {
         const option = document.createElement("option");
         option.innerText = saved_server.server
         option.addEventListener("mousedown", (event) => {
+            if (document.getElementById("server").value == saved_server.server && document.getElementById("pass").value == saved_server.pass) {
+                ok();
+            }
             document.getElementById("server").value = saved_server.server;
             document.getElementById("pass").value = saved_server.pass;
         }, true);
