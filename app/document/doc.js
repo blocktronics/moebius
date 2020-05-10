@@ -1,9 +1,10 @@
 const libtextmode = require("../libtextmode/libtextmode");
-const {on, send} = require("../senders");
+const {on, send, send_sync} = require("../senders");
 const events = require("events");
 const chat = require("./ui/chat");
+const path = require("path");;
 let doc, render;
-const actions =  {CONNECTED: 0, REFUSED: 1, JOIN: 2, LEAVE: 3, CURSOR: 4, SELECTION: 5, RESIZE_SELECTION: 6, OPERATION: 7, HIDE_CURSOR: 8, DRAW: 9, CHAT: 10, STATUS: 11, SAUCE: 12, ICE_COLORS: 13, USE_9PX_FONT: 14, CHANGE_FONT: 15, SET_CANVAS_SIZE: 16, PASTE_AS_SELECTION: 17, ROTATE: 18, FLIP_X: 19, FLIP_Y: 20};
+const actions =  {CONNECTED: 0, REFUSED: 1, JOIN: 2, LEAVE: 3, CURSOR: 4, SELECTION: 5, RESIZE_SELECTION: 6, OPERATION: 7, HIDE_CURSOR: 8, DRAW: 9, CHAT: 10, STATUS: 11, SAUCE: 12, ICE_COLORS: 13, USE_9PX_FONT: 14, CHANGE_FONT: 15, SET_CANVAS_SIZE: 16, PASTE_AS_SELECTION: 17, ROTATE: 18, FLIP_X: 19, FLIP_Y: 20, SET_BG: 21};
 const statuses = {ACTIVE: 0, IDLE: 1, AWAY: 2, WEB: 3};
 const modes = {EDITING: 0, SELECTION: 1, OPERATION: 2};
 let nick, group;
@@ -103,7 +104,7 @@ class NetworkCursor {
         this.canvas.height = blocks.rows * render.font.height;
         this.canvas.style.width = `${this.canvas.width}px`;
         this.canvas.style.height = `${this.canvas.height}px`;
-        this.ctx.drawImage(libtextmode.render_blocks(blocks, render.font), 0, 0);
+        this.ctx.drawImage(libtextmode.render_blocks(blocks, render.font, doc.c64_background), 0, 0);
         this.operation_blocks = blocks;
         this.mode = modes.OPERATION;
     }
@@ -258,7 +259,7 @@ class Connection extends events.EventEmitter {
                     break;
                 case actions.DRAW:
                     doc.data[data.y * doc.columns + data.x] = Object.assign(data.block);
-                    libtextmode.render_at(render, data.x, data.y, data.block);
+                    libtextmode.render_at(render, data.x, data.y, data.block, doc.c64_background);
                     if (user) this.users[data.id].last_row = data.y;
                     break;
                 case actions.CHAT:
@@ -299,6 +300,9 @@ class Connection extends events.EventEmitter {
                 case actions.FLIP_Y:
                     if (user && user.cursor) user.cursor.flip_y();
                     break;
+                case actions.SET_BG:
+                    this.emit("set_bg", data.value);
+                    break;
             }
         }
     }
@@ -326,6 +330,7 @@ class Connection extends events.EventEmitter {
             if (this.users[id].cursor) this.users[id].cursor.resize_cursor();
         }
     }
+    set_bg(value) {this.send(actions.SET_BG, {value});}
 
     constructor(server, pass, web = false) {
         super();
@@ -400,7 +405,7 @@ class UndoHistory extends events.EventEmitter {
             block.code = undo.code;
             block.fg = undo.fg;
             block.bg = undo.bg;
-            libtextmode.render_at(render, undo.x, undo.y, block);
+            libtextmode.render_at(render, undo.x, undo.y, block, doc.c64_background);
             if (connection) connection.draw(undo.x, undo.y, block);
             if (undo.cursor) this.emit("move_to", undo.cursor.prev_x, undo.cursor.prev_y);
         }
@@ -420,7 +425,7 @@ class UndoHistory extends events.EventEmitter {
             block.code = redo.code;
             block.fg = redo.fg;
             block.bg = redo.bg;
-            libtextmode.render_at(render, redo.x, redo.y, block);
+            libtextmode.render_at(render, redo.x, redo.y, block, doc.c64_background);
             if (connection) connection.draw(redo.x, redo.y, block);
             if (redo.cursor) this.emit("move_to", redo.cursor.post_x, redo.cursor.post_y);
         }
@@ -671,6 +676,17 @@ class TextModeDoc extends events.EventEmitter {
         });
         connection.on("change_font", (font_name) => {
             doc.font_name = font_name;
+            if (font_name == "C64 PETSCII unshifted" || font_name == "C64 PETSCII shifted") {
+                if (libtextmode.has_ansi_palette(doc.palette)) {
+                    doc.palette = libtextmode.c64;
+                    this.emit("update_swatches");
+                }
+            } else {
+                if (libtextmode.has_c64_palette(doc.palette)) {
+                    doc.palette = libtextmode.ega;
+                    this.emit("update_swatches");
+                }
+            }
             this.start_rendering().then(() => this.emit("change_font", doc.font_name));
         });
         connection.on("sauce", (title, author, group, comments) => {
@@ -687,11 +703,14 @@ class TextModeDoc extends events.EventEmitter {
         });
         connection.on("goto_row", (line_no) => this.emit("goto_row", line_no));
         connection.on("goto_self", (line_no) => this.emit("goto_self"));
+        connection.on("set_bg", (value) => this.emit("set_bg", value));
     }
 
     get connection() {return connection;}
     get render() {return render;}
     get font() {return render.font;}
+    get font_bytes() {return render.font.bitmask;}
+    get font_height() {return render.font.height;}
     get columns() {return doc.columns;}
     get rows() {return doc.rows;}
     get title() {return doc.title;}
@@ -703,6 +722,8 @@ class TextModeDoc extends events.EventEmitter {
     get ice_colors() {return doc.ice_colors;}
     get use_9px_font() {return doc.use_9px_font;}
     get data() {return doc.data;}
+    get c64_background() {return doc.c64_background;}
+    set c64_background(value) {doc.c64_background = value;}
 
     set_sauce(title, author, group, comments) {
         doc.title = title;
@@ -715,6 +736,18 @@ class TextModeDoc extends events.EventEmitter {
 
     set font_name(font_name) {
         doc.font_name = font_name;
+        doc.font_bytes = undefined;
+        if (font_name == "C64 PETSCII unshifted" || font_name == "C64 PETSCII shifted") {
+            if (libtextmode.has_ansi_palette(doc.palette)) {
+                doc.palette = libtextmode.c64;
+                this.emit("update_swatches");
+            }
+        } else {
+            if (libtextmode.has_c64_palette(doc.palette)) {
+                doc.palette = libtextmode.ega;
+                this.emit("update_swatches");
+            }
+        }
         this.start_rendering().then(() => this.emit("change_font", doc.font_name));
         if (connection) connection.change_font(doc.font_name);
     }
@@ -749,7 +782,7 @@ class TextModeDoc extends events.EventEmitter {
             this.undo_history.push(x, y, doc.data[i]);
         }
         doc.data[i] = {code, fg, bg};
-        libtextmode.render_at(render, x, y, doc.data[i]);
+        libtextmode.render_at(render, x, y, doc.data[i], doc.c64_background);
         if (connection) connection.draw(x, y, doc.data[i]);
         if (this.mirror_mode && mirrored) {
             const opposing_x = Math.floor(doc.columns / 2) - (x - Math.ceil(doc.columns / 2)) - 1;
@@ -1040,16 +1073,18 @@ class TextModeDoc extends events.EventEmitter {
         send("set_file", {file: this.file});
     }
 
-    async save() {
+    async save(save_without_sauce) {
         if (!this.file) return;
-        await libtextmode.write_file(this, this.file);
+        await libtextmode.write_file(this, this.file, {save_without_sauce});
         if (!connection) send("set_file", {file: this.file});
     }
 
     async share_online() {
-        const default_palette = libtextmode.has_default_palette(doc.palette);
+        const default_palette = libtextmode.has_ansi_palette(doc.palette);
         const bytes = default_palette ? libtextmode.encode_as_ansi(doc) : libtextmode.encode_as_xbin(doc);
-        const req = await fetch(`https://api.16colo.rs/v1/paste?key=${SIXTEEN_COLORS_API_KEY}&extension=${default_palette ? "ans" : "xb"}&retention=${retention}`, {
+        const extension = (default_palette) ? "ans" : "xb";
+        const filename = (this.file) ? path.basename(this.file) : "unknown" + '.' + extension;
+        const req = await fetch(`https://api.16colo.rs/v1/paste?key=${SIXTEEN_COLORS_API_KEY}&extension=${extension}&retention=${retention}&filename=${filename}`, {
             body: `file=${Buffer.from(bytes).toString("base64")}`,
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
@@ -1085,8 +1120,8 @@ class TextModeDoc extends events.EventEmitter {
         on("ice_colors", (event, value) => this.ice_colors = value);
         on("use_9px_font", (event, value) => this.use_9px_font = value);
         on("change_font", (event, font_name) => this.font_name = font_name);
-        on("get_sauce_info", (event) => send("get_sauce_info", {title: doc.title, author: doc.author, group: doc.group, comments: doc.comments}));
-        on("get_canvas_size", (event) => send("get_canvas_size", {columns: doc.columns, rows: doc.rows}));
+        on("get_sauce_info", (event) => send_sync("get_sauce_info", {title: doc.title, author: doc.author, group: doc.group, comments: doc.comments}));
+        on("get_canvas_size", (event) => send_sync("get_canvas_size", {columns: doc.columns, rows: doc.rows}));
         on("set_canvas_size", (event, {columns, rows}) => this.resize(columns, rows));
         on("set_sauce_info", (event, {title, author, group, comments}) => this.set_sauce(title, author, group, comments));
         on("mirror_mode", (event, value) => this.mirror_mode = value);

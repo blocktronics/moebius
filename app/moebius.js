@@ -12,6 +12,7 @@ const linux = (process.platform == "linux");
 const frameless = darwin ? {frame: false, titleBarStyle: "hiddenInset"} : {frame: true};
 let prevent_splash_screen_at_startup = false;
 let splash_screen;
+const discord = require("./discord");
 
 function cleanup(id) {
     menu.cleanup(id);
@@ -31,7 +32,7 @@ async function new_document_window() {
     const win_pos = win.getPosition();
     last_win_pos = win_pos;
     const debug = prefs.get("debug");
-    docs[win.id] = {win, menu: menu.document_menu(win, debug), chat_input_menu: menu.chat_input_menu(win, debug), edited: false, win_pos, destroyed: false};
+    docs[win.id] = {win, menu: menu.document_menu(win, debug), chat_input_menu: menu.chat_input_menu(win, debug), edited: false, win_pos, destroyed: false, open_in_current_window: false};
     touchbar.create_touch_bars(win);
     prefs.send(win);
     win.on("focus", (event) => {
@@ -99,6 +100,9 @@ async function open_file(file) {
 }
 
 function open_in_new_window(win) {
+    if (win && docs[win.id].open_in_current_window) {
+        return false;
+    }
     return !win || docs[win.id].network || docs[win.id].file || docs[win.id].edited;
 }
 
@@ -120,14 +124,29 @@ function open(win) {
 menu.on("open", open);
 electron.ipcMain.on("open", (event) => open());
 
+menu.on("open_in_current_window", (win) => {
+    docs[win.id].open_in_current_window = true;
+    open(win);
+});
+
 async function preferences() {
-    const preferences = await window.static("app/html/preferences.html", {width: 480, height: 670});
+    const preferences = await window.static("app/html/preferences.html", {width: 480, height: 690});
     preferences.send("prefs", prefs.get_all());
 }
 menu.on("preferences", preferences);
 electron.ipcMain.on("preferences", (event) => preferences());
 
-menu.on("show_new_connection_window", async () => await window.static("app/html/new_connection.html", {width: 480, height: 160}, touchbar.new_connection));
+async function show_new_connection() {
+    const new_connection = await window.static("app/html/new_connection.html", {width: 480, height: 340}, touchbar.new_connection);
+    const server = prefs.get("server");
+    const pass = prefs.get("pass");
+    const saved_servers = prefs.get("saved_servers");
+    if (server) {
+        new_connection.send("saved_servers", {server, pass, saved_servers});
+    }
+}
+menu.on("show_new_connection_window", show_new_connection);
+electron.ipcMain.on("show_new_connection_window", (event) => show_new_connection());
 
 async function connect_to_server(server, pass = "") {
     const win = await new_document_window();
@@ -139,6 +158,11 @@ electron.ipcMain.on("connect_to_server", (event, {server, pass}) => connect_to_s
 
 async function show_splash_screen() {
     splash_screen = await window.static("app/html/splash_screen.html", {width: 720, height: 600, ...frameless}, touchbar.splash_screen, {preferences, new_document, open});
+    const server = prefs.get('server');
+    const pass = prefs.get('pass');
+    if (server) {
+        splash_screen.send("saved_server", {server, pass});
+    }
 }
 
 menu.on("show_cheatsheet", () => window.static("app/html/cheatsheet.html", {width: 640, height: 816, ...frameless}));
@@ -154,6 +178,7 @@ electron.ipcMain.on("get_canvas_size", async (event, {id, columns, rows}) => {
     docs[id].modal = await window.new_modal("app/html/resize.html", {width: 300, height: 190, parent: docs[id].win, frame: false, ...get_centered_xy(id, 300, 190)}, touchbar.get_canvas_size);
     if (darwin) add_darwin_window_menu_handler(id);
     docs[id].modal.send("set_canvas_size", {columns, rows});
+    event.returnValue = true;
 });
 
 electron.ipcMain.on("document_changed", (event, {id}) => {
@@ -174,6 +199,15 @@ function update_prefs(key, value) {
 }
 
 electron.ipcMain.on("update_prefs", (event, {key, value}) => update_prefs(key, value));
+
+electron.ipcMain.on("discord", (event, {value}) => {
+    prefs.set("discord", value);
+    if (value) {
+        discord.login();
+    } else {
+        discord.destroy();
+    }
+});
 
 electron.ipcMain.on("show_rendering_modal", async (event, {id}) => {
     docs[id].modal = await window.new_modal("app/html/rendering.html", {width: 200, height: 80, parent: docs[id].win, frame: false, ...get_centered_xy(id, 200, 80)});
@@ -222,6 +256,7 @@ electron.ipcMain.on("get_sauce_info", async (event, {id, title, author, group, c
     docs[id].modal = await window.new_modal("app/html/sauce.html", {width: 350, height: 340, parent: docs[id].win, frame: false, ...get_centered_xy(id, 350, 340)}, touchbar.get_sauce_info);
     if (darwin) add_darwin_window_menu_handler(id);
     docs[id].modal.send("set_sauce_info", {title, author, group, comments});
+    event.returnValue = true;
 });
 
 electron.ipcMain.on("update_sauce", (event, {id, title, author, group, comments}) => {
@@ -239,16 +274,19 @@ function get_centered_xy(id, width, height) {
 electron.ipcMain.on("select_attribute", async (event, {id, fg, bg, palette}) => {
     if (docs[id].modal && !docs[id].modal.isDestroyed()) {
         docs[id].modal.close();
+        event.returnValue = true;
         return;
     }
     docs[id].modal = await window.new_modal("app/html/select_attribute.html", {width: 340, height: 340, parent: docs[id].win, frame: false, ...get_centered_xy(id, 340, 340)}, touchbar.select_attribute);
     if (darwin) add_darwin_window_menu_handler(id);
     docs[id].modal.send("select_attribute", {fg, bg, palette});
+    event.returnValue = true;
 });
 
 electron.ipcMain.on("fkey_prefs", async (event, {id, num, fkey_index, current, bitmask, font_height}) => {
     if (docs[id].modal && !docs[id].modal.isDestroyed()) {
         docs[id].modal.close();
+        event.returnValue = true;
         return;
     }
     const width = 16 * 8 * 2;
@@ -256,6 +294,7 @@ electron.ipcMain.on("fkey_prefs", async (event, {id, num, fkey_index, current, b
     docs[id].modal = await window.new_modal("app/html/fkey_prefs.html", {width, height, parent: docs[id].win, frame: false, ...get_centered_xy(id, width, height)});
     if (darwin) add_darwin_window_menu_handler(id);
     docs[id].modal.send("fkey_prefs", {num, fkey_index, current, bitmask, font_height});
+    event.returnValue = true;
 });
 
 electron.ipcMain.on("set_fkey", async (event, {id, num, fkey_index, code}) => {
@@ -292,6 +331,9 @@ electron.app.on("ready", (event) => {
         if (!prevent_splash_screen_at_startup) show_splash_screen();
     }
     if (darwin) electron.app.dock.setMenu(menu.dock_menu);
+    if (prefs.get("discord")) {
+        discord.login();
+    }
 });
 
 electron.app.on("window-all-closed", (event) => {

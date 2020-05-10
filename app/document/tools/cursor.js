@@ -24,7 +24,7 @@ class Cursor {
             break;
         case modes.OPERATION:
             if (this.operation_blocks.underneath) {
-                const canvas = libtextmode.render_blocks(libtextmode.merge_blocks(this.operation_blocks, this.get_blocks_in_operation()), doc.font);
+                const canvas = libtextmode.render_blocks(libtextmode.merge_blocks(this.operation_blocks, this.get_blocks_in_operation()), doc.font, doc.c64_background);
                 this.ctx.drawImage(canvas, 2, 2, canvas.width - 4, canvas.height - 4, 0, 0, canvas.width - 4, canvas.height - 4);
             }
             break;
@@ -123,6 +123,9 @@ class Cursor {
 
     new_line() {
         if (this.mode != modes.EDITING) return;
+        if (keyboard.insert_mode && this.y < doc.rows - 1) {
+            this.insert_row(this.y + 1);
+        }
         const old_x = this.x;
         this.move_to(0, Math.min(doc.rows - 1, this.y + 1));
         if (this.scroll_document_with_cursor) this.scroll(-old_x, 1);
@@ -230,7 +233,7 @@ class Cursor {
         const font = doc.font;
         this.canvas.width = this.operation_blocks.columns * font.width - 4; this.canvas.height = this.operation_blocks.rows * font.height - 4;
         this.canvas.style.width = `${this.canvas.width}px`; this.canvas.style.height = `${this.canvas.height}px`;
-        const canvas = libtextmode.render_blocks(this.operation_blocks, doc.font);
+        const canvas = libtextmode.render_blocks(this.operation_blocks, doc.font, doc.c64_background);
         this.ctx.drawImage(canvas, 2, 2, canvas.width - 4, canvas.height - 4, 0, 0, canvas.width - 4, canvas.height - 4);
     }
 

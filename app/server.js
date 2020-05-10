@@ -1,6 +1,6 @@
 const ws = require("ws");
 const libtextmode = require("./libtextmode/libtextmode");
-const action =  {CONNECTED: 0, REFUSED: 1, JOIN: 2, LEAVE: 3, CURSOR: 4, SELECTION: 5, RESIZE_SELECTION: 6, OPERATION: 7, HIDE_CURSOR: 8, DRAW: 9, CHAT: 10, STATUS: 11, SAUCE: 12, ICE_COLORS: 13, USE_9PX_FONT: 14, CHANGE_FONT: 15, SET_CANVAS_SIZE: 16};
+const action =  {CONNECTED: 0, REFUSED: 1, JOIN: 2, LEAVE: 3, CURSOR: 4, SELECTION: 5, RESIZE_SELECTION: 6, OPERATION: 7, HIDE_CURSOR: 8, DRAW: 9, CHAT: 10, STATUS: 11, SAUCE: 12, ICE_COLORS: 13, USE_9PX_FONT: 14, CHANGE_FONT: 15, SET_CANVAS_SIZE: 16, SET_BG: 21};
 const status_types = {ACTIVE: 0, IDLE: 1, AWAY: 2, WEB: 3};
 const os = require("os");
 const url = require("url");
@@ -15,8 +15,21 @@ function send(ws, type, data = {}) {
 }
 
 class Joint {
-    log(text) {
-        if (!this.quiet) console.log(`${new Date().toISOString()} ${this.hostname}${this.path}: ${text}`);
+    log(text, ip) {
+        const date = new Date();
+        const year = date.getFullYear();
+        let month = date.getMonth() + 1;
+        let day =  date.getDate();
+        let hour = date.getHours();
+        let min = date.getMinutes();
+        let sec = date.getSeconds();
+        month = (month < 10) ? '0' + month : month;
+        day = (day < 10) ? '0' + day : day;
+        hour = (hour < 10) ? '0' + hour : hour;
+        min = (min < 10) ? '0' + min : min;
+        sec = (sec < 10) ? '0' + sec : sec;
+        const timestamp = year + '-' + month + '-' + day + ' ' + hour + ':' + min + ':' + sec;
+        if (!this.quiet) console.log(`${timestamp} ${this.hostname}${this.path}: (${ip}) ${text}`);
     }
 
     send_all(sender, type, opts = {}) {
@@ -41,7 +54,7 @@ class Joint {
         return this.data_store.filter((data) => !data.closed).map((data) => data.user);
     }
 
-    message(ws, msg) {
+    message(ws, msg, ip) {
         switch (msg.type) {
         case action.CONNECTED:
             if (msg.data.nick == undefined || this.pass == "" || msg.data.pass == this.pass) {
@@ -50,15 +63,15 @@ class Joint {
                 this.data_store.push({user: {nick: msg.data.nick, group: msg.data.group, id: id, status: (msg.data.nick == undefined) ? status_types.WEB : status_types.ACTIVE}, ws: ws, closed: false});
                 if (msg.data.nick == undefined) {
                     send(ws, action.CONNECTED, {id, doc: libtextmode.compress(this.doc)});
-                    this.log("web joined");
+                    this.log("web joined", ip);
                 } else {
                     send(ws, action.CONNECTED, {id, doc: libtextmode.compress(this.doc), users, chat_history: this.chat_history, status: status_types.ACTIVE});
-                    this.log(`${msg.data.nick} has joined`);
+                    this.log(`${msg.data.nick} has joined`, ip);
                 }
                 this.send_all(ws, action.JOIN, {id, nick: msg.data.nick, group: msg.data.group, status: (msg.data.nick == undefined) ? status_types.WEB : status_types.ACTIVE});
             } else {
                 send(ws, action.REFUSED);
-                this.log(`${msg.data.nick} was refused`);
+                this.log(`${msg.data.nick} was refused`, ip);
             }
         break;
         case action.DRAW:
@@ -73,10 +86,13 @@ class Joint {
             this.chat_history.push({id: msg.data.id, nick: msg.data.nick, group: msg.data.group, text: msg.data.text, time: Date.now()});
             if (this.chat_history.length > 32) this.chat_history.shift();
             this.send_all(ws, msg.type, msg.data);
+            this.log(`${msg.data.nick}: ${msg.data.text}`, ip);
         break;
         case action.STATUS:
             this.data_store[msg.data.id].user.status = msg.data.status;
             this.send_all_including_self(msg.type, msg.data);
+            const status = Object.keys(status_types).find(key => status_types[key] === msg.data.status);
+            this.log(`status: ${status}`, ip);
             break;
         case action.SAUCE:
             this.doc.title = msg.data.title;
@@ -99,6 +115,11 @@ class Joint {
             break;
         case action.SET_CANVAS_SIZE:
             libtextmode.resize_canvas(this.doc, msg.data.columns, msg.data.rows);
+            this.send_all_including_guests(ws, msg.type, msg.data);
+            this.log(`changed canvas: ${msg.data.columns}/${msg.data.rows}`, ip);
+            break;
+        case action.SET_BG:
+            this.doc.c64_background = msg.data.value;
             this.send_all_including_guests(ws, msg.type, msg.data);
             break;
         default:
@@ -126,17 +147,17 @@ class Joint {
         });
     }
 
-    connection(ws) {
-        ws.on("message", msg => this.message(ws, JSON.parse(msg)));
+    connection(ws, ip) {
+        ws.on("message", msg => this.message(ws, JSON.parse(msg), ip));
         ws.on("close", () => {
             for (let id = 0; id < this.data_store.length; id++) {
                 if (this.data_store[id].ws == ws) {
                     this.data_store[id].closed = true;
                     const user = this.data_store[id].user;
                     if (user.nick == undefined) {
-                        this.log("web left");
+                        this.log("web left", ip);
                     } else {
-                        this.log(`${user.nick} has left`);
+                        this.log(`${user.nick} has left`, ip);
                     }
                     this.send_all(ws, action.LEAVE, {id: user.id});
                 }
@@ -183,7 +204,8 @@ function end_joint(path) {
 server.on("upgrade", (req, socket, head) => {
     const path = decodeURI(url.parse(req.url).pathname).toLowerCase();
     if (joints[path]) {
-        joints[path].wss.handleUpgrade(req, socket, head, (ws) => joints[path].connection(ws));
+        const ip = req.connection.remoteAddress;
+        joints[path].wss.handleUpgrade(req, socket, head, (ws) => joints[path].connection(ws, ip));
     } else {
         socket.destroy();
     }

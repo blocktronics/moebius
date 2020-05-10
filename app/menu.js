@@ -8,6 +8,7 @@ const font_list = {
     "Amiga": {"Amiga Topaz 1": 16, "Amiga Topaz 1+": 16, "Amiga Topaz 2": 16, "Amiga Topaz 2+": 16, "Amiga P0T-NOoDLE": 16, "Amiga MicroKnight": 16, "Amiga MicroKnight+": 16, "Amiga mOsOul": 16},
     "Arabic": {"IBM VGA50 864": 8, "IBM EGA 864": 14, "IBM VGA 864": 16},
     "Baltic Rim": {"IBM VGA50 775": 8, "IBM EGA 775": 14, "IBM VGA 775": 16},
+    "C64": {"C64 PETSCII unshifted": 8, "C64 PETSCII shifted": 8},
     "Cyrillic": {"IBM VGA50 866": 8, "IBM EGA 866": 14, "IBM VGA 866": 16, "IBM VGA50 855": 8, "IBM EGA 855": 14, "IBM VGA 855": 16},
     "French Canadian": {"IBM VGA50 863": 8, "IBM EGA 863": 14, "IBM VGA 863": 16, "IBM VGA25G 863": 19},
     "Greek": {"IBM VGA50 737": 8, "IBM EGA 737": 14, "IBM VGA 737": 16, "IBM VGA50 869": 8, "IBM EGA 869": 14, "IBM VGA 869": 16, "IBM VGA50 851": 8, "IBM EGA 851": 14, "IBM VGA 851": 16, "IBM VGA25G 851": 19},
@@ -71,6 +72,7 @@ const window_menu_items = {
 
 const help_menu_items = {
     label: "Help", role: "help", submenu: [
+        {label: "How to Start a Server", id: "show_repo", click(item) {electron.shell.openExternal("https://github.com/blocktronics/moebius/blob/master/README.md#moebius-server");}},
         {label: "Enable Function Keys on MacOS", id: "enable_function_keys", click(item) {electron.shell.openExternal("file:///System/Library/PreferencePanes/Keyboard.prefPane/");}, enabled: darwin},
         {type: "separator"},
         {label: "Cheatsheet", id: "show_cheatsheet", click(item) {event.emit("show_cheatsheet");}},
@@ -79,7 +81,7 @@ const help_menu_items = {
         {label: "Acknowledgements", id: "show_cheatsheet", click(item) {event.emit("show_acknowledgements");}},
         {type: "separator"},
         {label: "ANSI Art Tutorials at 16Colors", id: "changelog", click(item) {electron.shell.openExternal("https://16colo.rs/tags/content/tutorial");}},
-        {label: "Mœbius Homepage", id: "show_homepage", click(item) {electron.shell.openExternal("http://www.andyh.org/moebius/");}},
+        {label: "Mœbius Homepage", id: "show_homepage", click(item) {electron.shell.openExternal("https://blocktronics.github.io/moebius/");}},
         {label: "Source Code at GitHub", id: "show_repo", click(item) {electron.shell.openExternal("https://github.com/blocktronics/moebius");}},
         {label: "Raise an Issue at GitHub", id: "show_issues", click(item) {electron.shell.openExternal("https://github.com/blocktronics/moebius/issues");}},
         {type: "separator"},
@@ -112,6 +114,7 @@ function file_menu_template(win) {
             {label: "Duplicate as New Document", id: "duplicate", click(item) {win.send("duplicate");}},
             {type: "separator"},
             {label: "Open\u2026", id: "open", accelerator: "CmdorCtrl+O", click(item) {event.emit("open", win);}},
+            {label: "Open in Current Window\u2026", id: "open_in_current_window", accelerator: "CmdorCtrl+Shift+O", click(item) {event.emit("open_in_current_window", win);}},
             darwin ? {role: "recentDocuments", submenu: [{role: "clearRecentDocuments"}]} : ({type: "separator"}, {label: "Settings", click(item) {event.emit("preferences");}}),
             {type: "separator"},
             {label: "Revert to Last Save", id: "revert_to_last_save", click(item) {win.send("revert_to_last_save");}, enabled: false},
@@ -121,6 +124,7 @@ function file_menu_template(win) {
             {type: "separator"},
             {label: "Save", id: "save", accelerator: "CmdorCtrl+S", click(item) {win.send("save");}},
             {label: "Save As\u2026", id: "save_as", accelerator: "CmdorCtrl+Shift+S", click(item) {win.send("save_as");}},
+            {label: "Save Without Sauce Info\u2026", id: "save_without_sauce", click(item) {win.send("save_without_sauce");}},
             {type: "separator"},
             {label: "Share Online", id: "share_online", click(item) {win.send("share_online");}},
             {type: "separator"},
@@ -237,6 +241,10 @@ function view_menu_template(win) {
             {label: "Next Character Set", id: "next_character_set", accelerator: "Ctrl+.", click(item) {win.send("next_character_set");}, enabled: true},
             {label: "Default Character Set", id: "default_character_set", accelerator: "Ctrl+/", click(item) {win.send("default_character_set");}, enabled: true},
             {type: "separator"},
+            {label: "Increase Brush Size", id: "increase_brush_size", accelerator: "Alt+=", click(item) {win.send("increase_brush_size");}, enabled: false},
+            {label: "Decrease Brush Size", id: "decrease_brush_size", accelerator: "Alt+-", click(item) {win.send("decrease_brush_size");}, enabled: false},
+            {label: "Reset Brush Size", id: "reset_brush_size", accelerator: "Alt+0", click(item) {win.send("reset_brush_size");}, enabled: false},
+            {type: "separator"},
             {label: "Use 9px Font", id: "use_9px_font", accelerator: "CmdorCtrl+F", click(item) {win.send("use_9px_font", item.checked);}, type: "checkbox", checked: false},
             {type: "separator"},
             {label: "Actual Size", id: "actual_size", accelerator: "CmdorCtrl+Alt+0", click(item) {win.send("actual_size");}, type: "checkbox", checked: false},
@@ -250,6 +258,7 @@ function view_menu_template(win) {
                 {label: "Square (80×40)", id: "square_guide", click(item) {win.send("toggle_square_guide", item.checked);}, type: "checkbox", checked: false},
                 {label: "Instagram (80×50)", id: "instagram_guide", click(item) {win.send("toggle_instagram_guide", item.checked);}, type: "checkbox", checked: false},
                 {label: "File ID (44×22)", id: "file_id_guide", click(item) {win.send("toggle_file_id_guide", item.checked);}, type: "checkbox", checked: false},
+                {label: "PETSCII (40×25)", id: "petscii_guide", click(item) {win.send("toggle_petscii_guide", item.checked);}, type: "checkbox", checked: false},
             ]},
             {type: "separator"},
             {label: "Open Reference Image\u2026", id: "open_reference_image", accelerator: "CmdorCtrl+Shift+O", click(item) {win.send("open_reference_image");}},
@@ -596,16 +605,30 @@ electron.ipcMain.on("check_smallscale_guide", (event, {id}) => check(id, "smalls
 electron.ipcMain.on("check_square_guide", (event, {id}) => check(id, "square_guide"));
 electron.ipcMain.on("check_instagram_guide", (event, {id}) => check(id, "instagram_guide"));
 electron.ipcMain.on("check_file_id_guide", (event, {id}) => check(id, "file_id_guide"));
+electron.ipcMain.on("check_petscii_guide", (event, {id}) => check(id, "petscii_guide"));
 electron.ipcMain.on("uncheck_all_guides", (event, {id}) => {
     uncheck(id, "smallscale_guide");
     uncheck(id, "square_guide");
     uncheck(id, "instagram_guide");
     uncheck(id, "file_id_guide");
+    uncheck(id, "petscii_guide");
 });
 
 electron.ipcMain.on("enable_chat_window_toggle", (event, {id}) => {
     enable(id, "chat_window_toggle");
     check(id, "chat_window_toggle");
+});
+
+electron.ipcMain.on("enable_brush_size_shortcuts", (event, {id}) => {
+    enable(id, "increase_brush_size");
+    enable(id, "decrease_brush_size");
+    enable(id, "reset_brush_size");
+});
+
+electron.ipcMain.on("disable_brush_size_shortcuts", (event, {id}) => {
+    disable(id, "increase_brush_size");
+    disable(id, "decrease_brush_size");
+    disable(id, "reset_brush_size");
 });
 
 class MenuEvent extends events.EventEmitter {

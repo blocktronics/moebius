@@ -1,5 +1,5 @@
 const server = require("./app/server");
-const argv = require("minimist")(process.argv, {default: {path: "", pass: "", file: "./server.ans", quiet: false, web: false, web_port: 80}});
+const argv = require("minimist")(process.argv, {default: {path: "", pass: "", file: "./server.ans", quiet: false, web: false, web_port: 8000}});
 const express = require("express");
 const path = require("path");
 
@@ -16,7 +16,8 @@ if (argv.web) {
     });
     app.use(express.static("./server/"));
     app.use("/fonts/", express.static("./app/fonts/"));
-    app.use((req, resp) => resp.sendStatus(404));
+  app.use((req, resp) => resp.sendStatus(404));
+  console.log(`Started webserver on port ${argv.web_port}`)
     const express_server = app.listen(argv.web_port, () => console.log(`Started webserver on port ${argv.web_port}`));
     process.on("SIGINT", () => express_server.close());
 }

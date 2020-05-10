@@ -1,4 +1,4 @@
-const {ega} = require("./palette");
+const {ega, c64} = require("./palette");
 const {Textmode, add_sauce_for_ans} = require("./textmode");
 const {cp437_to_unicode_bytes} = require("./encodings");
 
@@ -416,7 +416,11 @@ class Ansi extends Textmode {
         } else if (this.rows < screen.rows) {
             screen.rows = this.rows;
         }
-        this.palette = ega;
+        if (this.font_name == "C64 PETSCII unshifted" || this.font_name == "C64 PETSCII shifted") {
+            this.palette = c64;
+        } else {
+            this.palette = ega;
+        }
         this.custom_colors = screen.unique_custom_colors();
         this.data = screen.trim_data();
     }
@@ -432,7 +436,7 @@ function bin_to_ansi_colour(bin_colour) {
     }
 }
 
-function encode_as_ansi(doc, {utf8 = false} = {}) {
+function encode_as_ansi(doc, save_without_sauce, {utf8 = false} = {}) {
     let output = [27, 91, 48, 109];
     let bold = false;
     let blink = false;
@@ -523,7 +527,10 @@ function encode_as_ansi(doc, {utf8 = false} = {}) {
     }
     const bytes = new Uint8Array(output);
     if (utf8) return bytes;
-    return add_sauce_for_ans({doc, bytes});
+    if (!save_without_sauce) {
+        return add_sauce_for_ans({doc, bytes});
+    }
+    return bytes;
 }
 
 module.exports = {Ansi, encode_as_ansi};

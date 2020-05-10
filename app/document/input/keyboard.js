@@ -36,28 +36,30 @@ class KeyboardEvent extends events.EventEmitter {
             case "Digit7":
                 this.emit("toggle_fg", 7);
                 return;
-            case "KeyC":
+        }
+        switch (event.key) {
+            case "c": case "C":
                 this.emit("copy");
                 return;
-            case "KeyV":
+            case "v": case "V":
                 this.emit("paste");
                 return;
-            case "KeyX":
+            case "x": case "X":
                 this.emit("cut");
                 return;
-            case "KeyZ":
+            case "z": case "Z":
                 if (!darwin) {
                     doc.undo();
                     event.preventDefault();
                 }
                 return;
-            case "KeyY":
+            case "y": case "Y":
                 if (!darwin) {
                     doc.redo();
                     event.preventDefault();
                 }
                 return;
-            case "KeyA":
+            case "a": case "A":
                 if (!darwin) {
                     this.emit("select_all");
                     event.preventDefault();

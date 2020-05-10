@@ -1,7 +1,7 @@
 const libtextmode = require("../libtextmode/libtextmode");
 const events = require("events");
 let doc, render;
-const actions =  {CONNECTED: 0, REFUSED: 1, JOIN: 2, LEAVE: 3, CURSOR: 4, SELECTION: 5, RESIZE_SELECTION: 6, OPERATION: 7, HIDE_CURSOR: 8, DRAW: 9, CHAT: 10, STATUS: 11, SAUCE: 12, ICE_COLORS: 13, USE_9PX_FONT: 14, CHANGE_FONT: 15, SET_CANVAS_SIZE: 16, PASTE_AS_SELECTION: 17, ROTATE: 18, FLIP_X: 19, FLIP_Y: 20};
+const actions =  {CONNECTED: 0, REFUSED: 1, JOIN: 2, LEAVE: 3, CURSOR: 4, SELECTION: 5, RESIZE_SELECTION: 6, OPERATION: 7, HIDE_CURSOR: 8, DRAW: 9, CHAT: 10, STATUS: 11, SAUCE: 12, ICE_COLORS: 13, USE_9PX_FONT: 14, CHANGE_FONT: 15, SET_CANVAS_SIZE: 16, PASTE_AS_SELECTION: 17, ROTATE: 18, FLIP_X: 19, FLIP_Y: 20, SET_BG: 21};
 let connection;
 
 class Connection extends events.EventEmitter {
@@ -34,7 +34,7 @@ class Connection extends events.EventEmitter {
             switch (type) {
                 case actions.DRAW:
                     doc.data[data.y * doc.columns + data.x] = Object.assign(data.block);
-                    libtextmode.render_at(render, data.x, data.y, data.block);
+                    libtextmode.render_at(render, data.x, data.y, data.block, doc.c64_background);
                     break;
                 case actions.SAUCE:
                     this.emit("sauce", data.title, data.author, data.group, data.comments);
@@ -50,6 +50,9 @@ class Connection extends events.EventEmitter {
                     break;
                 case actions.SET_CANVAS_SIZE:
                     this.emit("set_canvas_size", data.columns, data.rows);
+                    break;
+                case actions.SET_BG:
+                    this.emit("set_bg", data.value);
                     break;
             }
         }
@@ -113,6 +116,17 @@ class TextModeDoc extends events.EventEmitter {
         });
         connection.on("change_font", (font_name) => {
             doc.font_name = font_name;
+            if (font_name == "C64 PETSCII unshifted" || font_name == "C64 PETSCII shifted") {
+                if (libtextmode.has_ansi_palette(doc.palette)) {
+                    doc.palette = libtextmode.c64;
+                    this.emit("update_swatches");
+                }
+            } else {
+                if (libtextmode.has_c64_palette(doc.palette)) {
+                    doc.palette = libtextmode.ega;
+                    this.emit("update_swatches");
+                }
+            }
             this.start_rendering().then(() => this.emit("change_font", doc.font_name));
         });
         connection.on("sauce", (title, author, group, comments) => {
@@ -123,8 +137,11 @@ class TextModeDoc extends events.EventEmitter {
             this.emit("sauce", title, author, group, comments);
         });
         connection.on("set_canvas_size", (columns, rows) => {
-            this.undo_history.reset_undos();
             libtextmode.resize_canvas(doc, columns, rows);
+            this.start_rendering();
+        });
+        connection.on("set_bg", (value) => {
+            doc.c64_background = value;
             this.start_rendering();
         });
     }

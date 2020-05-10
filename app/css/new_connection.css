@@ -19,6 +19,10 @@ form > div:first-child {
     margin-top: 20px;
 }
 
+div {
+    display: inline-block;
+}
+
 label {
     display: inline-block;
     width: 300px;
@@ -72,4 +76,35 @@ button:active {
 
 #connect {
     margin-top: 24px;
+}
+
+#save_and_remove {
+    margin-top: 4px;
+    margin-bottom: 8px;
+}
+
+#save {
+    position: fixed;
+    right: 48px;
+}
+
+#remove {
+    float: right;
+    left: 48px;
+}
+
+#bookmarks {
+    border: 1px solid #aaaaaa;
+    background: none;
+    color: white;
+    outline: none;
+    width: 100%;
+    font-family: var(--system-font);
+    font-size: 14px;
+    margin: 8px 0px;
+    padding: 8px;
+}
+
+#bookmarks:focus {
+    border-color: white;
 }

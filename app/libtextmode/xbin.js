@@ -1,4 +1,4 @@
-const {ega} = require("./palette");
+const {ega, has_c64_palette} = require("./palette");
 const {bytes_to_utf8, bytes_to_blocks, Textmode, add_sauce_for_xbin} = require("./textmode");
 const repeating = {NONE: 0, CHARACTERS: 1, ATTRIBUTES: 2, BOTH_CHARACTERS_AND_ATTRIBUTES: 3};
 const {encode_as_bin} = require("./binary_text");
@@ -64,6 +64,7 @@ class XBin extends Textmode {
             this.palette = ega;
         }
         if (font_flag) {
+            this.font_name = "Custom";
             this.font_bytes = this.bytes.subarray(i, i + 256 * this.font_height);
             i += 256 * this.font_height;
         }
@@ -75,7 +76,7 @@ class XBin extends Textmode {
     }
 }
 
-function encode_as_xbin(doc) {
+function encode_as_xbin(doc, save_without_sauce) {
     let bin_bytes = encode_as_bin(doc);
     let header = [88, 66, 73, 78, 26, doc.columns & 255, doc.columns >> 8, doc.rows & 255, doc.rows >> 8, doc.font_height, 0];
     if (doc.palette) {
@@ -96,13 +97,16 @@ function encode_as_xbin(doc) {
         }
         header = header.concat(font_bytes);
     }
-    if (doc.ice_colors) {
+    if (doc.ice_colors || doc.c64_background != undefined) {
         header[10] += 1 << 3;
     }
     let bytes = new Uint8Array(header.length + bin_bytes.length);
     bytes.set(header, 0);
     bytes.set(bin_bytes, header.length);
-    return add_sauce_for_xbin({doc, bytes});
+    if (!save_without_sauce) {
+        return add_sauce_for_xbin({doc, bytes});
+    }
+    return bytes;
 }
 
 module.exports = {XBin, encode_as_xbin};

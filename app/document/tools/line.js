@@ -69,28 +69,28 @@ mouse.on("up", (x, y, half_y, button) => {
     const {fg, bg} = palette;
     if (toolbar.mode == toolbar.modes.HALF_BLOCK) {
         if (clear) {
-            brushes.half_block_line(mouse.start.x, mouse.start.half_y, x, half_y, 0);
+            brushes.single_half_block_line(mouse.start.x, mouse.start.half_y, x, half_y, 0);
         } else {
-            brushes.half_block_line(mouse.start.x, mouse.start.half_y, x, half_y, (button == mouse.buttons.LEFT) ? fg : bg);
+            brushes.single_half_block_line(mouse.start.x, mouse.start.half_y, x, half_y, (button == mouse.buttons.LEFT) ? fg : bg);
         }
     } else if (clear || toolbar.mode == toolbar.modes.CLEAR_BLOCK) {
         brushes.clear_block_line(mouse.start.x, mouse.start.y, x, y);
     } else {
         switch (toolbar.mode) {
             case toolbar.modes.FULL_BLOCK:
-                brushes.full_block_line(mouse.start.x, mouse.start.y, x, y, (button == mouse.buttons.LEFT) ? fg : bg);
+                brushes.single_full_block_line(mouse.start.x, mouse.start.y, x, y, (button == mouse.buttons.LEFT) ? fg : bg);
                 break;
             case toolbar.modes.SHADING_BLOCK:
-                brushes.shading_block_line(mouse.start.x, mouse.start.y, x, y, fg, bg, button != mouse.buttons.LEFT);
+                brushes.single_shading_block_line(mouse.start.x, mouse.start.y, x, y, fg, bg, button != mouse.buttons.LEFT);
                 break;
             case toolbar.modes.REPLACE_COLOR:
-                brushes.replace_color_line(mouse.start.x, mouse.start.y, x, y, fg, bg);
+                brushes.single_replace_color_line(mouse.start.x, mouse.start.y, x, y, fg, bg);
                 break;
             case toolbar.modes.BLINK:
-                brushes.blink_line(mouse.start.x, mouse.start.y, x, y, button != mouse.buttons.LEFT);
+                brushes.single_blink_line(mouse.start.x, mouse.start.y, x, y, button != mouse.buttons.LEFT);
                 break;
             case toolbar.modes.COLORIZE:
-                brushes.colorize_line(mouse.start.x, mouse.start.y, x, y, toolbar.colorize_fg ? fg : undefined, toolbar.colorize_bg ? bg : undefined);
+                brushes.single_colorize_line(mouse.start.x, mouse.start.y, x, y, toolbar.colorize_fg ? fg : undefined, toolbar.colorize_bg ? bg : undefined);
                 break;
         }
     }

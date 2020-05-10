@@ -1,5 +1,5 @@
 const electron = require("electron");
-const {on, send, open_box} = require("../../senders");
+const {on, send, send_sync, open_box} = require("../../senders");
 const doc = require("../doc");
 const palette = require("../palette");
 const keyboard = require("../input/keyboard");
@@ -97,6 +97,19 @@ function toggle_file_id_guide(visible) {
     }
 }
 
+function toggle_petscii_guide(visible) {
+    send("uncheck_all_guides");
+    if (visible) {
+        guide_columns = 40;
+        guide_rows = 25;
+        rescale_guide();
+        $("guide").classList.remove("hidden");
+        send("check_petscii_guide");
+    } else {
+        $("guide").classList.add("hidden");
+    }
+}
+
 function rescale_guide() {
     $("guide").style.width = `${doc.render.font.width * Math.min(doc.columns, guide_columns)}px`;
     $("guide").style.height = `${doc.render.font.height * Math.min(doc.rows, guide_rows)}px`;
@@ -116,6 +129,7 @@ on("toggle_smallscale_guide", (event, visible) => toggle_smallscale_guide(visibl
 on("toggle_square_guide", (event, visible) => toggle_square_guide(visible));
 on("toggle_instagram_guide", (event, visible) => toggle_instagram_guide(visible));
 on("toggle_file_id_guide", (event, visible) => toggle_file_id_guide(visible));
+on("toggle_petscii_guide", (event, visible) => toggle_petscii_guide(visible));
 
 doc.on("render", () => rescale_guide());
 
@@ -168,18 +182,18 @@ function hide_scrollbars(value) {
 }
 
 function current_zoom_factor() {
-    return parseFloat(electron.remote.getCurrentWebContents().getZoomFactor().toFixed(1));
+    return parseFloat(electron.remote.getCurrentWebContents().zoomFactor.toFixed(1));
 }
 
 function set_zoom(factor) {
     const zoom_element = $("zoom");
-    electron.remote.getCurrentWebContents().setZoomFactor(factor);
+    electron.remote.getCurrentWebContents().zoomFactor = factor;
     zoom_element.textContent = `${Math.ceil(factor * 10) * 10}%`;
     zoom_element.classList.remove("fade");
     document.body.removeChild(zoom_element);
     document.body.appendChild(zoom_element);
     zoom_element.classList.add("fade");
-    send("update_menu_checkboxes", {actual_size: (electron.remote.getCurrentWebContents().getZoomFactor() == 1)});
+    send("update_menu_checkboxes", {actual_size: (electron.remote.getCurrentWebContents().zoomFactor == 1)});
 }
 
 function zoom_in() {
@@ -360,6 +374,21 @@ class Toolbar extends events.EventEmitter {
         this.change_fkeys((this.fkey_index + 1 == this.fkeys.length) ? 0 : this.fkey_index + 1);
     }
 
+    increase_brush_size() {
+        this.brush_size = Math.min(this.brush_size + 1, 9);
+        $("brush_size_num").innerText = this.brush_size;
+    }
+
+    decrease_brush_size() {
+        this.brush_size = Math.max(this.brush_size - 1, 1);
+        $("brush_size_num").innerText = this.brush_size;
+    }
+
+    reset_brush_size() {
+        this.brush_size = 1;
+        $("brush_size_num").innerText = this.brush_size;
+    }
+
     default_character_set() {
         this.change_fkeys(this.default_fkeys);
     }
@@ -370,6 +399,7 @@ class Toolbar extends events.EventEmitter {
 
     show_select() {
         send("show_editing_touchbar");
+        send("disable_brush_size_shortcuts");
         $("select_panel").classList.remove("hidden");
         $("brush_panel").classList.add("hidden");
         $("sample_panel").classList.add("hidden");
@@ -377,6 +407,7 @@ class Toolbar extends events.EventEmitter {
 
     show_brush() {
         send("show_brush_touchbar");
+        send("enable_brush_size_shortcuts");
         $("select_panel").classList.add("hidden");
         $("brush_panel").classList.remove("hidden");
         $("sample_panel").classList.add("hidden");
@@ -384,6 +415,7 @@ class Toolbar extends events.EventEmitter {
 
     show_sample() {
         send("show_brush_touchbar");
+        send("disable_brush_size_shortcuts");
         $("select_panel").classList.add("hidden");
         $("brush_panel").classList.add("hidden");
         $("sample_panel").classList.remove("hidden");
@@ -394,7 +426,7 @@ class Toolbar extends events.EventEmitter {
     }
 
     fkey_pref_clicker(num) {
-        return (event) => send("fkey_prefs", {num, fkey_index: this.fkey_index, current: this.fkeys[this.fkey_index][num], bitmask: doc.font.bitmask, use_9px_font: doc.font.use_9px_font, font_height: doc.font.height});
+        return (event) => send_sync("fkey_prefs", {num, fkey_index: this.fkey_index, current: this.fkeys[this.fkey_index][num], bitmask: doc.font.bitmask, use_9px_font: doc.font.use_9px_font, font_height: doc.font.height});
     }
 
     change_mode(new_mode) {
@@ -454,10 +486,14 @@ class Toolbar extends events.EventEmitter {
         on("next_character_set", () => this.next_character_set());
         on("previous_character_set", () => this.previous_character_set());
         on("default_character_set", () => this.default_character_set());
+        on("increase_brush_size", () => this.increase_brush_size());
+        on("decrease_brush_size", () => this.decrease_brush_size());
+        on("reset_brush_size", () => this.reset_brush_size());
         keyboard.on("change_fkeys", (num) => this.change_fkeys(num));
         this.modes = {HALF_BLOCK: 0, FULL_BLOCK: 1, SHADING_BLOCK: 2, CLEAR_BLOCK: 3, REPLACE_COLOR: 4, BLINK: 5, COLORIZE: 6};
         this.colorize_fg = true;
         this.colorize_bg = false;
+        this.brush_size = 1;
         on("show_toolbar", (event, visible) => set_var_px("toolbar-height", visible ? 48 : 0));
         palette.on("set_fg", () => this.redraw_fkeys());
         palette.on("set_bg", () => this.redraw_fkeys());
@@ -476,6 +512,9 @@ class Toolbar extends events.EventEmitter {
             for (let i = 0; i < 12; i++) $(`f${i + 1}_pref`).addEventListener("mousedown", this.fkey_pref_clicker(i), true);
             $("fkey_chooser_left").addEventListener("mousedown", (event) => this.previous_character_set(), true);
             $("fkey_chooser_right").addEventListener("mousedown", (event) => this.next_character_set(), true);
+            $("brush_size_left").addEventListener("mousedown", (event) => this.decrease_brush_size(), true);
+            $("brush_size_right").addEventListener("mousedown", (event) => this.increase_brush_size(), true);
+            $("brush_size_num").innerText = this.brush_size;
             $("half_block").addEventListener("mousedown", (event) => this.change_mode(this.modes.HALF_BLOCK));
             $("full_block").addEventListener("mousedown", (event) => this.change_mode(this.modes.FULL_BLOCK));
             $("shading_block").addEventListener("mousedown", (event) => this.change_mode(this.modes.SHADING_BLOCK));
