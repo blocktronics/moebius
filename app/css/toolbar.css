@@ -111,11 +111,17 @@ body.dark .panel > div {
     border-bottom-left-radius: 4px;
 }
 
-#full_block, #shading_block, #clear_block, #replace_color, #blink {
+#full_block, #custom_block, #shading_block, #clear_block, #replace_color, #blink {
     margin-left: 0px;
     margin-right: 0px;
     border-right: none;
     border-left: none;
+}
+
+#custom_block canvas {
+    display: inline-block;
+    vertical-align: middle;
+    border: 1px solid black;
 }
 
 #colorize {

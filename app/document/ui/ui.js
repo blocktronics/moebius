@@ -361,6 +361,16 @@ class Toolbar extends events.EventEmitter {
         $("fkey_chooser_num").textContent = `${this.fkey_index + 1}`;
     }
 
+    draw_custom_block() {
+        const font = doc.font;
+        const {fg, bg} = palette;
+        const canvas = $("custom_block_canvas");
+        canvas.width = font.width;
+        canvas.height = font.height;
+        const ctx = canvas.getContext("2d");
+        font.draw(ctx, {code: this.custom_block_index, fg, bg}, 0, 0);
+    }
+
     change_fkeys(num) {
         this.fkey_index = num;
         this.redraw_fkeys();
@@ -430,8 +440,15 @@ class Toolbar extends events.EventEmitter {
     }
 
     change_mode(new_mode) {
+        if (this.mode == new_mode) {
+            if (this.mode == this.modes.CUSTOM_BLOCK) {
+                send_sync("fkey_prefs", {num: -1, fkey_index: 0, current: this.custom_block_index, bitmask: doc.font.bitmask, use_9px_font: doc.font.use_9px_font, font_height: doc.font.height});
+            }
+            return;
+        }
         this.mode = new_mode;
         $("half_block").classList.remove("brush_mode_selected");
+        $("custom_block").classList.remove("brush_mode_selected");
         $("colorize").classList.remove("brush_mode_selected");
         $("shading_block").classList.remove("brush_mode_selected");
         $("full_block").classList.remove("brush_mode_selected");
@@ -444,6 +461,7 @@ class Toolbar extends events.EventEmitter {
         $("colorize_bg").classList.remove("brush_mode_selected");
         switch (this.mode) {
             case this.modes.HALF_BLOCK: $("half_block").classList.add("brush_mode_selected"); break;
+            case this.modes.CUSTOM_BLOCK: $("custom_block").classList.add("brush_mode_selected"); break;
             case this.modes.FULL_BLOCK: $("full_block").classList.add("brush_mode_selected"); break;
             case this.modes.SHADING_BLOCK: $("shading_block").classList.add("brush_mode_selected"); break;
             case this.modes.CLEAR_BLOCK: $("clear_block").classList.add("brush_mode_selected"); break;
@@ -483,6 +501,10 @@ class Toolbar extends events.EventEmitter {
             this.default_fkeys = value;
             this.fkey_index = value;
         });
+        on("set_custom_block", (event, value) => {
+            this.custom_block_index = value;
+            this.draw_custom_block();
+        });
         on("next_character_set", () => this.next_character_set());
         on("previous_character_set", () => this.previous_character_set());
         on("default_character_set", () => this.default_character_set());
@@ -490,15 +512,23 @@ class Toolbar extends events.EventEmitter {
         on("decrease_brush_size", () => this.decrease_brush_size());
         on("reset_brush_size", () => this.reset_brush_size());
         keyboard.on("change_fkeys", (num) => this.change_fkeys(num));
-        this.modes = {HALF_BLOCK: 0, FULL_BLOCK: 1, SHADING_BLOCK: 2, CLEAR_BLOCK: 3, REPLACE_COLOR: 4, BLINK: 5, COLORIZE: 6};
+        this.modes = {HALF_BLOCK: 0, CUSTOM_BLOCK: 1, FULL_BLOCK: 2, SHADING_BLOCK: 3, CLEAR_BLOCK: 4, REPLACE_COLOR: 5, BLINK: 6, COLORIZE: 7};
         this.colorize_fg = true;
         this.colorize_bg = false;
         this.brush_size = 1;
+        this.custom_block_index = 176;
         on("show_toolbar", (event, visible) => set_var_px("toolbar-height", visible ? 48 : 0));
-        palette.on("set_fg", () => this.redraw_fkeys());
-        palette.on("set_bg", () => this.redraw_fkeys());
+        palette.on("set_fg", () => {
+            this.redraw_fkeys();
+            this.draw_custom_block();
+        });
+        palette.on("set_bg", () => {
+            this.redraw_fkeys();
+            this.draw_custom_block();
+        });
         doc.on("render", () => {
             this.redraw_fkeys();
+            this.draw_custom_block();
             const font = doc.font;
             const sample_block = document.getElementById("sample_block");
             sample_block.width = font.width;
@@ -516,6 +546,7 @@ class Toolbar extends events.EventEmitter {
             $("brush_size_right").addEventListener("mousedown", (event) => this.increase_brush_size(), true);
             $("brush_size_num").innerText = this.brush_size;
             $("half_block").addEventListener("mousedown", (event) => this.change_mode(this.modes.HALF_BLOCK));
+            $("custom_block").addEventListener("mousedown", (event) => this.change_mode(this.modes.CUSTOM_BLOCK));
             $("full_block").addEventListener("mousedown", (event) => this.change_mode(this.modes.FULL_BLOCK));
             $("shading_block").addEventListener("mousedown", (event) => this.change_mode(this.modes.SHADING_BLOCK));
             $("clear_block").addEventListener("mousedown", (event) => this.change_mode(this.modes.CLEAR_BLOCK));

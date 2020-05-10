@@ -101,6 +101,12 @@ function draw_full_block_ellipse(sx, sy, dx, dy, col) {
     for (const coord of coords) doc.change_data(coord.x, coord.y, 219, col, 0);
 }
 
+function draw_custom_block_ellipse(sx, sy, dx, dy, fg, bg) {
+    const coords = ellipse_coords(sx, sy, dx, dy);
+    if (!coords) return;
+    for (const coord of coords) doc.change_data(coord.x, coord.y, toolbar.custom_block_index, fg, bg);
+}
+
 function draw_shaded_block_ellipse(sx, sy, dx, dy, fg, bg, reduce) {
     const coords = ellipse_coords(sx, sy, dx, dy);
     if (!coords) return;
@@ -178,6 +184,9 @@ mouse.on("up", (x, y, half_y, button) => {
         switch (toolbar.mode) {
             case toolbar.modes.FULL_BLOCK:
                 draw_full_block_ellipse(mouse.start.x, mouse.start.y, x, y, (button == mouse.buttons.LEFT) ? fg : bg);
+                break;
+            case toolbar.modes.CUSTOM_BLOCK:
+                draw_custom_block_ellipse(mouse.start.x, mouse.start.y, x, y, fg, bg);
                 break;
             case toolbar.modes.SHADING_BLOCK:
                 const reduce = (button != mouse.buttons.LEFT);

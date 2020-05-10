@@ -80,6 +80,9 @@ mouse.on("up", (x, y, half_y, button) => {
             case toolbar.modes.FULL_BLOCK:
                 brushes.single_full_block_line(mouse.start.x, mouse.start.y, x, y, (button == mouse.buttons.LEFT) ? fg : bg);
                 break;
+            case toolbar.modes.CUSTOM_BLOCK:
+                brushes.single_custom_block_line(mouse.start.x, mouse.start.y, x, y, fg, bg);
+                break;
             case toolbar.modes.SHADING_BLOCK:
                 brushes.single_shading_block_line(mouse.start.x, mouse.start.y, x, y, fg, bg, button != mouse.buttons.LEFT);
                 break;

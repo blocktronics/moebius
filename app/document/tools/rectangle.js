@@ -83,6 +83,9 @@ mouse.on("up", (x, y, half_y, button) => {
             case toolbar.modes.FULL_BLOCK:
                 for (let y = sy; y <= dy; y++) brushes.single_full_block_line(sx, y, dx, y, (button == mouse.buttons.LEFT) ? fg : bg);
                 break;
+            case toolbar.modes.CUSTOM_BLOCK:
+                for (let y = sy; y <= dy; y++) brushes.single_custom_block_line(sx, y, dx, y, fg, bg);
+                break;
             case toolbar.modes.SHADING_BLOCK:
                 const reduce = (button != mouse.buttons.LEFT);
                 for (let y = sy; y <= dy; y++) brushes.single_shading_block_line(sx, y, dx, y, fg, bg, reduce);

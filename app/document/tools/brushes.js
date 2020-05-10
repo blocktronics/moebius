@@ -58,6 +58,22 @@ function full_block_line(sx, sy, dx, dy, col, skip_first = false) {
     }
 }
 
+function single_custom_block_line(sx, sy, dx, dy, fg, bg, skip_first = false) {
+    const coords = line(sx, sy, dx, dy, skip_first);
+    for (const coord of coords) doc.change_data(coord.x, coord.y, toolbar.custom_block_index, fg, bg);
+}
+
+function custom_block_line(sx, sy, dx, dy, fg, bg, skip_first = false) {
+    const coords = line(sx, sy, dx, dy, skip_first);
+    for (const coord of coords) {
+        for (let x = -Math.floor(toolbar.brush_size / 2); x < -Math.floor(toolbar.brush_size / 2) + toolbar.brush_size; x++) {
+            for (let y = -Math.floor(toolbar.brush_size / 2); y < -Math.floor(toolbar.brush_size / 2) + toolbar.brush_size; y++) {
+                doc.change_data(coord.x + x, coord.y + y, toolbar.custom_block_index, fg, bg);
+            }
+        }
+    }
+}
+
 function shading_block(x, y, fg, bg, reduce) {
     const block = doc.at(x, y);
     if (block) {
@@ -172,4 +188,4 @@ function colorize_line(sx, sy, dx, dy, fg, bg, skip_first = false) {
     }
 }
 
-module.exports = {single_half_block_line, half_block_line, single_full_block_line, full_block_line, shading_block, single_shading_block_line, shading_block_line, single_clear_block_line, clear_block_line, single_replace_color_line, replace_color_line, single_blink_line, blink_line, single_colorize_line, colorize_line, line};
+module.exports = {single_half_block_line, half_block_line, single_full_block_line, full_block_line, single_custom_block_line, custom_block_line, shading_block, single_shading_block_line, shading_block_line, single_clear_block_line, clear_block_line, single_replace_color_line, replace_color_line, single_blink_line, blink_line, single_colorize_line, colorize_line, line};

@@ -299,8 +299,12 @@ electron.ipcMain.on("fkey_prefs", async (event, {id, num, fkey_index, current, b
 
 electron.ipcMain.on("set_fkey", async (event, {id, num, fkey_index, code}) => {
     const fkeys = prefs.get("fkeys");
-    fkeys[fkey_index][num] = code;
-    update_prefs("fkeys", fkeys);
+    if (num == -1) {
+        docs[id].win.send("set_custom_block", code);
+    } else {
+        fkeys[fkey_index][num] = code;
+        update_prefs("fkeys", fkeys);
+    }
 });
 
 electron.ipcMain.on("ready", async (event, {id}) => {
