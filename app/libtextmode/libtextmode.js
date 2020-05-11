@@ -659,17 +659,21 @@ function export_as_apng(render, file) {
 }
 
 function remove_ice_color_for_block(block) {
-    if (block.code == 0 || block.code == 32 || block.code == 255) {
-        return {fg: block.bg, bg: 0, code: 219};
+    switch (block.code) {
+        case 0: case 32: case 255:
+            return {fg: block.bg, bg: 0, code: 219};
+        case 219:
+            return {fg: block.fg, bg: 0, code: 219};
+
     }
-    if (fg < 8) {
+    if (block.fg < 8) {
         switch (block.code) {
             case 176: return {fg: block.bg, bg: block.fg, code: 178};
             case 177: return {fg: block.bg, bg: block.fg, code: 177};
             case 178: return {fg: block.bg, bg: block.fg, code: 176};
+            case 220: return {fg: block.bg, bg: block.fg, code: 223};
             case 221: return {fg: block.bg, bg: block.fg, code: 222};
             case 222: return {fg: block.bg, bg: block.fg, code: 221};
-            case 220: return {fg: block.bg, bg: block.fg, code: 223};
             case 223: return {fg: block.bg, bg: block.fg, code: 220};
         }
     }
