@@ -54,7 +54,12 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("pass").addEventListener("keydown", key_down, true);
     libtextmode.animate({file: `${ans_path}MB4K.ans`, ctx: document.getElementById("splash_terminal").getContext("2d")});
     fetch("https://blocktronics.github.io/moebius/latest.json", {cache: "no-cache"}).then((response) => response.json()).then((json) => {
-        if (electron.remote.app.getVersion() != json.version) show_new_version_button();
+        if (electron.remote.app.getVersion() != json.version) {
+            // 50/50 chance to show update button to stagger updates to try and mitigate en-masse release problems.
+            if (Math.floor(Math.random() * 2) == 0 || json.urgent) {
+                show_new_version_button();
+            }
+        }
     });
 });
 
