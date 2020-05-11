@@ -11,7 +11,7 @@ let overlay;
 let clear = false;
 
 tools.on("start", (mode) => {
-    enabled = (mode == tools.modes.RECTANGLE);
+    enabled = (mode == tools.modes.RECTANGLE_FILLED);
     if (enabled) toolbar.show_brush();
 });
 

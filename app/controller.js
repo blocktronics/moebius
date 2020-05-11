@@ -9,8 +9,10 @@ require("./document/tools/select");
 require("./document/tools/brush");
 require("./document/tools/shifter");
 require("./document/tools/line");
-require("./document/tools/rectangle");
-require("./document/tools/ellipse");
+require("./document/tools/rectangle_filled");
+require("./document/tools/rectangle_outline");
+require("./document/tools/ellipse_filled");
+require("./document/tools/ellipse_outline");
 require("./document/tools/fill");
 require("./document/tools/sample");
 

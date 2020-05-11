@@ -56,8 +56,20 @@ body.dark .tool.selected {
 #rectangle_mode {
     background-image: url("../img/rectangle.png");
 }
+#rectangle_mode.outline {
+    background-image: url("../img/rectangle_outline.png");
+}
+#rectangle_mode.filled {
+    background-image: url("../img/rectangle_filled.png");
+}
 #ellipse_mode {
     background-image: url("../img/ellipse.png");
+}
+#ellipse_mode.outline {
+    background-image: url("../img/ellipse_outline.png");
+}
+#ellipse_mode.filled {
+    background-image: url("../img/ellipse_filled.png");
 }
 #fill_mode {
     background-image: url("../img/fill.png");

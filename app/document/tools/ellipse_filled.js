@@ -11,7 +11,7 @@ let overlay;
 let clear = false;
 
 tools.on("start", (mode) => {
-    enabled = (mode == tools.modes.ELLIPSE);
+    enabled = (mode == tools.modes.ELLIPSE_FILLED);
     if (enabled) toolbar.show_brush();
 });
 
@@ -70,7 +70,9 @@ function half_block_ellipse_overlay(sx, sy, dx, dy, col) {
     const coords = ellipse_outline(radius_x, radius_y, radius_x, radius_y);
     if (!coords) return;
     overlay.fill_style(font, col);
-    for (const coord of coords) overlay.fill_rect(coord.x * font.width, Math.floor(coord.y * font.height / 2), font.width, Math.floor(font.height / 2));
+    for (let i = 0; i < coords.length; i += 2) {
+        overlay.fill_rect(coords[i].x * font.width, Math.floor(coords[i].y * font.height / 2), (coords[i + 1].x - coords[i].x) * font.width, Math.floor(font.height / 2))
+    }
 }
 
 function full_block_ellipse_overlay(sx, sy, dx, dy, col) {
@@ -80,63 +82,72 @@ function full_block_ellipse_overlay(sx, sy, dx, dy, col) {
     const coords = ellipse_outline(radius_x, radius_y, radius_x, radius_y);
     if (!coords) return;
     overlay.fill_style(font, col);
-    for (const coord of coords) overlay.fill_rect(coord.x * font.width, coord.y * font.height, font.width, font.height);
+    for (let i = 0; i < coords.length; i += 2) {
+        overlay.fill_rect(coords[i].x * font.width, coords[i].y * font.height, (coords[i + 1].x - coords[i].x) * font.width, font.height);
+    }
 }
 
 function draw_half_block_ellipse(sx, sy, dx, dy, col) {
     const coords = ellipse_coords(sx, sy, dx, dy);
     if (!coords) return;
-    for (const coord of coords) doc.set_half_block(coord.x, coord.y, col);
+    for (let i = 0; i < coords.length; i += 2) {
+        brushes.single_half_block_line(coords[i].x - 1, coords[i].y, coords[i + 1].x, coords[i + 1].y, col);
+    }
 }
 
 function draw_clear_block_ellipse(sx, sy, dx, dy) {
     const coords = ellipse_coords(sx, sy, dx, dy);
     if (!coords) return;
-    for (const coord of coords) doc.change_data(coord.x, coord.y, 32, 7, 0);
+    for (let i = 0; i < coords.length; i += 2) {
+        brushes.single_clear_block_line(coords[i].x - 1, coords[i].y, coords[i + 1].x, coords[i + 1].y);
+    }
 }
 
 function draw_full_block_ellipse(sx, sy, dx, dy, col) {
     const coords = ellipse_coords(sx, sy, dx, dy);
     if (!coords) return;
-    for (const coord of coords) doc.change_data(coord.x, coord.y, 219, col, 0);
+    for (let i = 0; i < coords.length; i += 2) {
+        brushes.single_full_block_line(coords[i].x - 1, coords[i].y, coords[i + 1].x, coords[i + 1].y, col);
+    }
 }
 
 function draw_custom_block_ellipse(sx, sy, dx, dy, fg, bg) {
     const coords = ellipse_coords(sx, sy, dx, dy);
     if (!coords) return;
-    for (const coord of coords) doc.change_data(coord.x, coord.y, toolbar.custom_block_index, fg, bg);
+    for (let i = 0; i < coords.length; i += 2) {
+        brushes.single_custom_block_line(coords[i].x - 1, coords[i].y, coords[i + 1].x, coords[i + 1].y, fg, bg);
+    }
 }
 
 function draw_shaded_block_ellipse(sx, sy, dx, dy, fg, bg, reduce) {
     const coords = ellipse_coords(sx, sy, dx, dy);
     if (!coords) return;
-    for (const coord of coords) brushes.shading_block(coord.x, coord.y, fg, bg, reduce);
+    for (let i = 0; i < coords.length; i += 2) {
+        brushes.single_shading_block_line(coords[i].x - 1, coords[i].y, coords[i + 1].x, coords[i + 1].y, fg, bg, reduce);
+    }
 }
 
 function draw_replace_color_block_ellipse(sx, sy, dx, dy, to, from) {
     const coords = ellipse_coords(sx, sy, dx, dy);
     if (!coords) return;
-    for (const coord of coords) {
-        const block = doc.at(coord.x, coord.y);
-        if (block && (block.fg == from || block.bg == from)) doc.change_data(coord.x, coord.y, block.code, (block.fg == from) ? to : block.fg, (block.bg == from) ? to : block.bg);
+    for (let i = 0; i < coords.length; i += 2) {
+        brushes.single_replace_color_line(coords[i].x - 1, coords[i].y, coords[i + 1].x, coords[i + 1].y, to, from);
     }
 }
 
 function draw_blink_ellipse(sx, sy, dx, dy, unblink) {
     const coords = ellipse_coords(sx, sy, dx, dy);
     if (!coords) return;
-    for (const coord of coords) {
-        const block = doc.at(coord.x, coord.y);
-        if (block && ((!unblink && block.bg < 8) || (unblink && block.bg >= 8)) && (block.code != 0 && block.code != 32 && block.code != 255)) doc.change_data(coord.x, coord.y, block.code, block.fg, unblink ? block.bg - 8 : block.bg + 8);
+    for (let i = 0; i < coords.length; i += 2) {
+        brushes.single_blink_line(coords[i].x - 1, coords[i].y, coords[i + 1].x, coords[i + 1].y, unblink);
     }
 }
 
 function draw_colorize_block_ellipse(sx, sy, dx, dy, fg, bg) {
     const coords = ellipse_coords(sx, sy, dx, dy);
     if (!coords) return;
-    for (const coord of coords) {
-        const block = doc.at(coord.x, coord.y);
-        if (block) doc.change_data(coord.x, coord.y, block.code, (fg != undefined) ? fg : block.fg, (bg != undefined) ? bg : block.bg);
+    for (let i = 0; i < coords.length; i += 2) {
+        brushes.single_colorize_line(coords[i].x - 1, coords[i].y, coords[i + 1].x, coords[i + 1].y, fg, bg);
     }
 }
 

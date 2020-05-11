@@ -289,8 +289,10 @@ class Tools extends events.EventEmitter {
             case this.modes.BRUSH: return $("brush_mode");
             case this.modes.SHIFTER: return $("shifter_mode");
             case this.modes.LINE: return $("line_mode");
-            case this.modes.RECTANGLE: return $("rectangle_mode");
-            case this.modes.ELLIPSE: return $("ellipse_mode");
+            case this.modes.RECTANGLE_OUTLINE: return $("rectangle_mode");
+            case this.modes.RECTANGLE_FILLED: return $("rectangle_mode");
+            case this.modes.ELLIPSE_OUTLINE: return $("ellipse_mode");
+            case this.modes.ELLIPSE_FILLED: return $("ellipse_mode");
             case this.modes.FILL: return $("fill_mode");
             case this.modes.SAMPLE: return $("sample_mode");
         }
@@ -298,10 +300,24 @@ class Tools extends events.EventEmitter {
 
     start(new_mode) {
         if (new_mode == this.mode) return;
-        if (this.mode != undefined) this.get_tool_div(this.mode).classList.remove("selected");
+        if (this.mode != undefined) {
+            const div = this.get_tool_div(this.mode);
+            div.classList.remove("selected");
+            if (this.mode == this.modes.RECTANGLE_OUTLINE || this.mode == this.modes.ELLIPSE_OUTLINE) {
+                div.classList.remove("outline");
+            } else if (this.mode == this.modes.RECTANGLE_FILLED || this.mode == this.modes.ELLIPSE_FILLED) {
+                div.classList.remove("filled");
+            }
+        }
         this.previous_mode = this.mode;
         this.mode = new_mode;
-        this.get_tool_div(this.mode).classList.add("selected");
+        const div = this.get_tool_div(this.mode);
+        div.classList.add("selected");
+        if (this.mode == this.modes.RECTANGLE_OUTLINE || this.mode == this.modes.ELLIPSE_OUTLINE) {
+            div.classList.add("outline");
+        } else if (this.mode == this.modes.RECTANGLE_FILLED || this.mode == this.modes.ELLIPSE_FILLED) {
+            div.classList.add("filled");
+        }
         this.emit("start", this.mode);
     }
 
@@ -312,21 +328,32 @@ class Tools extends events.EventEmitter {
 
     constructor() {
         super();
-        this.modes = {SELECT: 0, BRUSH: 1, SHIFTER: 2, LINE: 3, RECTANGLE: 4, ELLIPSE: 5, FILL: 6, SAMPLE: 7};
+        this.modes = {SELECT: 0, BRUSH: 1, SHIFTER: 2, LINE: 3, RECTANGLE_OUTLINE: 4, RECTANGLE_FILLED: 5, ELLIPSE_OUTLINE: 6, ELLIPSE_FILLED: 7, FILL: 8, SAMPLE: 9};
         on("change_to_select_mode", (event) => this.start(this.modes.SELECT));
         on("change_to_brush_mode", (event) => this.start(this.modes.BRUSH));
         on("change_to_shifter_mode", (event) => this.start(this.modes.SHIFTER));
-        on("change_to_line_mode", (event) => this.start(this.modes.LINE));
-        on("change_to_rectangle_mode", (event) => this.start(this.modes.RECTANGLE));
-        on("change_to_ellipse_mode", (event) => this.start(this.modes.ELLIPSE));
         on("change_to_fill_mode", (event) => this.start(this.modes.FILL));
         document.addEventListener("DOMContentLoaded", (event) => {
             $("select_mode").addEventListener("mousedown", (event) => this.start(this.modes.SELECT), true);
             $("brush_mode").addEventListener("mousedown", (event) => this.start(this.modes.BRUSH), true);
             $("shifter_mode").addEventListener("mousedown", (event) => this.start(this.modes.SHIFTER), true);
             $("line_mode").addEventListener("mousedown", (event) => this.start(this.modes.LINE), true);
-            $("rectangle_mode").addEventListener("mousedown", (event) => this.start(this.modes.RECTANGLE), true);
-            $("ellipse_mode").addEventListener("mousedown", (event) => this.start(this.modes.ELLIPSE), true);
+            $("rectangle_mode").addEventListener("mousedown", (event) => {
+                const rect = $("rectangle_mode").getBoundingClientRect();
+                if (Math.floor(event.clientX - rect.left) < 24) {
+                    this.start(this.modes.RECTANGLE_OUTLINE);
+                } else {
+                    this.start(this.modes.RECTANGLE_FILLED);
+                }
+            }, true);
+            $("ellipse_mode").addEventListener("mousedown", (event) => {
+                const rect = $("ellipse_mode").getBoundingClientRect();
+                if (Math.floor(event.clientX - rect.left) < 24) {
+                    this.start(this.modes.ELLIPSE_OUTLINE);
+                } else {
+                    this.start(this.modes.ELLIPSE_FILLED);
+                }
+            }, true);
             $("fill_mode").addEventListener("mousedown", (event) => this.start(this.modes.FILL), true);
             $("sample_mode").addEventListener("mousedown", (event) => this.start(this.modes.SAMPLE), true);
         });
