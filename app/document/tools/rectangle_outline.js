@@ -65,7 +65,7 @@ mouse.on("to", (x, y, half_y, button) => {
         return;
     }
     const {sx, sy, dx, dy} = reorientate(mouse.start.x, mouse.start.y, x, y);
-    if (clear || toolbar.mode == toolbar.modes.CLEAR_BLOCK) {
+    if (clear) {
         rectangle_overlay(sx, sy, dx, dy, 0);
     } else {
         rectangle_overlay(sx, sy, dx, dy, (button == mouse.buttons.LEFT) ? fg : bg);
@@ -102,7 +102,7 @@ mouse.on("up", (x, y, half_y, button) => {
         return;
     }
     const {sx, sy, dx, dy} = reorientate(mouse.start.x, mouse.start.y, x, y);
-    if (clear || toolbar.mode == toolbar.modes.CLEAR_BLOCK) {
+    if (clear) {
         brushes.single_clear_block_line(sx, sy, dx, sy);
         if (dy > sy) {
             brushes.single_clear_block_line(sx, dy, dx, dy);
@@ -113,17 +113,6 @@ mouse.on("up", (x, y, half_y, button) => {
         }
     } else {
         switch (toolbar.mode) {
-            case toolbar.modes.FULL_BLOCK:
-                const col = (button == mouse.buttons.LEFT) ? fg : bg;
-                brushes.single_full_block_line(sx, sy, dx, sy, col);
-                if (dy > sy) {
-                    brushes.single_full_block_line(sx, dy, dx, dy, col);
-                    if (dy > sy + 1) {
-                        brushes.single_full_block_line(sx, sy + 1, sx, dy - 1, col);
-                        brushes.single_full_block_line(dx, sy + 1, dx, dy - 1, col);
-                    }
-                }
-                break;
             case toolbar.modes.CUSTOM_BLOCK:
                 brushes.single_custom_block_line(sx, sy, dx, sy, fg, bg);
                 if (dy > sy) {

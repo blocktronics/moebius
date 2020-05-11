@@ -55,7 +55,7 @@ mouse.on("to", (x, y, half_y, button) => {
         } else {
             draw_line_overlay_half_block(x, half_y, (button == mouse.buttons.LEFT) ? fg : bg);
         }
-    } else if (clear || toolbar.mode == toolbar.modes.CLEAR_BLOCK) {
+    } else if (clear) {
         draw_line_overlay(x, y, 0);
     } else {
         draw_line_overlay(x, y, (button == mouse.buttons.LEFT) ? fg : bg);
@@ -73,13 +73,10 @@ mouse.on("up", (x, y, half_y, button) => {
         } else {
             brushes.single_half_block_line(mouse.start.x, mouse.start.half_y, x, half_y, (button == mouse.buttons.LEFT) ? fg : bg);
         }
-    } else if (clear || toolbar.mode == toolbar.modes.CLEAR_BLOCK) {
+    } else if (clear) {
         brushes.clear_block_line(mouse.start.x, mouse.start.y, x, y);
     } else {
         switch (toolbar.mode) {
-            case toolbar.modes.FULL_BLOCK:
-                brushes.single_full_block_line(mouse.start.x, mouse.start.y, x, y, (button == mouse.buttons.LEFT) ? fg : bg);
-                break;
             case toolbar.modes.CUSTOM_BLOCK:
                 brushes.single_custom_block_line(mouse.start.x, mouse.start.y, x, y, fg, bg);
                 break;

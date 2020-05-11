@@ -301,22 +301,38 @@ class Tools extends events.EventEmitter {
     start(new_mode) {
         if (new_mode == this.mode) return;
         if (this.mode != undefined) {
+            $("brush_size_chooser").classList.remove("ghosted");
             const div = this.get_tool_div(this.mode);
             div.classList.remove("selected");
-            if (this.mode == this.modes.RECTANGLE_OUTLINE || this.mode == this.modes.ELLIPSE_OUTLINE) {
-                div.classList.remove("outline");
-            } else if (this.mode == this.modes.RECTANGLE_FILLED || this.mode == this.modes.ELLIPSE_FILLED) {
-                div.classList.remove("filled");
+            switch (this.mode) {
+                case this.modes.RECTANGLE_OUTLINE:
+                case this.modes.ELLIPSE_OUTLINE:
+                    div.classList.remove("outline");
+                    break;
+                case this.modes.RECTANGLE_FILLED:
+                case this.modes.ELLIPSE_FILLED:
+                    div.classList.remove("filled");
+                    break;
             }
         }
         this.previous_mode = this.mode;
         this.mode = new_mode;
         const div = this.get_tool_div(this.mode);
         div.classList.add("selected");
-        if (this.mode == this.modes.RECTANGLE_OUTLINE || this.mode == this.modes.ELLIPSE_OUTLINE) {
-            div.classList.add("outline");
-        } else if (this.mode == this.modes.RECTANGLE_FILLED || this.mode == this.modes.ELLIPSE_FILLED) {
-            div.classList.add("filled");
+        switch (this.mode) {
+            case this.modes.RECTANGLE_OUTLINE:
+            case this.modes.ELLIPSE_OUTLINE:
+                div.classList.add("outline");
+                $("brush_size_chooser").classList.add("ghosted");
+                break;
+            case this.modes.RECTANGLE_FILLED:
+            case this.modes.ELLIPSE_FILLED:
+                div.classList.add("filled");
+                $("brush_size_chooser").classList.add("ghosted");
+                break;
+            case this.modes.LINE:
+                $("brush_size_chooser").classList.add("ghosted");
+                break;
         }
         this.emit("start", this.mode);
     }
@@ -467,10 +483,8 @@ class Toolbar extends events.EventEmitter {
     }
 
     change_mode(new_mode) {
-        if (this.mode == new_mode) {
-            if (this.mode == this.modes.CUSTOM_BLOCK) {
-                send_sync("fkey_prefs", {num: -1, fkey_index: 0, current: this.custom_block_index, bitmask: doc.font.bitmask, use_9px_font: doc.font.use_9px_font, font_height: doc.font.height});
-            }
+        if (this.mode == new_mode && this.mode == this.modes.CUSTOM_BLOCK) {
+            send_sync("fkey_prefs", {num: -1, fkey_index: 0, current: this.custom_block_index, bitmask: doc.font.bitmask, use_9px_font: doc.font.use_9px_font, font_height: doc.font.height});
             return;
         }
         this.mode = new_mode;
@@ -478,8 +492,6 @@ class Toolbar extends events.EventEmitter {
         $("custom_block").classList.remove("brush_mode_selected");
         $("colorize").classList.remove("brush_mode_selected");
         $("shading_block").classList.remove("brush_mode_selected");
-        $("full_block").classList.remove("brush_mode_selected");
-        $("clear_block").classList.remove("brush_mode_selected");
         $("replace_color").classList.remove("brush_mode_selected");
         $("blink").classList.remove("brush_mode_selected");
         $("colorize_fg").classList.add("brush_mode_ghosted");
@@ -489,15 +501,14 @@ class Toolbar extends events.EventEmitter {
         switch (this.mode) {
             case this.modes.HALF_BLOCK: $("half_block").classList.add("brush_mode_selected"); break;
             case this.modes.CUSTOM_BLOCK: $("custom_block").classList.add("brush_mode_selected"); break;
-            case this.modes.FULL_BLOCK: $("full_block").classList.add("brush_mode_selected"); break;
             case this.modes.SHADING_BLOCK: $("shading_block").classList.add("brush_mode_selected"); break;
-            case this.modes.CLEAR_BLOCK: $("clear_block").classList.add("brush_mode_selected"); break;
             case this.modes.REPLACE_COLOR: $("replace_color").classList.add("brush_mode_selected"); break;
             case this.modes.BLINK: $("blink").classList.add("brush_mode_selected"); break;
-            case this.modes.COLORIZE: $("colorize").classList.add("brush_mode_selected");
+            case this.modes.COLORIZE:
+                $("colorize").classList.add("brush_mode_selected");
                 $("colorize_fg").classList.remove("brush_mode_ghosted");
                 $("colorize_bg").classList.remove("brush_mode_ghosted");
-            break;
+                break;
         }
         if (this.colorize_fg) $("colorize_fg").classList.add("brush_mode_selected");
         if (this.colorize_bg) $("colorize_bg").classList.add("brush_mode_selected");
@@ -539,7 +550,7 @@ class Toolbar extends events.EventEmitter {
         on("decrease_brush_size", () => this.decrease_brush_size());
         on("reset_brush_size", () => this.reset_brush_size());
         keyboard.on("change_fkeys", (num) => this.change_fkeys(num));
-        this.modes = {HALF_BLOCK: 0, CUSTOM_BLOCK: 1, FULL_BLOCK: 2, SHADING_BLOCK: 3, CLEAR_BLOCK: 4, REPLACE_COLOR: 5, BLINK: 6, COLORIZE: 7};
+        this.modes = {HALF_BLOCK: 0, CUSTOM_BLOCK: 1, SHADING_BLOCK: 2, REPLACE_COLOR: 3, BLINK: 4, COLORIZE: 5};
         this.colorize_fg = true;
         this.colorize_bg = false;
         this.brush_size = 1;
@@ -574,9 +585,7 @@ class Toolbar extends events.EventEmitter {
             $("brush_size_num").innerText = this.brush_size;
             $("half_block").addEventListener("mousedown", (event) => this.change_mode(this.modes.HALF_BLOCK));
             $("custom_block").addEventListener("mousedown", (event) => this.change_mode(this.modes.CUSTOM_BLOCK));
-            $("full_block").addEventListener("mousedown", (event) => this.change_mode(this.modes.FULL_BLOCK));
             $("shading_block").addEventListener("mousedown", (event) => this.change_mode(this.modes.SHADING_BLOCK));
-            $("clear_block").addEventListener("mousedown", (event) => this.change_mode(this.modes.CLEAR_BLOCK));
             $("replace_color").addEventListener("mousedown", (event) => this.change_mode(this.modes.REPLACE_COLOR));
             $("blink").addEventListener("mousedown", (event) => this.change_mode(this.modes.BLINK));
             $("colorize").addEventListener("mousedown", (event) => this.change_mode(this.modes.COLORIZE));

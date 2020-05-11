@@ -31,13 +31,10 @@ function mouse_handler(skip_first) {
             } else {
                 brushes.half_block_line(mouse.x, mouse.half_y, x, half_y, (button == mouse.buttons.LEFT) ? fg : bg, skip_first);
             }
-        } else if (shift_key || toolbar.mode == toolbar.modes.CLEAR_BLOCK) {
+        } else if (shift_key) {
             brushes.clear_block_line(mouse.x, mouse.y, x, y);
         } else {
             switch (toolbar.mode) {
-                case toolbar.modes.FULL_BLOCK:
-                    brushes.full_block_line(mouse.x, mouse.y, x, y, (button == mouse.buttons.LEFT) ? fg : bg, skip_first);
-                    break;
                 case toolbar.modes.CUSTOM_BLOCK:
                     brushes.custom_block_line(mouse.x, mouse.y, x, y, fg, bg, skip_first);
                     break;
@@ -66,14 +63,8 @@ function mouse_up(x, y, half_y, button, single_point, shift_key) {
             case toolbar.modes.HALF_BLOCK:
                 brushes.half_block_line(last_xy.x, last_xy.half_y, x, half_y, (button == mouse.buttons.LEFT) ? fg : bg);
                 break;
-            case toolbar.modes.FULL_BLOCK:
-                brushes.full_block_line(last_xy.x, last_xy.y, x, y, (button == mouse.buttons.LEFT) ? fg : bg);
-                break;
             case toolbar.modes.CUSTOM_BLOCK:
                 brushes.custom_block_line(last_xy.x, last_xy.y, x, y, fg, bg);
-                break;
-            case toolbar.modes.CLEAR_BLOCK:
-                brushes.clear_block_line(last_xy.x, last_xy.y, x, y);
                 break;
             case toolbar.modes.SHADING_BLOCK:
                 brushes.shading_block_line(last_xy.x, last_xy.y, x, y, fg, bg, button != mouse.buttons.LEFT);

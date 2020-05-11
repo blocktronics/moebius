@@ -53,7 +53,7 @@ mouse.on("to", (x, y, half_y, button) => {
         return;
     }
     const {sx, sy, dx, dy} = reorientate(mouse.start.x, mouse.start.y, x, y);
-    if (clear || toolbar.mode == toolbar.modes.CLEAR_BLOCK) {
+    if (clear) {
         rectangle_overlay(sx, sy, dx, dy, 0);
     } else {
         rectangle_overlay(sx, sy, dx, dy, (button == mouse.buttons.LEFT) ? fg : bg);
@@ -76,13 +76,10 @@ mouse.on("up", (x, y, half_y, button) => {
         return;
     }
     const {sx, sy, dx, dy} = reorientate(mouse.start.x, mouse.start.y, x, y);
-    if (clear || toolbar.mode == toolbar.modes.CLEAR_BLOCK) {
+    if (clear) {
         for (let y = sy; y <= dy; y++) brushes.single_clear_block_line(sx, y, dx, y);
     } else {
         switch (toolbar.mode) {
-            case toolbar.modes.FULL_BLOCK:
-                for (let y = sy; y <= dy; y++) brushes.single_full_block_line(sx, y, dx, y, (button == mouse.buttons.LEFT) ? fg : bg);
-                break;
             case toolbar.modes.CUSTOM_BLOCK:
                 for (let y = sy; y <= dy; y++) brushes.single_custom_block_line(sx, y, dx, y, fg, bg);
                 break;

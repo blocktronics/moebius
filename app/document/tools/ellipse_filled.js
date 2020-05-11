@@ -103,14 +103,6 @@ function draw_clear_block_ellipse(sx, sy, dx, dy) {
     }
 }
 
-function draw_full_block_ellipse(sx, sy, dx, dy, col) {
-    const coords = ellipse_coords(sx, sy, dx, dy);
-    if (!coords) return;
-    for (let i = 0; i < coords.length; i += 2) {
-        brushes.single_full_block_line(coords[i].x - 1, coords[i].y, coords[i + 1].x, coords[i + 1].y, col);
-    }
-}
-
 function draw_custom_block_ellipse(sx, sy, dx, dy, fg, bg) {
     const coords = ellipse_coords(sx, sy, dx, dy);
     if (!coords) return;
@@ -169,7 +161,7 @@ mouse.on("to", (x, y, half_y, button) => {
         }
         return;
     }
-    if (clear || toolbar.mode == toolbar.modes.CLEAR_BLOCK) {
+    if (clear) {
         full_block_ellipse_overlay(mouse.start.x, mouse.start.y, x, y, 0);
     } else {
         full_block_ellipse_overlay(mouse.start.x, mouse.start.y, x, y, (button == mouse.buttons.LEFT) ? fg : bg);
@@ -189,13 +181,10 @@ mouse.on("up", (x, y, half_y, button) => {
         }
         return;
     }
-    if (clear || toolbar.mode == toolbar.modes.CLEAR_BLOCK) {
+    if (clear) {
         draw_clear_block_ellipse(mouse.start.x, mouse.start.y, x, y);
     } else {
         switch (toolbar.mode) {
-            case toolbar.modes.FULL_BLOCK:
-                draw_full_block_ellipse(mouse.start.x, mouse.start.y, x, y, (button == mouse.buttons.LEFT) ? fg : bg);
-                break;
             case toolbar.modes.CUSTOM_BLOCK:
                 draw_custom_block_ellipse(mouse.start.x, mouse.start.y, x, y, fg, bg);
                 break;

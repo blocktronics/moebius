@@ -9,7 +9,7 @@
     width: fit-content;
     min-width: max-content;
     margin: 0px auto;
-    font-size: 12px;
+    font-size: 10px;
     line-height: 48px;
     color: rgba(0, 0, 0, 0.7);
 }
@@ -111,7 +111,7 @@ body.dark .panel > div {
     border-bottom-left-radius: 4px;
 }
 
-#full_block, #custom_block, #shading_block, #clear_block, #replace_color, #blink {
+#custom_block, #shading_block, #replace_color, #blink {
     margin-left: 0px;
     margin-right: 0px;
     border-right: none;
