@@ -223,3 +223,8 @@ on("select_attribute", (event) => {
     if (!enabled) return;
     palette.select_attribute();
 });
+
+keyboard.on("f_key", (num) => {
+    if (!enabled) return;
+    toolbar.change_custom_brush(num);
+});

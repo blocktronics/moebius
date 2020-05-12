@@ -106,3 +106,8 @@ function select_attribute() {
 
 keyboard.on("escape", () => select_attribute());
 on("select_attribute", (event) => select_attribute());
+
+keyboard.on("f_key", (num) => {
+    if (!enabled) return;
+    toolbar.change_custom_brush(num);
+});

@@ -528,6 +528,12 @@ class Toolbar extends events.EventEmitter {
         $("bg_value").textContent = `${block.bg}`;
     }
 
+    change_custom_brush(num) {
+        if (this.mode != this.modes.CUSTOM_BLOCK) this.change_mode(this.modes.CUSTOM_BLOCK);
+        this.custom_block_index = this.fkeys[this.fkey_index][num];
+        this.draw_custom_block();
+    }
+
     constructor() {
         super();
         this.fkey_index = 0;
