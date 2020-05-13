@@ -659,6 +659,9 @@ function export_as_apng(render, file) {
 }
 
 function remove_ice_color_for_block(block) {
+    if (block.fg == block.bg) {
+        return {fg: block.bg, bg: 0, code: 219};
+    }
     switch (block.code) {
         case 0: case 32: case 255:
             return {fg: block.bg, bg: 0, code: 219};
