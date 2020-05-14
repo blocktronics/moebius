@@ -1,7 +1,7 @@
 directories:
   output: dist
   buildResources: build
-appId: org.blocktronics.moebius
+appId: org.andyherbert.moebius
 productName: Moebius
 copyright: Copyright © 2020 Andy Herbert
 extraResources:

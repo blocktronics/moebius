@@ -1,6 +1,6 @@
 {
   "name": "moebius",
-  "version": "1.0.25",
+  "version": "1.0.26",
   "description": "Modern ANSI Art Editor",
   "repository": {
     "type": "git",
@@ -26,13 +26,13 @@
   "dependencies": {
     "discord-rpc": "^3.1.1",
     "electron-is-dev": "^1.2.0",
-    "jquery": "^3.5.0",
+    "jquery": "^3.5.1",
     "json5": "^2.1.3",
     "linkifyjs": "^2.1.9",
     "minimist": "^1.2.5",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "upng-js": "^2.1.0",
-    "ws": "^7.2.5"
+    "ws": "^7.3.0"
   }
 }
