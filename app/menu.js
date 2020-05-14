@@ -258,7 +258,7 @@ function view_menu_template(win) {
                 {label: "Square (80×40)", id: "square_guide", click(item) {win.send("toggle_square_guide", item.checked);}, type: "checkbox", checked: false},
                 {label: "Instagram (80×50)", id: "instagram_guide", click(item) {win.send("toggle_instagram_guide", item.checked);}, type: "checkbox", checked: false},
                 {label: "File ID (44×22)", id: "file_id_guide", click(item) {win.send("toggle_file_id_guide", item.checked);}, type: "checkbox", checked: false},
-                {label: "PETSCII (40×25)", id: "petscii_guide", click(item) {win.send("toggle_petscii_guide", item.checked);}, type: "checkbox", checked: false},
+                // {label: "PETSCII (40×25)", id: "petscii_guide", click(item) {win.send("toggle_petscii_guide", item.checked);}, type: "checkbox", checked: false},
             ]},
             {type: "separator"},
             {label: "Open Reference Image\u2026", id: "open_reference_image", accelerator: "CmdorCtrl+Shift+O", click(item) {win.send("open_reference_image");}},
@@ -613,7 +613,7 @@ electron.ipcMain.on("uncheck_all_guides", (event, {id}) => {
     uncheck(id, "square_guide");
     uncheck(id, "instagram_guide");
     uncheck(id, "file_id_guide");
-    uncheck(id, "petscii_guide");
+    // uncheck(id, "petscii_guide");
 });
 
 electron.ipcMain.on("enable_chat_window_toggle", (event, {id}) => {
