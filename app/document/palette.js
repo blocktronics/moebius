@@ -60,7 +60,9 @@ class PaletteChooser extends events.EventEmitter {
     }
 
     new_document() {
-        if (libtextmode.has_c64_palette(doc.palette)) {
+        if (doc.c64_background != undefined) {
+            this.bg_value = doc.c64_background;
+        } else if (libtextmode.has_c64_palette(doc.palette)) {
             this.bg_value = doc.get_blocks(0, 0, 0, 0).data[0].bg;
             this.emit("set_bg", this.bg_value);
             doc.c64_background = this.bg_value;

@@ -447,6 +447,9 @@ function encode_as_ansi(doc, save_without_sauce, {utf8 = false} = {}) {
     for (let i = 0; i < doc.data.length; i++) {
         let attribs = [];
         let {code, fg, bg} = doc.data[i];
+        if (doc.c64_background != undefined) {
+            bg = doc.c64_background;
+        }
         switch (code) {
         case 10: code = 9; break;
         case 13: code = 14; break;
