@@ -42,7 +42,7 @@ class PaletteChooser extends events.EventEmitter {
             div.addEventListener("mousedown", (event) => {
                 if (event.button == 2 || event.ctrlKey) {
                     this.bg = i;
-                    if (doc.connection) doc.connection.set_bg(this.bg);
+                    // if (doc.connection) doc.connection.set_bg(this.bg);
                 } else if (event.button == 0) {
                     this.fg = i;
                 }
