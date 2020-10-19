@@ -16,7 +16,8 @@ body {
 }
 
 #sauce_requester {
-    width: 640px;
+    width: 100%;
+    border: 1px dashed green;
 }
 
 form {
@@ -105,5 +106,8 @@ button:active {
 
 #comments {
     overflow-y: scroll;
-    margin-left: 1em;
+    font-size: 100%;
+    font-family: 'Courier New', Courier, monospace;
+    padding: 2px;
+    width: 66ch;
 }

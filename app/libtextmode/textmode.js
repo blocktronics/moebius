@@ -43,21 +43,18 @@ function current_date() {
 const data_type_types = {CHARACTER: 1, BIN: 5, XBIN: 6};
 const file_type_types = {NONE: 0, ANS_FILETYPE: 1};
 
-function fill_string(text, length) {
-    var text_bytes = Buffer.from(text, "utf-8");
-    if (text_bytes.length > length) text_bytes = text_bytes.slice(0, length);
-    const bytes = Buffer.alloc(length);
-    bytes.fill(32, text_bytes.length);
-    bytes.set(text_bytes, 0);
-    return bytes.toString("utf-8");
-}
-
 function add_comments_bytes(rawcomments, sauce_bytes) {
     var comments = '';
     var commentlines = rawcomments.split('\n');
     for (var i = 0; i<commentlines.length; i++) {
-        var line = fill_string(commentlines[i], 64);
-        comments += line;
+        var s = 0;
+        while (commentlines[i].length > 0) {
+            var line = commentlines[i].substr((s * 64), 64).trim();
+            if (line.length == 0) break;
+            s++;
+            line = line.padEnd(64, ' ');
+            comments += line;
+        }
     }
     const comment_bytes = Buffer.from(comments, "utf-8");
     const bytes = new Uint8Array(5 + comment_bytes.length);
