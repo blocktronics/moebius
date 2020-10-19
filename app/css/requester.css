@@ -16,8 +16,7 @@ body {
 }
 
 #sauce_requester {
-    width: 100%;
-    border: 1px dashed green;
+    width: 90%;
 }
 
 form {
