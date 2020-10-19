@@ -72,7 +72,15 @@ function comments_length(rawcomments) {
     } else {
         var commentlines = rawcomments.split('\n');
         var count = 0;
-        for (var i = 0; i<commentlines.length; i++) count++;
+        for (var i = 0; i<commentlines.length; i++) {
+            var s = 0;
+            while (commentlines[i].length > 0) {
+                var line = commentlines[i].substr((s * 64), 64).trim();
+                if (line.length == 0) break;
+                s++;
+                count++;
+            }
+        }
         return count;
     }
 }
