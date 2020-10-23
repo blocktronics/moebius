@@ -52,6 +52,7 @@ function toggle_smallscale_guide(visible) {
         guide_rows = 25;
         rescale_guide();
         $("guide").classList.remove("hidden");
+        $("drawing_grid").classList.add("hidden");
         send("check_smallscale_guide");
     } else {
         $("guide").classList.add("hidden");
@@ -65,6 +66,7 @@ function toggle_square_guide(visible) {
         guide_rows = 40;
         rescale_guide();
         $("guide").classList.remove("hidden");
+        $("drawing_grid").classList.add("hidden");
         send("check_square_guide");
     } else {
         $("guide").classList.add("hidden");
@@ -78,6 +80,7 @@ function toggle_instagram_guide(visible) {
         guide_rows = 50;
         rescale_guide();
         $("guide").classList.remove("hidden");
+        $("drawing_grid").classList.add("hidden");
         send("check_instagram_guide");
     } else {
         $("guide").classList.add("hidden");
@@ -91,6 +94,7 @@ function toggle_file_id_guide(visible) {
         guide_rows = 22;
         rescale_guide();
         $("guide").classList.remove("hidden");
+        $("drawing_grid").classList.add("hidden");
         send("check_file_id_guide");
     } else {
         $("guide").classList.add("hidden");
@@ -104,6 +108,7 @@ function toggle_petscii_guide(visible) {
         guide_rows = 25;
         rescale_guide();
         $("guide").classList.remove("hidden");
+        $("drawing_grid").classList.add("hidden");
         send("check_petscii_guide");
     } else {
         $("guide").classList.add("hidden");
@@ -125,11 +130,47 @@ function rescale_guide() {
     }
 }
 
+function toggle_drawinggrid(visible, columns) {
+    $("guide").classList.add("hidden");
+    send("uncheck_all_guides");
+    if (visible) {
+        rescale_drawinggrid(columns);
+        $("drawing_grid").classList.remove("hidden");
+        send("check_drawinggrid_" + columns + "x" + (columns / 2));
+    } else {
+        $("drawing_grid").classList.add("hidden");
+    }
+}
+
+function rescale_drawinggrid(columns) {
+    rows = Math.floor(columns / 2);
+    width = doc.render.font.width * doc.columns;
+    height = doc.render.font.height * doc.rows;
+    $("drawing_grid").innerHTML = '';
+    c = doc.render.font.width * columns;
+    while (c < width) {
+        var div = document.createElement('div');
+        div.style.width = c + 'px';
+        div.classList.add("column");
+        $("drawing_grid").appendChild(div);
+        c += doc.render.font.width * columns;
+    }
+    r = doc.render.font.height * rows;
+    while (r < height) {
+        var div = document.createElement('div');
+        div.style.height = r + 'px';
+        div.classList.add("row");
+        $("drawing_grid").appendChild(div);
+        r += doc.render.font.height * rows;
+    }    
+}
+
 on("toggle_smallscale_guide", (event, visible) => toggle_smallscale_guide(visible));
 on("toggle_square_guide", (event, visible) => toggle_square_guide(visible));
 on("toggle_instagram_guide", (event, visible) => toggle_instagram_guide(visible));
 on("toggle_file_id_guide", (event, visible) => toggle_file_id_guide(visible));
 on("toggle_petscii_guide", (event, visible) => toggle_petscii_guide(visible));
+on("toggle_drawinggrid", (event, visible, columns) => toggle_drawinggrid(visible, columns));
 
 doc.on("render", () => rescale_guide());
 
