@@ -312,6 +312,13 @@ electron.ipcMain.on("ready", async (event, {id}) => {
     if (prefs.get("smallscale_guide")) docs[id].win.send("toggle_smallscale_guide", true);
 });
 
+electron.ipcMain.on("show_controlcharacters", async (event, {id, method, destroy_when_done}) => {
+    docs[id].modal = await window.new_modal("app/html/controlcharacters.html", {width: 640, height: 400, parent: docs[id].win, frame: false, ...get_centered_xy(id, 640, 400)});
+    if (darwin) add_darwin_window_menu_handler(id);
+    docs[id].modal.send("get_save_data", {method, destroy_when_done});
+    event.returnValue = true;
+});
+
 if (darwin) {
     electron.app.on("will-finish-launching", (event) => {
         electron.app.on("open-file", (event, file) => {

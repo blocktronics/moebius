@@ -1,0 +1,42 @@
+body {
+    user-select: none;
+    font-size: 14px;
+    color: #aaaaaa;
+    background-color: var(--dark-mid-color);
+    overflow: hidden;
+    padding: 1em;
+    width: 640px;
+}
+
+button {
+    position: absolute;
+    bottom: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 4px;
+    background: none;
+    color: var(--text);
+    padding: 6px 10px;
+    margin: 6px;
+    outline: none;
+    transition-property: background-color;
+    transition-duration: 20ms;
+    transition-timing-function: linear;
+}
+
+button:active {
+    border: 1px solid white;
+    background-color: var(--status);
+    color: var(--text);
+}
+
+#content {
+    width: 600px;
+}
+
+#cancel {
+    left: 0px;
+}
+
+#ok {
+    right: 0px;
+}
