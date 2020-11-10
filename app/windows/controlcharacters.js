@@ -31,6 +31,8 @@ document.addEventListener("DOMContentLoaded", (event) => {
     document.getElementById("cancel").addEventListener("click", event => cancel(), true);
 }, true);
 
+document.getElementById("img_cc").src=`${process.resourcesPath}/png/controlcharacters.png`;
+
 electron.ipcRenderer.on("ok", (event) => ok());
 electron.ipcRenderer.on("cancel", (event) => cancel());
 
