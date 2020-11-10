@@ -8,6 +8,9 @@ extraResources:
   - from: build/ans
     to: ans
     filter: "*.ans"
+  - from: build/png
+    to: png
+    filter: "*.png"
 fileAssociations:
   - ext: .ans
     name: ANSI Art
@@ -52,4 +55,4 @@ linux:
   target: deb
   description: Moebius is a new ANSI and ASCII Editor for Linux, MacOS, and Windows. The major feature that differentiates it from PabloDraw is the 'half-block' brush which allows editing in a style closer to Photoshop than a text editor, although you can still use the function and cursor keys to draw with, and you should find that most of the text editing features from PabloDraw are carried over to this editor.
   category: Graphics
-electronVersion: 8.3.0
+electronVersion: 8.5.2
