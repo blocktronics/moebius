@@ -392,6 +392,23 @@ body.dark #statusbar > div > div {
 #guide.guide_row {
     border-bottom: rgba(100, 100, 100) 1px dashed;
 }
+#drawing_grid.hidden {
+    display: none;
+}
+#drawing_grid .column {
+    border-right: rgba(100, 100, 100) 1px dashed;
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+}
+#drawing_grid .row {
+    border-bottom: rgba(100, 100, 100) 1px dashed;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+}
 #zoom {
     font-size: 30px;
     pointer-events: none;

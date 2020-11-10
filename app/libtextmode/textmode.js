@@ -1,3 +1,9 @@
+const {on, send, send_sync, open_box} = require("../senders");
+
+function $(name) {
+    return document.getElementById(name);
+}
+
 function bytes_to_blocks({columns, rows, bytes}) {
     const data = new Array(columns * rows);
     for (let i = 0, j = 0; i < data.length; i++, j++) {
@@ -226,6 +232,8 @@ function resize_canvas(doc, columns, rows) {
     doc.data = new_data;
     doc.columns = columns;
     doc.rows = rows;
+    $("drawing_grid").classList.add("hidden");
+    send("uncheck_all_guides");
 }
 
 module.exports = {bytes_to_blocks, bytes_to_utf8, current_date, Textmode, add_sauce_for_ans, add_sauce_for_bin, add_sauce_for_xbin, resize_canvas};
