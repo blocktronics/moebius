@@ -16,7 +16,7 @@ body {
 }
 
 #sauce_requester {
-    width: 350px;
+    width: 90%;
 }
 
 form {
@@ -34,14 +34,12 @@ p.note {
 }
 
 textarea {
-    border: none;
-    border-top: 1px solid rgb(50, 50, 50);
-    border-bottom: 1px solid rgb(50, 50, 50);
-    padding: 0 8px;
-    width: 334px;
+    border: 1px solid rbg(255, 255, 255, 0.4);
+    padding: 4px;
     height: 100px;
-    margin: 0 auto;
+    margin: 0 auto 0 auto;
     resize: none;
+    word-wrap: break-word;
 }
 
 label {
@@ -103,4 +101,12 @@ button:active {
 
 #ok {
     right: 0px;
+}
+
+#comments {
+    overflow-y: scroll;
+    font-size: 100%;
+    font-family: 'Courier New', Courier, monospace;
+    padding: 2px;
+    width: 66ch;
 }

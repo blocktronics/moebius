@@ -43,7 +43,19 @@ function current_date() {
 const data_type_types = {CHARACTER: 1, BIN: 5, XBIN: 6};
 const file_type_types = {NONE: 0, ANS_FILETYPE: 1};
 
-function add_comments_bytes(comments, sauce_bytes) {
+function add_comments_bytes(rawcomments, sauce_bytes) {
+    var comments = '';
+    var commentlines = rawcomments.split('\n');
+    for (var i = 0; i<commentlines.length; i++) {
+        var s = 0;
+        while (commentlines[i].length > 0) {
+            var line = commentlines[i].substr((s * 64), 64).trim();
+            if (line.length == 0) break;
+            s++;
+            line = line.padEnd(64, ' ');
+            comments += line;
+        }
+    }
     const comment_bytes = Buffer.from(comments, "utf-8");
     const bytes = new Uint8Array(5 + comment_bytes.length);
     bytes.set(Buffer.from("COMNT", "utf-8"), 0);
@@ -52,6 +64,25 @@ function add_comments_bytes(comments, sauce_bytes) {
     merged_bytes.set(bytes, 0);
     merged_bytes.set(sauce_bytes, bytes.length);
     return merged_bytes;
+}
+
+function comments_length(rawcomments) {
+    if (rawcomments.length == 0) {
+        return 0;
+    } else {
+        var commentlines = rawcomments.split('\n');
+        var count = 0;
+        for (var i = 0; i<commentlines.length; i++) {
+            var s = 0;
+            while (commentlines[i].length > 0) {
+                var line = commentlines[i].substr((s * 64), 64).trim();
+                if (line.length == 0) break;
+                s++;
+                count++;
+            }
+        }
+        return count;
+    }
 }
 
 function pad(text, length) {
@@ -83,7 +114,7 @@ function add_sauce_bytes({doc, data_type, file_type, bytes: file_bytes}) {
         bytes[98] = doc.rows & 0xff;
         bytes[99] = doc.rows >> 8;
     }
-    bytes[104] = doc.comments.length / 64;
+    bytes[104] = comments_length(doc.comments);
     if (data_type != data_type_types.XBIN) {
         if (doc.ice_colors) {
             bytes[105] = 1;
@@ -138,7 +169,13 @@ function get_sauce(bytes) {
                 rows = (sauce_bytes[99] << 8) + sauce_bytes[98];
             }
             const number_of_comments = sauce_bytes[104];
-            const comments = bytes.subarray(bytes.length - (number_of_comments * 64) - 128, bytes.length - 128).toString("utf-8");
+            const rawcomments = bytes.subarray(bytes.length - (number_of_comments * 64) - 128, bytes.length - 128).toString("utf-8");
+            var comments = '';
+            for (i=0; i<number_of_comments; i++) {
+                var line = rawcomments.substr(i * 64, 64).trim();
+                if (i != (number_of_comments-1)) line += '\n'
+                comments += line;
+            }
             const flags = sauce_bytes[105];
             const ice_colors = (flags & 0x01) == 1;
             const use_9px_font = (flags >> 1 & 0x02) == 2;

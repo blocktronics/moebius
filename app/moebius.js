@@ -253,7 +253,7 @@ function add_darwin_window_menu_handler(id) {
 }
 
 electron.ipcMain.on("get_sauce_info", async (event, {id, title, author, group, comments}) => {
-    docs[id].modal = await window.new_modal("app/html/sauce.html", {width: 350, height: 340, parent: docs[id].win, frame: false, ...get_centered_xy(id, 350, 340)}, touchbar.get_sauce_info);
+    docs[id].modal = await window.new_modal("app/html/sauce.html", {width: 600, height: 340, parent: docs[id].win, frame: false, ...get_centered_xy(id, 350, 340)}, touchbar.get_sauce_info);
     if (darwin) add_darwin_window_menu_handler(id);
     docs[id].modal.send("set_sauce_info", {title, author, group, comments});
     event.returnValue = true;
