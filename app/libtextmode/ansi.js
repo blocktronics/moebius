@@ -440,7 +440,7 @@ function encode_as_ansi(doc, save_without_sauce, {utf8 = false} = {}) {
     let output = [27, 91, 48, 109];
     let bold = false;
     let blink = false;
-    let current_fg = 7;
+    let current_fg = 255;
     let current_bg = 0;
     let current_bold = false;
     let current_blink = false;
@@ -471,7 +471,7 @@ function encode_as_ansi(doc, save_without_sauce, {utf8 = false} = {}) {
         }
         if ((current_bold && !bold) || (current_blink && !blink)) {
             attribs.push([48]);
-            current_fg = 7;
+            current_fg = 255;
             current_bg = 0;
             current_bold = false;
             current_blink = false;
