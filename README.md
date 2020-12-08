@@ -41,7 +41,7 @@ This will start a server with default settings. In this case a password will not
 The following parameters can be set:
 
 * `--file=filename.ans` load an initial ANSI file after the server starts
-* `--passw=password` set a server password which clients need to provide to logon to the server
+* `--pass=password` set a server password which clients need to provide to logon to the server
 * `--web` and `--web_port=80` run the webserver for external viewing (default port: 80). This enables live preview of the canvas, the preview and SAUCE information in a browser, the URL would be http://hostname.tld:web_port
 * `--path=pathname` set a path for this server: users and webviewers would connect to hostname.tld/path
 * `--quiet=true/false` suppress console output after the server has been started
