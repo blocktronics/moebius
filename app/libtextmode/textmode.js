@@ -1,5 +1,3 @@
-const {on, send, send_sync, open_box} = require("../senders");
-
 function $(name) {
     return document.getElementById(name);
 }
@@ -218,6 +216,7 @@ class Textmode {
 }
 
 function resize_canvas(doc, columns, rows) {
+    const {send} = require("../senders");
     const min_rows = Math.min(doc.rows, rows);
     const min_columns = Math.min(doc.columns, columns);
     const new_data = new Array(columns * rows);
