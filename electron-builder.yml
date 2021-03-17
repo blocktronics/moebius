@@ -51,7 +51,7 @@ win:
 portable:
   artifactName: Moebius.exe
 linux:
-  artifactName: Moebius
+  artifactName: Moebius.${ext}
   target: 
   - target: rpm
   - target: deb
