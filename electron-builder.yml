@@ -42,7 +42,7 @@ mac:
   target: dmg
   darkModeSupport: true
 win:
-  artifactName: Moebius Setup.exe
+  artifactName: Moebius.Setup.exe
   target:
   - target: nsis
     arch: [x64, ia32]
