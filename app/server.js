@@ -183,10 +183,10 @@ class Joint {
     }
 }
 
-async function start_joint({path: server_path, file, pass = "", quiet = false} = {}) {
+async function start_joint({path: server_path, file, pass = "", quiet = false, server_port} = {}) {
     server_path = (server_path != undefined) ? server_path : path.parse(file).base;
     server_path = `/${server_path.toLowerCase()}`;
-    if (!server.address()) server.listen(8000);
+    if (!server.address()) server.listen(server_port);
     if (joints[server_path]) throw "Path already in use.";
     server_path = server_path.toLowerCase();
     joints[server_path] = new Joint({path: server_path, file, pass, quiet});

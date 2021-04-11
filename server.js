@@ -1,5 +1,5 @@
 const server = require("./app/server");
-const argv = require("minimist")(process.argv, {default: {path: "", pass: "", file: "./server.ans", quiet: false, web: false, web_port: 80}});
+const argv = require("minimist")(process.argv, {default: {path: "", pass: "", file: "./server.ans", quiet: false, web: false, web_port: 80, server_port: 8000}});
 const express = require("express");
 const path = require("path");
 
