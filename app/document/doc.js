@@ -346,13 +346,15 @@ class Connection extends events.EventEmitter {
             }
         });
         try {
-            const {groups} = (/(?<host>[^\/]+)\/?(?<path>[^\/]*)\/?/).exec(server);
+            const {groups} = (/(?<host>[^\/:]+):?(?<port>[\d]*)\/?(?<path>[^\/]*)\/?/).exec(server);
             this.host = groups.host;
-            this.path = groups.path;
+            this.port = groups.port;
+            this.path = groups.path;;
+            if (!this.port) this.port = 8000;
             this.web = web;
             this.queued_messages = [];
             this.ready = false;
-            this.ws = new WebSocket(`ws://${encodeURI(groups.host)}:8000/${encodeURI(groups.path)}`);
+            this.ws = new WebSocket(`ws://${encodeURI(groups.host)}:${this.port}/${encodeURI(groups.path)}`);
             this.ws.addEventListener("open", () => this.open(pass));
             this.ws.addEventListener("error", () => this.emit("unable_to_connect"));
             this.ws.addEventListener("message", (resp) => this.message(JSON.parse(resp.data)));

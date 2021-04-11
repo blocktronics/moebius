@@ -36,12 +36,13 @@ npm install
 node ./server.js
 ```
 
-This will start a server with default settings. In this case a password will not be set and any value entered in the Moebius client will be accepted by the server. The server runs on port 8000, as the port can't be modified by Moebius clients this is also not configurable.
+This will start a server with default settings. In this case a password will not be set and any value entered in the Moebius client will be accepted by the server. The server runs by default on port 8000, Moebius clients can modify the port by entering the server as hostname:port 
 
 The following parameters can be set:
 
 * `--file=filename.ans` load an initial ANSI file after the server starts
-* `--passw=password` set a server password which clients need to provide to logon to the server
+* `--pass=password` set a server password which clients need to provide to logon to the server
+* `--server_port=8000` set the server port, defaults to 8000. 
 * `--web` and `--web_port=80` run the webserver for external viewing (default port: 80). This enables live preview of the canvas, the preview and SAUCE information in a browser, the URL would be http://hostname.tld:web_port
 * `--path=pathname` set a path for this server: users and webviewers would connect to hostname.tld/path
 * `--quiet=true/false` suppress console output after the server has been started
