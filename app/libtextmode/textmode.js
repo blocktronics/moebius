@@ -216,7 +216,15 @@ class Textmode {
 }
 
 function resize_canvas(doc, columns, rows) {
-    const {send} = require("../senders");
+    var client = false;
+    try { 
+        const electron = require("electron");
+        const win = electron.remote.getCurrentWindow();
+        client = true;
+    } catch (err) {
+        console.log(err);
+    }
+    console.log('client: ' + client);
     const min_rows = Math.min(doc.rows, rows);
     const min_columns = Math.min(doc.columns, columns);
     const new_data = new Array(columns * rows);
@@ -231,8 +239,11 @@ function resize_canvas(doc, columns, rows) {
     doc.data = new_data;
     doc.columns = columns;
     doc.rows = rows;
-    $("drawing_grid").classList.add("hidden");
-    send("uncheck_all_guides");
+    if (client) {
+        const {send} = require("../senders");
+        $("drawing_grid").classList.add("hidden");
+        send("uncheck_all_guides");
+    }
 }
 
 module.exports = {bytes_to_blocks, bytes_to_utf8, current_date, Textmode, add_sauce_for_ans, add_sauce_for_bin, add_sauce_for_xbin, resize_canvas};
