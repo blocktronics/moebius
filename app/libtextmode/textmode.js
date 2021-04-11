@@ -219,12 +219,13 @@ function resize_canvas(doc, columns, rows) {
     var client = false;
     try { 
         const electron = require("electron");
-        const win = electron.remote.getCurrentWindow();
-        client = true;
+        if (typeof electron == "object") {
+            const win = electron.remote.getCurrentWindow();
+            client = true;
+        }
     } catch (err) {
         console.log(err);
     }
-    console.log('client: ' + client);
     const min_rows = Math.min(doc.rows, rows);
     const min_columns = Math.min(doc.columns, columns);
     const new_data = new Array(columns * rows);
