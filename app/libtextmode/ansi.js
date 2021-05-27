@@ -432,7 +432,23 @@ function bin_to_ansi_colour(bin_colour) {
     case 3: return 6;
     case 4: return 1;
     case 6: return 3;
+    case 9: return 12;
+    case 11: return 14;
+    case 12: return 9;
+    case 14: return 11;
     default: return bin_colour;
+    }
+}
+
+function clr_to_ascii(color, output) {
+    switch (color) {
+        case 10: output.push(49, 48); break;
+        case 11: output.push(49, 49); break;
+        case 12: output.push(49, 50); break;
+        case 13: output.push(49, 51); break;
+        case 14: output.push(49, 52); break;
+        case 15: output.push(49, 53); break;
+        default: output.push(color + 48); break;
     }
 }
 
@@ -457,51 +473,77 @@ function encode_as_ansi(doc, save_without_sauce, {utf8 = false} = {}) {
         case 27: code = 17; break;
         default:
         }
-        if (fg > 7) {
-            bold = true;
-            fg = fg - 8;
-        } else {
-            bold = false;
-        }
-        if (bg > 7) {
-            blink = true;
-            bg = bg - 8;
-        } else {
-            blink = false;
-        }
-        if ((current_bold && !bold) || (current_blink && !blink)) {
-            attribs.push([48]);
-            current_fg = 7;
-            current_bg = 0;
-            current_bold = false;
-            current_blink = false;
-        }
-        if (bold && !current_bold) {
-            attribs.push([49]);
-            current_bold = true;
-        }
-        if (blink && !current_blink) {
-            attribs.push([53]);
-            current_blink = true;
-        }
-        if (fg != current_fg) {
-            attribs.push([51, 48 + bin_to_ansi_colour(fg)]);
-            current_fg = fg;
-        }
-        if (bg != current_bg) {
-            attribs.push([52, 48 + bin_to_ansi_colour(bg)]);
-            current_bg = bg;
-        }
-        if (attribs.length) {
-            output.push(27, 91);
-            for (let i = 0; i < attribs.length; i += 1) {
-                for (const attrib of attribs[i]) {
-                    output.push(attrib);
+        if (utf8) {
+            if ((fg > 7 && current_fg < 7) || (bg > 7 && current_bg < 7)) {
+                output.push(27, 91, 48, 109);
+                current_fg = 7;
+                current_bg = 0;
+            }
+            if (fg != current_fg) {
+                output.push(27, 91, 51, 56, 59, 53, 59);
+                clr_to_ascii(bin_to_ansi_colour(fg), output);
+                output.push(109);
+                current_fg = fg;
+            }
+            if (bg != current_bg) {
+                if (bg == 0) {
+                    output.push(27, 91, 52, 57, 109);
                 }
-                if (i != attribs.length - 1) {
-                    output.push(59);
-                } else {
+                else {
+                    output.push(27, 91, 52, 56, 59, 53, 59);
+                    clr_to_ascii(bin_to_ansi_colour(bg), output);
                     output.push(109);
+                }
+                current_bg = bg;
+            }
+        }
+        else {
+            if (fg > 7) {
+                bold = true;
+                fg = fg - 8;
+            } else {
+                bold = false;
+            }
+            if (bg > 7) {
+                blink = true;
+                bg = bg - 8;
+            } else {
+                blink = false;
+            }
+            if ((current_bold && !bold) || (current_blink && !blink)) {
+                attribs.push([48]);
+                current_fg = 7;
+                current_bg = 0;
+                current_bold = false;
+                current_blink = false;
+            }
+            if (bold && !current_bold) {
+                attribs.push([49]);
+                current_bold = true;
+            }
+            if (blink && !current_blink) {
+                attribs.push([53]);
+                current_blink = true;
+            }
+            if (fg != current_fg) {
+                attribs.push([51, 48 + bin_to_ansi_colour(fg)]);
+                current_fg = fg;
+            }
+            if (bg != current_bg) {
+                attribs.push([52, 48 + bin_to_ansi_colour(bg)]);
+                current_bg = bg;
+            }
+            if (attribs.length) {
+                output.push(27, 91);
+                for (let i = 0; i < attribs.length; i += 1) {
+                    for (const attrib of attribs[i]) {
+                        output.push(attrib);
+                    }
+                    if (i != attribs.length - 1) {
+                        output.push(59);
+                    } else {
+                        output.push(109);
+                    }
                 }
             }
         }
