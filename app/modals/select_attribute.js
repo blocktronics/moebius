@@ -1,5 +1,5 @@
 const electron = require("electron");
-const libtextmode = require("../libtextmode/libtextmode");
+const {rgb_to_hex} = require("../libtextmode/palette");
 const {on} = require("../senders");
 let fg = 0;
 let bg = 0;
@@ -21,7 +21,7 @@ function update_canvas() {
         if (y == fg) {
             py += 20;
         } else {
-            ctx.fillStyle = libtextmode.convert_ega_to_style(palette[y]);
+            ctx.fillStyle = rgb_to_hex(palette[y]);
             ctx.fillRect(bg * 20 + 10, py, 20, 20);
         }
     }
@@ -29,15 +29,15 @@ function update_canvas() {
         if (x == bg) {
             px += 20;
         } else {
-            ctx.fillStyle = libtextmode.convert_ega_to_style(palette[x]);
+            ctx.fillStyle = rgb_to_hex(palette[x]);
             ctx.fillRect(px, fg * 20 + 10, 20, 20);
         }
     }
-    ctx.fillStyle = libtextmode.convert_ega_to_style(palette[bg]);
+    ctx.fillStyle = rgb_to_hex(palette[bg]);
     ctx.fillRect(bg * 20, fg * 20, 40, 40);
     ctx.strokeStyle = "black";
     ctx.strokeRect(bg * 20, fg * 20, 40, 40);
-    ctx.fillStyle = libtextmode.convert_ega_to_style(palette[fg]);
+    ctx.fillStyle = rgb_to_hex(palette[fg]);
     ctx.fillRect(bg * 20 + 8, fg * 20 + 8, 24, 24);
 }
 

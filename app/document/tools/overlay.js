@@ -1,4 +1,4 @@
-const {convert_ega_to_style} = require("../../libtextmode/libtextmode");
+const {rgb_to_css} = require("../../libtextmode/palette");
 
 class Overlay {
     constructor(border = false) {
@@ -19,7 +19,7 @@ class Overlay {
     }
 
     fill_style(font, col) {
-        this.ctx.fillStyle = convert_ega_to_style(font.palette[col]);
+        this.ctx.fillStyle = rgb_to_css(font.palette[col]);
     }
 
     fill_rect(x, y, width, height) {
@@ -27,7 +27,7 @@ class Overlay {
     }
 
     background_color(font, col) {
-        this.canvas.style.backgroundColor = convert_ega_to_style(font.palette[col]);
+        this.canvas.style.backgroundColor = rgb_to_css(font.palette[col]);
     }
 
     destroy() {

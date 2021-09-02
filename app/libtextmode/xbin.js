@@ -1,5 +1,5 @@
-const {ega, has_c64_palette} = require("./palette");
 const {bytes_to_utf8, bytes_to_blocks, Textmode, add_sauce_for_xbin} = require("./textmode");
+const {palette_4bit, xbin_to_rgb, rgb_to_xbin} = require("./palette");
 const repeating = {NONE: 0, CHARACTERS: 1, ATTRIBUTES: 2, BOTH_CHARACTERS_AND_ATTRIBUTES: 3};
 const {encode_as_bin} = require("./binary_text");
 
@@ -57,11 +57,11 @@ class XBin extends Textmode {
             const palette_bytes = this.bytes.subarray(11, 11 + 48);
             this.palette = new Array(16);
             for (let i = 0, j = 0; i < 16; i++, j += 3) {
-                this.palette[i] = {r: palette_bytes[j], g: palette_bytes[j + 1], b: palette_bytes[j + 2]};
+                this.palette[i] = xbin_to_rgb(palette_bytes[j], palette_bytes[j + 1], palette_bytes[j + 2]);
             }
             i += 48;
         } else {
-            this.palette = ega;
+            this.palette = palette_4bit;
         }
         if (font_flag) {
             this.font_name = "Custom";
@@ -83,9 +83,7 @@ function encode_as_xbin(doc, save_without_sauce) {
         header[10] += 1;
         const palette_bytes = [];
         for (const rgb of doc.palette) {
-            palette_bytes.push(rgb.r);
-            palette_bytes.push(rgb.g);
-            palette_bytes.push(rgb.b);
+            palette_bytes.push(...rgb_to_xbin(rgb));
         }
         header = header.concat(palette_bytes);
     }
@@ -97,7 +95,7 @@ function encode_as_xbin(doc, save_without_sauce) {
         }
         header = header.concat(font_bytes);
     }
-    if (doc.ice_colors || doc.c64_background != undefined) {
+    if (doc.ice_colors) {
         header[10] += 1 << 3;
     }
     let bytes = new Uint8Array(header.length + bin_bytes.length);

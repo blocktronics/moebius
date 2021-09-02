@@ -3,12 +3,18 @@ const {create_canvas, join_canvases} = require("./canvas");
 const {Ansi, encode_as_ansi} = require("./ansi");
 const {BinaryText, encode_as_bin} = require("./binary_text");
 const {XBin, encode_as_xbin} = require("./xbin");
-const {ega, c64, convert_ega_to_style, has_ansi_palette, has_c64_palette} = require("./palette");
+const {palette_4bit, has_base_palette} = require("./palette");
 const path = require("path");
-const {current_date, resize_canvas} = require("./textmode");
+const {current_date, resize_canvas, Textmode} = require("./textmode");
 const {cp437_to_unicode, cp437_to_unicode_bytes, unicode_to_cp437} = require("./encodings");
 const fs = require("fs");
 const upng = require("upng-js");
+
+const document_types = {
+    ansi: { name: "ANSI Art", extensions: ["ans", "asc", "diz", "nfo", "txt"] },
+    xbin: { name: "XBin", extensions: ["xb"] },
+    bin: { name: "Binary Text", extensions: ["bin"] }
+}
 
 function read_bytes(bytes, file) {
     switch (path.extname(file).toLowerCase()) {
@@ -40,8 +46,8 @@ async function animate({file, ctx}) {
     for (let y = 0, py = 0, i = 0; y < doc.rows; y++, py += font.height) {
         for (let x = 0, px = 0; x < doc.columns; x++, px += font.width, i++) {
             const block = doc.data[i];
-            if (block.bg >= 8 && !doc.ice_colors) {
-                font.draw(ctx, {fg: block.fg, bg: block.bg - 8, code: block.code, fg_rgb: block.fg_rgb, bg_rgb: block.bg_rgb}, px, py);
+            if (!doc.ice_colors && block.bg > 7 && block.bg < 16) {
+                font.draw(ctx, {fg: block.fg, bg: block.bg - 8, code: block.code}, px, py);
             } else {
                 font.draw(ctx, block, px, py);
             }
@@ -91,22 +97,22 @@ async function render(doc) {
     for (let y = 0, py = 0, i = 0; y < doc.rows; y++, py += font.height) {
         for (let x = 0, px = 0; x < doc.columns; x++, px += font.width, i++) {
             const block = doc.data[i];
-            if (doc.c64_background == undefined && block.bg >= 8 && !doc.ice_colors) {
-                font.draw(ctx, {fg: block.fg, bg: block.bg - 8, code: block.code, fg_rgb: block.fg_rgb, bg_rgb: block.bg_rgb}, px, py, doc.c64_background);
+            if (!doc.ice_colors && block.bg > 7 && block.bg < 16) {
+                font.draw(ctx, {fg: block.fg, bg: block.bg - 8, code: block.code}, px, py);
             } else {
-                font.draw(ctx, block, px, py, doc.c64_background);
+                font.draw(ctx, block, px, py);
             }
         }
     }
     return {canvas, font};
 }
 
-function render_blocks(blocks, font, c64_background) {
+function render_blocks(blocks, font) {
     const {canvas, ctx} = create_canvas(blocks.columns * font.width, blocks.rows * font.height);
     for (let y = 0, py = 0, i = 0; y < blocks.rows; y++, py += font.height) {
         for (let x = 0, px = 0; x < blocks.columns; x++, px += font.width, i++) {
             const block = blocks.data[i];
-            if (!blocks.transparent || block.code != 32 || block.bg != 0) font.draw(ctx, block, px, py, c64_background);
+            if (!blocks.transparent || block.code != 32 || block.bg != 0) font.draw(ctx, block, px, py);
         }
     }
     return canvas;
@@ -146,7 +152,7 @@ async function render_split(doc, maximum_rows = 100) {
             canvas_i += 1;
         }
         for (let x = 0, px = 0; x < doc.columns; x++, px += font.width, i++) {
-            font.draw(ctxs[canvas_i], doc.data[i], px, py, doc.c64_background);
+            font.draw(ctxs[canvas_i], doc.data[i], px, py);
         }
     }
     const blink_on_collection = copy_canvases(canvases);
@@ -158,9 +164,9 @@ async function render_split(doc, maximum_rows = 100) {
         }
         for (let x = 0, px = 0; x < doc.columns; x++, px += font.width, i++) {
             const block = doc.data[i];
-            if (doc.c64_background == undefined && block.bg >= 8 && !block.bg_rgb) {
+            if (block.bg > 7 && block.bg < 16) {
                 font.draw_bg(blink_on_collection[canvas_i].ctx, block.bg - 8, px, py);
-                font.draw(blink_off_collection[canvas_i].ctx, {fg: block.fg, bg: block.bg - 8, code: block.code, fg_rgb: block.fg_rgb, bg_rgb: block.bg_rgb}, px, py, doc.c64_background);
+                font.draw(blink_off_collection[canvas_i].ctx, {fg: block.fg, bg: block.bg - 8, code: block.code}, px, py);
             }
         }
     }
@@ -178,18 +184,18 @@ async function render_split(doc, maximum_rows = 100) {
     };
 }
 
-function render_at(render, x, y, block, c64_background) {
+function render_at(render, x, y, block) {
     const i = Math.floor(y / render.maximum_rows);
     const px = x * render.font.width;
     const py = (y % render.maximum_rows) * render.font.height;
-    render.font.draw(render.ice_color_collection[i].getContext("2d"), block, px, py, c64_background);
-    render.font.draw(render.preview_collection[i].getContext("2d"), block, px, py, c64_background);
-    if (c64_background != undefined || block.bg < 8) {
-        render.font.draw(render.blink_on_collection[i].getContext("2d"), block, px, py, c64_background);
-        render.font.draw(render.blink_off_collection[i].getContext("2d"), block, px, py, c64_background);
+    render.font.draw(render.ice_color_collection[i].getContext("2d"), block, px, py);
+    render.font.draw(render.preview_collection[i].getContext("2d"), block, px, py);
+    if (block.bg > 7 && block.bg < 16) {
+        render.font.draw_bg(render.blink_on_collection[i].getContext("2d"), block.bg - 8, px, py);
+        render.font.draw(render.blink_off_collection[i].getContext("2d"), {code: block.code, fg: block.fg, bg: block.bg - 8}, px, py);
     } else {
-        render.font.draw_bg(render.blink_on_collection[i].getContext("2d"), block.bg - 8, px, py, c64_background);
-        render.font.draw(render.blink_off_collection[i].getContext("2d"), {code: block.code, fg: block.fg, bg: block.bg - 8}, px, py, c64_background);
+        render.font.draw(render.blink_on_collection[i].getContext("2d"), block, px, py);
+        render.font.draw(render.blink_off_collection[i].getContext("2d"), block, px, py);
     }
 }
 
@@ -203,7 +209,7 @@ function render_insert_column(doc, x, render) {
         render.blink_on_collection[i].getContext("2d").drawImage(render.blink_on_collection[i], sx, 0, width, render.blink_on_collection[i].height, dx, 0, width, render.blink_on_collection[i].height);
         render.blink_off_collection[i].getContext("2d").drawImage(render.blink_off_collection[i], sx, 0, width, render.blink_off_collection[i].height, dx, 0, width, render.blink_off_collection[i].height);
     }
-    for (let y = 0; y < doc.rows; y++) render_at(render, x, y, doc.data[y * doc.columns + x], doc.c64_background);
+    for (let y = 0; y < doc.rows; y++) render_at(render, x, y, doc.data[y * doc.columns + x]);
 }
 
 function render_delete_column(doc, x, render) {
@@ -216,7 +222,7 @@ function render_delete_column(doc, x, render) {
         render.blink_on_collection[i].getContext("2d").drawImage(render.blink_on_collection[i], sx, 0, width, render.blink_on_collection[i].height, dx, 0, width, render.blink_on_collection[i].height);
         render.blink_off_collection[i].getContext("2d").drawImage(render.blink_off_collection[i], sx, 0, width, render.blink_off_collection[i].height, dx, 0, width, render.blink_off_collection[i].height);
     }
-    for (let y = 0; y < doc.rows; y++) render_at(render, doc.columns - 1, y, doc.data[y * doc.columns + doc.columns - 1], doc.c64_background);
+    for (let y = 0; y < doc.rows; y++) render_at(render, doc.columns - 1, y, doc.data[y * doc.columns + doc.columns - 1]);
 }
 
 function render_insert_row(doc, y, render) {
@@ -241,7 +247,7 @@ function render_insert_row(doc, y, render) {
     render.preview_collection[canvas_row].getContext("2d").drawImage(render.preview_collection[canvas_row], 0, sy, render.preview_collection[canvas_row].width, height, 0, sy + render.font.height, render.preview_collection[canvas_row].width, height);
     render.blink_on_collection[canvas_row].getContext("2d").drawImage(render.blink_on_collection[canvas_row], 0, sy, render.blink_on_collection[canvas_row].width, height, 0, sy + render.font.height, render.blink_on_collection[canvas_row].width, height);
     render.blink_off_collection[canvas_row].getContext("2d").drawImage(render.blink_off_collection[canvas_row], 0, sy, render.blink_off_collection[canvas_row].width, height, 0, sy + render.font.height, render.blink_off_collection[canvas_row].width, height);
-    for (let x = 0; x < doc.columns; x++) render_at(render, x, y, doc.data[y * doc.columns + x], doc.c64_background);
+    for (let x = 0; x < doc.columns; x++) render_at(render, x, y, doc.data[y * doc.columns + x]);
 }
 
 function render_delete_row(doc, y, render) {
@@ -272,7 +278,7 @@ function render_delete_row(doc, y, render) {
             render.blink_off_collection[i].getContext("2d").drawImage(render.blink_off_collection[i + 1], 0, 0, render.blink_off_collection[i + 1].width, render.font.height, 0, render.blink_off_collection[i].height - render.font.height, render.blink_off_collection[i].width, render.font.height);
         }
     }
-    for (let x = 0; x < doc.columns; x++) render_at(render, x, doc.rows - 1, doc.data[(doc.rows - 1) * doc.columns + x], doc.c64_background);
+    for (let x = 0; x < doc.columns; x++) render_at(render, x, doc.rows - 1, doc.data[(doc.rows - 1) * doc.columns + x]);
 }
 
 function flip_code_x(code) {
@@ -512,7 +518,7 @@ function render_scroll_canvas_up(doc, render) {
             render.blink_off_collection[i].getContext("2d").drawImage(render.blink_off_collection[i + 1], 0, 0, render.blink_off_collection[i + 1].width, render.font.height, 0, render.blink_off_collection[i].height - render.font.height, render.blink_off_collection[i].width, render.font.height);
         }
     }
-    for (let x = 0; x < doc.columns; x++) render_at(render, x, doc.rows - 1, doc.data[(doc.rows - 1) * doc.columns + x], doc.c64_background);
+    for (let x = 0; x < doc.columns; x++) render_at(render, x, doc.rows - 1, doc.data[(doc.rows - 1) * doc.columns + x]);
 }
 
 function render_scroll_canvas_down(doc, render) {
@@ -532,7 +538,7 @@ function render_scroll_canvas_down(doc, render) {
             blink_off_ctx.drawImage(render.blink_off_collection[i - 1], 0, render.blink_off_collection[i - 1].height - render.font.height, render.blink_off_collection[i - 1].width, render.font.height, 0, 0, render.blink_off_collection[i].width, render.font.height);
         }
     }
-    for (let x = 0; x < doc.columns; x++) render_at(render, x, 0, doc.data[x], doc.c64_background);
+    for (let x = 0; x < doc.columns; x++) render_at(render, x, 0, doc.data[x]);
 }
 
 function render_scroll_canvas_left(doc, render) {
@@ -542,7 +548,7 @@ function render_scroll_canvas_left(doc, render) {
         render.blink_on_collection[i].getContext("2d").drawImage(render.blink_on_collection[i], render.font.width, 0, render.blink_on_collection[i].width - render.font.width, render.blink_on_collection[i].height, 0, 0, render.blink_on_collection[i].width - render.font.width, render.blink_on_collection[i].height);
         render.blink_off_collection[i].getContext("2d").drawImage(render.blink_off_collection[i], render.font.width, 0, render.blink_off_collection[i].width - render.font.width, render.blink_off_collection[i].height, 0, 0, render.blink_off_collection[i].width - render.font.width, render.blink_off_collection[i].height);
     }
-    for (let y = 0; y < doc.rows; y++) render_at(render, doc.columns - 1, y, doc.data[y * doc.columns + doc.columns - 1], doc.c64_background);
+    for (let y = 0; y < doc.rows; y++) render_at(render, doc.columns - 1, y, doc.data[y * doc.columns + doc.columns - 1]);
 }
 
 function render_scroll_canvas_right(doc, render) {
@@ -552,11 +558,11 @@ function render_scroll_canvas_right(doc, render) {
         render.blink_on_collection[i].getContext("2d").drawImage(render.blink_on_collection[i], 0, 0, render.blink_on_collection[i].width - render.font.width, render.blink_on_collection[i].height, render.font.width, 0, render.blink_on_collection[i].width - render.font.width, render.blink_on_collection[i].height);
         render.blink_off_collection[i].getContext("2d").drawImage(render.blink_off_collection[i], 0, 0, render.blink_off_collection[i].width - render.font.width, render.blink_off_collection[i].height, render.font.width, 0, render.blink_off_collection[i].width - render.font.width, render.blink_off_collection[i].height);
     }
-    for (let y = 0; y < doc.rows; y++) render_at(render, 0, y, doc.data[y * doc.columns], doc.c64_background);
+    for (let y = 0; y < doc.rows; y++) render_at(render, 0, y, doc.data[y * doc.columns]);
 }
 
-function new_document({columns = 80, rows = 100, title = "", author = "", group = "", date = "", palette = ega, font_name = "IBM VGA", ice_colors = false, use_9px_font = false, comments = "", data, c64_background = undefined} = {}) {
-    const doc = {columns, rows, title, author, group, date: (date != "") ? date : current_date(), palette, font_name, ice_colors, use_9px_font, comments, c64_background};
+function new_document({columns = 80, rows = 100, title = "", author = "", group = "", date = "", palette = [...palette_4bit], font_name = "IBM VGA", ice_colors = false, use_9px_font = false, comments = "", data} = {}) {
+    const doc = new Textmode(null, {columns, rows, title, author, group, date: (date != "") ? date : current_date(), palette, font_name, ice_colors, use_9px_font, comments});
     if (!data || data.length != columns * rows) {
         doc.data = new Array(columns * rows);
         for (let i = 0; i < doc.data.length; i++) doc.data[i] = {fg: 7, bg: 0, code: 32};
@@ -604,7 +610,7 @@ function compress(doc) {
             }
         }
     }
-    return {columns: doc.columns, rows: doc.rows, title: doc.title, author: doc.author, group: doc.group, date: doc.date, palette: doc.palette, font_name: doc.font_name, ice_colors: doc.ice_colors, use_9px_font: doc.use_9px_font, comments: doc.comments, compressed_data, c64_background: doc.c64_background};
+    return {columns: doc.columns, rows: doc.rows, title: doc.title, author: doc.author, group: doc.group, date: doc.date, palette: doc.palette, font_name: doc.font_name, ice_colors: doc.ice_colors, use_9px_font: doc.use_9px_font, comments: doc.comments, compressed_data};
 }
 
 function uncompress(doc) {
@@ -684,9 +690,9 @@ function remove_ice_color_for_block(block) {
 }
 
 function remove_ice_colors(doc) {
-    const new_doc = {columns: doc.columns, rows: doc.rows, data: new Array(doc.data.length), palette: doc.palette, font_name: doc.font_name, use_9px_font: doc.use_9px_font, ice_colors: false};
+    const new_doc = new Textmode(null, {columns: doc.columns, rows: doc.rows, data: new Array(doc.data.length), palette: doc.palette, font_name: doc.font_name, use_9px_font: doc.use_9px_font, ice_colors: false});
     doc.data.forEach((block, index) => {
-        if (block.bg >= 8) {
+        if (block.bg > 7 && block.bg < 16) {
             new_doc.data[index] = remove_ice_color_for_block(block);
         } else {
             new_doc.data[index] = Object.assign(block);
@@ -695,4 +701,4 @@ function remove_ice_colors(doc) {
     return new_doc;
 }
 
-module.exports = {Font, read_bytes, read_file, write_file, animate, render, render_split, render_at, render_insert_column, render_delete_column, render_insert_row, render_delete_row, new_document, clone_document, resize_canvas, cp437_to_unicode, cp437_to_unicode_bytes, unicode_to_cp437, render_blocks, merge_blocks, flip_code_x, flip_x, flip_y, rotate, insert_column, insert_row, delete_column, delete_row, scroll_canvas_up, scroll_canvas_down, scroll_canvas_left, scroll_canvas_right, render_scroll_canvas_up, render_scroll_canvas_down, render_scroll_canvas_left, render_scroll_canvas_right, get_data_url, ega, c64, convert_ega_to_style, compress, uncompress, get_blocks, get_all_blocks, export_as_png, export_as_apng, has_ansi_palette, has_c64_palette, encode_as_bin, encode_as_xbin, encode_as_ansi, remove_ice_colors};
+module.exports = {Font, document_types, read_bytes, read_file, write_file, animate, render, render_split, render_at, render_insert_column, render_delete_column, render_insert_row, render_delete_row, new_document, clone_document, resize_canvas, cp437_to_unicode, cp437_to_unicode_bytes, unicode_to_cp437, render_blocks, merge_blocks, flip_code_x, flip_x, flip_y, rotate, insert_column, insert_row, delete_column, delete_row, scroll_canvas_up, scroll_canvas_down, scroll_canvas_left, scroll_canvas_right, render_scroll_canvas_up, render_scroll_canvas_down, render_scroll_canvas_left, render_scroll_canvas_right, get_data_url, compress, uncompress, get_blocks, get_all_blocks, export_as_png, export_as_apng, has_base_palette, encode_as_bin, encode_as_xbin, encode_as_ansi, remove_ice_colors};

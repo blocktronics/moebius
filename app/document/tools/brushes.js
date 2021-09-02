@@ -136,7 +136,7 @@ function single_blink_line(sx, sy, dx, dy, unblink, skip_first = false) {
     const coords = line(sx, sy, dx, dy, skip_first);
     for (const coord of coords) {
         const block = doc.at(coord.x, coord.y);
-        if (block && ((!unblink && block.bg < 8) || (unblink && block.bg >= 8)) && (block.code != 0 && block.code != 32 && block.code != 255)) doc.change_data(coord.x, coord.y, block.code, block.fg, unblink ? block.bg - 8 : block.bg + 8);
+        if (block && ((!unblink && block.bg < 8) || (unblink && block.bg > 7 && block.bg < 15)) && (block.code !== 0 && block.code !== 32 && block.code !== 255)) doc.change_data(coord.x, coord.y, block.code, block.fg, unblink ? block.bg - 8 : block.bg + 8);
     }
 }
 
@@ -146,7 +146,7 @@ function blink_line(sx, sy, dx, dy, unblink, skip_first = false) {
         for (let x = -Math.floor(toolbar.brush_size / 2); x < -Math.floor(toolbar.brush_size / 2) + toolbar.brush_size; x++) {
             for (let y = -Math.floor(toolbar.brush_size / 2); y < -Math.floor(toolbar.brush_size / 2) + toolbar.brush_size; y++) {
                 const block = doc.at(coord.x + x, coord.y + y);
-                if (block && ((!unblink && block.bg < 8) || (unblink && block.bg >= 8)) && (block.code != 0 && block.code != 32 && block.code != 255)) doc.change_data(coord.x + x, coord.y + y, block.code, block.fg, unblink ? block.bg - 8 : block.bg + 8);
+                if (block && ((!unblink && block.bg < 8) || (unblink && block.bg > 7 && block.bg < 16)) && (block.code !== 0 && block.code !== 32 && block.code !== 255)) doc.change_data(coord.x + x, coord.y + y, block.code, block.fg, unblink ? block.bg - 8 : block.bg + 8);
             }
         }
     }

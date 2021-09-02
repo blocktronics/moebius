@@ -97,6 +97,12 @@ body.dark #sidebar, body.dark #toolbar {
 body.dark #current_colors > canvas {
     border: 1px solid white;
 }
+#color_picker {
+    position: absolute;
+    opacity: 0;
+    top: -1000px;
+    left: -1000px;
+}
 #fg {
     top: 4px;
     left: 4px;
@@ -107,13 +113,19 @@ body.dark #current_colors > canvas {
     right: 4px;
     background-color: rgb(0, 0, 0);
 }
-#swatches {
-    column-gap: 0px;
+#swatches section.base {
+    column-gap: 0;
     column-count: 2;
     width: 48px;
     min-height: 192px;
 }
-#swatches > div {
+#swatches section.custom {
+    border-top: 1px solid rgba(0, 0, 0, 0.3);
+}
+#swatches section.custom:empty {
+    border: 0;
+}
+#swatches > section > div {
     display: inline-block;
     vertical-align: bottom;
     width: 24px;
@@ -124,13 +136,17 @@ body.dark #current_colors > canvas {
     outline: 1px solid transparent;
     cursor: pointer;
 }
-#swatches > div.selected_fg {
+#swatches > section > div.add {
+    background-image: url("../img/add_color.png");
+    opacity: 0.6;
+}
+#swatches div.selected_fg {
     background-image: url("../img/selected_fg.png");
 }
-#swatches > div.selected_bg {
+#swatches div.selected_bg {
     background-image: url("../img/selected_bg.png");
 }
-#swatches > div.selected_fg.selected_bg {
+#swatches div.selected_fg.selected_bg {
     background-image: url("../img/selected_fg.png"), url("../img/selected_bg.png");;
 }
 #viewport {

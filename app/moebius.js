@@ -14,6 +14,12 @@ let prevent_splash_screen_at_startup = false;
 let splash_screen;
 const discord = require("./discord");
 
+// This switch is required for <input type="color"> to utilize the OS color
+// picker, which is nicer than the one that's provided by chromium. At some
+// time in the future, this may no longer be true, in which case it would be
+// fine to remove this line if it causes other issues with forms.
+electron.app.commandLine.appendSwitch('disable-features', 'FormControlsRefresh')
+
 function cleanup(id) {
     menu.cleanup(id);
     last_win_pos = docs[id].win_pos;

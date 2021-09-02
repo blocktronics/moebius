@@ -2,7 +2,6 @@ const libtextmode = require("../libtextmode/libtextmode");
 const {on, send, send_sync} = require("../senders");
 const events = require("events");
 const chat = require("./ui/chat");
-const path = require("path");;
 let doc, render;
 const actions =  {CONNECTED: 0, REFUSED: 1, JOIN: 2, LEAVE: 3, CURSOR: 4, SELECTION: 5, RESIZE_SELECTION: 6, OPERATION: 7, HIDE_CURSOR: 8, DRAW: 9, CHAT: 10, STATUS: 11, SAUCE: 12, ICE_COLORS: 13, USE_9PX_FONT: 14, CHANGE_FONT: 15, SET_CANVAS_SIZE: 16, PASTE_AS_SELECTION: 17, ROTATE: 18, FLIP_X: 19, FLIP_Y: 20, SET_BG: 21};
 const statuses = {ACTIVE: 0, IDLE: 1, AWAY: 2, WEB: 3};
@@ -104,7 +103,7 @@ class NetworkCursor {
         this.canvas.height = blocks.rows * render.font.height;
         this.canvas.style.width = `${this.canvas.width}px`;
         this.canvas.style.height = `${this.canvas.height}px`;
-        this.ctx.drawImage(libtextmode.render_blocks(blocks, render.font, doc.c64_background), 0, 0);
+        this.ctx.drawImage(libtextmode.render_blocks(blocks, render.font), 0, 0);
         this.operation_blocks = blocks;
         this.mode = modes.OPERATION;
     }
@@ -168,7 +167,7 @@ class Connection extends events.EventEmitter {
         }, 1 * 60 * 1000);
     }
 
-    send(type, data ={}) {
+    send(type, data = {}) {
         data.id = this.id;
         this.ws.send(JSON.stringify({type, data}));
         if (!this.web && type != actions.CONNECTED) {
@@ -181,7 +180,7 @@ class Connection extends events.EventEmitter {
         this.ws.send(JSON.stringify({type: actions.CONNECTED, data: {nick, group, pass}}));
     }
 
-    disconnected()  {
+    disconnected() {
         this.stop_away_timers();
         this.connected = false;
         for (const id of Object.keys(this.users)) this.leave(id, false);
@@ -259,7 +258,7 @@ class Connection extends events.EventEmitter {
                     break;
                 case actions.DRAW:
                     doc.data[data.y * doc.columns + data.x] = Object.assign(data.block);
-                    libtextmode.render_at(render, data.x, data.y, data.block, doc.c64_background);
+                    libtextmode.render_at(render, data.x, data.y, data.block);
                     if (user) this.users[data.id].last_row = data.y;
                     break;
                 case actions.CHAT:
@@ -349,7 +348,7 @@ class Connection extends events.EventEmitter {
             const {groups} = (/(?<host>[^\/:]+):?(?<port>[\d]*)\/?(?<path>[^\/]*)\/?/).exec(server);
             this.host = groups.host;
             this.port = groups.port;
-            this.path = groups.path;;
+            this.path = groups.path;
             if (!this.port) this.port = 8000;
             this.web = web;
             this.queued_messages = [];
@@ -407,7 +406,7 @@ class UndoHistory extends events.EventEmitter {
             block.code = undo.code;
             block.fg = undo.fg;
             block.bg = undo.bg;
-            libtextmode.render_at(render, undo.x, undo.y, block, doc.c64_background);
+            libtextmode.render_at(render, undo.x, undo.y, block);
             if (connection) connection.draw(undo.x, undo.y, block);
             if (undo.cursor) this.emit("move_to", undo.cursor.prev_x, undo.cursor.prev_y);
         }
@@ -427,7 +426,7 @@ class UndoHistory extends events.EventEmitter {
             block.code = redo.code;
             block.fg = redo.fg;
             block.bg = redo.bg;
-            libtextmode.render_at(render, redo.x, redo.y, block, doc.c64_background);
+            libtextmode.render_at(render, redo.x, redo.y, block);
             if (connection) connection.draw(redo.x, redo.y, block);
             if (redo.cursor) this.emit("move_to", redo.cursor.post_x, redo.cursor.post_y);
         }
@@ -678,17 +677,6 @@ class TextModeDoc extends events.EventEmitter {
         });
         connection.on("change_font", (font_name) => {
             doc.font_name = font_name;
-            if (font_name == "C64 PETSCII unshifted" || font_name == "C64 PETSCII shifted") {
-                if (libtextmode.has_ansi_palette(doc.palette)) {
-                    doc.palette = libtextmode.c64;
-                    this.emit("update_swatches");
-                }
-            } else {
-                if (libtextmode.has_c64_palette(doc.palette)) {
-                    doc.palette = libtextmode.ega;
-                    this.emit("update_swatches");
-                }
-            }
             this.start_rendering().then(() => this.emit("change_font", doc.font_name));
         });
         connection.on("sauce", (title, author, group, comments) => {
@@ -724,8 +712,6 @@ class TextModeDoc extends events.EventEmitter {
     get ice_colors() {return doc.ice_colors;}
     get use_9px_font() {return doc.use_9px_font;}
     get data() {return doc.data;}
-    get c64_background() {return doc.c64_background;}
-    set c64_background(value) {doc.c64_background = value;}
 
     set_sauce(title, author, group, comments) {
         doc.title = title;
@@ -739,17 +725,6 @@ class TextModeDoc extends events.EventEmitter {
     set font_name(font_name) {
         doc.font_name = font_name;
         doc.font_bytes = undefined;
-        if (font_name == "C64 PETSCII unshifted" || font_name == "C64 PETSCII shifted") {
-            if (libtextmode.has_ansi_palette(doc.palette)) {
-                doc.palette = libtextmode.c64;
-                this.emit("update_swatches");
-            }
-        } else {
-            if (libtextmode.has_c64_palette(doc.palette)) {
-                doc.palette = libtextmode.ega;
-                this.emit("update_swatches");
-            }
-        }
         this.start_rendering().then(() => this.emit("change_font", doc.font_name));
         if (connection) connection.change_font(doc.font_name);
     }
@@ -784,11 +759,26 @@ class TextModeDoc extends events.EventEmitter {
             this.undo_history.push(x, y, doc.data[i]);
         }
         doc.data[i] = {code, fg, bg};
-        libtextmode.render_at(render, x, y, doc.data[i], doc.c64_background);
+        libtextmode.render_at(render, x, y, doc.data[i]);
         if (connection) connection.draw(x, y, doc.data[i]);
         if (this.mirror_mode && mirrored) {
             const opposing_x = Math.floor(doc.columns / 2) - (x - Math.ceil(doc.columns / 2)) - 1;
             this.change_data(opposing_x, y, libtextmode.flip_code_x(code), fg, bg, undefined, undefined, false);
+        }
+    }
+
+    update_palette(index, rgb) {
+        if (index === null) index = doc.add_to_palette(rgb);
+        render.font.replace_cache_at(index, this.palette[index] = rgb)
+
+        // TODO: should this be undoable? it doesn't fit in nicely, but I think it should be.
+        for (let y = 0; y <= doc.rows - 1; y++) {
+            for (let x = 0; x <= doc.columns - 1; x++) {
+                const block = doc.data[doc.columns * y + x];
+                if (block.bg === index || block.fg === index) {
+                    libtextmode.render_at(render, x, y, block);
+                }
+            }
         }
     }
 
@@ -1082,14 +1072,14 @@ class TextModeDoc extends events.EventEmitter {
     }
 
     async share_online() {
-        const default_palette = libtextmode.has_ansi_palette(doc.palette);
+        const default_palette = libtextmode.has_base_palette(doc.palette);
         const bytes = default_palette ? libtextmode.encode_as_ansi(doc) : libtextmode.encode_as_xbin(doc);
         const extension = (default_palette) ? "ans" : "xb";
         const filename = (this.file) ? path.basename(this.file) : "unknown" + '.' + extension;
         const req = await fetch(`https://api.16colo.rs/v1/paste?key=${SIXTEEN_COLORS_API_KEY}&extension=${extension}&retention=${retention}&filename=${filename}`, {
             body: `file=${Buffer.from(bytes).toString("base64")}`,
             headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
+                "Content-Type": "application/x-www-form-urlencoded"
             },
             method: "POST"
         });

@@ -1,16 +1,16 @@
-const {white, bright_white, get_rgba, convert_ega_to_vga, ega} = require("./palette");
-const {create_canvas} = require("./canvas");
+const {white, bright_white, palette_4bit, rgb_to_hex} = require("./palette");
+const {create_canvas, clone_canvas} = require("./canvas");
 
 function generate_font_canvas(bitmask, height, length) {
     const {canvas, ctx, image_data} = create_canvas(8 * length, height);
-    const rgba = get_rgba(convert_ega_to_vga(bright_white));
+    const rgba = new Uint8Array([255, 255, 255, 255]);
     for (let i = 0, y = 0, char = 0; i < bitmask.length; i++) {
         for (let x = 0, byte = bitmask[i]; x < 8; x++) {
             if (byte >> x & 1) {
                 image_data.data.set(rgba, (y * canvas.width + (8 - 1 - x) + char * 8) * 4);
             }
         }
-        if ((i + 1) % height == 0) {
+        if ((i + 1) % height === 0) {
             y = 0;
             char++;
         } else {
@@ -32,40 +32,43 @@ function add_ninth_bit_to_canvas(canvas, length) {
     return new_canvas;
 }
 
-function coloured_glyphs(canvas, rgb) {
-    const image_data = canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height);
-    const {canvas: coloured_canvas, ctx} = create_canvas(canvas.width, canvas.height);
-    const rgba = get_rgba(rgb);
-    for (let i = 0; i < image_data.data.length; i += 4) {
-        if (image_data.data[i + 3]) {
-            image_data.data.set(rgba, i);
-        }
-    }
-    ctx.putImageData(image_data, 0, 0);
-    return coloured_canvas;
+function coloured_glyphs(source_canvas, rgb) {
+    const { canvas, ctx } = clone_canvas(source_canvas);
+
+    ctx.fillStyle = rgb_to_hex(rgb);
+    ctx.globalCompositeOperation = "source-in";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    return canvas;
 }
 
+cached_backgrounds = {}
 function coloured_background(font_width, height, rgb) {
-    const {canvas, ctx, image_data} = create_canvas(font_width, height);
-    const rgba = get_rgba(rgb);
-    for (let i = 0; i < image_data.data.length; i += 4) {
-        image_data.data.set(rgba, i);
-    }
-    ctx.putImageData(image_data, 0, 0);
-    return canvas;
+    const hex = rgb_to_hex(rgb);
+    const key = hex;
+    if (cached_backgrounds[key]) return cached_backgrounds[key];
+
+    const { canvas, ctx } = create_canvas(font_width, height);
+    ctx.fillStyle = hex;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    return cached_backgrounds[key] = canvas;
 }
 
-function create_coloured_glyph({canvas: glyphs_canvas, code, rgb, width, height}) {
-    const {canvas, ctx} = create_canvas(width, height);
-    const image_data = glyphs_canvas.getContext("2d").getImageData(code * width, 0, width, height);
-    const rgba = get_rgba(rgb);
-    for (let i = 0; i < image_data.data.length; i += 4) {
-        if (image_data.data[i + 3]) {
-            image_data.data.set(rgba, i);
-        }
-    }
+cached_glyphs = {}
+function create_coloured_glyph(source_canvas, code, rgb, font_width, height) {
+    const hex = rgb_to_hex(rgb);
+    const key = [hex, code].join('|')
+    if (cached_glyphs[key]) return cached_glyphs[key];
+
+    const {canvas, ctx} = create_canvas(font_width, height);
+    const image_data = source_canvas.getContext("2d").getImageData(code * font_width, 0, font_width, height);
     ctx.putImageData(image_data, 0, 0);
-    return canvas;
+    ctx.globalCompositeOperation = "source-in";
+    ctx.fillStyle = hex;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    return cached_glyphs[key] = canvas;
 }
 
 function lookup_url(font_name) {
@@ -223,8 +226,6 @@ function lookup_url(font_name) {
     case "Amiga MicroKnight":     return "../fonts/amiga/MicroKnight.F16";
     case "Amiga MicroKnight+":    return "../fonts/amiga/MicroKnightPlus.F16";
     case "Amiga mOsOul":          return "../fonts/amiga/mO'sOul.F16";
-    case "C64 PETSCII unshifted": return "../fonts/c64/PETSCII unshifted.F08";
-    case "C64 PETSCII shifted":   return "../fonts/c64/PETSCII shifted.F08";
     case "Atari ATASCII":         return "../fonts/atari/atascii.F08";
     default:                      return "../fonts/ibm/CP437.F16";
     }
@@ -241,7 +242,7 @@ class Font {
             bytes = new Uint8Array(await resp.arrayBuffer());
         }
         const font_height = bytes.length / 256;
-        if (font_height % 1 != 0) {
+        if (font_height % 1 !== 0) {
             throw("Error loading font.");
         }
         this.height = font_height;
@@ -249,37 +250,35 @@ class Font {
         this.width = 8;
         this.length = 256;
         this.use_9px_font = use_9px_font;
+
         this.canvas = generate_font_canvas(this.bitmask, this.height, this.length);
         if (this.use_9px_font) {
             this.width += 1;
             this.canvas = add_ninth_bit_to_canvas(this.canvas, this.length);
         }
-        this.glyphs = this.palette.map(rgb => coloured_glyphs(this.canvas, convert_ega_to_vga(rgb)));
-        this.backgrounds = this.palette.map(rgb => coloured_background(this.width, this.height, convert_ega_to_vga(rgb)));
-        this.cursor = coloured_background(this.width, 2, convert_ega_to_vga(bright_white));
+
+        this.glyphs = this.palette.map(rgb => coloured_glyphs(this.canvas, rgb));
+        this.backgrounds = this.palette.map(rgb => coloured_background(this.width, this.height, rgb));
+        this.cursor = coloured_background(this.width, 2, bright_white);
     }
 
-    draw(ctx, block, x, y, c64_background) {
-        if (c64_background != undefined) {
-            ctx.drawImage(this.backgrounds[c64_background], x, y);
-        } else if (block.bg_rgb) {
-            ctx.drawImage(coloured_background(this.width, this.height, block.bg_rgb), x, y);
-        } else {
-            ctx.drawImage(this.backgrounds[block.bg], x, y);
-        }
-        if (block.fg_rgb) {
-            ctx.drawImage(create_coloured_glyph({canvas: this.canvas, code: block.code, rgb: block.fg_rgb, width: this.width, height: this.height}), x, y);
-        } else {
-            ctx.drawImage(this.glyphs[block.fg], block.code * this.width, 0, this.width, this.height, x, y, this.width, this.height);
-        }
+    replace_cache_at(index, rgb) {
+        this.backgrounds[index] = coloured_background(this.width, this.height, rgb);
+        this.glyphs[index] = coloured_glyphs(this.canvas, rgb);
+    }
+
+    draw(ctx, block, x, y) {
+        ctx.drawImage(this.get_background_for(block.bg), x, y);
+        ctx.drawImage(this.get_glyphs_for(block.fg), block.code * this.width, 0, this.width, this.height, x, y, this.width, this.height);
     }
 
     draw_raw(ctx, block, x, y) {
-        ctx.drawImage(create_coloured_glyph({canvas: this.canvas, code: block.code, rgb: convert_ega_to_vga(white), width: this.width, height: this.height}), x, y);
+        const canvas = create_coloured_glyph(this.canvas, block.code, white, this.width, this.height);
+        ctx.drawImage(canvas, x, y);
     }
 
     get_rgb(i) {
-        return convert_ega_to_vga(this.palette[i]);
+        return this.palette[i];
     }
 
     draw_bg(ctx, bg, x, y) {
@@ -290,7 +289,15 @@ class Font {
         ctx.drawImage(this.cursor, x, y);
     }
 
-    constructor(palette = ega) {
+    get_glyphs_for(index) {
+        return this.glyphs[index] = this.glyphs[index] || coloured_glyphs(this.canvas, this.get_rgb(index));
+    }
+
+    get_background_for(index) {
+        return this.backgrounds[index] = this.backgrounds[index] || coloured_background(this.width, this.height, this.get_rgb(index));
+    }
+
+    constructor(palette = [...palette_4bit]) {
         this.palette = palette;
     }
 }

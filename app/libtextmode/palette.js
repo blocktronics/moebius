@@ -1,76 +1,392 @@
-const black = {r: 0, g: 0, b: 0};
-const blue = {r: 0, g: 0, b: 42};
-const green = {r: 0, g: 42, b:   0};
-const cyan = {r: 0, g: 42, b: 42};
-const red = {r: 42, g: 0, b: 0};
-const magenta = {r: 42, g: 0, b: 42};
-const yellow = {r: 42, g: 21, b: 0};
-const white = {r: 42, g: 42, b: 42};
-const bright_black = {r: 21, g: 21, b: 21};
-const bright_blue = {r: 21, g: 21, b: 63};
-const bright_green = {r: 21, g: 63, b: 21};
-const bright_cyan = {r: 21, g: 63, b: 63};
-const bright_red = {r: 63, g: 21, b: 21};
-const bright_magenta = {r: 63, g: 21, b: 63};
-const bright_yellow = {r: 63, g: 63, b: 21};
-const bright_white = {r: 63, g: 63, b: 63};
+// This is the standard 4bit palette in bin (binary text) order.
+const palette_4bit = [
+    // standard 3-4bit colors
+    { r: 0x00, g: 0x00, b: 0x00 }, // black
+    { r: 0x00, g: 0x00, b: 0xaa }, // blue
+    { r: 0x00, g: 0xaa, b: 0x00 }, // green
+    { r: 0x00, g: 0xaa, b: 0xaa }, // cyan
+    { r: 0xaa, g: 0x00, b: 0x00 }, // red
+    { r: 0xaa, g: 0x00, b: 0xaa }, // magenta
+    { r: 0xaa, g: 0x55, b: 0x00 }, // yellow
+    { r: 0xaa, g: 0xaa, b: 0xaa }, // white
+    // high intensity 4bit colors
+    { r: 0x55, g: 0x55, b: 0x55 }, // bright black
+    { r: 0x55, g: 0x55, b: 0xff }, // bright blue
+    { r: 0x55, g: 0xff, b: 0x55 }, // bright green
+    { r: 0x55, g: 0xff, b: 0xff }, // bright cyan
+    { r: 0xff, g: 0x55, b: 0x55 }, // bright red
+    { r: 0xff, g: 0x55, b: 0xff }, // bright magenta
+    { r: 0xff, g: 0xff, b: 0x55 }, // bright yellow
+    { r: 0xff, g: 0xff, b: 0xff } // bright white
+];
 
-const c64_black = {r: 0, g: 0, b: 0};
-const c64_white = {r: 63, g: 63, b: 63};
-const c64_red = {r: 32, g: 13, b: 14};
-const c64_cyan = {r: 29, g: 51, b: 50};
-const c64_violet = {r: 35, g: 15, b: 37};
-const c64_green = {r: 21, g: 43, b: 19};
-const c64_blue = {r: 12, g: 11, b: 38};
-const c64_yellow = {r: 59, g: 60, b: 28};
-const c64_orange = {r: 35, g: 20, b: 10};
-const c64_brown = {r: 21, g: 14, b: 0};
-const c64_light_red = {r: 48, g: 27, b: 28};
-const c64_dark_grey = {r: 19, g: 19, b: 18};
-const c64_grey = {r: 31, g: 31, b: 31};
-const c64_light_green = {r: 42, g: 63, b: 39};
-const c64_light_blue = {r: 26, g: 27, b: 58};
-const c64_light_grey = {r: 44, g: 44, b: 44};
+// Standard ANSI defines colors in a different order than the order of our
+// 4bit palette. We use this mapping to convert into an index that's useful
+// for ansi codes.
+const palette_4bit_ansi_mapping = {
+    1: 4, 4: 1, 9: 12, 12: 9, // flip blue with red
+    3: 6, 6: 3, 11: 14, 14: 11 // flip cyan with yellow
+};
 
-const ega = [black, blue, green, cyan, red, magenta, yellow, white, bright_black, bright_blue, bright_green, bright_cyan, bright_red, bright_magenta, bright_yellow, bright_white];
-const c64 = [c64_black, c64_white, c64_red, c64_cyan, c64_violet, c64_green, c64_blue, c64_yellow, c64_orange, c64_brown, c64_light_red, c64_dark_grey, c64_grey, c64_light_green, c64_light_blue, c64_light_grey];
+// This is the standard 8bit palette, also with the first portion being in
+// bin (binary text) order to simplify consistency in conversion.
+const palette_8bit = [
+    // 0-15: standard 4bit palette
+    ...palette_4bit,
 
-function get_rgba(rgb) {
-    return new Uint8Array([rgb.r, rgb.g, rgb.b, 255]);
+    // 16-231: 6×6×6 cube (216 colors)
+    { r: 0x00, g: 0x00, b: 0x00 },
+    { r: 0x00, g: 0x00, b: 0x5f },
+    { r: 0x00, g: 0x00, b: 0x87 },
+    { r: 0x00, g: 0x00, b: 0xaf },
+    { r: 0x00, g: 0x00, b: 0xd7 },
+    { r: 0x00, g: 0x00, b: 0xff },
+    { r: 0x00, g: 0x5f, b: 0x00 },
+    { r: 0x00, g: 0x5f, b: 0x5f },
+    { r: 0x00, g: 0x5f, b: 0x87 },
+    { r: 0x00, g: 0x5f, b: 0xaf },
+    { r: 0x00, g: 0x5f, b: 0xd7 },
+    { r: 0x00, g: 0x5f, b: 0xff },
+    { r: 0x00, g: 0x87, b: 0x00 },
+    { r: 0x00, g: 0x87, b: 0x5f },
+    { r: 0x00, g: 0x87, b: 0x87 },
+    { r: 0x00, g: 0x87, b: 0xaf },
+    { r: 0x00, g: 0x87, b: 0xd7 },
+    { r: 0x00, g: 0x87, b: 0xff },
+    { r: 0x00, g: 0xaf, b: 0x00 },
+    { r: 0x00, g: 0xaf, b: 0x5f },
+    { r: 0x00, g: 0xaf, b: 0x87 },
+    { r: 0x00, g: 0xaf, b: 0xaf },
+    { r: 0x00, g: 0xaf, b: 0xd7 },
+    { r: 0x00, g: 0xaf, b: 0xff },
+    { r: 0x00, g: 0xd7, b: 0x00 },
+    { r: 0x00, g: 0xd7, b: 0x5f },
+    { r: 0x00, g: 0xd7, b: 0x87 },
+    { r: 0x00, g: 0xd7, b: 0xaf },
+    { r: 0x00, g: 0xd7, b: 0xd7 },
+    { r: 0x00, g: 0xd7, b: 0xff },
+    { r: 0x00, g: 0xff, b: 0x00 },
+    { r: 0x00, g: 0xff, b: 0x5f },
+    { r: 0x00, g: 0xff, b: 0x87 },
+    { r: 0x00, g: 0xff, b: 0xaf },
+    { r: 0x00, g: 0xff, b: 0xd7 },
+    { r: 0x00, g: 0xff, b: 0xff },
+    { r: 0x5f, g: 0x00, b: 0x00 },
+    { r: 0x5f, g: 0x00, b: 0x5f },
+    { r: 0x5f, g: 0x00, b: 0x87 },
+    { r: 0x5f, g: 0x00, b: 0xaf },
+    { r: 0x5f, g: 0x00, b: 0xd7 },
+    { r: 0x5f, g: 0x00, b: 0xff },
+    { r: 0x5f, g: 0x5f, b: 0x00 },
+    { r: 0x5f, g: 0x5f, b: 0x5f },
+    { r: 0x5f, g: 0x5f, b: 0x87 },
+    { r: 0x5f, g: 0x5f, b: 0xaf },
+    { r: 0x5f, g: 0x5f, b: 0xd7 },
+    { r: 0x5f, g: 0x5f, b: 0xff },
+    { r: 0x5f, g: 0x87, b: 0x00 },
+    { r: 0x5f, g: 0x87, b: 0x5f },
+    { r: 0x5f, g: 0x87, b: 0x87 },
+    { r: 0x5f, g: 0x87, b: 0xaf },
+    { r: 0x5f, g: 0x87, b: 0xd7 },
+    { r: 0x5f, g: 0x87, b: 0xff },
+    { r: 0x5f, g: 0xaf, b: 0x00 },
+    { r: 0x5f, g: 0xaf, b: 0x5f },
+    { r: 0x5f, g: 0xaf, b: 0x87 },
+    { r: 0x5f, g: 0xaf, b: 0xaf },
+    { r: 0x5f, g: 0xaf, b: 0xd7 },
+    { r: 0x5f, g: 0xaf, b: 0xff },
+    { r: 0x5f, g: 0xd7, b: 0x00 },
+    { r: 0x5f, g: 0xd7, b: 0x5f },
+    { r: 0x5f, g: 0xd7, b: 0x87 },
+    { r: 0x5f, g: 0xd7, b: 0xaf },
+    { r: 0x5f, g: 0xd7, b: 0xd7 },
+    { r: 0x5f, g: 0xd7, b: 0xff },
+    { r: 0x5f, g: 0xff, b: 0x00 },
+    { r: 0x5f, g: 0xff, b: 0x5f },
+    { r: 0x5f, g: 0xff, b: 0x87 },
+    { r: 0x5f, g: 0xff, b: 0xaf },
+    { r: 0x5f, g: 0xff, b: 0xd7 },
+    { r: 0x5f, g: 0xff, b: 0xff },
+    { r: 0x87, g: 0x00, b: 0x00 },
+    { r: 0x87, g: 0x00, b: 0x5f },
+    { r: 0x87, g: 0x00, b: 0x87 },
+    { r: 0x87, g: 0x00, b: 0xaf },
+    { r: 0x87, g: 0x00, b: 0xd7 },
+    { r: 0x87, g: 0x00, b: 0xff },
+    { r: 0x87, g: 0x5f, b: 0x00 },
+    { r: 0x87, g: 0x5f, b: 0x5f },
+    { r: 0x87, g: 0x5f, b: 0x87 },
+    { r: 0x87, g: 0x5f, b: 0xaf },
+    { r: 0x87, g: 0x5f, b: 0xd7 },
+    { r: 0x87, g: 0x5f, b: 0xff },
+    { r: 0x87, g: 0x87, b: 0x00 },
+    { r: 0x87, g: 0x87, b: 0x5f },
+    { r: 0x87, g: 0x87, b: 0x87 },
+    { r: 0x87, g: 0x87, b: 0xaf },
+    { r: 0x87, g: 0x87, b: 0xd7 },
+    { r: 0x87, g: 0x87, b: 0xff },
+    { r: 0x87, g: 0xaf, b: 0x00 },
+    { r: 0x87, g: 0xaf, b: 0x5f },
+    { r: 0x87, g: 0xaf, b: 0x87 },
+    { r: 0x87, g: 0xaf, b: 0xaf },
+    { r: 0x87, g: 0xaf, b: 0xd7 },
+    { r: 0x87, g: 0xaf, b: 0xff },
+    { r: 0x87, g: 0xd7, b: 0x00 },
+    { r: 0x87, g: 0xd7, b: 0x5f },
+    { r: 0x87, g: 0xd7, b: 0x87 },
+    { r: 0x87, g: 0xd7, b: 0xaf },
+    { r: 0x87, g: 0xd7, b: 0xd7 },
+    { r: 0x87, g: 0xd7, b: 0xff },
+    { r: 0x87, g: 0xff, b: 0x00 },
+    { r: 0x87, g: 0xff, b: 0x5f },
+    { r: 0x87, g: 0xff, b: 0x87 },
+    { r: 0x87, g: 0xff, b: 0xaf },
+    { r: 0x87, g: 0xff, b: 0xd7 },
+    { r: 0x87, g: 0xff, b: 0xff },
+    { r: 0xaf, g: 0x00, b: 0x00 },
+    { r: 0xaf, g: 0x00, b: 0x5f },
+    { r: 0xaf, g: 0x00, b: 0x87 },
+    { r: 0xaf, g: 0x00, b: 0xaf },
+    { r: 0xaf, g: 0x00, b: 0xd7 },
+    { r: 0xaf, g: 0x00, b: 0xff },
+    { r: 0xaf, g: 0x5f, b: 0x00 },
+    { r: 0xaf, g: 0x5f, b: 0x5f },
+    { r: 0xaf, g: 0x5f, b: 0x87 },
+    { r: 0xaf, g: 0x5f, b: 0xaf },
+    { r: 0xaf, g: 0x5f, b: 0xd7 },
+    { r: 0xaf, g: 0x5f, b: 0xff },
+    { r: 0xaf, g: 0x87, b: 0x00 },
+    { r: 0xaf, g: 0x87, b: 0x5f },
+    { r: 0xaf, g: 0x87, b: 0x87 },
+    { r: 0xaf, g: 0x87, b: 0xaf },
+    { r: 0xaf, g: 0x87, b: 0xd7 },
+    { r: 0xaf, g: 0x87, b: 0xff },
+    { r: 0xaf, g: 0xaf, b: 0x00 },
+    { r: 0xaf, g: 0xaf, b: 0x5f },
+    { r: 0xaf, g: 0xaf, b: 0x87 },
+    { r: 0xaf, g: 0xaf, b: 0xaf },
+    { r: 0xaf, g: 0xaf, b: 0xd7 },
+    { r: 0xaf, g: 0xaf, b: 0xff },
+    { r: 0xaf, g: 0xd7, b: 0x00 },
+    { r: 0xaf, g: 0xd7, b: 0x5f },
+    { r: 0xaf, g: 0xd7, b: 0x87 },
+    { r: 0xaf, g: 0xd7, b: 0xaf },
+    { r: 0xaf, g: 0xd7, b: 0xd7 },
+    { r: 0xaf, g: 0xd7, b: 0xff },
+    { r: 0xaf, g: 0xff, b: 0x00 },
+    { r: 0xaf, g: 0xff, b: 0x5f },
+    { r: 0xaf, g: 0xff, b: 0x87 },
+    { r: 0xaf, g: 0xff, b: 0xaf },
+    { r: 0xaf, g: 0xff, b: 0xd7 },
+    { r: 0xaf, g: 0xff, b: 0xff },
+    { r: 0xd7, g: 0x00, b: 0x00 },
+    { r: 0xd7, g: 0x00, b: 0x5f },
+    { r: 0xd7, g: 0x00, b: 0x87 },
+    { r: 0xd7, g: 0x00, b: 0xaf },
+    { r: 0xd7, g: 0x00, b: 0xd7 },
+    { r: 0xd7, g: 0x00, b: 0xff },
+    { r: 0xd7, g: 0x5f, b: 0x00 },
+    { r: 0xd7, g: 0x5f, b: 0x5f },
+    { r: 0xd7, g: 0x5f, b: 0x87 },
+    { r: 0xd7, g: 0x5f, b: 0xaf },
+    { r: 0xd7, g: 0x5f, b: 0xd7 },
+    { r: 0xd7, g: 0x5f, b: 0xff },
+    { r: 0xd7, g: 0x87, b: 0x00 },
+    { r: 0xd7, g: 0x87, b: 0x5f },
+    { r: 0xd7, g: 0x87, b: 0x87 },
+    { r: 0xd7, g: 0x87, b: 0xaf },
+    { r: 0xd7, g: 0x87, b: 0xd7 },
+    { r: 0xd7, g: 0x87, b: 0xff },
+    { r: 0xd7, g: 0xaf, b: 0x00 },
+    { r: 0xd7, g: 0xaf, b: 0x5f },
+    { r: 0xd7, g: 0xaf, b: 0x87 },
+    { r: 0xd7, g: 0xaf, b: 0xaf },
+    { r: 0xd7, g: 0xaf, b: 0xd7 },
+    { r: 0xd7, g: 0xaf, b: 0xff },
+    { r: 0xd7, g: 0xd7, b: 0x00 },
+    { r: 0xd7, g: 0xd7, b: 0x5f },
+    { r: 0xd7, g: 0xd7, b: 0x87 },
+    { r: 0xd7, g: 0xd7, b: 0xaf },
+    { r: 0xd7, g: 0xd7, b: 0xd7 },
+    { r: 0xd7, g: 0xd7, b: 0xff },
+    { r: 0xd7, g: 0xff, b: 0x00 },
+    { r: 0xd7, g: 0xff, b: 0x5f },
+    { r: 0xd7, g: 0xff, b: 0x87 },
+    { r: 0xd7, g: 0xff, b: 0xaf },
+    { r: 0xd7, g: 0xff, b: 0xd7 },
+    { r: 0xd7, g: 0xff, b: 0xff },
+    { r: 0xff, g: 0x00, b: 0x00 },
+    { r: 0xff, g: 0x00, b: 0x5f },
+    { r: 0xff, g: 0x00, b: 0x87 },
+    { r: 0xff, g: 0x00, b: 0xaf },
+    { r: 0xff, g: 0x00, b: 0xd7 },
+    { r: 0xff, g: 0x00, b: 0xff },
+    { r: 0xff, g: 0x5f, b: 0x00 },
+    { r: 0xff, g: 0x5f, b: 0x5f },
+    { r: 0xff, g: 0x5f, b: 0x87 },
+    { r: 0xff, g: 0x5f, b: 0xaf },
+    { r: 0xff, g: 0x5f, b: 0xd7 },
+    { r: 0xff, g: 0x5f, b: 0xff },
+    { r: 0xff, g: 0x87, b: 0x00 },
+    { r: 0xff, g: 0x87, b: 0x5f },
+    { r: 0xff, g: 0x87, b: 0x87 },
+    { r: 0xff, g: 0x87, b: 0xaf },
+    { r: 0xff, g: 0x87, b: 0xd7 },
+    { r: 0xff, g: 0x87, b: 0xff },
+    { r: 0xff, g: 0xaf, b: 0x00 },
+    { r: 0xff, g: 0xaf, b: 0x5f },
+    { r: 0xff, g: 0xaf, b: 0x87 },
+    { r: 0xff, g: 0xaf, b: 0xaf },
+    { r: 0xff, g: 0xaf, b: 0xd7 },
+    { r: 0xff, g: 0xaf, b: 0xff },
+    { r: 0xff, g: 0xd7, b: 0x00 },
+    { r: 0xff, g: 0xd7, b: 0x5f },
+    { r: 0xff, g: 0xd7, b: 0x87 },
+    { r: 0xff, g: 0xd7, b: 0xaf },
+    { r: 0xff, g: 0xd7, b: 0xd7 },
+    { r: 0xff, g: 0xd7, b: 0xff },
+    { r: 0xff, g: 0xff, b: 0x00 },
+    { r: 0xff, g: 0xff, b: 0x5f },
+    { r: 0xff, g: 0xff, b: 0x87 },
+    { r: 0xff, g: 0xff, b: 0xaf },
+    { r: 0xff, g: 0xff, b: 0xd7 },
+    { r: 0xff, g: 0xff, b: 0xff },
+
+    // 232-255: grayscale in 24 steps
+    { r: 0x08, g: 0x08, b: 0x08 },
+    { r: 0x12, g: 0x12, b: 0x12 },
+    { r: 0x1c, g: 0x1c, b: 0x1c },
+    { r: 0x26, g: 0x26, b: 0x26 },
+    { r: 0x30, g: 0x30, b: 0x30 },
+    { r: 0x3a, g: 0x3a, b: 0x3a },
+    { r: 0x44, g: 0x44, b: 0x44 },
+    { r: 0x4e, g: 0x4e, b: 0x4e },
+    { r: 0x58, g: 0x58, b: 0x58 },
+    { r: 0x62, g: 0x62, b: 0x62 },
+    { r: 0x6c, g: 0x6c, b: 0x6c },
+    { r: 0x76, g: 0x76, b: 0x76 },
+    { r: 0x80, g: 0x80, b: 0x80 },
+    { r: 0x8a, g: 0x8a, b: 0x8a },
+    { r: 0x94, g: 0x94, b: 0x94 },
+    { r: 0x9e, g: 0x9e, b: 0x9e },
+    { r: 0xa8, g: 0xa8, b: 0xa8 },
+    { r: 0xb2, g: 0xb2, b: 0xb2 },
+    { r: 0xbc, g: 0xbc, b: 0xbc },
+    { r: 0xc6, g: 0xc6, b: 0xc6 },
+    { r: 0xd0, g: 0xd0, b: 0xd0 },
+    { r: 0xda, g: 0xda, b: 0xda },
+    { r: 0xe4, g: 0xe4, b: 0xe4 },
+    { r: 0xee, g: 0xee, b: 0xee }
+]
+
+function rgb_distance(rgb1, rgb2) {
+    return Math.sqrt(
+        Math.pow((rgb2.r - rgb1.r) * 0.3, 2) +
+        Math.pow((rgb2.g - rgb1.g) * 0.59, 2) +
+        Math.pow((rgb2.b - rgb1.b) * 0.11, 2)
+    );
 }
 
-function convert_6bits_to_8bits(value) {
+function closest_index_in(palette, rgb) {
+    let index = 0;
+    let closest = Infinity;
+
+    for (let i in palette) {
+        const distance = rgb_distance(rgb, palette[i]);
+        if (distance > closest) continue;
+
+        closest = distance;
+        index = i;
+
+        if (distance === 0) return index;
+    }
+
+    return index;
+}
+
+function convert_6_to_8bits(value) {
     return (value << 2) | ((value & 0x30) >> 4);
 }
 
-function convert_ega_to_vga(rgb) {
-    return {
-        r: convert_6bits_to_8bits(rgb.r),
-        g: convert_6bits_to_8bits(rgb.g),
-        b: convert_6bits_to_8bits(rgb.b)
-    };
+function index_to_ansi(index) {
+    return parseInt(palette_4bit_ansi_mapping[index] || index, 10)
 }
 
-function convert_rgb_to_style(rgb) {
-    return `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
-}
+module.exports = {
+    palette_4bit,
+    palette_8bit,
 
-function convert_ega_to_style(rgb) {
-    return convert_rgb_to_style(convert_ega_to_vga(rgb));
-}
+    white: palette_4bit[7],
+    bright_white: palette_4bit[15],
 
-function has_ansi_palette(palette) {
-    for (let i = 0; i < palette.length; i++) {
-        if (palette[i].r != ega[i].r || palette[i].g != ega[i].g || palette[i].b != ega[i].b) return false;
+    // TODO: used for share online
+    //  is there a better way to determine this after we handle document type?
+    has_base_palette(palette) {
+        if (palette.length > 16) return false;
+
+        let i = 0;
+        for (let { r, g, b } of palette) {
+            if (r !== palette_4bit[i].r || g !== palette_4bit[i].g || b !== palette_4bit[i].b) return false;
+            i++;
+        }
+        return true;
+    },
+
+    base_palette_index({ r, g, b}) {
+        for (let i in palette_4bit) {
+            if (r === palette_4bit[i].r && g === palette_4bit[i].g && b === palette_4bit[i].b) return i;
+        }
+        return -1;
+    },
+
+    rgb_to_css({ r, g, b }) {
+        return `rgb(${r} ${g} ${b})`;
+    },
+
+    rgb_to_hex({ r, g, b }) {
+        return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    },
+
+    rgb_to_xbin({ r, g, b }) {
+        return [r >> 2, g >> 2, b >> 2]; // a direct bitshift is fine.
+    },
+
+    hex_to_rbg(hex) {
+        const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex) || [0, 0, 0];
+        return { r: parseInt(m[1], 16), g: parseInt(m[2], 16), b: parseInt(m[3], 16) }
+    },
+
+    xbin_to_rgb(r, g, b) {
+        return { r: convert_6_to_8bits(r), g: convert_6_to_8bits(g), b: convert_6_to_8bits(b) };
+    },
+
+    index_to_ansi,
+
+    rgb_to_ansi(rgb, bit_depth = 4) {
+        const { r, g, b } = rgb;
+        const f = Math.floor;
+
+        // we process 4bit first, because we use this in the 8bit lookup too.
+        const base_index = closest_index_in(palette_4bit, rgb);
+        if (bit_depth === 4) return base_index;
+
+        // move on to calculating 8bit lookup.
+        const options = [];
+        const base_distance = rgb_distance(rgb, palette_4bit[base_index]);
+
+        // early return if we found an exact base match.
+        if (!base_distance) return base_index;
+        options.push([base_index, base_distance])
+
+        // find the nearest color on the cube map.
+        const cube_index = 16 + f(b / 255 * 5) + (6 * f(g / 255 * 5)) + (36 * f(r / 255 * 5));
+        options.push([cube_index, rgb_distance(rgb, palette_8bit[cube_index])])
+
+        // find the nearest color on in the greyscale ramp (clamping to 255 because "precision").
+        const grey_index = Math.min(255, 232 + f((rgb.r + rgb.g + rgb.b) / 2.8 / 255 * 23));
+        options.push([grey_index, rgb_distance(rgb, palette_8bit[grey_index])])
+
+        // return the index with the closest match.
+        return options.sort((a, b) => a[1] - b[1])[0][0];
     }
-    return true;
-}
-
-function has_c64_palette(palette) {
-    for (let i = 0; i < palette.length; i++) {
-        if (palette[i].r != c64[i].r || palette[i].g != c64[i].g || palette[i].b != c64[i].b) return false;
-    }
-    return true;
-}
-
-module.exports = {white, bright_white, ega, c64, get_rgba, convert_ega_to_vga, convert_ega_to_style, has_ansi_palette, has_c64_palette};
+};

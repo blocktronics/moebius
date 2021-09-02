@@ -121,7 +121,7 @@ function draw_blink_ellipse(sx, sy, dx, dy, unblink) {
     if (!coords) return;
     for (const coord of coords) {
         const block = doc.at(coord.x, coord.y);
-        if (block && ((!unblink && block.bg < 8) || (unblink && block.bg >= 8)) && (block.code != 0 && block.code != 32 && block.code != 255)) doc.change_data(coord.x, coord.y, block.code, block.fg, unblink ? block.bg - 8 : block.bg + 8);
+        if (block && ((!unblink && block.bg < 8) || (unblink && block.bg > 7 && block.bg < 16)) && (block.code !== 0 && block.code !== 32 && block.code !== 255)) doc.change_data(coord.x, coord.y, block.code, block.fg, unblink ? block.bg - 8 : block.bg + 8);
     }
 }
 

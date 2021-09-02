@@ -119,7 +119,6 @@ class Joint {
             this.log(`changed canvas: ${msg.data.columns}/${msg.data.rows}`, ip);
             break;
         case action.SET_BG:
-            // this.doc.c64_background = msg.data.value;
             // this.send_all_including_guests(ws, msg.type, msg.data);
             break;
         default:

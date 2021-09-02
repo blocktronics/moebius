@@ -34,7 +34,7 @@ class Connection extends events.EventEmitter {
             switch (type) {
                 case actions.DRAW:
                     doc.data[data.y * doc.columns + data.x] = Object.assign(data.block);
-                    libtextmode.render_at(render, data.x, data.y, data.block, doc.c64_background);
+                    libtextmode.render_at(render, data.x, data.y, data.block);
                     break;
                 case actions.SAUCE:
                     this.emit("sauce", data.title, data.author, data.group, data.comments);
@@ -116,17 +116,6 @@ class TextModeDoc extends events.EventEmitter {
         });
         connection.on("change_font", (font_name) => {
             doc.font_name = font_name;
-            if (font_name == "C64 PETSCII unshifted" || font_name == "C64 PETSCII shifted") {
-                if (libtextmode.has_ansi_palette(doc.palette)) {
-                    doc.palette = libtextmode.c64;
-                    this.emit("update_swatches");
-                }
-            } else {
-                if (libtextmode.has_c64_palette(doc.palette)) {
-                    doc.palette = libtextmode.ega;
-                    this.emit("update_swatches");
-                }
-            }
             this.start_rendering().then(() => this.emit("change_font", doc.font_name));
         });
         connection.on("sauce", (title, author, group, comments) => {
@@ -141,7 +130,6 @@ class TextModeDoc extends events.EventEmitter {
             this.start_rendering();
         });
         connection.on("set_bg", (value) => {
-            doc.c64_background = value;
             this.start_rendering();
         });
     }
