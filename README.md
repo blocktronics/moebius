@@ -18,7 +18,7 @@ npm install
 npm start
 ```
 
-Moebius packakges can be built easily with [electron-builder](https://github.com/electron-userland/electron-builder). Note that a build for MacOS must be made on MacOS.
+Moebius packages can be built easily with [electron-builder](https://github.com/electron-userland/electron-builder). Note that a build for MacOS must be made on MacOS.
 
 ```
 npm run-script build-mac
