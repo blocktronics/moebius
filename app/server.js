@@ -8,6 +8,7 @@ const server = require("http").createServer();
 const joints = {};
 const path = require("path");
 const {HourlySaver} = require("./hourly_saver");
+const {WebhookClient} = require("discord.js");
 let hourly_saver;
 
 function send(ws, type, data = {}) {
@@ -54,6 +55,25 @@ class Joint {
         return this.data_store.filter((data) => !data.closed).map((data) => data.user);
     }
 
+    discord_chat(nick, text) {
+        const webhookClient = new WebhookClient({ url: this.discord });
+        webhookClient.send({
+            username: nick,
+            content: text,
+        });
+    }
+
+    discord_join(nick) {
+        const webhookClient = new WebhookClient({ url: this.discord });
+        webhookClient.send({
+            embeds: [
+                {
+                    title: `${nick} has joined`,
+                }
+            ]
+        });
+    }
+
     message(ws, msg, ip) {
         switch (msg.type) {
         case action.CONNECTED:
@@ -67,6 +87,7 @@ class Joint {
                 } else {
                     send(ws, action.CONNECTED, {id, doc: libtextmode.compress(this.doc), users, chat_history: this.chat_history, status: status_types.ACTIVE});
                     this.log(`${msg.data.nick} has joined`, ip);
+                    if (this.discord != "") this.discord_join(msg.data.nick);
                 }
                 this.send_all(ws, action.JOIN, {id, nick: msg.data.nick, group: msg.data.group, status: (msg.data.nick == undefined) ? status_types.WEB : status_types.ACTIVE});
             } else {
@@ -87,6 +108,7 @@ class Joint {
             if (this.chat_history.length > 32) this.chat_history.shift();
             this.send_all(ws, msg.type, msg.data);
             this.log(`${msg.data.nick}: ${msg.data.text}`, ip);
+            if (this.discord != "") this.discord_chat(msg.data.nick, msg.data.text);
         break;
         case action.STATUS:
             this.data_store[msg.data.id].user.status = msg.data.status;
@@ -131,11 +153,12 @@ class Joint {
         libtextmode.write_file(this.doc, file);
     }
 
-    constructor({path, file, pass, quiet = false}) {
+    constructor({path, file, pass, quiet = false, discord}) {
         this.path = path;
         this.file = file;
         this.pass = pass;
         this.quiet = quiet;
+        this.discord = discord;
         this.data_store = [];
         this.chat_history = [];
         hourly_saver = new HourlySaver();
@@ -183,13 +206,13 @@ class Joint {
     }
 }
 
-async function start_joint({path: server_path, file, pass = "", quiet = false, server_port} = {}) {
+async function start_joint({path: server_path, file, pass = "", quiet = false, server_port, discord = ""} = {}) {
     server_path = (server_path != undefined) ? server_path : path.parse(file).base;
     server_path = `/${server_path.toLowerCase()}`;
     if (!server.address()) server.listen(server_port);
     if (joints[server_path]) throw "Path already in use.";
     server_path = server_path.toLowerCase();
-    joints[server_path] = new Joint({path: server_path, file, pass, quiet});
+    joints[server_path] = new Joint({path: server_path, file, pass, quiet, discord});
     await joints[server_path].start();
     return server_path;
 }

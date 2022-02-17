@@ -46,6 +46,7 @@ The following parameters can be set:
 * `--web` and `--web_port=80` run the webserver for external viewing (default port: 80). This enables live preview of the canvas, the preview and SAUCE information in a browser, the URL would be http://hostname.tld:web_port
 * `--path=pathname` set a path for this server: users and webviewers would connect to hostname.tld/path
 * `--quiet=true/false` suppress console output after the server has been started
+* `--discord=url` Mirrors server joins and chat activity via a [Discord Webhook](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks)
 
 ## Acknowledgements
 * Uses modified Google's Material Icons. https://material.io/icons/
