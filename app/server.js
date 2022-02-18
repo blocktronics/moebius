@@ -60,7 +60,7 @@ class Joint {
         webhookClient.send({
             username: nick,
             content: text,
-        });
+        }).catch(console.error);
     }
 
     discord_join(nick) {
@@ -71,7 +71,7 @@ class Joint {
                     title: `${nick} has joined`,
                 }
             ]
-        });
+        }).catch(console.error);
     }
 
     message(ws, msg, ip) {
