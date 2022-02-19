@@ -55,20 +55,25 @@ class Joint {
         return this.data_store.filter((data) => !data.closed).map((data) => data.user);
     }
 
-    discord_chat(nick, text) {
-        const webhookClient = new WebhookClient({ url: this.discord });
-        webhookClient.send({
-            username: nick,
-            content: text,
+    discord_chat(nick, content) {
+        this.webhook.send({
+            avatarURL: "https://raw.githubusercontent.com/blocktronics/moebius/master/build/icon.png",
+            username: (nick == "") ? "Guest" : nick,
+            content,
         }).catch(console.error);
     }
 
     discord_join(nick) {
-        const webhookClient = new WebhookClient({ url: this.discord });
-        webhookClient.send({
+        this.webhook.send({
             embeds: [
                 {
-                    title: `${nick} has joined`,
+                    color: "#008000",
+                    author: {
+                        name: "Moebius collaborative server",
+                        url: "https://blocktronics.github.io/moebius/",
+                        iconURL: "https://raw.githubusercontent.com/blocktronics/moebius/master/build/icon.png",
+                    },
+                    description: `${(nick == "") ? "Guest" : nick} has joined`,
                 }
             ]
         }).catch(console.error);
@@ -87,7 +92,7 @@ class Joint {
                 } else {
                     send(ws, action.CONNECTED, {id, doc: libtextmode.compress(this.doc), users, chat_history: this.chat_history, status: status_types.ACTIVE});
                     this.log(`${msg.data.nick} has joined`, ip);
-                    if (this.discord != "") this.discord_join(msg.data.nick);
+                    if (this.webhook) this.discord_join(msg.data.nick);
                 }
                 this.send_all(ws, action.JOIN, {id, nick: msg.data.nick, group: msg.data.group, status: (msg.data.nick == undefined) ? status_types.WEB : status_types.ACTIVE});
             } else {
@@ -108,7 +113,7 @@ class Joint {
             if (this.chat_history.length > 32) this.chat_history.shift();
             this.send_all(ws, msg.type, msg.data);
             this.log(`${msg.data.nick}: ${msg.data.text}`, ip);
-            if (this.discord != "") this.discord_chat(msg.data.nick, msg.data.text);
+            if (this.webhook) this.discord_chat(msg.data.nick, msg.data.text);
         break;
         case action.STATUS:
             this.data_store[msg.data.id].user.status = msg.data.status;
@@ -158,7 +163,7 @@ class Joint {
         this.file = file;
         this.pass = pass;
         this.quiet = quiet;
-        this.discord = discord;
+        this.webhook = (discord == "") ? undefined : new WebhookClient({ url: discord });
         this.data_store = [];
         this.chat_history = [];
         hourly_saver = new HourlySaver();
