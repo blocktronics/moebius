@@ -433,7 +433,23 @@ function bin_to_ansi_colour(bin_colour) {
     case 3: return 6;
     case 4: return 1;
     case 6: return 3;
+    case 9: return 12;
+    case 11: return 14;
+    case 12: return 9;
+    case 14: return 11;
     default: return bin_colour;
+    }
+}
+
+function clr_to_ascii(color, output) {
+    switch (color) {
+        case 10: output.push(49, 48); break;
+        case 11: output.push(49, 49); break;
+        case 12: output.push(49, 50); break;
+        case 13: output.push(49, 51); break;
+        case 14: output.push(49, 52); break;
+        case 15: output.push(49, 53); break;
+        default: output.push(color + 48); break;
     }
 }
 
@@ -448,6 +464,9 @@ function encode_as_ansi(doc, save_without_sauce, {utf8 = false} = {}) {
     for (let i = 0; i < doc.data.length; i++) {
         let attribs = [];
         let {code, fg, bg} = doc.data[i];
+        if (doc.c64_background != undefined) {
+            bg = doc.c64_background;
+        }
         switch (code) {
         case 10: code = 9; break;
         case 13: code = 14; break;
@@ -455,51 +474,77 @@ function encode_as_ansi(doc, save_without_sauce, {utf8 = false} = {}) {
         case 27: code = 17; break;
         default:
         }
-        if (fg > 7) {
-            bold = true;
-            fg = fg - 8;
-        } else {
-            bold = false;
-        }
-        if (bg > 7) {
-            blink = true;
-            bg = bg - 8;
-        } else {
-            blink = false;
-        }
-        if ((current_bold && !bold) || (current_blink && !blink)) {
-            attribs.push([48]);
-            current_fg = 7;
-            current_bg = 0;
-            current_bold = false;
-            current_blink = false;
-        }
-        if (bold && !current_bold) {
-            attribs.push([49]);
-            current_bold = true;
-        }
-        if (blink && !current_blink) {
-            attribs.push([53]);
-            current_blink = true;
-        }
-        if (fg != current_fg) {
-            attribs.push([51, 48 + bin_to_ansi_colour(fg)]);
-            current_fg = fg;
-        }
-        if (bg != current_bg) {
-            attribs.push([52, 48 + bin_to_ansi_colour(bg)]);
-            current_bg = bg;
-        }
-        if (attribs.length) {
-            output.push(27, 91);
-            for (let i = 0; i < attribs.length; i += 1) {
-                for (const attrib of attribs[i]) {
-                    output.push(attrib);
+        if (utf8) {
+            if ((fg > 7 && current_fg < 7) || (bg > 7 && current_bg < 7)) {
+                output.push(27, 91, 48, 109);
+                current_fg = 7;
+                current_bg = 0;
+            }
+            if (fg != current_fg) {
+                output.push(27, 91, 51, 56, 59, 53, 59);
+                clr_to_ascii(bin_to_ansi_colour(fg), output);
+                output.push(109);
+                current_fg = fg;
+            }
+            if (bg != current_bg) {
+                if (bg == 0) {
+                    output.push(27, 91, 52, 57, 109);
                 }
-                if (i != attribs.length - 1) {
-                    output.push(59);
-                } else {
+                else {
+                    output.push(27, 91, 52, 56, 59, 53, 59);
+                    clr_to_ascii(bin_to_ansi_colour(bg), output);
                     output.push(109);
+                }
+                current_bg = bg;
+            }
+        }
+        else {
+            if (fg > 7) {
+                bold = true;
+                fg = fg - 8;
+            } else {
+                bold = false;
+            }
+            if (bg > 7) {
+                blink = true;
+                bg = bg - 8;
+            } else {
+                blink = false;
+            }
+            if ((current_bold && !bold) || (current_blink && !blink)) {
+                attribs.push([48]);
+                current_fg = 7;
+                current_bg = 0;
+                current_bold = false;
+                current_blink = false;
+            }
+            if (bold && !current_bold) {
+                attribs.push([49]);
+                current_bold = true;
+            }
+            if (blink && !current_blink) {
+                attribs.push([53]);
+                current_blink = true;
+            }
+            if (fg != current_fg) {
+                attribs.push([51, 48 + bin_to_ansi_colour(fg)]);
+                current_fg = fg;
+            }
+            if (bg != current_bg) {
+                attribs.push([52, 48 + bin_to_ansi_colour(bg)]);
+                current_bg = bg;
+            }
+            if (attribs.length) {
+                output.push(27, 91);
+                for (let i = 0; i < attribs.length; i += 1) {
+                    for (const attrib of attribs[i]) {
+                        output.push(attrib);
+                    }
+                    if (i != attribs.length - 1) {
+                        output.push(59);
+                    } else {
+                        output.push(109);
+                    }
                 }
             }
         }
@@ -610,7 +655,7 @@ function join_canvases(canvases) {
 module.exports = {create_canvas, join_canvases};
 
 },{}],4:[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 function cp437_to_unicode(cp437) {
     switch(cp437) {
         case 1: return "\u263A";
@@ -952,8 +997,8 @@ function unicode_to_cp437(unicode) {
 
 module.exports = {cp437_to_unicode, cp437_to_unicode_bytes, unicode_to_cp437};
 
-}).call(this,require("buffer").Buffer)
-},{"buffer":15}],5:[function(require,module,exports){
+}).call(this)}).call(this,require("buffer").Buffer)
+},{"buffer":16}],5:[function(require,module,exports){
 const {white, bright_white, get_rgba, convert_ega_to_vga, ega} = require("./palette");
 const {create_canvas} = require("./canvas");
 
@@ -1254,7 +1299,7 @@ class Font {
 module.exports = {Font};
 
 },{"./canvas":3,"./palette":7}],6:[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
 const {Font} = require("./font");
 const {create_canvas, join_canvases} = require("./canvas");
 const {Ansi, encode_as_ansi} = require("./ansi");
@@ -1861,7 +1906,7 @@ function compress(doc) {
             }
         }
     }
-    return {columns: doc.columns, rows: doc.rows, title: doc.title, author: doc.author, group: doc.group, date: doc.date, palette: doc.palette, font_name: doc.font_name, ice_colors: doc.ice_colors, use_9px_font: doc.use_9px_font, comments: doc.comments, compressed_data};
+    return {columns: doc.columns, rows: doc.rows, title: doc.title, author: doc.author, group: doc.group, date: doc.date, palette: doc.palette, font_name: doc.font_name, ice_colors: doc.ice_colors, use_9px_font: doc.use_9px_font, comments: doc.comments, compressed_data, c64_background: doc.c64_background};
 }
 
 function uncompress(doc) {
@@ -1915,10 +1960,47 @@ function export_as_apng(render, file) {
     fs.writeFileSync(file, Buffer.from(bytes));
 }
 
-module.exports = {Font, read_bytes, read_file, write_file, animate, render, render_split, render_at, render_insert_column, render_delete_column, render_insert_row, render_delete_row, new_document, clone_document, resize_canvas, cp437_to_unicode, cp437_to_unicode_bytes, unicode_to_cp437, render_blocks, merge_blocks, flip_code_x, flip_x, flip_y, rotate, insert_column, insert_row, delete_column, delete_row, scroll_canvas_up, scroll_canvas_down, scroll_canvas_left, scroll_canvas_right, render_scroll_canvas_up, render_scroll_canvas_down, render_scroll_canvas_left, render_scroll_canvas_right, get_data_url, ega, c64, convert_ega_to_style, compress, uncompress, get_blocks, get_all_blocks, export_as_png, export_as_apng, has_ansi_palette, has_c64_palette, encode_as_bin, encode_as_xbin, encode_as_ansi};
+function remove_ice_color_for_block(block) {
+    if (block.fg == block.bg) {
+        return {fg: block.bg, bg: 0, code: 219};
+    }
+    switch (block.code) {
+        case 0: case 32: case 255:
+            return {fg: block.bg, bg: 0, code: 219};
+        case 219:
+            return {fg: block.fg, bg: 0, code: 219};
 
-}).call(this,require("buffer").Buffer)
-},{"./ansi":1,"./binary_text":2,"./canvas":3,"./encodings":4,"./font":5,"./palette":7,"./textmode":8,"./xbin":9,"buffer":15,"fs":14,"path":45,"upng-js":47}],7:[function(require,module,exports){
+    }
+    if (block.fg < 8) {
+        switch (block.code) {
+            case 176: return {fg: block.bg, bg: block.fg, code: 178};
+            case 177: return {fg: block.bg, bg: block.fg, code: 177};
+            case 178: return {fg: block.bg, bg: block.fg, code: 176};
+            case 220: return {fg: block.bg, bg: block.fg, code: 223};
+            case 221: return {fg: block.bg, bg: block.fg, code: 222};
+            case 222: return {fg: block.bg, bg: block.fg, code: 221};
+            case 223: return {fg: block.bg, bg: block.fg, code: 220};
+        }
+    }
+    return {fg: block.fg, bg: block.bg - 8, code: block.code};
+}
+
+function remove_ice_colors(doc) {
+    const new_doc = {columns: doc.columns, rows: doc.rows, data: new Array(doc.data.length), palette: doc.palette, font_name: doc.font_name, use_9px_font: doc.use_9px_font, ice_colors: false};
+    doc.data.forEach((block, index) => {
+        if (block.bg >= 8) {
+            new_doc.data[index] = remove_ice_color_for_block(block);
+        } else {
+            new_doc.data[index] = Object.assign(block);
+        }
+    });
+    return new_doc;
+}
+
+module.exports = {Font, read_bytes, read_file, write_file, animate, render, render_split, render_at, render_insert_column, render_delete_column, render_insert_row, render_delete_row, new_document, clone_document, resize_canvas, cp437_to_unicode, cp437_to_unicode_bytes, unicode_to_cp437, render_blocks, merge_blocks, flip_code_x, flip_x, flip_y, rotate, insert_column, insert_row, delete_column, delete_row, scroll_canvas_up, scroll_canvas_down, scroll_canvas_left, scroll_canvas_right, render_scroll_canvas_up, render_scroll_canvas_down, render_scroll_canvas_left, render_scroll_canvas_right, get_data_url, ega, c64, convert_ega_to_style, compress, uncompress, get_blocks, get_all_blocks, export_as_png, export_as_apng, has_ansi_palette, has_c64_palette, encode_as_bin, encode_as_xbin, encode_as_ansi, remove_ice_colors};
+
+}).call(this)}).call(this,require("buffer").Buffer)
+},{"./ansi":1,"./binary_text":2,"./canvas":3,"./encodings":4,"./font":5,"./palette":7,"./textmode":8,"./xbin":9,"buffer":16,"fs":15,"path":47,"upng-js":49}],7:[function(require,module,exports){
 const black = {r: 0, g: 0, b: 0};
 const blue = {r: 0, g: 0, b: 42};
 const green = {r: 0, g: 42, b:   0};
@@ -1939,19 +2021,19 @@ const bright_white = {r: 63, g: 63, b: 63};
 const c64_black = {r: 0, g: 0, b: 0};
 const c64_white = {r: 63, g: 63, b: 63};
 const c64_red = {r: 32, g: 13, b: 14};
-const c64_cyan = {r: 29, g: 52, b: 50};
-const c64_violet = {r: 36, g: 15, b: 38};
-const c64_green = {r: 22, g: 43, b: 19};
-const c64_blue = {r: 12, g: 11, b: 39};
+const c64_cyan = {r: 29, g: 51, b: 50};
+const c64_violet = {r: 35, g: 15, b: 37};
+const c64_green = {r: 21, g: 43, b: 19};
+const c64_blue = {r: 12, g: 11, b: 38};
 const c64_yellow = {r: 59, g: 60, b: 28};
-const c64_orange = {r: 36, g: 20, b: 10};
+const c64_orange = {r: 35, g: 20, b: 10};
 const c64_brown = {r: 21, g: 14, b: 0};
-const c64_light_red = {r: 49, g: 26, b: 28};
-const c64_dark_grey = {r: 19, g: 19, b: 19};
+const c64_light_red = {r: 48, g: 27, b: 28};
+const c64_dark_grey = {r: 19, g: 19, b: 18};
 const c64_grey = {r: 31, g: 31, b: 31};
-const c64_light_green = {r: 42, g: 63, b: 40};
-const c64_light_blue = {r: 28, g: 27, b: 59};
-const c64_light_grey = {r: 45, g: 45, b: 45};
+const c64_light_green = {r: 42, g: 63, b: 39};
+const c64_light_blue = {r: 26, g: 27, b: 58};
+const c64_light_grey = {r: 44, g: 44, b: 44};
 
 const ega = [black, blue, green, cyan, red, magenta, yellow, white, bright_black, bright_blue, bright_green, bright_cyan, bright_red, bright_magenta, bright_yellow, bright_white];
 const c64 = [c64_black, c64_white, c64_red, c64_cyan, c64_violet, c64_green, c64_blue, c64_yellow, c64_orange, c64_brown, c64_light_red, c64_dark_grey, c64_grey, c64_light_green, c64_light_blue, c64_light_grey];
@@ -1997,7 +2079,11 @@ function has_c64_palette(palette) {
 module.exports = {white, bright_white, ega, c64, get_rgba, convert_ega_to_vga, convert_ega_to_style, has_ansi_palette, has_c64_palette};
 
 },{}],8:[function(require,module,exports){
-(function (Buffer){
+(function (Buffer){(function (){
+function $(name) {
+    return document.getElementById(name);
+}
+
 function bytes_to_blocks({columns, rows, bytes}) {
     const data = new Array(columns * rows);
     for (let i = 0, j = 0; i < data.length; i++, j++) {
@@ -2043,7 +2129,19 @@ function current_date() {
 const data_type_types = {CHARACTER: 1, BIN: 5, XBIN: 6};
 const file_type_types = {NONE: 0, ANS_FILETYPE: 1};
 
-function add_comments_bytes(comments, sauce_bytes) {
+function add_comments_bytes(rawcomments, sauce_bytes) {
+    var comments = '';
+    var commentlines = rawcomments.split('\n');
+    for (var i = 0; i<commentlines.length; i++) {
+        var s = 0;
+        while (commentlines[i].length > 0) {
+            var line = commentlines[i].substr((s * 64), 64).trim();
+            if (line.length == 0) break;
+            s++;
+            line = line.padEnd(64, ' ');
+            comments += line;
+        }
+    }
     const comment_bytes = Buffer.from(comments, "utf-8");
     const bytes = new Uint8Array(5 + comment_bytes.length);
     bytes.set(Buffer.from("COMNT", "utf-8"), 0);
@@ -2052,6 +2150,25 @@ function add_comments_bytes(comments, sauce_bytes) {
     merged_bytes.set(bytes, 0);
     merged_bytes.set(sauce_bytes, bytes.length);
     return merged_bytes;
+}
+
+function comments_length(rawcomments) {
+    if (rawcomments.length == 0) {
+        return 0;
+    } else {
+        var commentlines = rawcomments.split('\n');
+        var count = 0;
+        for (var i = 0; i<commentlines.length; i++) {
+            var s = 0;
+            while (commentlines[i].length > 0) {
+                var line = commentlines[i].substr((s * 64), 64).trim();
+                if (line.length == 0) break;
+                s++;
+                count++;
+            }
+        }
+        return count;
+    }
 }
 
 function pad(text, length) {
@@ -2083,7 +2200,7 @@ function add_sauce_bytes({doc, data_type, file_type, bytes: file_bytes}) {
         bytes[98] = doc.rows & 0xff;
         bytes[99] = doc.rows >> 8;
     }
-    bytes[104] = doc.comments.length / 64;
+    bytes[104] = comments_length(doc.comments);
     if (data_type != data_type_types.XBIN) {
         if (doc.ice_colors) {
             bytes[105] = 1;
@@ -2138,7 +2255,13 @@ function get_sauce(bytes) {
                 rows = (sauce_bytes[99] << 8) + sauce_bytes[98];
             }
             const number_of_comments = sauce_bytes[104];
-            const comments = bytes.subarray(bytes.length - (number_of_comments * 64) - 128, bytes.length - 128).toString("utf-8");
+            const rawcomments = bytes.subarray(bytes.length - (number_of_comments * 64) - 128, bytes.length - 128).toString("utf-8");
+            var comments = '';
+            for (i=0; i<number_of_comments; i++) {
+                var line = rawcomments.substr(i * 64, 64).trim();
+                if (i != (number_of_comments-1)) line += '\n'
+                comments += line;
+            }
             const flags = sauce_bytes[105];
             const ice_colors = (flags & 0x01) == 1;
             const use_9px_font = (flags >> 1 & 0x02) == 2;
@@ -2175,6 +2298,16 @@ class Textmode {
 }
 
 function resize_canvas(doc, columns, rows) {
+    var client = false;
+    try { 
+        const electron = require("electron");
+        if (typeof electron == "object") {
+            const win = electron.remote.getCurrentWindow();
+            client = true;
+        }
+    } catch (err) {
+        console.log(err);
+    }
     const min_rows = Math.min(doc.rows, rows);
     const min_columns = Math.min(doc.columns, columns);
     const new_data = new Array(columns * rows);
@@ -2189,12 +2322,17 @@ function resize_canvas(doc, columns, rows) {
     doc.data = new_data;
     doc.columns = columns;
     doc.rows = rows;
+    if (client) {
+        const {send} = require("../senders");
+        $("drawing_grid").classList.add("hidden");
+        send("uncheck_all_guides");
+    }
 }
 
 module.exports = {bytes_to_blocks, bytes_to_utf8, current_date, Textmode, add_sauce_for_ans, add_sauce_for_bin, add_sauce_for_xbin, resize_canvas};
 
-}).call(this,require("buffer").Buffer)
-},{"buffer":15}],9:[function(require,module,exports){
+}).call(this)}).call(this,require("buffer").Buffer)
+},{"../senders":10,"buffer":16,"electron":17}],9:[function(require,module,exports){
 const {ega, has_c64_palette} = require("./palette");
 const {bytes_to_utf8, bytes_to_blocks, Textmode, add_sauce_for_xbin} = require("./textmode");
 const repeating = {NONE: 0, CHARACTERS: 1, ATTRIBUTES: 2, BOTH_CHARACTERS_AND_ATTRIBUTES: 3};
@@ -2309,6 +2447,44 @@ function encode_as_xbin(doc, save_without_sauce) {
 module.exports = {XBin, encode_as_xbin};
 
 },{"./binary_text":2,"./palette":7,"./textmode":8}],10:[function(require,module,exports){
+const electron = require("electron");
+const path = require("path");
+const win = electron.remote.getCurrentWindow();
+
+function on(channel, msg) {
+    return electron.ipcRenderer.on(channel, msg);
+}
+
+function send_sync(channel, opts) {
+    return electron.ipcRenderer.sendSync(channel, {id: electron.remote.getCurrentWindow().id, ...opts});
+}
+
+function send(channel, opts) {
+    electron.ipcRenderer.send(channel, {id: electron.remote.getCurrentWindow().id, ...opts});
+}
+
+function msg_box(message, detail, opts = {}) {
+    send("close_modal");
+    return electron.remote.dialog.showMessageBoxSync(win, {message, detail, ...opts});
+}
+
+function open_box(opts) {
+    send("set_modal_menu");
+    const files = electron.remote.dialog.showOpenDialogSync(win, opts);
+    send("set_doc_menu");
+    return files;
+}
+
+function save_box(default_file, ext, opts) {
+    send("set_modal_menu");
+    const file = electron.remote.dialog.showSaveDialogSync(win, {defaultPath: `${default_file ? path.parse(default_file).name : "Untitled"}.${ext}`, ...opts});
+    send("set_doc_menu");
+    return file;
+}
+
+module.exports = {on, send_sync, send, msg_box, open_box, save_box};
+
+},{"electron":17,"path":47}],11:[function(require,module,exports){
 const doc = require("./web_doc");
 require("./web_canvas");
 const linkify = require("linkifyjs/string");
@@ -2329,7 +2505,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
     if (mobile) document.body.classList.add("mobile");
 }, true);
 
-},{"./web_canvas":11,"./web_doc":12,"linkifyjs/string":28}],11:[function(require,module,exports){
+},{"./web_canvas":12,"./web_doc":13,"linkifyjs/string":30}],12:[function(require,module,exports){
 const doc = require("./web_doc");
 let interval, render;
 let mouse_button = false;
@@ -2454,18 +2630,18 @@ window.addEventListener("DOMContentLoaded", (event) => {
 }, true);
 
 doc.on("render", () => add(doc.render));
-doc.on("ice_color", (value) => {
+doc.on("ice_colors", (value) => {
     if (value) {
-        start_blinking();
-    } else {
         stop_blinking();
+    } else {
+        start_blinking();
     }
 });
 doc.on("use_9px_font", () => add(doc.render));
 doc.on("goto_row", (row_no) => goto_row(row_no));
 module.export = {update_frame};
 
-},{"./web_doc":12}],12:[function(require,module,exports){
+},{"./web_doc":13}],13:[function(require,module,exports){
 const libtextmode = require("../libtextmode/libtextmode");
 const events = require("events");
 let doc, render;
@@ -2569,6 +2745,7 @@ class TextModeDoc extends events.EventEmitter {
             doc = remote_doc;
             await this.start_rendering();
             this.emit("new_document");
+            this.emit("ice_colors", doc.ice_colors);
             this.ready();
         });
         connection.on("refused", () => this.emit("refused"));
@@ -2637,7 +2814,7 @@ class TextModeDoc extends events.EventEmitter {
 
 module.exports = new TextModeDoc();
 
-},{"../libtextmode/libtextmode":6,"events":16}],13:[function(require,module,exports){
+},{"../libtextmode/libtextmode":6,"events":18}],14:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -2765,9 +2942,7 @@ function fromByteArray (uint8) {
 
   // go through the array every three bytes, we'll deal with trailing stuff later
   for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
-    parts.push(encodeChunk(
-      uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)
-    ))
+    parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)))
   }
 
   // pad the end with zeros, but make sure to not forget the extra bytes
@@ -2791,10 +2966,10 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],14:[function(require,module,exports){
-
 },{}],15:[function(require,module,exports){
-(function (Buffer){
+
+},{}],16:[function(require,module,exports){
+(function (Buffer){(function (){
 /*!
  * The buffer module from node.js, for the browser.
  *
@@ -4573,8 +4748,33 @@ function numberIsNaN (obj) {
   return obj !== obj // eslint-disable-line no-self-compare
 }
 
-}).call(this,require("buffer").Buffer)
-},{"base64-js":13,"buffer":15,"ieee754":17}],16:[function(require,module,exports){
+}).call(this)}).call(this,require("buffer").Buffer)
+},{"base64-js":14,"buffer":16,"ieee754":19}],17:[function(require,module,exports){
+(function (process,__dirname){(function (){
+const fs = require('fs');
+const path = require('path');
+
+const pathFile = path.join(__dirname, 'path.txt');
+
+function getElectronPath () {
+  let executablePath;
+  if (fs.existsSync(pathFile)) {
+    executablePath = fs.readFileSync(pathFile, 'utf-8');
+  }
+  if (process.env.ELECTRON_OVERRIDE_DIST_PATH) {
+    return path.join(process.env.ELECTRON_OVERRIDE_DIST_PATH, executablePath || 'electron');
+  }
+  if (executablePath) {
+    return path.join(__dirname, 'dist', executablePath);
+  } else {
+    throw new Error('Electron failed to install correctly, please delete node_modules/electron and try installing again');
+  }
+}
+
+module.exports = getElectronPath();
+
+}).call(this)}).call(this,require('_process'),"/node_modules/electron")
+},{"_process":48,"fs":15,"path":47}],18:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -5099,7 +5299,8 @@ function functionBindPolyfill(context) {
   };
 }
 
-},{}],17:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
+/*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = (nBytes * 8) - mLen - 1
@@ -5185,7 +5386,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],18:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -5294,7 +5495,7 @@ if (!String.prototype.linkify) {
 }
 
 exports.default = linkifyStr;
-},{"./linkify":19}],19:[function(require,module,exports){
+},{"./linkify":21}],21:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -5380,7 +5581,7 @@ exports.parser = parser;
 exports.scanner = scanner;
 exports.test = test;
 exports.tokenize = tokenize;
-},{"./linkify/core/parser":20,"./linkify/core/scanner":21,"./linkify/utils/class":26,"./linkify/utils/options":27}],20:[function(require,module,exports){
+},{"./linkify/core/parser":22,"./linkify/core/scanner":23,"./linkify/utils/class":28,"./linkify/utils/options":29}],22:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -5668,7 +5869,7 @@ exports.State = _state.TokenState;
 exports.TOKENS = MULTI_TOKENS;
 exports.run = run;
 exports.start = S_START;
-},{"./state":22,"./tokens/multi":24,"./tokens/text":25}],21:[function(require,module,exports){
+},{"./state":24,"./tokens/multi":26,"./tokens/text":27}],23:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -5849,7 +6050,7 @@ exports.State = _state.CharacterState;
 exports.TOKENS = TOKENS;
 exports.run = run;
 exports.start = start;
-},{"./state":22,"./tokens/text":25}],22:[function(require,module,exports){
+},{"./state":24,"./tokens/text":27}],24:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -6091,7 +6292,7 @@ function stateify(str, start, endToken, defaultToken) {
 exports.CharacterState = CharacterState;
 exports.TokenState = TokenState;
 exports.stateify = stateify;
-},{"../utils/class":26}],23:[function(require,module,exports){
+},{"../utils/class":28}],25:[function(require,module,exports){
 "use strict";
 
 exports.__esModule = true;
@@ -6104,7 +6305,7 @@ function createTokenClass() {
 }
 
 exports.createTokenClass = createTokenClass;
-},{}],24:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -6309,7 +6510,7 @@ exports.EMAIL = EMAIL;
 exports.NL = NL;
 exports.TEXT = TEXT;
 exports.URL = URL;
-},{"../../utils/class":26,"./create-token-class":23,"./text":25}],25:[function(require,module,exports){
+},{"../../utils/class":28,"./create-token-class":25,"./text":27}],27:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -6514,7 +6715,7 @@ exports.CLOSEBRACKET = CLOSEBRACKET;
 exports.CLOSEANGLEBRACKET = CLOSEANGLEBRACKET;
 exports.CLOSEPAREN = CLOSEPAREN;
 exports.AMPERSAND = AMPERSAND;
-},{"../../utils/class":26,"./create-token-class":23}],26:[function(require,module,exports){
+},{"../../utils/class":28,"./create-token-class":25}],28:[function(require,module,exports){
 "use strict";
 
 exports.__esModule = true;
@@ -6530,7 +6731,7 @@ function inherits(parent, child) {
 	child.prototype = extended;
 	return child;
 }
-},{}],27:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 'use strict';
 
 exports.__esModule = true;
@@ -6658,10 +6859,10 @@ function noop(val) {
 function typeToTarget(href, type) {
 	return type === 'url' ? '_blank' : null;
 }
-},{}],28:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 module.exports = require('./lib/linkify-string').default;
 
-},{"./lib/linkify-string":18}],29:[function(require,module,exports){
+},{"./lib/linkify-string":20}],31:[function(require,module,exports){
 // Top level file is just a mixin of submodules & constants
 'use strict';
 
@@ -6677,7 +6878,7 @@ assign(pako, deflate, inflate, constants);
 
 module.exports = pako;
 
-},{"./lib/deflate":30,"./lib/inflate":31,"./lib/utils/common":32,"./lib/zlib/constants":35}],30:[function(require,module,exports){
+},{"./lib/deflate":32,"./lib/inflate":33,"./lib/utils/common":34,"./lib/zlib/constants":37}],32:[function(require,module,exports){
 'use strict';
 
 
@@ -7079,7 +7280,7 @@ exports.deflate = deflate;
 exports.deflateRaw = deflateRaw;
 exports.gzip = gzip;
 
-},{"./utils/common":32,"./utils/strings":33,"./zlib/deflate":37,"./zlib/messages":42,"./zlib/zstream":44}],31:[function(require,module,exports){
+},{"./utils/common":34,"./utils/strings":35,"./zlib/deflate":39,"./zlib/messages":44,"./zlib/zstream":46}],33:[function(require,module,exports){
 'use strict';
 
 
@@ -7504,7 +7705,7 @@ exports.inflate = inflate;
 exports.inflateRaw = inflateRaw;
 exports.ungzip  = inflate;
 
-},{"./utils/common":32,"./utils/strings":33,"./zlib/constants":35,"./zlib/gzheader":38,"./zlib/inflate":40,"./zlib/messages":42,"./zlib/zstream":44}],32:[function(require,module,exports){
+},{"./utils/common":34,"./utils/strings":35,"./zlib/constants":37,"./zlib/gzheader":40,"./zlib/inflate":42,"./zlib/messages":44,"./zlib/zstream":46}],34:[function(require,module,exports){
 'use strict';
 
 
@@ -7611,7 +7812,7 @@ exports.setTyped = function (on) {
 
 exports.setTyped(TYPED_OK);
 
-},{}],33:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 // String encode/decode helpers
 'use strict';
 
@@ -7800,7 +8001,7 @@ exports.utf8border = function (buf, max) {
   return (pos + _utf8len[buf[pos]] > max) ? pos : max;
 };
 
-},{"./common":32}],34:[function(require,module,exports){
+},{"./common":34}],36:[function(require,module,exports){
 'use strict';
 
 // Note: adler32 takes 12% for level 0 and 2% for level 6.
@@ -7853,7 +8054,7 @@ function adler32(adler, buf, len, pos) {
 
 module.exports = adler32;
 
-},{}],35:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -7923,7 +8124,7 @@ module.exports = {
   //Z_NULL:                 null // Use -1 or null inline, depending on var type
 };
 
-},{}],36:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 'use strict';
 
 // Note: we can't get significant speed boost here.
@@ -7984,7 +8185,7 @@ function crc32(crc, buf, len, pos) {
 
 module.exports = crc32;
 
-},{}],37:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -9860,7 +10061,7 @@ exports.deflatePrime = deflatePrime;
 exports.deflateTune = deflateTune;
 */
 
-},{"../utils/common":32,"./adler32":34,"./crc32":36,"./messages":42,"./trees":43}],38:[function(require,module,exports){
+},{"../utils/common":34,"./adler32":36,"./crc32":38,"./messages":44,"./trees":45}],40:[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -9920,7 +10121,7 @@ function GZheader() {
 
 module.exports = GZheader;
 
-},{}],39:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -10267,7 +10468,7 @@ module.exports = function inflate_fast(strm, start) {
   return;
 };
 
-},{}],40:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -11825,7 +12026,7 @@ exports.inflateSyncPoint = inflateSyncPoint;
 exports.inflateUndermine = inflateUndermine;
 */
 
-},{"../utils/common":32,"./adler32":34,"./crc32":36,"./inffast":39,"./inftrees":41}],41:[function(require,module,exports){
+},{"../utils/common":34,"./adler32":36,"./crc32":38,"./inffast":41,"./inftrees":43}],43:[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -12170,7 +12371,7 @@ module.exports = function inflate_table(type, lens, lens_index, codes, table, ta
   return 0;
 };
 
-},{"../utils/common":32}],42:[function(require,module,exports){
+},{"../utils/common":34}],44:[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -12204,7 +12405,7 @@ module.exports = {
   '-6':   'incompatible version' /* Z_VERSION_ERROR (-6) */
 };
 
-},{}],43:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -13428,7 +13629,7 @@ exports._tr_flush_block  = _tr_flush_block;
 exports._tr_tally = _tr_tally;
 exports._tr_align = _tr_align;
 
-},{"../utils/common":32}],44:[function(require,module,exports){
+},{"../utils/common":34}],46:[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -13477,8 +13678,8 @@ function ZStream() {
 
 module.exports = ZStream;
 
-},{}],45:[function(require,module,exports){
-(function (process){
+},{}],47:[function(require,module,exports){
+(function (process){(function (){
 // .dirname, .basename, and .extname methods are extracted from Node.js v8.11.1,
 // backported and transplited with Babel, with backwards-compat fixes
 
@@ -13782,8 +13983,8 @@ var substr = 'ab'.substr(-1) === 'b'
     }
 ;
 
-}).call(this,require('_process'))
-},{"_process":46}],46:[function(require,module,exports){
+}).call(this)}).call(this,require('_process'))
+},{"_process":48}],48:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -13969,8 +14170,8 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],47:[function(require,module,exports){
-(function (process){
+},{}],49:[function(require,module,exports){
+(function (process){(function (){
 
 ;(function(){
 var UPNG = {};
@@ -14792,5 +14993,5 @@ UPNG.encode.alphaMul = function(img, roundA) {
 })();
 
 
-}).call(this,require('_process'))
-},{"_process":46,"pako":29}]},{},[10]);
+}).call(this)}).call(this,require('_process'))
+},{"_process":48,"pako":31}]},{},[11]);

@@ -122,11 +122,11 @@ window.addEventListener("DOMContentLoaded", (event) => {
 }, true);
 
 doc.on("render", () => add(doc.render));
-doc.on("ice_color", (value) => {
+doc.on("ice_colors", (value) => {
     if (value) {
-        start_blinking();
-    } else {
         stop_blinking();
+    } else {
+        start_blinking();
     }
 });
 doc.on("use_9px_font", () => add(doc.render));

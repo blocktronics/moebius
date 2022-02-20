@@ -101,6 +101,7 @@ class TextModeDoc extends events.EventEmitter {
             doc = remote_doc;
             await this.start_rendering();
             this.emit("new_document");
+            this.emit("ice_colors", doc.ice_colors);
             this.ready();
         });
         connection.on("refused", () => this.emit("refused"));
