@@ -30,7 +30,7 @@
     "jquery": "^3.5.1",
     "json5": "^2.1.3",
     "linkifyjs": "^2.1.9",
-    "minimist": "^1.2.5",
+    "minimist": "^1.2.6",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "upng-js": "^2.1.0",
