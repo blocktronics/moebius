@@ -41,7 +41,7 @@ mac:
   category: public.app-category.graphics-design
   target:
   - target: dmg
-    arch: [x64, arm64]
+    arch: [x64]
   darkModeSupport: true
 win:
   artifactName: Moebius.Setup.exe
