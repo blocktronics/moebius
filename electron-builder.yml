@@ -3,7 +3,7 @@ directories:
   buildResources: build
 appId: org.andyherbert.moebius
 productName: Moebius
-copyright: Copyright © 2020 Andy Herbert
+copyright: Copyright © 2022 Andy Herbert
 extraResources:
   - from: build/ans
     to: ans
