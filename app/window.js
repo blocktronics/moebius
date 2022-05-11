@@ -1,12 +1,15 @@
 const electron = require("electron");
+const remote_main = require("@electron/remote/main");
 const darwin = (process.platform == "darwin");
 const menu = require("./menu");
 const static_wins = {};
 const modal_prefs = {maximizable: false, resizable: false, fullscreenable: false, backgroundColor: "#292c33"};
+remote_main.initialize();
 
 async function new_win(file, options, touchbar, touchbar_opts) {
     return new Promise((resolve) => {
-        const win = new electron.BrowserWindow({...options, show: false, useContentSize: true, webPreferences: {nodeIntegration: true}});
+        const win = new electron.BrowserWindow({...options, show: false, useContentSize: true, webPreferences: {nodeIntegration: true, contextIsolation: false}});
+        remote_main.enable(win.webContents);
         if (touchbar) touchbar(win, touchbar_opts);
         win.on("ready-to-show", (event) => {
             win.show();

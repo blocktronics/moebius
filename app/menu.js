@@ -24,19 +24,19 @@ const font_list = {
 };
 
 const moebius_menu = {
-    label: "Mœbius",
+    label: "Moebius",
     submenu: [
-        {role: "about", label: "About Mœbius"},
+        {role: "about", label: "About Moebius"},
         {type: "separator"},
         {label: "Preferences", id: "preferences", accelerator: "CmdorCtrl+,", click(item) {event.emit("preferences");}},
         {type: "separator"},
         {role: "services"},
         {type: "separator"},
-        {role: "hide", label: "Hide Mœbius"},
+        {role: "hide", label: "Hide Moebius"},
         {role: "hideothers"},
         {role: "unhide"},
         {type: "separator"},
-        {role: "quit", label: "Quit Mœbius"}
+        {role: "quit", label: "Quit Moebius"}
     ]
 };
 
@@ -81,7 +81,7 @@ const help_menu_items = {
         {label: "Acknowledgements", id: "show_cheatsheet", click(item) {event.emit("show_acknowledgements");}},
         {type: "separator"},
         {label: "ANSI Art Tutorials at 16Colors", id: "changelog", click(item) {electron.shell.openExternal("https://16colo.rs/tags/content/tutorial");}},
-        {label: "Mœbius Homepage", id: "show_homepage", click(item) {electron.shell.openExternal("https://blocktronics.github.io/moebius/");}},
+        {label: "Moebius Homepage", id: "show_homepage", click(item) {electron.shell.openExternal("https://blocktronics.github.io/moebius/");}},
         {label: "Source Code at GitHub", id: "show_repo", click(item) {electron.shell.openExternal("https://github.com/blocktronics/moebius");}},
         {label: "Raise an Issue at GitHub", id: "show_issues", click(item) {electron.shell.openExternal("https://github.com/blocktronics/moebius/issues");}},
         {type: "separator"},

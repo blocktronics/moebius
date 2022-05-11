@@ -6,7 +6,7 @@ let rpc;
 function login() {
     rpc = new DiscordRPC.Client({transport: "ipc"});
     rpc.on("ready", () => {
-        rpc.setActivity({details: "Pushing blocks", largeImageKey: "default", largeImageText: "Mœbius"});
+        rpc.setActivity({details: "Pushing blocks", largeImageKey: "default", largeImageText: "Moebius"});
     });
     rpc.login({clientId: client_id}).catch((e) => {});
 }

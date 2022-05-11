@@ -3,8 +3,8 @@ let visible = false;
 const statuses = {ACTIVE: 0, IDLE: 1, AWAY: 2, WEB: 3};
 const electron = require("electron");
 const {send} = require("../../senders");
-require("linkifyjs/plugins/ticket")(require("linkifyjs"));
-const linkify_string = require("linkifyjs/string");
+const linkify_string = require("linkify-string");
+require("linkify-plugin-ticket");
 let last_height = 240;
 let last_date;
 

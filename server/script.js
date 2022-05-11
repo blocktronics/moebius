@@ -998,7 +998,7 @@ function unicode_to_cp437(unicode) {
 module.exports = {cp437_to_unicode, cp437_to_unicode_bytes, unicode_to_cp437};
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":16}],5:[function(require,module,exports){
+},{"buffer":23}],5:[function(require,module,exports){
 const {white, bright_white, get_rgba, convert_ega_to_vga, ega} = require("./palette");
 const {create_canvas} = require("./canvas");
 
@@ -2000,7 +2000,7 @@ function remove_ice_colors(doc) {
 module.exports = {Font, read_bytes, read_file, write_file, animate, render, render_split, render_at, render_insert_column, render_delete_column, render_insert_row, render_delete_row, new_document, clone_document, resize_canvas, cp437_to_unicode, cp437_to_unicode_bytes, unicode_to_cp437, render_blocks, merge_blocks, flip_code_x, flip_x, flip_y, rotate, insert_column, insert_row, delete_column, delete_row, scroll_canvas_up, scroll_canvas_down, scroll_canvas_left, scroll_canvas_right, render_scroll_canvas_up, render_scroll_canvas_down, render_scroll_canvas_left, render_scroll_canvas_right, get_data_url, ega, c64, convert_ega_to_style, compress, uncompress, get_blocks, get_all_blocks, export_as_png, export_as_apng, has_ansi_palette, has_c64_palette, encode_as_bin, encode_as_xbin, encode_as_ansi, remove_ice_colors};
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"./ansi":1,"./binary_text":2,"./canvas":3,"./encodings":4,"./font":5,"./palette":7,"./textmode":8,"./xbin":9,"buffer":16,"fs":15,"path":47,"upng-js":49}],7:[function(require,module,exports){
+},{"./ansi":1,"./binary_text":2,"./canvas":3,"./encodings":4,"./font":5,"./palette":7,"./textmode":8,"./xbin":9,"buffer":23,"fs":22,"path":47,"upng-js":49}],7:[function(require,module,exports){
 const black = {r: 0, g: 0, b: 0};
 const blue = {r: 0, g: 0, b: 42};
 const green = {r: 0, g: 42, b:   0};
@@ -2299,12 +2299,9 @@ class Textmode {
 
 function resize_canvas(doc, columns, rows) {
     var client = false;
-    try { 
+    try {
         const electron = require("electron");
-        if (typeof electron == "object") {
-            const win = electron.remote.getCurrentWindow();
-            client = true;
-        }
+        client = (typeof electron == "object");
     } catch (err) {
         console.log(err);
     }
@@ -2332,7 +2329,7 @@ function resize_canvas(doc, columns, rows) {
 module.exports = {bytes_to_blocks, bytes_to_utf8, current_date, Textmode, add_sauce_for_ans, add_sauce_for_bin, add_sauce_for_xbin, resize_canvas};
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"../senders":10,"buffer":16,"electron":17}],9:[function(require,module,exports){
+},{"../senders":10,"buffer":23,"electron":24}],9:[function(require,module,exports){
 const {ega, has_c64_palette} = require("./palette");
 const {bytes_to_utf8, bytes_to_blocks, Textmode, add_sauce_for_xbin} = require("./textmode");
 const repeating = {NONE: 0, CHARACTERS: 1, ATTRIBUTES: 2, BOTH_CHARACTERS_AND_ATTRIBUTES: 3};
@@ -2448,46 +2445,47 @@ module.exports = {XBin, encode_as_xbin};
 
 },{"./binary_text":2,"./palette":7,"./textmode":8}],10:[function(require,module,exports){
 const electron = require("electron");
+const remote = require("@electron/remote");
 const path = require("path");
-const win = electron.remote.getCurrentWindow();
+const win = remote.getCurrentWindow();
 
 function on(channel, msg) {
     return electron.ipcRenderer.on(channel, msg);
 }
 
 function send_sync(channel, opts) {
-    return electron.ipcRenderer.sendSync(channel, {id: electron.remote.getCurrentWindow().id, ...opts});
+    return electron.ipcRenderer.sendSync(channel, {id: remote.getCurrentWindow().id, ...opts});
 }
 
 function send(channel, opts) {
-    electron.ipcRenderer.send(channel, {id: electron.remote.getCurrentWindow().id, ...opts});
+    electron.ipcRenderer.send(channel, {id: remote.getCurrentWindow().id, ...opts});
 }
 
 function msg_box(message, detail, opts = {}) {
     send("close_modal");
-    return electron.remote.dialog.showMessageBoxSync(win, {message, detail, ...opts});
+    return remote.dialog.showMessageBoxSync(win, {message, detail, ...opts});
 }
 
 function open_box(opts) {
     send("set_modal_menu");
-    const files = electron.remote.dialog.showOpenDialogSync(win, opts);
+    const files = remote.dialog.showOpenDialogSync(win, opts);
     send("set_doc_menu");
     return files;
 }
 
 function save_box(default_file, ext, opts) {
     send("set_modal_menu");
-    const file = electron.remote.dialog.showSaveDialogSync(win, {defaultPath: `${default_file ? path.parse(default_file).name : "Untitled"}.${ext}`, ...opts});
+    const file = remote.dialog.showSaveDialogSync(win, {defaultPath: `${default_file ? path.parse(default_file).name : "Untitled"}.${ext}`, ...opts});
     send("set_doc_menu");
     return file;
 }
 
 module.exports = {on, send_sync, send, msg_box, open_box, save_box};
 
-},{"electron":17,"path":47}],11:[function(require,module,exports){
+},{"@electron/remote":20,"electron":24,"path":47}],11:[function(require,module,exports){
 const doc = require("./web_doc");
 require("./web_canvas");
-const linkify = require("linkifyjs/string");
+const linkify = require("linkify-string");
 const mobile = (navigator.userAgent.match(/Android/i) || navigator.userAgent.match(/webOS/i) || navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPad/i) || navigator.userAgent.match(/iPod/i) || navigator.userAgent.match(/BlackBerry/i) || navigator.userAgent.match(/Windows Phone/i));
 
 function sauce(title, author, group, comments) {
@@ -2505,7 +2503,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
     if (mobile) document.body.classList.add("mobile");
 }, true);
 
-},{"./web_canvas":12,"./web_doc":13,"linkifyjs/string":30}],12:[function(require,module,exports){
+},{"./web_canvas":12,"./web_doc":13,"linkify-string":27}],12:[function(require,module,exports){
 const doc = require("./web_doc");
 let interval, render;
 let mouse_button = false;
@@ -2814,7 +2812,689 @@ class TextModeDoc extends events.EventEmitter {
 
 module.exports = new TextModeDoc();
 
-},{"../libtextmode/libtextmode":6,"events":18}],14:[function(require,module,exports){
+},{"../libtextmode/libtextmode":6,"events":25}],14:[function(require,module,exports){
+(function (process){(function (){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getElectronBinding = void 0;
+const getElectronBinding = (name) => {
+    if (process._linkedBinding) {
+        return process._linkedBinding('electron_common_' + name);
+    }
+    else if (process.electronBinding) {
+        return process.electronBinding(name);
+    }
+    else {
+        return null;
+    }
+};
+exports.getElectronBinding = getElectronBinding;
+
+}).call(this)}).call(this,require('_process'))
+},{"_process":48}],15:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.browserModuleNames = exports.commonModuleNames = void 0;
+const get_electron_binding_1 = require("./get-electron-binding");
+exports.commonModuleNames = [
+    'clipboard',
+    'nativeImage',
+    'shell',
+];
+exports.browserModuleNames = [
+    'app',
+    'autoUpdater',
+    'BaseWindow',
+    'BrowserView',
+    'BrowserWindow',
+    'contentTracing',
+    'crashReporter',
+    'dialog',
+    'globalShortcut',
+    'ipcMain',
+    'inAppPurchase',
+    'Menu',
+    'MenuItem',
+    'nativeTheme',
+    'net',
+    'netLog',
+    'MessageChannelMain',
+    'Notification',
+    'powerMonitor',
+    'powerSaveBlocker',
+    'protocol',
+    'safeStorage',
+    'screen',
+    'session',
+    'ShareMenu',
+    'systemPreferences',
+    'TopLevelWindow',
+    'TouchBar',
+    'Tray',
+    'View',
+    'webContents',
+    'WebContentsView',
+    'webFrameMain',
+].concat(exports.commonModuleNames);
+const features = get_electron_binding_1.getElectronBinding('features');
+if (!features || features.isDesktopCapturerEnabled()) {
+    exports.browserModuleNames.push('desktopCapturer');
+}
+if (!features || features.isViewApiEnabled()) {
+    exports.browserModuleNames.push('ImageView');
+}
+
+},{"./get-electron-binding":14}],16:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.deserialize = exports.serialize = exports.isSerializableObject = exports.isPromise = void 0;
+const electron_1 = require("electron");
+function isPromise(val) {
+    return (val &&
+        val.then &&
+        val.then instanceof Function &&
+        val.constructor &&
+        val.constructor.reject &&
+        val.constructor.reject instanceof Function &&
+        val.constructor.resolve &&
+        val.constructor.resolve instanceof Function);
+}
+exports.isPromise = isPromise;
+const serializableTypes = [
+    Boolean,
+    Number,
+    String,
+    Date,
+    Error,
+    RegExp,
+    ArrayBuffer
+];
+// https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm#Supported_types
+function isSerializableObject(value) {
+    return value === null || ArrayBuffer.isView(value) || serializableTypes.some(type => value instanceof type);
+}
+exports.isSerializableObject = isSerializableObject;
+const objectMap = function (source, mapper) {
+    const sourceEntries = Object.entries(source);
+    const targetEntries = sourceEntries.map(([key, val]) => [key, mapper(val)]);
+    return Object.fromEntries(targetEntries);
+};
+function serializeNativeImage(image) {
+    const representations = [];
+    const scaleFactors = image.getScaleFactors();
+    // Use Buffer when there's only one representation for better perf.
+    // This avoids compressing to/from PNG where it's not necessary to
+    // ensure uniqueness of dataURLs (since there's only one).
+    if (scaleFactors.length === 1) {
+        const scaleFactor = scaleFactors[0];
+        const size = image.getSize(scaleFactor);
+        const buffer = image.toBitmap({ scaleFactor });
+        representations.push({ scaleFactor, size, buffer });
+    }
+    else {
+        // Construct from dataURLs to ensure that they are not lost in creation.
+        for (const scaleFactor of scaleFactors) {
+            const size = image.getSize(scaleFactor);
+            const dataURL = image.toDataURL({ scaleFactor });
+            representations.push({ scaleFactor, size, dataURL });
+        }
+    }
+    return { __ELECTRON_SERIALIZED_NativeImage__: true, representations };
+}
+function deserializeNativeImage(value) {
+    const image = electron_1.nativeImage.createEmpty();
+    // Use Buffer when there's only one representation for better perf.
+    // This avoids compressing to/from PNG where it's not necessary to
+    // ensure uniqueness of dataURLs (since there's only one).
+    if (value.representations.length === 1) {
+        const { buffer, size, scaleFactor } = value.representations[0];
+        const { width, height } = size;
+        image.addRepresentation({ buffer, scaleFactor, width, height });
+    }
+    else {
+        // Construct from dataURLs to ensure that they are not lost in creation.
+        for (const rep of value.representations) {
+            const { dataURL, size, scaleFactor } = rep;
+            const { width, height } = size;
+            image.addRepresentation({ dataURL, scaleFactor, width, height });
+        }
+    }
+    return image;
+}
+function serialize(value) {
+    if (value && value.constructor && value.constructor.name === 'NativeImage') {
+        return serializeNativeImage(value);
+    }
+    if (Array.isArray(value)) {
+        return value.map(serialize);
+    }
+    else if (isSerializableObject(value)) {
+        return value;
+    }
+    else if (value instanceof Object) {
+        return objectMap(value, serialize);
+    }
+    else {
+        return value;
+    }
+}
+exports.serialize = serialize;
+function deserialize(value) {
+    if (value && value.__ELECTRON_SERIALIZED_NativeImage__) {
+        return deserializeNativeImage(value);
+    }
+    else if (Array.isArray(value)) {
+        return value.map(deserialize);
+    }
+    else if (isSerializableObject(value)) {
+        return value;
+    }
+    else if (value instanceof Object) {
+        return objectMap(value, deserialize);
+    }
+    else {
+        return value;
+    }
+}
+exports.deserialize = deserialize;
+
+},{"electron":24}],17:[function(require,module,exports){
+(function (global){(function (){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.CallbacksRegistry = void 0;
+class CallbacksRegistry {
+    constructor() {
+        this.nextId = 0;
+        this.callbacks = {};
+        this.callbackIds = new WeakMap();
+        this.locationInfo = new WeakMap();
+    }
+    add(callback) {
+        // The callback is already added.
+        let id = this.callbackIds.get(callback);
+        if (id != null)
+            return id;
+        id = this.nextId += 1;
+        this.callbacks[id] = callback;
+        this.callbackIds.set(callback, id);
+        // Capture the location of the function and put it in the ID string,
+        // so that release errors can be tracked down easily.
+        const regexp = /at (.*)/gi;
+        const stackString = (new Error()).stack;
+        if (!stackString)
+            return id;
+        let filenameAndLine;
+        let match;
+        while ((match = regexp.exec(stackString)) !== null) {
+            const location = match[1];
+            if (location.includes('(native)'))
+                continue;
+            if (location.includes('(<anonymous>)'))
+                continue;
+            if (location.includes('callbacks-registry.js'))
+                continue;
+            if (location.includes('remote.js'))
+                continue;
+            if (location.includes('@electron/remote/dist'))
+                continue;
+            const ref = /([^/^)]*)\)?$/gi.exec(location);
+            if (ref)
+                filenameAndLine = ref[1];
+            break;
+        }
+        this.locationInfo.set(callback, filenameAndLine);
+        return id;
+    }
+    get(id) {
+        return this.callbacks[id] || function () { };
+    }
+    getLocation(callback) {
+        return this.locationInfo.get(callback);
+    }
+    apply(id, ...args) {
+        return this.get(id).apply(global, ...args);
+    }
+    remove(id) {
+        const callback = this.callbacks[id];
+        if (callback) {
+            this.callbackIds.delete(callback);
+            delete this.callbacks[id];
+        }
+    }
+}
+exports.CallbacksRegistry = CallbacksRegistry;
+
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],18:[function(require,module,exports){
+(function (process){(function (){
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __exportStar = (this && this.__exportStar) || function(m, exports) {
+    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+if (process.type === 'browser')
+    throw new Error(`"@electron/remote" cannot be required in the browser process. Instead require("@electron/remote/main").`);
+__exportStar(require("./remote"), exports);
+
+}).call(this)}).call(this,require('_process'))
+},{"./remote":19,"_process":48}],19:[function(require,module,exports){
+(function (process,global,Buffer){(function (){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.createFunctionWithReturnValue = exports.getGlobal = exports.getCurrentWebContents = exports.getCurrentWindow = exports.getBuiltin = void 0;
+const callbacks_registry_1 = require("./callbacks-registry");
+const type_utils_1 = require("../common/type-utils");
+const electron_1 = require("electron");
+const module_names_1 = require("../common/module-names");
+const get_electron_binding_1 = require("../common/get-electron-binding");
+const callbacksRegistry = new callbacks_registry_1.CallbacksRegistry();
+const remoteObjectCache = new Map();
+const finalizationRegistry = new FinalizationRegistry((id) => {
+    const ref = remoteObjectCache.get(id);
+    if (ref !== undefined && ref.deref() === undefined) {
+        remoteObjectCache.delete(id);
+        electron_1.ipcRenderer.send("REMOTE_BROWSER_DEREFERENCE" /* BROWSER_DEREFERENCE */, contextId, id, 0);
+    }
+});
+const electronIds = new WeakMap();
+const isReturnValue = new WeakSet();
+function getCachedRemoteObject(id) {
+    const ref = remoteObjectCache.get(id);
+    if (ref !== undefined) {
+        const deref = ref.deref();
+        if (deref !== undefined)
+            return deref;
+    }
+}
+function setCachedRemoteObject(id, value) {
+    const wr = new WeakRef(value);
+    remoteObjectCache.set(id, wr);
+    finalizationRegistry.register(value, id);
+    return value;
+}
+function getContextId() {
+    const v8Util = get_electron_binding_1.getElectronBinding('v8_util');
+    if (v8Util) {
+        return v8Util.getHiddenValue(global, 'contextId');
+    }
+    else {
+        throw new Error('Electron >=v13.0.0-beta.6 required to support sandboxed renderers');
+    }
+}
+// An unique ID that can represent current context.
+const contextId = process.contextId || getContextId();
+// Notify the main process when current context is going to be released.
+// Note that when the renderer process is destroyed, the message may not be
+// sent, we also listen to the "render-view-deleted" event in the main process
+// to guard that situation.
+process.on('exit', () => {
+    const command = "REMOTE_BROWSER_CONTEXT_RELEASE" /* BROWSER_CONTEXT_RELEASE */;
+    electron_1.ipcRenderer.send(command, contextId);
+});
+const IS_REMOTE_PROXY = Symbol('is-remote-proxy');
+// Convert the arguments object into an array of meta data.
+function wrapArgs(args, visited = new Set()) {
+    const valueToMeta = (value) => {
+        // Check for circular reference.
+        if (visited.has(value)) {
+            return {
+                type: 'value',
+                value: null
+            };
+        }
+        if (value && value.constructor && value.constructor.name === 'NativeImage') {
+            return { type: 'nativeimage', value: type_utils_1.serialize(value) };
+        }
+        else if (Array.isArray(value)) {
+            visited.add(value);
+            const meta = {
+                type: 'array',
+                value: wrapArgs(value, visited)
+            };
+            visited.delete(value);
+            return meta;
+        }
+        else if (value instanceof Buffer) {
+            return {
+                type: 'buffer',
+                value
+            };
+        }
+        else if (type_utils_1.isSerializableObject(value)) {
+            return {
+                type: 'value',
+                value
+            };
+        }
+        else if (typeof value === 'object') {
+            if (type_utils_1.isPromise(value)) {
+                return {
+                    type: 'promise',
+                    then: valueToMeta(function (onFulfilled, onRejected) {
+                        value.then(onFulfilled, onRejected);
+                    })
+                };
+            }
+            else if (electronIds.has(value)) {
+                return {
+                    type: 'remote-object',
+                    id: electronIds.get(value)
+                };
+            }
+            const meta = {
+                type: 'object',
+                name: value.constructor ? value.constructor.name : '',
+                members: []
+            };
+            visited.add(value);
+            for (const prop in value) { // eslint-disable-line guard-for-in
+                meta.members.push({
+                    name: prop,
+                    value: valueToMeta(value[prop])
+                });
+            }
+            visited.delete(value);
+            return meta;
+        }
+        else if (typeof value === 'function' && isReturnValue.has(value)) {
+            return {
+                type: 'function-with-return-value',
+                value: valueToMeta(value())
+            };
+        }
+        else if (typeof value === 'function') {
+            return {
+                type: 'function',
+                id: callbacksRegistry.add(value),
+                location: callbacksRegistry.getLocation(value),
+                length: value.length
+            };
+        }
+        else {
+            return {
+                type: 'value',
+                value
+            };
+        }
+    };
+    return args.map(valueToMeta);
+}
+// Populate object's members from descriptors.
+// The |ref| will be kept referenced by |members|.
+// This matches |getObjectMemebers| in rpc-server.
+function setObjectMembers(ref, object, metaId, members) {
+    if (!Array.isArray(members))
+        return;
+    for (const member of members) {
+        if (Object.prototype.hasOwnProperty.call(object, member.name))
+            continue;
+        const descriptor = { enumerable: member.enumerable };
+        if (member.type === 'method') {
+            const remoteMemberFunction = function (...args) {
+                let command;
+                if (this && this.constructor === remoteMemberFunction) {
+                    command = "REMOTE_BROWSER_MEMBER_CONSTRUCTOR" /* BROWSER_MEMBER_CONSTRUCTOR */;
+                }
+                else {
+                    command = "REMOTE_BROWSER_MEMBER_CALL" /* BROWSER_MEMBER_CALL */;
+                }
+                const ret = electron_1.ipcRenderer.sendSync(command, contextId, metaId, member.name, wrapArgs(args));
+                return metaToValue(ret);
+            };
+            let descriptorFunction = proxyFunctionProperties(remoteMemberFunction, metaId, member.name);
+            descriptor.get = () => {
+                descriptorFunction.ref = ref; // The member should reference its object.
+                return descriptorFunction;
+            };
+            // Enable monkey-patch the method
+            descriptor.set = (value) => {
+                descriptorFunction = value;
+                return value;
+            };
+            descriptor.configurable = true;
+        }
+        else if (member.type === 'get') {
+            descriptor.get = () => {
+                const command = "REMOTE_BROWSER_MEMBER_GET" /* BROWSER_MEMBER_GET */;
+                const meta = electron_1.ipcRenderer.sendSync(command, contextId, metaId, member.name);
+                return metaToValue(meta);
+            };
+            if (member.writable) {
+                descriptor.set = (value) => {
+                    const args = wrapArgs([value]);
+                    const command = "REMOTE_BROWSER_MEMBER_SET" /* BROWSER_MEMBER_SET */;
+                    const meta = electron_1.ipcRenderer.sendSync(command, contextId, metaId, member.name, args);
+                    if (meta != null)
+                        metaToValue(meta);
+                    return value;
+                };
+            }
+        }
+        Object.defineProperty(object, member.name, descriptor);
+    }
+}
+// Populate object's prototype from descriptor.
+// This matches |getObjectPrototype| in rpc-server.
+function setObjectPrototype(ref, object, metaId, descriptor) {
+    if (descriptor === null)
+        return;
+    const proto = {};
+    setObjectMembers(ref, proto, metaId, descriptor.members);
+    setObjectPrototype(ref, proto, metaId, descriptor.proto);
+    Object.setPrototypeOf(object, proto);
+}
+// Wrap function in Proxy for accessing remote properties
+function proxyFunctionProperties(remoteMemberFunction, metaId, name) {
+    let loaded = false;
+    // Lazily load function properties
+    const loadRemoteProperties = () => {
+        if (loaded)
+            return;
+        loaded = true;
+        const command = "REMOTE_BROWSER_MEMBER_GET" /* BROWSER_MEMBER_GET */;
+        const meta = electron_1.ipcRenderer.sendSync(command, contextId, metaId, name);
+        setObjectMembers(remoteMemberFunction, remoteMemberFunction, meta.id, meta.members);
+    };
+    return new Proxy(remoteMemberFunction, {
+        set: (target, property, value) => {
+            if (property !== 'ref')
+                loadRemoteProperties();
+            target[property] = value;
+            return true;
+        },
+        get: (target, property) => {
+            if (property === IS_REMOTE_PROXY)
+                return true;
+            if (!Object.prototype.hasOwnProperty.call(target, property))
+                loadRemoteProperties();
+            const value = target[property];
+            if (property === 'toString' && typeof value === 'function') {
+                return value.bind(target);
+            }
+            return value;
+        },
+        ownKeys: (target) => {
+            loadRemoteProperties();
+            return Object.getOwnPropertyNames(target);
+        },
+        getOwnPropertyDescriptor: (target, property) => {
+            const descriptor = Object.getOwnPropertyDescriptor(target, property);
+            if (descriptor)
+                return descriptor;
+            loadRemoteProperties();
+            return Object.getOwnPropertyDescriptor(target, property);
+        }
+    });
+}
+// Convert meta data from browser into real value.
+function metaToValue(meta) {
+    if (meta.type === 'value') {
+        return meta.value;
+    }
+    else if (meta.type === 'array') {
+        return meta.members.map((member) => metaToValue(member));
+    }
+    else if (meta.type === 'nativeimage') {
+        return type_utils_1.deserialize(meta.value);
+    }
+    else if (meta.type === 'buffer') {
+        return Buffer.from(meta.value.buffer, meta.value.byteOffset, meta.value.byteLength);
+    }
+    else if (meta.type === 'promise') {
+        return Promise.resolve({ then: metaToValue(meta.then) });
+    }
+    else if (meta.type === 'error') {
+        return metaToError(meta);
+    }
+    else if (meta.type === 'exception') {
+        if (meta.value.type === 'error') {
+            throw metaToError(meta.value);
+        }
+        else {
+            throw new Error(`Unexpected value type in exception: ${meta.value.type}`);
+        }
+    }
+    else {
+        let ret;
+        if ('id' in meta) {
+            const cached = getCachedRemoteObject(meta.id);
+            if (cached !== undefined) {
+                return cached;
+            }
+        }
+        // A shadow class to represent the remote function object.
+        if (meta.type === 'function') {
+            const remoteFunction = function (...args) {
+                let command;
+                if (this && this.constructor === remoteFunction) {
+                    command = "REMOTE_BROWSER_CONSTRUCTOR" /* BROWSER_CONSTRUCTOR */;
+                }
+                else {
+                    command = "REMOTE_BROWSER_FUNCTION_CALL" /* BROWSER_FUNCTION_CALL */;
+                }
+                const obj = electron_1.ipcRenderer.sendSync(command, contextId, meta.id, wrapArgs(args));
+                return metaToValue(obj);
+            };
+            ret = remoteFunction;
+        }
+        else {
+            ret = {};
+        }
+        setObjectMembers(ret, ret, meta.id, meta.members);
+        setObjectPrototype(ret, ret, meta.id, meta.proto);
+        if (ret.constructor && ret.constructor[IS_REMOTE_PROXY]) {
+            Object.defineProperty(ret.constructor, 'name', { value: meta.name });
+        }
+        // Track delegate obj's lifetime & tell browser to clean up when object is GCed.
+        electronIds.set(ret, meta.id);
+        setCachedRemoteObject(meta.id, ret);
+        return ret;
+    }
+}
+function metaToError(meta) {
+    const obj = meta.value;
+    for (const { name, value } of meta.members) {
+        obj[name] = metaToValue(value);
+    }
+    return obj;
+}
+function handleMessage(channel, handler) {
+    electron_1.ipcRenderer.on(channel, (event, passedContextId, id, ...args) => {
+        if (event.senderId !== 0) {
+            console.error(`Message ${channel} sent by unexpected WebContents (${event.senderId})`);
+            return;
+        }
+        if (passedContextId === contextId) {
+            handler(id, ...args);
+        }
+        else {
+            // Message sent to an un-exist context, notify the error to main process.
+            electron_1.ipcRenderer.send("REMOTE_BROWSER_WRONG_CONTEXT_ERROR" /* BROWSER_WRONG_CONTEXT_ERROR */, contextId, passedContextId, id);
+        }
+    });
+}
+const enableStacks = process.argv.includes('--enable-api-filtering-logging');
+function getCurrentStack() {
+    const target = { stack: undefined };
+    if (enableStacks) {
+        Error.captureStackTrace(target, getCurrentStack);
+    }
+    return target.stack;
+}
+// Browser calls a callback in renderer.
+handleMessage("REMOTE_RENDERER_CALLBACK" /* RENDERER_CALLBACK */, (id, args) => {
+    callbacksRegistry.apply(id, metaToValue(args));
+});
+// A callback in browser is released.
+handleMessage("REMOTE_RENDERER_RELEASE_CALLBACK" /* RENDERER_RELEASE_CALLBACK */, (id) => {
+    callbacksRegistry.remove(id);
+});
+exports.require = (module) => {
+    const command = "REMOTE_BROWSER_REQUIRE" /* BROWSER_REQUIRE */;
+    const meta = electron_1.ipcRenderer.sendSync(command, contextId, module, getCurrentStack());
+    return metaToValue(meta);
+};
+// Alias to remote.require('electron').xxx.
+function getBuiltin(module) {
+    const command = "REMOTE_BROWSER_GET_BUILTIN" /* BROWSER_GET_BUILTIN */;
+    const meta = electron_1.ipcRenderer.sendSync(command, contextId, module, getCurrentStack());
+    return metaToValue(meta);
+}
+exports.getBuiltin = getBuiltin;
+function getCurrentWindow() {
+    const command = "REMOTE_BROWSER_GET_CURRENT_WINDOW" /* BROWSER_GET_CURRENT_WINDOW */;
+    const meta = electron_1.ipcRenderer.sendSync(command, contextId, getCurrentStack());
+    return metaToValue(meta);
+}
+exports.getCurrentWindow = getCurrentWindow;
+// Get current WebContents object.
+function getCurrentWebContents() {
+    const command = "REMOTE_BROWSER_GET_CURRENT_WEB_CONTENTS" /* BROWSER_GET_CURRENT_WEB_CONTENTS */;
+    const meta = electron_1.ipcRenderer.sendSync(command, contextId, getCurrentStack());
+    return metaToValue(meta);
+}
+exports.getCurrentWebContents = getCurrentWebContents;
+// Get a global object in browser.
+function getGlobal(name) {
+    const command = "REMOTE_BROWSER_GET_GLOBAL" /* BROWSER_GET_GLOBAL */;
+    const meta = electron_1.ipcRenderer.sendSync(command, contextId, name, getCurrentStack());
+    return metaToValue(meta);
+}
+exports.getGlobal = getGlobal;
+// Get the process object in browser.
+Object.defineProperty(exports, 'process', {
+    enumerable: true,
+    get: () => exports.getGlobal('process')
+});
+// Create a function that will return the specified value when called in browser.
+function createFunctionWithReturnValue(returnValue) {
+    const func = () => returnValue;
+    isReturnValue.add(func);
+    return func;
+}
+exports.createFunctionWithReturnValue = createFunctionWithReturnValue;
+const addBuiltinProperty = (name) => {
+    Object.defineProperty(exports, name, {
+        enumerable: true,
+        get: () => exports.getBuiltin(name)
+    });
+};
+module_names_1.browserModuleNames
+    .forEach(addBuiltinProperty);
+
+}).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
+},{"../common/get-electron-binding":14,"../common/module-names":15,"../common/type-utils":16,"./callbacks-registry":17,"_process":48,"buffer":23,"electron":24}],20:[function(require,module,exports){
+module.exports = require('../dist/src/renderer')
+
+},{"../dist/src/renderer":18}],21:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -2966,9 +3646,9 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],15:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 
-},{}],16:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 (function (Buffer){(function (){
 /*!
  * The buffer module from node.js, for the browser.
@@ -4749,7 +5429,7 @@ function numberIsNaN (obj) {
 }
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"base64-js":14,"buffer":16,"ieee754":19}],17:[function(require,module,exports){
+},{"base64-js":21,"buffer":23,"ieee754":26}],24:[function(require,module,exports){
 (function (process,__dirname){(function (){
 const fs = require('fs');
 const path = require('path');
@@ -4774,7 +5454,7 @@ function getElectronPath () {
 module.exports = getElectronPath();
 
 }).call(this)}).call(this,require('_process'),"/node_modules/electron")
-},{"_process":48,"fs":15,"path":47}],18:[function(require,module,exports){
+},{"_process":48,"fs":22,"path":47}],25:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -4796,182 +5476,143 @@ module.exports = getElectronPath();
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-var objectCreate = Object.create || objectCreatePolyfill
-var objectKeys = Object.keys || objectKeysPolyfill
-var bind = Function.prototype.bind || functionBindPolyfill
+'use strict';
 
-function EventEmitter() {
-  if (!this._events || !Object.prototype.hasOwnProperty.call(this, '_events')) {
-    this._events = objectCreate(null);
-    this._eventsCount = 0;
+var R = typeof Reflect === 'object' ? Reflect : null
+var ReflectApply = R && typeof R.apply === 'function'
+  ? R.apply
+  : function ReflectApply(target, receiver, args) {
+    return Function.prototype.apply.call(target, receiver, args);
   }
 
-  this._maxListeners = this._maxListeners || undefined;
+var ReflectOwnKeys
+if (R && typeof R.ownKeys === 'function') {
+  ReflectOwnKeys = R.ownKeys
+} else if (Object.getOwnPropertySymbols) {
+  ReflectOwnKeys = function ReflectOwnKeys(target) {
+    return Object.getOwnPropertyNames(target)
+      .concat(Object.getOwnPropertySymbols(target));
+  };
+} else {
+  ReflectOwnKeys = function ReflectOwnKeys(target) {
+    return Object.getOwnPropertyNames(target);
+  };
+}
+
+function ProcessEmitWarning(warning) {
+  if (console && console.warn) console.warn(warning);
+}
+
+var NumberIsNaN = Number.isNaN || function NumberIsNaN(value) {
+  return value !== value;
+}
+
+function EventEmitter() {
+  EventEmitter.init.call(this);
 }
 module.exports = EventEmitter;
+module.exports.once = once;
 
 // Backwards-compat with node 0.10.x
 EventEmitter.EventEmitter = EventEmitter;
 
 EventEmitter.prototype._events = undefined;
+EventEmitter.prototype._eventsCount = 0;
 EventEmitter.prototype._maxListeners = undefined;
 
 // By default EventEmitters will print a warning if more than 10 listeners are
 // added to it. This is a useful default which helps finding memory leaks.
 var defaultMaxListeners = 10;
 
-var hasDefineProperty;
-try {
-  var o = {};
-  if (Object.defineProperty) Object.defineProperty(o, 'x', { value: 0 });
-  hasDefineProperty = o.x === 0;
-} catch (err) { hasDefineProperty = false }
-if (hasDefineProperty) {
-  Object.defineProperty(EventEmitter, 'defaultMaxListeners', {
-    enumerable: true,
-    get: function() {
-      return defaultMaxListeners;
-    },
-    set: function(arg) {
-      // check whether the input is a positive number (whose value is zero or
-      // greater and not a NaN).
-      if (typeof arg !== 'number' || arg < 0 || arg !== arg)
-        throw new TypeError('"defaultMaxListeners" must be a positive number');
-      defaultMaxListeners = arg;
-    }
-  });
-} else {
-  EventEmitter.defaultMaxListeners = defaultMaxListeners;
+function checkListener(listener) {
+  if (typeof listener !== 'function') {
+    throw new TypeError('The "listener" argument must be of type Function. Received type ' + typeof listener);
+  }
 }
+
+Object.defineProperty(EventEmitter, 'defaultMaxListeners', {
+  enumerable: true,
+  get: function() {
+    return defaultMaxListeners;
+  },
+  set: function(arg) {
+    if (typeof arg !== 'number' || arg < 0 || NumberIsNaN(arg)) {
+      throw new RangeError('The value of "defaultMaxListeners" is out of range. It must be a non-negative number. Received ' + arg + '.');
+    }
+    defaultMaxListeners = arg;
+  }
+});
+
+EventEmitter.init = function() {
+
+  if (this._events === undefined ||
+      this._events === Object.getPrototypeOf(this)._events) {
+    this._events = Object.create(null);
+    this._eventsCount = 0;
+  }
+
+  this._maxListeners = this._maxListeners || undefined;
+};
 
 // Obviously not all Emitters should be limited to 10. This function allows
 // that to be increased. Set to zero for unlimited.
 EventEmitter.prototype.setMaxListeners = function setMaxListeners(n) {
-  if (typeof n !== 'number' || n < 0 || isNaN(n))
-    throw new TypeError('"n" argument must be a positive number');
+  if (typeof n !== 'number' || n < 0 || NumberIsNaN(n)) {
+    throw new RangeError('The value of "n" is out of range. It must be a non-negative number. Received ' + n + '.');
+  }
   this._maxListeners = n;
   return this;
 };
 
-function $getMaxListeners(that) {
+function _getMaxListeners(that) {
   if (that._maxListeners === undefined)
     return EventEmitter.defaultMaxListeners;
   return that._maxListeners;
 }
 
 EventEmitter.prototype.getMaxListeners = function getMaxListeners() {
-  return $getMaxListeners(this);
+  return _getMaxListeners(this);
 };
 
-// These standalone emit* functions are used to optimize calling of event
-// handlers for fast cases because emit() itself often has a variable number of
-// arguments and can be deoptimized because of that. These functions always have
-// the same number of arguments and thus do not get deoptimized, so the code
-// inside them can execute faster.
-function emitNone(handler, isFn, self) {
-  if (isFn)
-    handler.call(self);
-  else {
-    var len = handler.length;
-    var listeners = arrayClone(handler, len);
-    for (var i = 0; i < len; ++i)
-      listeners[i].call(self);
-  }
-}
-function emitOne(handler, isFn, self, arg1) {
-  if (isFn)
-    handler.call(self, arg1);
-  else {
-    var len = handler.length;
-    var listeners = arrayClone(handler, len);
-    for (var i = 0; i < len; ++i)
-      listeners[i].call(self, arg1);
-  }
-}
-function emitTwo(handler, isFn, self, arg1, arg2) {
-  if (isFn)
-    handler.call(self, arg1, arg2);
-  else {
-    var len = handler.length;
-    var listeners = arrayClone(handler, len);
-    for (var i = 0; i < len; ++i)
-      listeners[i].call(self, arg1, arg2);
-  }
-}
-function emitThree(handler, isFn, self, arg1, arg2, arg3) {
-  if (isFn)
-    handler.call(self, arg1, arg2, arg3);
-  else {
-    var len = handler.length;
-    var listeners = arrayClone(handler, len);
-    for (var i = 0; i < len; ++i)
-      listeners[i].call(self, arg1, arg2, arg3);
-  }
-}
-
-function emitMany(handler, isFn, self, args) {
-  if (isFn)
-    handler.apply(self, args);
-  else {
-    var len = handler.length;
-    var listeners = arrayClone(handler, len);
-    for (var i = 0; i < len; ++i)
-      listeners[i].apply(self, args);
-  }
-}
-
 EventEmitter.prototype.emit = function emit(type) {
-  var er, handler, len, args, i, events;
+  var args = [];
+  for (var i = 1; i < arguments.length; i++) args.push(arguments[i]);
   var doError = (type === 'error');
 
-  events = this._events;
-  if (events)
-    doError = (doError && events.error == null);
+  var events = this._events;
+  if (events !== undefined)
+    doError = (doError && events.error === undefined);
   else if (!doError)
     return false;
 
   // If there is no 'error' event listener then throw.
   if (doError) {
-    if (arguments.length > 1)
-      er = arguments[1];
+    var er;
+    if (args.length > 0)
+      er = args[0];
     if (er instanceof Error) {
+      // Note: The comments on the `throw` lines are intentional, they show
+      // up in Node's output if this results in an unhandled exception.
       throw er; // Unhandled 'error' event
-    } else {
-      // At least give some kind of context to the user
-      var err = new Error('Unhandled "error" event. (' + er + ')');
-      err.context = er;
-      throw err;
     }
-    return false;
+    // At least give some kind of context to the user
+    var err = new Error('Unhandled error.' + (er ? ' (' + er.message + ')' : ''));
+    err.context = er;
+    throw err; // Unhandled 'error' event
   }
 
-  handler = events[type];
+  var handler = events[type];
 
-  if (!handler)
+  if (handler === undefined)
     return false;
 
-  var isFn = typeof handler === 'function';
-  len = arguments.length;
-  switch (len) {
-      // fast cases
-    case 1:
-      emitNone(handler, isFn, this);
-      break;
-    case 2:
-      emitOne(handler, isFn, this, arguments[1]);
-      break;
-    case 3:
-      emitTwo(handler, isFn, this, arguments[1], arguments[2]);
-      break;
-    case 4:
-      emitThree(handler, isFn, this, arguments[1], arguments[2], arguments[3]);
-      break;
-      // slower
-    default:
-      args = new Array(len - 1);
-      for (i = 1; i < len; i++)
-        args[i - 1] = arguments[i];
-      emitMany(handler, isFn, this, args);
+  if (typeof handler === 'function') {
+    ReflectApply(handler, this, args);
+  } else {
+    var len = handler.length;
+    var listeners = arrayClone(handler, len);
+    for (var i = 0; i < len; ++i)
+      ReflectApply(listeners[i], this, args);
   }
 
   return true;
@@ -4982,19 +5623,18 @@ function _addListener(target, type, listener, prepend) {
   var events;
   var existing;
 
-  if (typeof listener !== 'function')
-    throw new TypeError('"listener" argument must be a function');
+  checkListener(listener);
 
   events = target._events;
-  if (!events) {
-    events = target._events = objectCreate(null);
+  if (events === undefined) {
+    events = target._events = Object.create(null);
     target._eventsCount = 0;
   } else {
     // To avoid recursion in the case that type === "newListener"! Before
     // adding it to the listeners, first emit "newListener".
-    if (events.newListener) {
+    if (events.newListener !== undefined) {
       target.emit('newListener', type,
-          listener.listener ? listener.listener : listener);
+                  listener.listener ? listener.listener : listener);
 
       // Re-assign `events` because a newListener handler could have caused the
       // this._events to be assigned to a new object
@@ -5003,7 +5643,7 @@ function _addListener(target, type, listener, prepend) {
     existing = events[type];
   }
 
-  if (!existing) {
+  if (existing === undefined) {
     // Optimize the case of one listener. Don't need the extra array object.
     existing = events[type] = listener;
     ++target._eventsCount;
@@ -5011,33 +5651,29 @@ function _addListener(target, type, listener, prepend) {
     if (typeof existing === 'function') {
       // Adding the second element, need to change to array.
       existing = events[type] =
-          prepend ? [listener, existing] : [existing, listener];
-    } else {
+        prepend ? [listener, existing] : [existing, listener];
       // If we've already got an array, just append.
-      if (prepend) {
-        existing.unshift(listener);
-      } else {
-        existing.push(listener);
-      }
+    } else if (prepend) {
+      existing.unshift(listener);
+    } else {
+      existing.push(listener);
     }
 
     // Check for listener leak
-    if (!existing.warned) {
-      m = $getMaxListeners(target);
-      if (m && m > 0 && existing.length > m) {
-        existing.warned = true;
-        var w = new Error('Possible EventEmitter memory leak detected. ' +
-            existing.length + ' "' + String(type) + '" listeners ' +
-            'added. Use emitter.setMaxListeners() to ' +
-            'increase limit.');
-        w.name = 'MaxListenersExceededWarning';
-        w.emitter = target;
-        w.type = type;
-        w.count = existing.length;
-        if (typeof console === 'object' && console.warn) {
-          console.warn('%s: %s', w.name, w.message);
-        }
-      }
+    m = _getMaxListeners(target);
+    if (m > 0 && existing.length > m && !existing.warned) {
+      existing.warned = true;
+      // No error code for this since it is a Warning
+      // eslint-disable-next-line no-restricted-syntax
+      var w = new Error('Possible EventEmitter memory leak detected. ' +
+                          existing.length + ' ' + String(type) + ' listeners ' +
+                          'added. Use emitter.setMaxListeners() to ' +
+                          'increase limit');
+      w.name = 'MaxListenersExceededWarning';
+      w.emitter = target;
+      w.type = type;
+      w.count = existing.length;
+      ProcessEmitWarning(w);
     }
   }
 
@@ -5059,44 +5695,29 @@ function onceWrapper() {
   if (!this.fired) {
     this.target.removeListener(this.type, this.wrapFn);
     this.fired = true;
-    switch (arguments.length) {
-      case 0:
-        return this.listener.call(this.target);
-      case 1:
-        return this.listener.call(this.target, arguments[0]);
-      case 2:
-        return this.listener.call(this.target, arguments[0], arguments[1]);
-      case 3:
-        return this.listener.call(this.target, arguments[0], arguments[1],
-            arguments[2]);
-      default:
-        var args = new Array(arguments.length);
-        for (var i = 0; i < args.length; ++i)
-          args[i] = arguments[i];
-        this.listener.apply(this.target, args);
-    }
+    if (arguments.length === 0)
+      return this.listener.call(this.target);
+    return this.listener.apply(this.target, arguments);
   }
 }
 
 function _onceWrap(target, type, listener) {
   var state = { fired: false, wrapFn: undefined, target: target, type: type, listener: listener };
-  var wrapped = bind.call(onceWrapper, state);
+  var wrapped = onceWrapper.bind(state);
   wrapped.listener = listener;
   state.wrapFn = wrapped;
   return wrapped;
 }
 
 EventEmitter.prototype.once = function once(type, listener) {
-  if (typeof listener !== 'function')
-    throw new TypeError('"listener" argument must be a function');
+  checkListener(listener);
   this.on(type, _onceWrap(this, type, listener));
   return this;
 };
 
 EventEmitter.prototype.prependOnceListener =
     function prependOnceListener(type, listener) {
-      if (typeof listener !== 'function')
-        throw new TypeError('"listener" argument must be a function');
+      checkListener(listener);
       this.prependListener(type, _onceWrap(this, type, listener));
       return this;
     };
@@ -5106,20 +5727,19 @@ EventEmitter.prototype.removeListener =
     function removeListener(type, listener) {
       var list, events, position, i, originalListener;
 
-      if (typeof listener !== 'function')
-        throw new TypeError('"listener" argument must be a function');
+      checkListener(listener);
 
       events = this._events;
-      if (!events)
+      if (events === undefined)
         return this;
 
       list = events[type];
-      if (!list)
+      if (list === undefined)
         return this;
 
       if (list === listener || list.listener === listener) {
         if (--this._eventsCount === 0)
-          this._events = objectCreate(null);
+          this._events = Object.create(null);
         else {
           delete events[type];
           if (events.removeListener)
@@ -5141,35 +5761,38 @@ EventEmitter.prototype.removeListener =
 
         if (position === 0)
           list.shift();
-        else
+        else {
           spliceOne(list, position);
+        }
 
         if (list.length === 1)
           events[type] = list[0];
 
-        if (events.removeListener)
+        if (events.removeListener !== undefined)
           this.emit('removeListener', type, originalListener || listener);
       }
 
       return this;
     };
 
+EventEmitter.prototype.off = EventEmitter.prototype.removeListener;
+
 EventEmitter.prototype.removeAllListeners =
     function removeAllListeners(type) {
       var listeners, events, i;
 
       events = this._events;
-      if (!events)
+      if (events === undefined)
         return this;
 
       // not listening for removeListener, no need to emit
-      if (!events.removeListener) {
+      if (events.removeListener === undefined) {
         if (arguments.length === 0) {
-          this._events = objectCreate(null);
+          this._events = Object.create(null);
           this._eventsCount = 0;
-        } else if (events[type]) {
+        } else if (events[type] !== undefined) {
           if (--this._eventsCount === 0)
-            this._events = objectCreate(null);
+            this._events = Object.create(null);
           else
             delete events[type];
         }
@@ -5178,7 +5801,7 @@ EventEmitter.prototype.removeAllListeners =
 
       // emit removeListener for all listeners on all events
       if (arguments.length === 0) {
-        var keys = objectKeys(events);
+        var keys = Object.keys(events);
         var key;
         for (i = 0; i < keys.length; ++i) {
           key = keys[i];
@@ -5186,7 +5809,7 @@ EventEmitter.prototype.removeAllListeners =
           this.removeAllListeners(key);
         }
         this.removeAllListeners('removeListener');
-        this._events = objectCreate(null);
+        this._events = Object.create(null);
         this._eventsCount = 0;
         return this;
       }
@@ -5195,7 +5818,7 @@ EventEmitter.prototype.removeAllListeners =
 
       if (typeof listeners === 'function') {
         this.removeListener(type, listeners);
-      } else if (listeners) {
+      } else if (listeners !== undefined) {
         // LIFO order
         for (i = listeners.length - 1; i >= 0; i--) {
           this.removeListener(type, listeners[i]);
@@ -5208,17 +5831,18 @@ EventEmitter.prototype.removeAllListeners =
 function _listeners(target, type, unwrap) {
   var events = target._events;
 
-  if (!events)
+  if (events === undefined)
     return [];
 
   var evlistener = events[type];
-  if (!evlistener)
+  if (evlistener === undefined)
     return [];
 
   if (typeof evlistener === 'function')
     return unwrap ? [evlistener.listener || evlistener] : [evlistener];
 
-  return unwrap ? unwrapListeners(evlistener) : arrayClone(evlistener, evlistener.length);
+  return unwrap ?
+    unwrapListeners(evlistener) : arrayClone(evlistener, evlistener.length);
 }
 
 EventEmitter.prototype.listeners = function listeners(type) {
@@ -5241,12 +5865,12 @@ EventEmitter.prototype.listenerCount = listenerCount;
 function listenerCount(type) {
   var events = this._events;
 
-  if (events) {
+  if (events !== undefined) {
     var evlistener = events[type];
 
     if (typeof evlistener === 'function') {
       return 1;
-    } else if (evlistener) {
+    } else if (evlistener !== undefined) {
       return evlistener.length;
     }
   }
@@ -5255,21 +5879,20 @@ function listenerCount(type) {
 }
 
 EventEmitter.prototype.eventNames = function eventNames() {
-  return this._eventsCount > 0 ? Reflect.ownKeys(this._events) : [];
+  return this._eventsCount > 0 ? ReflectOwnKeys(this._events) : [];
 };
-
-// About 1.5x faster than the two-arg version of Array#splice().
-function spliceOne(list, index) {
-  for (var i = index, k = i + 1, n = list.length; k < n; i += 1, k += 1)
-    list[i] = list[k];
-  list.pop();
-}
 
 function arrayClone(arr, n) {
   var copy = new Array(n);
   for (var i = 0; i < n; ++i)
     copy[i] = arr[i];
   return copy;
+}
+
+function spliceOne(list, index) {
+  for (; index + 1 < list.length; index++)
+    list[index] = list[index + 1];
+  list.pop();
 }
 
 function unwrapListeners(arr) {
@@ -5280,26 +5903,57 @@ function unwrapListeners(arr) {
   return ret;
 }
 
-function objectCreatePolyfill(proto) {
-  var F = function() {};
-  F.prototype = proto;
-  return new F;
-}
-function objectKeysPolyfill(obj) {
-  var keys = [];
-  for (var k in obj) if (Object.prototype.hasOwnProperty.call(obj, k)) {
-    keys.push(k);
-  }
-  return k;
-}
-function functionBindPolyfill(context) {
-  var fn = this;
-  return function () {
-    return fn.apply(context, arguments);
-  };
+function once(emitter, name) {
+  return new Promise(function (resolve, reject) {
+    function errorListener(err) {
+      emitter.removeListener(name, resolver);
+      reject(err);
+    }
+
+    function resolver() {
+      if (typeof emitter.removeListener === 'function') {
+        emitter.removeListener('error', errorListener);
+      }
+      resolve([].slice.call(arguments));
+    };
+
+    eventTargetAgnosticAddListener(emitter, name, resolver, { once: true });
+    if (name !== 'error') {
+      addErrorHandlerIfEventEmitter(emitter, errorListener, { once: true });
+    }
+  });
 }
 
-},{}],19:[function(require,module,exports){
+function addErrorHandlerIfEventEmitter(emitter, handler, flags) {
+  if (typeof emitter.on === 'function') {
+    eventTargetAgnosticAddListener(emitter, 'error', handler, flags);
+  }
+}
+
+function eventTargetAgnosticAddListener(emitter, name, listener, flags) {
+  if (typeof emitter.on === 'function') {
+    if (flags.once) {
+      emitter.once(name, listener);
+    } else {
+      emitter.on(name, listener);
+    }
+  } else if (typeof emitter.addEventListener === 'function') {
+    // EventTarget does not have `error` event semantics like Node
+    // EventEmitters, we do not listen for `error` events here.
+    emitter.addEventListener(name, function wrapListener(arg) {
+      // IE does not have builtin `{ once: true }` support so we
+      // have to do it manually.
+      if (flags.once) {
+        emitter.removeEventListener(name, wrapListener);
+      }
+      listener(arg);
+    });
+  } else {
+    throw new TypeError('The "emitter" argument must be of type EventEmitter. Received type ' + typeof emitter);
+  }
+}
+
+},{}],26:[function(require,module,exports){
 /*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
@@ -5386,216 +6040,2602 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],20:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
+module.exports = require('linkifyjs/lib/linkify-string');
+
+},{"linkifyjs/lib/linkify-string":29}],28:[function(require,module,exports){
+module.exports = require('./lib/linkify');
+
+},{"./lib/linkify":30}],29:[function(require,module,exports){
 'use strict';
 
-exports.__esModule = true;
+var linkifyjs = require('linkifyjs');
 
-var _linkify = require('./linkify');
-
-var linkify = _interopRequireWildcard(_linkify);
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-
-var tokenize = linkify.tokenize,
-    options = linkify.options; /**
-                               	Convert strings of text into linkable HTML text
-                               */
-
-var Options = options.Options;
-
+/**
+	Convert strings of text into linkable HTML text
+*/
 
 function escapeText(text) {
-	return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 function escapeAttr(href) {
-	return href.replace(/"/g, '&quot;');
+  return href.replace(/"/g, '&quot;');
 }
 
 function attributesToString(attributes) {
-	if (!attributes) {
-		return '';
-	}
-	var result = [];
+  if (!attributes) {
+    return '';
+  }
 
-	for (var attr in attributes) {
-		var val = attributes[attr] + '';
-		result.push(attr + '="' + escapeAttr(val) + '"');
-	}
-	return result.join(' ');
+  var result = [];
+
+  for (var attr in attributes) {
+    var val = attributes[attr] + '';
+    result.push("".concat(attr, "=\"").concat(escapeAttr(val), "\""));
+  }
+
+  return result.join(' ');
 }
+/**
+ * Convert a plan text string to an HTML string with links. Expects that the
+ * given strings does not contain any HTML entities. Use the linkify-html
+ * interface if you need to parse HTML entities.
+ *
+ * @param {string} str string to linkify
+ * @param {object} [opts] overridable options
+ * @returns {string}
+ */
+
 
 function linkifyStr(str) {
-	var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+  var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+  opts = new linkifyjs.Options(opts);
+  var tokens = linkifyjs.tokenize(str);
+  var result = [];
 
-	opts = new Options(opts);
+  for (var i = 0; i < tokens.length; i++) {
+    var token = tokens[i];
 
-	var tokens = tokenize(str);
-	var result = [];
+    if (token.t === 'nl' && opts.nl2br) {
+      result.push('<br>\n');
+      continue;
+    } else if (!token.isLink || !opts.check(token)) {
+      result.push(escapeText(token.toString()));
+      continue;
+    }
 
-	for (var i = 0; i < tokens.length; i++) {
-		var token = tokens[i];
+    var _opts$resolve = opts.resolve(token),
+        formatted = _opts$resolve.formatted,
+        formattedHref = _opts$resolve.formattedHref,
+        tagName = _opts$resolve.tagName,
+        className = _opts$resolve.className,
+        target = _opts$resolve.target,
+        rel = _opts$resolve.rel,
+        attributes = _opts$resolve.attributes;
 
-		if (token.type === 'nl' && opts.nl2br) {
-			result.push('<br>\n');
-			continue;
-		} else if (!token.isLink || !opts.check(token)) {
-			result.push(escapeText(token.toString()));
-			continue;
-		}
+    var link = ["<".concat(tagName, " href=\"").concat(escapeAttr(formattedHref), "\"")];
 
-		var _opts$resolve = opts.resolve(token),
-		    formatted = _opts$resolve.formatted,
-		    formattedHref = _opts$resolve.formattedHref,
-		    tagName = _opts$resolve.tagName,
-		    className = _opts$resolve.className,
-		    target = _opts$resolve.target,
-		    attributes = _opts$resolve.attributes;
+    if (className) {
+      link.push(" class=\"".concat(escapeAttr(className), "\""));
+    }
 
-		var link = '<' + tagName + ' href="' + escapeAttr(formattedHref) + '"';
+    if (target) {
+      link.push(" target=\"".concat(escapeAttr(target), "\""));
+    }
 
-		if (className) {
-			link += ' class="' + escapeAttr(className) + '"';
-		}
+    if (rel) {
+      link.push(" rel=\"".concat(escapeAttr(rel), "\""));
+    }
 
-		if (target) {
-			link += ' target="' + escapeAttr(target) + '"';
-		}
+    if (attributes) {
+      link.push(" ".concat(attributesToString(attributes)));
+    }
 
-		if (attributes) {
-			link += ' ' + attributesToString(attributes);
-		}
+    link.push(">".concat(escapeText(formatted), "</").concat(tagName, ">"));
+    result.push(link.join(''));
+  }
 
-		link += '>' + escapeText(formatted) + '</' + tagName + '>';
-		result.push(link);
-	}
-
-	return result.join('');
+  return result.join('');
 }
 
 if (!String.prototype.linkify) {
-	try {
-		Object.defineProperty(String.prototype, 'linkify', {
-			set: function set() {},
-			get: function get() {
-				return function linkify(opts) {
-					return linkifyStr(this, opts);
-				};
-			}
-		});
-	} catch (e) {
-		// IE 8 doesn't like Object.defineProperty on non-DOM objects
-		if (!String.prototype.linkify) {
-			String.prototype.linkify = function (opts) {
-				return linkifyStr(this, opts);
-			};
-		}
-	}
+  Object.defineProperty(String.prototype, 'linkify', {
+    writable: false,
+    value: function linkify(options) {
+      return linkifyStr(this, options);
+    }
+  });
 }
 
-exports.default = linkifyStr;
-},{"./linkify":21}],21:[function(require,module,exports){
+module.exports = linkifyStr;
+
+},{"linkifyjs":28}],30:[function(require,module,exports){
 'use strict';
 
-exports.__esModule = true;
-exports.tokenize = exports.test = exports.scanner = exports.parser = exports.options = exports.inherits = exports.find = undefined;
+Object.defineProperty(exports, '__esModule', { value: true });
 
-var _class = require('./linkify/utils/class');
+/**
+ * Finite State Machine generation utilities
+ */
 
-var _options = require('./linkify/utils/options');
+/**
+ * Define a basic state machine state. j is the list of character transitions,
+ * jr is the list of regex-match transitions, jd is the default state to
+ * transition to t is the accepting token type, if any. If this is the terminal
+ * state, then it does not emit a token.
+ * @param {string|class} token to emit
+ */
+function State(token) {
+  this.j = {}; // IMPLEMENTATION 1
+  // this.j = []; // IMPLEMENTATION 2
 
-var options = _interopRequireWildcard(_options);
+  this.jr = [];
+  this.jd = null;
+  this.t = token;
+}
+/**
+ * Take the transition from this state to the next one on the given input.
+ * If this state does not exist deterministically, will create it.
+ *
+ * @param {string} input character or token to transition on
+ * @param {string|class} [token] token or multi-token to emit when reaching
+ * this state
+ */
 
-var _scanner = require('./linkify/core/scanner');
+State.prototype = {
+  /**
+   * @param {State} state
+   */
+  accepts: function accepts() {
+    return !!this.t;
+  },
 
-var scanner = _interopRequireWildcard(_scanner);
+  /**
+   * Short for "take transition", this is a method for building/working with
+   * state machines.
+   *
+   * If a state already exists for the given input, returns it.
+   *
+   * If a token is specified, that state will emit that token when reached by
+   * the linkify engine.
+   *
+   * If no state exists, it will be initialized with some default transitions
+   * that resemble existing default transitions.
+   *
+   * If a state is given for the second argument, that state will be
+   * transitioned to on the given input regardless of what that input
+   * previously did.
+   *
+   * @param {string} input character or token to transition on
+   * @param {Token|State} tokenOrState transition to a matching state
+   * @returns State taken after the given input
+   */
+  tt: function tt(input, tokenOrState) {
+    if (tokenOrState && tokenOrState.j) {
+      // State, default a basic transition
+      this.j[input] = tokenOrState;
+      return tokenOrState;
+    } // See if there's a direct state transition (not regex or default)
 
-var _parser = require('./linkify/core/parser');
 
-var parser = _interopRequireWildcard(_parser);
+    var token = tokenOrState;
+    var nextState = this.j[input];
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+    if (nextState) {
+      if (token) {
+        nextState.t = token;
+      } // overrwites previous token
 
-if (!Array.isArray) {
-	Array.isArray = function (arg) {
-		return Object.prototype.toString.call(arg) === '[object Array]';
-	};
+
+      return nextState;
+    } // Create a new state for this input
+
+
+    nextState = makeState(); // Take the transition using the usual default mechanisms
+
+    var templateState = takeT(this, input);
+
+    if (templateState) {
+      // Some default state transition, make a prime state based on this one
+      Object.assign(nextState.j, templateState.j);
+      nextState.jr.append(templateState.jr);
+      nextState.jr = templateState.jd;
+      nextState.t = token || templateState.t;
+    } else {
+      nextState.t = token;
+    }
+
+    this.j[input] = nextState;
+    return nextState;
+  }
+};
+/**
+ * Utility function to create state without using new keyword (reduced file size
+ * when minified)
+ */
+
+var makeState = function makeState() {
+  return new State();
+};
+/**
+ * Similar to previous except it is an accepting state that emits a token
+ * @param {Token} token
+ */
+
+var makeAcceptingState = function makeAcceptingState(token) {
+  return new State(token);
+};
+/**
+ * Create a transition from startState to nextState via the given character
+ * @param {State} startState transition from thie starting state
+ * @param {Token} input via this input character or other concrete token type
+ * @param {State} nextState to this next state
+ */
+
+var makeT = function makeT(startState, input, nextState) {
+  // IMPLEMENTATION 1: Add to object (fast)
+  if (!startState.j[input]) {
+    startState.j[input] = nextState;
+  } // IMPLEMENTATION 2: Add to array (slower)
+  // startState.j.push([input, nextState]);
+
+};
+/**
+ *
+ * @param {State} startState stransition from this starting state
+ * @param {RegExp} regex Regular expression to match on input
+ * @param {State} nextState transition to this next state if there's are regex match
+ */
+
+var makeRegexT = function makeRegexT(startState, regex, nextState) {
+  startState.jr.push([regex, nextState]);
+};
+/**
+ * Follow the transition from the given character to the next state
+ * @param {State} state
+ * @param {Token} input character or other concrete token type to transition
+ * @returns {?State} the next state, if any
+ */
+
+var takeT = function takeT(state, input) {
+  // IMPLEMENTATION 1: Object key lookup (faster)
+  var nextState = state.j[input];
+
+  if (nextState) {
+    return nextState;
+  } // IMPLEMENTATION 2: List lookup (slower)
+  // Loop through all the state transitions and see if there's a match
+  // for (let i = 0; i < state.j.length; i++) {
+  //	const val = state.j[i][0];
+  //	const nextState = state.j[i][1];
+  // 	if (input === val) { return nextState; }
+  // }
+
+
+  for (var i = 0; i < state.jr.length; i++) {
+    var regex = state.jr[i][0];
+    var _nextState = state.jr[i][1];
+
+    if (regex.test(input)) {
+      return _nextState;
+    }
+  } // Nowhere left to jump! Return default, if any
+
+
+  return state.jd;
+};
+/**
+ * Similar to makeT, but takes a list of characters that all transition to the
+ * same nextState startState
+ * @param {State} startState
+ * @param {Array} chars
+ * @param {State} nextState
+ */
+
+var makeMultiT = function makeMultiT(startState, chars, nextState) {
+  for (var i = 0; i < chars.length; i++) {
+    makeT(startState, chars[i], nextState);
+  }
+};
+/**
+ * Set up a list of multiple transitions at once. transitions is a list of
+ * tuples, where the first element is the transitions character and the second
+ * is the state to transition to
+ * @param {State} startState
+ * @param {Array} transitions
+ */
+
+var makeBatchT = function makeBatchT(startState, transitions) {
+  for (var i = 0; i < transitions.length; i++) {
+    var input = transitions[i][0];
+    var nextState = transitions[i][1];
+    makeT(startState, input, nextState);
+  }
+};
+/**
+ * For state machines that transition on characters only; given a non-empty
+ * target string, generates states (if required) for each consecutive substring
+ * of characters starting from the beginning of the string. The final state will
+ * have a special value, as specified in options. All other "in between"
+ * substrings will have a default end state.
+ *
+ * This turns the state machine into a Trie-like data structure (rather than a
+ * intelligently-designed DFA).
+ * @param {State} state
+ * @param {string} str
+ * @param {Token} endStateFactory
+ * @param {Token} defaultStateFactory
+ */
+
+var makeChainT = function makeChainT(state, str, endState, defaultStateFactory) {
+  var i = 0,
+      len = str.length,
+      nextState; // Find the next state without a jump to the next character
+
+  while (i < len && (nextState = state.j[str[i]])) {
+    state = nextState;
+    i++;
+  }
+
+  if (i >= len) {
+    return [];
+  } // no new tokens were added
+
+
+  while (i < len - 1) {
+    nextState = defaultStateFactory();
+    makeT(state, str[i], nextState);
+    state = nextState;
+    i++;
+  }
+
+  makeT(state, str[len - 1], endState);
+};
+
+/******************************************************************************
+	Text Tokens
+	Tokens composed of strings
+******************************************************************************/
+// A valid web domain token
+var DOMAIN = 'DOMAIN';
+var LOCALHOST = 'LOCALHOST'; // special case of domain
+// Valid top-level domain (see tlds.js)
+
+var TLD = 'TLD'; // Any sequence of digits 0-9
+
+var NUM = 'NUM'; // A web URL protocol. Supported types include
+// - `http:`
+// - `https:`
+// - `ftp:`
+// - `ftps:`
+// - user-defined custom protocols
+
+var PROTOCOL = 'PROTOCOL'; // Start of the email URI protocol
+
+var MAILTO = 'MAILTO'; // mailto:
+// Any number of consecutive whitespace characters that are not newline
+
+var WS = 'WS'; // New line (unix style)
+
+var NL = 'NL'; // \n
+// Opening/closing bracket classes
+
+var OPENBRACE = 'OPENBRACE'; // {
+
+var OPENBRACKET = 'OPENBRACKET'; // [
+
+var OPENANGLEBRACKET = 'OPENANGLEBRACKET'; // <
+
+var OPENPAREN = 'OPENPAREN'; // (
+
+var CLOSEBRACE = 'CLOSEBRACE'; // }
+
+var CLOSEBRACKET = 'CLOSEBRACKET'; // ]
+
+var CLOSEANGLEBRACKET = 'CLOSEANGLEBRACKET'; // >
+
+var CLOSEPAREN = 'CLOSEPAREN'; // )
+// Various symbols
+
+var AMPERSAND = 'AMPERSAND'; // &
+
+var APOSTROPHE = 'APOSTROPHE'; // '
+
+var ASTERISK = 'ASTERISK'; // *
+
+var AT = 'AT'; // @
+
+var BACKSLASH = 'BACKSLASH'; // \
+
+var BACKTICK = 'BACKTICK'; // `
+
+var CARET = 'CARET'; // ^
+
+var COLON = 'COLON'; // :
+
+var COMMA = 'COMMA'; // ,
+
+var DOLLAR = 'DOLLAR'; // $
+
+var DOT = 'DOT'; // .
+
+var EQUALS = 'EQUALS'; // =
+
+var EXCLAMATION = 'EXCLAMATION'; // !
+
+var HYPHEN = 'HYPHEN'; // -
+
+var PERCENT = 'PERCENT'; // %
+
+var PIPE = 'PIPE'; // |
+
+var PLUS = 'PLUS'; // +
+
+var POUND = 'POUND'; // #
+
+var QUERY = 'QUERY'; // ?
+
+var QUOTE = 'QUOTE'; // "
+
+var SEMI = 'SEMI'; // ;
+
+var SLASH = 'SLASH'; // /
+
+var TILDE = 'TILDE'; // ~
+
+var UNDERSCORE = 'UNDERSCORE'; // _
+// Default token - anything that is not one of the above
+
+var SYM = 'SYM';
+
+var text = /*#__PURE__*/Object.freeze({
+	__proto__: null,
+	DOMAIN: DOMAIN,
+	LOCALHOST: LOCALHOST,
+	TLD: TLD,
+	NUM: NUM,
+	PROTOCOL: PROTOCOL,
+	MAILTO: MAILTO,
+	WS: WS,
+	NL: NL,
+	OPENBRACE: OPENBRACE,
+	OPENBRACKET: OPENBRACKET,
+	OPENANGLEBRACKET: OPENANGLEBRACKET,
+	OPENPAREN: OPENPAREN,
+	CLOSEBRACE: CLOSEBRACE,
+	CLOSEBRACKET: CLOSEBRACKET,
+	CLOSEANGLEBRACKET: CLOSEANGLEBRACKET,
+	CLOSEPAREN: CLOSEPAREN,
+	AMPERSAND: AMPERSAND,
+	APOSTROPHE: APOSTROPHE,
+	ASTERISK: ASTERISK,
+	AT: AT,
+	BACKSLASH: BACKSLASH,
+	BACKTICK: BACKTICK,
+	CARET: CARET,
+	COLON: COLON,
+	COMMA: COMMA,
+	DOLLAR: DOLLAR,
+	DOT: DOT,
+	EQUALS: EQUALS,
+	EXCLAMATION: EXCLAMATION,
+	HYPHEN: HYPHEN,
+	PERCENT: PERCENT,
+	PIPE: PIPE,
+	PLUS: PLUS,
+	POUND: POUND,
+	QUERY: QUERY,
+	QUOTE: QUOTE,
+	SEMI: SEMI,
+	SLASH: SLASH,
+	TILDE: TILDE,
+	UNDERSCORE: UNDERSCORE,
+	SYM: SYM
+});
+
+// NOTE: punycode versions of IDNs are not included here because these will not
+// be as commonly used without the http prefix anyway and linkify will already
+// force-encode those.
+// To be updated with the values in this list
+// http://data.iana.org/TLD/tlds-alpha-by-domain.txt
+// Version 2021022800, Last Updated Sun Feb 28 07:07:01 2021 UTC
+var tlds = 'aaa \
+aarp \
+abarth \
+abb \
+abbott \
+abbvie \
+abc \
+able \
+abogado \
+abudhabi \
+ac \
+academy \
+accenture \
+accountant \
+accountants \
+aco \
+actor \
+ad \
+adac \
+ads \
+adult \
+ae \
+aeg \
+aero \
+aetna \
+af \
+afamilycompany \
+afl \
+africa \
+ag \
+agakhan \
+agency \
+ai \
+aig \
+airbus \
+airforce \
+airtel \
+akdn \
+al \
+alfaromeo \
+alibaba \
+alipay \
+allfinanz \
+allstate \
+ally \
+alsace \
+alstom \
+am \
+amazon \
+americanexpress \
+americanfamily \
+amex \
+amfam \
+amica \
+amsterdam \
+analytics \
+android \
+anquan \
+anz \
+ao \
+aol \
+apartments \
+app \
+apple \
+aq \
+aquarelle \
+ar \
+arab \
+aramco \
+archi \
+army \
+arpa \
+art \
+arte \
+as \
+asda \
+asia \
+associates \
+at \
+athleta \
+attorney \
+au \
+auction \
+audi \
+audible \
+audio \
+auspost \
+author \
+auto \
+autos \
+avianca \
+aw \
+aws \
+ax \
+axa \
+az \
+azure \
+ba \
+baby \
+baidu \
+banamex \
+bananarepublic \
+band \
+bank \
+bar \
+barcelona \
+barclaycard \
+barclays \
+barefoot \
+bargains \
+baseball \
+basketball \
+bauhaus \
+bayern \
+bb \
+bbc \
+bbt \
+bbva \
+bcg \
+bcn \
+bd \
+be \
+beats \
+beauty \
+beer \
+bentley \
+berlin \
+best \
+bestbuy \
+bet \
+bf \
+bg \
+bh \
+bharti \
+bi \
+bible \
+bid \
+bike \
+bing \
+bingo \
+bio \
+biz \
+bj \
+black \
+blackfriday \
+blockbuster \
+blog \
+bloomberg \
+blue \
+bm \
+bms \
+bmw \
+bn \
+bnpparibas \
+bo \
+boats \
+boehringer \
+bofa \
+bom \
+bond \
+boo \
+book \
+booking \
+bosch \
+bostik \
+boston \
+bot \
+boutique \
+box \
+br \
+bradesco \
+bridgestone \
+broadway \
+broker \
+brother \
+brussels \
+bs \
+bt \
+budapest \
+bugatti \
+build \
+builders \
+business \
+buy \
+buzz \
+bv \
+bw \
+by \
+bz \
+bzh \
+ca \
+cab \
+cafe \
+cal \
+call \
+calvinklein \
+cam \
+camera \
+camp \
+cancerresearch \
+canon \
+capetown \
+capital \
+capitalone \
+car \
+caravan \
+cards \
+care \
+career \
+careers \
+cars \
+casa \
+case \
+cash \
+casino \
+cat \
+catering \
+catholic \
+cba \
+cbn \
+cbre \
+cbs \
+cc \
+cd \
+center \
+ceo \
+cern \
+cf \
+cfa \
+cfd \
+cg \
+ch \
+chanel \
+channel \
+charity \
+chase \
+chat \
+cheap \
+chintai \
+christmas \
+chrome \
+church \
+ci \
+cipriani \
+circle \
+cisco \
+citadel \
+citi \
+citic \
+city \
+cityeats \
+ck \
+cl \
+claims \
+cleaning \
+click \
+clinic \
+clinique \
+clothing \
+cloud \
+club \
+clubmed \
+cm \
+cn \
+co \
+coach \
+codes \
+coffee \
+college \
+cologne \
+com \
+comcast \
+commbank \
+community \
+company \
+compare \
+computer \
+comsec \
+condos \
+construction \
+consulting \
+contact \
+contractors \
+cooking \
+cookingchannel \
+cool \
+coop \
+corsica \
+country \
+coupon \
+coupons \
+courses \
+cpa \
+cr \
+credit \
+creditcard \
+creditunion \
+cricket \
+crown \
+crs \
+cruise \
+cruises \
+csc \
+cu \
+cuisinella \
+cv \
+cw \
+cx \
+cy \
+cymru \
+cyou \
+cz \
+dabur \
+dad \
+dance \
+data \
+date \
+dating \
+datsun \
+day \
+dclk \
+dds \
+de \
+deal \
+dealer \
+deals \
+degree \
+delivery \
+dell \
+deloitte \
+delta \
+democrat \
+dental \
+dentist \
+desi \
+design \
+dev \
+dhl \
+diamonds \
+diet \
+digital \
+direct \
+directory \
+discount \
+discover \
+dish \
+diy \
+dj \
+dk \
+dm \
+dnp \
+do \
+docs \
+doctor \
+dog \
+domains \
+dot \
+download \
+drive \
+dtv \
+dubai \
+duck \
+dunlop \
+dupont \
+durban \
+dvag \
+dvr \
+dz \
+earth \
+eat \
+ec \
+eco \
+edeka \
+edu \
+education \
+ee \
+eg \
+email \
+emerck \
+energy \
+engineer \
+engineering \
+enterprises \
+epson \
+equipment \
+er \
+ericsson \
+erni \
+es \
+esq \
+estate \
+et \
+etisalat \
+eu \
+eurovision \
+eus \
+events \
+exchange \
+expert \
+exposed \
+express \
+extraspace \
+fage \
+fail \
+fairwinds \
+faith \
+family \
+fan \
+fans \
+farm \
+farmers \
+fashion \
+fast \
+fedex \
+feedback \
+ferrari \
+ferrero \
+fi \
+fiat \
+fidelity \
+fido \
+film \
+final \
+finance \
+financial \
+fire \
+firestone \
+firmdale \
+fish \
+fishing \
+fit \
+fitness \
+fj \
+fk \
+flickr \
+flights \
+flir \
+florist \
+flowers \
+fly \
+fm \
+fo \
+foo \
+food \
+foodnetwork \
+football \
+ford \
+forex \
+forsale \
+forum \
+foundation \
+fox \
+fr \
+free \
+fresenius \
+frl \
+frogans \
+frontdoor \
+frontier \
+ftr \
+fujitsu \
+fujixerox \
+fun \
+fund \
+furniture \
+futbol \
+fyi \
+ga \
+gal \
+gallery \
+gallo \
+gallup \
+game \
+games \
+gap \
+garden \
+gay \
+gb \
+gbiz \
+gd \
+gdn \
+ge \
+gea \
+gent \
+genting \
+george \
+gf \
+gg \
+ggee \
+gh \
+gi \
+gift \
+gifts \
+gives \
+giving \
+gl \
+glade \
+glass \
+gle \
+global \
+globo \
+gm \
+gmail \
+gmbh \
+gmo \
+gmx \
+gn \
+godaddy \
+gold \
+goldpoint \
+golf \
+goo \
+goodyear \
+goog \
+google \
+gop \
+got \
+gov \
+gp \
+gq \
+gr \
+grainger \
+graphics \
+gratis \
+green \
+gripe \
+grocery \
+group \
+gs \
+gt \
+gu \
+guardian \
+gucci \
+guge \
+guide \
+guitars \
+guru \
+gw \
+gy \
+hair \
+hamburg \
+hangout \
+haus \
+hbo \
+hdfc \
+hdfcbank \
+health \
+healthcare \
+help \
+helsinki \
+here \
+hermes \
+hgtv \
+hiphop \
+hisamitsu \
+hitachi \
+hiv \
+hk \
+hkt \
+hm \
+hn \
+hockey \
+holdings \
+holiday \
+homedepot \
+homegoods \
+homes \
+homesense \
+honda \
+horse \
+hospital \
+host \
+hosting \
+hot \
+hoteles \
+hotels \
+hotmail \
+house \
+how \
+hr \
+hsbc \
+ht \
+hu \
+hughes \
+hyatt \
+hyundai \
+ibm \
+icbc \
+ice \
+icu \
+id \
+ie \
+ieee \
+ifm \
+ikano \
+il \
+im \
+imamat \
+imdb \
+immo \
+immobilien \
+in \
+inc \
+industries \
+infiniti \
+info \
+ing \
+ink \
+institute \
+insurance \
+insure \
+int \
+international \
+intuit \
+investments \
+io \
+ipiranga \
+iq \
+ir \
+irish \
+is \
+ismaili \
+ist \
+istanbul \
+it \
+itau \
+itv \
+iveco \
+jaguar \
+java \
+jcb \
+je \
+jeep \
+jetzt \
+jewelry \
+jio \
+jll \
+jm \
+jmp \
+jnj \
+jo \
+jobs \
+joburg \
+jot \
+joy \
+jp \
+jpmorgan \
+jprs \
+juegos \
+juniper \
+kaufen \
+kddi \
+ke \
+kerryhotels \
+kerrylogistics \
+kerryproperties \
+kfh \
+kg \
+kh \
+ki \
+kia \
+kim \
+kinder \
+kindle \
+kitchen \
+kiwi \
+km \
+kn \
+koeln \
+komatsu \
+kosher \
+kp \
+kpmg \
+kpn \
+kr \
+krd \
+kred \
+kuokgroup \
+kw \
+ky \
+kyoto \
+kz \
+la \
+lacaixa \
+lamborghini \
+lamer \
+lancaster \
+lancia \
+land \
+landrover \
+lanxess \
+lasalle \
+lat \
+latino \
+latrobe \
+law \
+lawyer \
+lb \
+lc \
+lds \
+lease \
+leclerc \
+lefrak \
+legal \
+lego \
+lexus \
+lgbt \
+li \
+lidl \
+life \
+lifeinsurance \
+lifestyle \
+lighting \
+like \
+lilly \
+limited \
+limo \
+lincoln \
+linde \
+link \
+lipsy \
+live \
+living \
+lixil \
+lk \
+llc \
+llp \
+loan \
+loans \
+locker \
+locus \
+loft \
+lol \
+london \
+lotte \
+lotto \
+love \
+lpl \
+lplfinancial \
+lr \
+ls \
+lt \
+ltd \
+ltda \
+lu \
+lundbeck \
+luxe \
+luxury \
+lv \
+ly \
+ma \
+macys \
+madrid \
+maif \
+maison \
+makeup \
+man \
+management \
+mango \
+map \
+market \
+marketing \
+markets \
+marriott \
+marshalls \
+maserati \
+mattel \
+mba \
+mc \
+mckinsey \
+md \
+me \
+med \
+media \
+meet \
+melbourne \
+meme \
+memorial \
+men \
+menu \
+merckmsd \
+mg \
+mh \
+miami \
+microsoft \
+mil \
+mini \
+mint \
+mit \
+mitsubishi \
+mk \
+ml \
+mlb \
+mls \
+mm \
+mma \
+mn \
+mo \
+mobi \
+mobile \
+moda \
+moe \
+moi \
+mom \
+monash \
+money \
+monster \
+mormon \
+mortgage \
+moscow \
+moto \
+motorcycles \
+mov \
+movie \
+mp \
+mq \
+mr \
+ms \
+msd \
+mt \
+mtn \
+mtr \
+mu \
+museum \
+mutual \
+mv \
+mw \
+mx \
+my \
+mz \
+na \
+nab \
+nagoya \
+name \
+nationwide \
+natura \
+navy \
+nba \
+nc \
+ne \
+nec \
+net \
+netbank \
+netflix \
+network \
+neustar \
+new \
+news \
+next \
+nextdirect \
+nexus \
+nf \
+nfl \
+ng \
+ngo \
+nhk \
+ni \
+nico \
+nike \
+nikon \
+ninja \
+nissan \
+nissay \
+nl \
+no \
+nokia \
+northwesternmutual \
+norton \
+now \
+nowruz \
+nowtv \
+np \
+nr \
+nra \
+nrw \
+ntt \
+nu \
+nyc \
+nz \
+obi \
+observer \
+off \
+office \
+okinawa \
+olayan \
+olayangroup \
+oldnavy \
+ollo \
+om \
+omega \
+one \
+ong \
+onl \
+online \
+onyourside \
+ooo \
+open \
+oracle \
+orange \
+org \
+organic \
+origins \
+osaka \
+otsuka \
+ott \
+ovh \
+pa \
+page \
+panasonic \
+paris \
+pars \
+partners \
+parts \
+party \
+passagens \
+pay \
+pccw \
+pe \
+pet \
+pf \
+pfizer \
+pg \
+ph \
+pharmacy \
+phd \
+philips \
+phone \
+photo \
+photography \
+photos \
+physio \
+pics \
+pictet \
+pictures \
+pid \
+pin \
+ping \
+pink \
+pioneer \
+pizza \
+pk \
+pl \
+place \
+play \
+playstation \
+plumbing \
+plus \
+pm \
+pn \
+pnc \
+pohl \
+poker \
+politie \
+porn \
+post \
+pr \
+pramerica \
+praxi \
+press \
+prime \
+pro \
+prod \
+productions \
+prof \
+progressive \
+promo \
+properties \
+property \
+protection \
+pru \
+prudential \
+ps \
+pt \
+pub \
+pw \
+pwc \
+py \
+qa \
+qpon \
+quebec \
+quest \
+qvc \
+racing \
+radio \
+raid \
+re \
+read \
+realestate \
+realtor \
+realty \
+recipes \
+red \
+redstone \
+redumbrella \
+rehab \
+reise \
+reisen \
+reit \
+reliance \
+ren \
+rent \
+rentals \
+repair \
+report \
+republican \
+rest \
+restaurant \
+review \
+reviews \
+rexroth \
+rich \
+richardli \
+ricoh \
+ril \
+rio \
+rip \
+rmit \
+ro \
+rocher \
+rocks \
+rodeo \
+rogers \
+room \
+rs \
+rsvp \
+ru \
+rugby \
+ruhr \
+run \
+rw \
+rwe \
+ryukyu \
+sa \
+saarland \
+safe \
+safety \
+sakura \
+sale \
+salon \
+samsclub \
+samsung \
+sandvik \
+sandvikcoromant \
+sanofi \
+sap \
+sarl \
+sas \
+save \
+saxo \
+sb \
+sbi \
+sbs \
+sc \
+sca \
+scb \
+schaeffler \
+schmidt \
+scholarships \
+school \
+schule \
+schwarz \
+science \
+scjohnson \
+scot \
+sd \
+se \
+search \
+seat \
+secure \
+security \
+seek \
+select \
+sener \
+services \
+ses \
+seven \
+sew \
+sex \
+sexy \
+sfr \
+sg \
+sh \
+shangrila \
+sharp \
+shaw \
+shell \
+shia \
+shiksha \
+shoes \
+shop \
+shopping \
+shouji \
+show \
+showtime \
+si \
+silk \
+sina \
+singles \
+site \
+sj \
+sk \
+ski \
+skin \
+sky \
+skype \
+sl \
+sling \
+sm \
+smart \
+smile \
+sn \
+sncf \
+so \
+soccer \
+social \
+softbank \
+software \
+sohu \
+solar \
+solutions \
+song \
+sony \
+soy \
+spa \
+space \
+sport \
+spot \
+spreadbetting \
+sr \
+srl \
+ss \
+st \
+stada \
+staples \
+star \
+statebank \
+statefarm \
+stc \
+stcgroup \
+stockholm \
+storage \
+store \
+stream \
+studio \
+study \
+style \
+su \
+sucks \
+supplies \
+supply \
+support \
+surf \
+surgery \
+suzuki \
+sv \
+swatch \
+swiftcover \
+swiss \
+sx \
+sy \
+sydney \
+systems \
+sz \
+tab \
+taipei \
+talk \
+taobao \
+target \
+tatamotors \
+tatar \
+tattoo \
+tax \
+taxi \
+tc \
+tci \
+td \
+tdk \
+team \
+tech \
+technology \
+tel \
+temasek \
+tennis \
+teva \
+tf \
+tg \
+th \
+thd \
+theater \
+theatre \
+tiaa \
+tickets \
+tienda \
+tiffany \
+tips \
+tires \
+tirol \
+tj \
+tjmaxx \
+tjx \
+tk \
+tkmaxx \
+tl \
+tm \
+tmall \
+tn \
+to \
+today \
+tokyo \
+tools \
+top \
+toray \
+toshiba \
+total \
+tours \
+town \
+toyota \
+toys \
+tr \
+trade \
+trading \
+training \
+travel \
+travelchannel \
+travelers \
+travelersinsurance \
+trust \
+trv \
+tt \
+tube \
+tui \
+tunes \
+tushu \
+tv \
+tvs \
+tw \
+tz \
+ua \
+ubank \
+ubs \
+ug \
+uk \
+unicom \
+university \
+uno \
+uol \
+ups \
+us \
+uy \
+uz \
+va \
+vacations \
+vana \
+vanguard \
+vc \
+ve \
+vegas \
+ventures \
+verisign \
+versicherung \
+vet \
+vg \
+vi \
+viajes \
+video \
+vig \
+viking \
+villas \
+vin \
+vip \
+virgin \
+visa \
+vision \
+viva \
+vivo \
+vlaanderen \
+vn \
+vodka \
+volkswagen \
+volvo \
+vote \
+voting \
+voto \
+voyage \
+vu \
+vuelos \
+wales \
+walmart \
+walter \
+wang \
+wanggou \
+watch \
+watches \
+weather \
+weatherchannel \
+webcam \
+weber \
+website \
+wed \
+wedding \
+weibo \
+weir \
+wf \
+whoswho \
+wien \
+wiki \
+williamhill \
+win \
+windows \
+wine \
+winners \
+wme \
+wolterskluwer \
+woodside \
+work \
+works \
+world \
+wow \
+ws \
+wtc \
+wtf \
+xbox \
+xerox \
+xfinity \
+xihuan \
+xin \
+xxx \
+xyz \
+yachts \
+yahoo \
+yamaxun \
+yandex \
+ye \
+yodobashi \
+yoga \
+yokohama \
+you \
+youtube \
+yt \
+yun \
+za \
+zappos \
+zara \
+zero \
+zip \
+zm \
+zone \
+zuerich \
+zw \
+vermögensberater-ctb \
+vermögensberatung-pwb \
+ελ \
+ευ \
+бг \
+бел \
+дети \
+ею \
+католик \
+ком \
+қаз \
+мкд \
+мон \
+москва \
+онлайн \
+орг \
+рус \
+рф \
+сайт \
+срб \
+укр \
+გე \
+հայ \
+ישראל \
+קום \
+ابوظبي \
+اتصالات \
+ارامكو \
+الاردن \
+البحرين \
+الجزائر \
+السعودية \
+العليان \
+المغرب \
+امارات \
+ایران \
+بارت \
+بازار \
+بھارت \
+بيتك \
+پاکستان \
+ڀارت \
+تونس \
+سودان \
+سورية \
+شبكة \
+عراق \
+عرب \
+عمان \
+فلسطين \
+قطر \
+كاثوليك \
+كوم \
+مصر \
+مليسيا \
+موريتانيا \
+موقع \
+همراه \
+कॉम \
+नेट \
+भारत \
+भारतम् \
+भारोत \
+संगठन \
+বাংলা \
+ভারত \
+ভাৰত \
+ਭਾਰਤ \
+ભારત \
+ଭାରତ \
+இந்தியா \
+இலங்கை \
+சிங்கப்பூர் \
+భారత్ \
+ಭಾರತ \
+ഭാരതം \
+ලංකා \
+คอม \
+ไทย \
+ລາວ \
+닷넷 \
+닷컴 \
+삼성 \
+한국 \
+アマゾン \
+グーグル \
+クラウド \
+コム \
+ストア \
+セール \
+ファッション \
+ポイント \
+みんな \
+世界 \
+中信 \
+中国 \
+中國 \
+中文网 \
+亚马逊 \
+企业 \
+佛山 \
+信息 \
+健康 \
+八卦 \
+公司 \
+公益 \
+台湾 \
+台灣 \
+商城 \
+商店 \
+商标 \
+嘉里 \
+嘉里大酒店 \
+在线 \
+大众汽车 \
+大拿 \
+天主教 \
+娱乐 \
+家電 \
+广东 \
+微博 \
+慈善 \
+我爱你 \
+手机 \
+招聘 \
+政务 \
+政府 \
+新加坡 \
+新闻 \
+时尚 \
+書籍 \
+机构 \
+淡马锡 \
+游戏 \
+澳門 \
+点看 \
+移动 \
+组织机构 \
+网址 \
+网店 \
+网站 \
+网络 \
+联通 \
+诺基亚 \
+谷歌 \
+购物 \
+通販 \
+集团 \
+電訊盈科 \
+飞利浦 \
+食品 \
+餐厅 \
+香格里拉 \
+香港'.split(' ');
+
+/**
+	The scanner provides an interface that takes a string of text as input, and
+	outputs an array of tokens instances that can be used for easy URL parsing.
+
+	@module linkify
+	@submodule scanner
+	@main scanner
+*/
+
+var LETTER = /(?:[A-Za-z\xAA\xB5\xBA\xC0-\xD6\xD8-\xF6\xF8-\u02C1\u02C6-\u02D1\u02E0-\u02E4\u02EC\u02EE\u0370-\u0374\u0376\u0377\u037A-\u037D\u037F\u0386\u0388-\u038A\u038C\u038E-\u03A1\u03A3-\u03F5\u03F7-\u0481\u048A-\u052F\u0531-\u0556\u0559\u0560-\u0588\u05D0-\u05EA\u05EF-\u05F2\u0620-\u064A\u066E\u066F\u0671-\u06D3\u06D5\u06E5\u06E6\u06EE\u06EF\u06FA-\u06FC\u06FF\u0710\u0712-\u072F\u074D-\u07A5\u07B1\u07CA-\u07EA\u07F4\u07F5\u07FA\u0800-\u0815\u081A\u0824\u0828\u0840-\u0858\u0860-\u086A\u0870-\u0887\u0889-\u088E\u08A0-\u08C9\u0904-\u0939\u093D\u0950\u0958-\u0961\u0971-\u0980\u0985-\u098C\u098F\u0990\u0993-\u09A8\u09AA-\u09B0\u09B2\u09B6-\u09B9\u09BD\u09CE\u09DC\u09DD\u09DF-\u09E1\u09F0\u09F1\u09FC\u0A05-\u0A0A\u0A0F\u0A10\u0A13-\u0A28\u0A2A-\u0A30\u0A32\u0A33\u0A35\u0A36\u0A38\u0A39\u0A59-\u0A5C\u0A5E\u0A72-\u0A74\u0A85-\u0A8D\u0A8F-\u0A91\u0A93-\u0AA8\u0AAA-\u0AB0\u0AB2\u0AB3\u0AB5-\u0AB9\u0ABD\u0AD0\u0AE0\u0AE1\u0AF9\u0B05-\u0B0C\u0B0F\u0B10\u0B13-\u0B28\u0B2A-\u0B30\u0B32\u0B33\u0B35-\u0B39\u0B3D\u0B5C\u0B5D\u0B5F-\u0B61\u0B71\u0B83\u0B85-\u0B8A\u0B8E-\u0B90\u0B92-\u0B95\u0B99\u0B9A\u0B9C\u0B9E\u0B9F\u0BA3\u0BA4\u0BA8-\u0BAA\u0BAE-\u0BB9\u0BD0\u0C05-\u0C0C\u0C0E-\u0C10\u0C12-\u0C28\u0C2A-\u0C39\u0C3D\u0C58-\u0C5A\u0C5D\u0C60\u0C61\u0C80\u0C85-\u0C8C\u0C8E-\u0C90\u0C92-\u0CA8\u0CAA-\u0CB3\u0CB5-\u0CB9\u0CBD\u0CDD\u0CDE\u0CE0\u0CE1\u0CF1\u0CF2\u0D04-\u0D0C\u0D0E-\u0D10\u0D12-\u0D3A\u0D3D\u0D4E\u0D54-\u0D56\u0D5F-\u0D61\u0D7A-\u0D7F\u0D85-\u0D96\u0D9A-\u0DB1\u0DB3-\u0DBB\u0DBD\u0DC0-\u0DC6\u0E01-\u0E30\u0E32\u0E33\u0E40-\u0E46\u0E81\u0E82\u0E84\u0E86-\u0E8A\u0E8C-\u0EA3\u0EA5\u0EA7-\u0EB0\u0EB2\u0EB3\u0EBD\u0EC0-\u0EC4\u0EC6\u0EDC-\u0EDF\u0F00\u0F40-\u0F47\u0F49-\u0F6C\u0F88-\u0F8C\u1000-\u102A\u103F\u1050-\u1055\u105A-\u105D\u1061\u1065\u1066\u106E-\u1070\u1075-\u1081\u108E\u10A0-\u10C5\u10C7\u10CD\u10D0-\u10FA\u10FC-\u1248\u124A-\u124D\u1250-\u1256\u1258\u125A-\u125D\u1260-\u1288\u128A-\u128D\u1290-\u12B0\u12B2-\u12B5\u12B8-\u12BE\u12C0\u12C2-\u12C5\u12C8-\u12D6\u12D8-\u1310\u1312-\u1315\u1318-\u135A\u1380-\u138F\u13A0-\u13F5\u13F8-\u13FD\u1401-\u166C\u166F-\u167F\u1681-\u169A\u16A0-\u16EA\u16F1-\u16F8\u1700-\u1711\u171F-\u1731\u1740-\u1751\u1760-\u176C\u176E-\u1770\u1780-\u17B3\u17D7\u17DC\u1820-\u1878\u1880-\u1884\u1887-\u18A8\u18AA\u18B0-\u18F5\u1900-\u191E\u1950-\u196D\u1970-\u1974\u1980-\u19AB\u19B0-\u19C9\u1A00-\u1A16\u1A20-\u1A54\u1AA7\u1B05-\u1B33\u1B45-\u1B4C\u1B83-\u1BA0\u1BAE\u1BAF\u1BBA-\u1BE5\u1C00-\u1C23\u1C4D-\u1C4F\u1C5A-\u1C7D\u1C80-\u1C88\u1C90-\u1CBA\u1CBD-\u1CBF\u1CE9-\u1CEC\u1CEE-\u1CF3\u1CF5\u1CF6\u1CFA\u1D00-\u1DBF\u1E00-\u1F15\u1F18-\u1F1D\u1F20-\u1F45\u1F48-\u1F4D\u1F50-\u1F57\u1F59\u1F5B\u1F5D\u1F5F-\u1F7D\u1F80-\u1FB4\u1FB6-\u1FBC\u1FBE\u1FC2-\u1FC4\u1FC6-\u1FCC\u1FD0-\u1FD3\u1FD6-\u1FDB\u1FE0-\u1FEC\u1FF2-\u1FF4\u1FF6-\u1FFC\u2071\u207F\u2090-\u209C\u2102\u2107\u210A-\u2113\u2115\u2119-\u211D\u2124\u2126\u2128\u212A-\u212D\u212F-\u2139\u213C-\u213F\u2145-\u2149\u214E\u2183\u2184\u2C00-\u2CE4\u2CEB-\u2CEE\u2CF2\u2CF3\u2D00-\u2D25\u2D27\u2D2D\u2D30-\u2D67\u2D6F\u2D80-\u2D96\u2DA0-\u2DA6\u2DA8-\u2DAE\u2DB0-\u2DB6\u2DB8-\u2DBE\u2DC0-\u2DC6\u2DC8-\u2DCE\u2DD0-\u2DD6\u2DD8-\u2DDE\u2E2F\u3005\u3006\u3031-\u3035\u303B\u303C\u3041-\u3096\u309D-\u309F\u30A1-\u30FA\u30FC-\u30FF\u3105-\u312F\u3131-\u318E\u31A0-\u31BF\u31F0-\u31FF\u3400-\u4DBF\u4E00-\uA48C\uA4D0-\uA4FD\uA500-\uA60C\uA610-\uA61F\uA62A\uA62B\uA640-\uA66E\uA67F-\uA69D\uA6A0-\uA6E5\uA717-\uA71F\uA722-\uA788\uA78B-\uA7CA\uA7D0\uA7D1\uA7D3\uA7D5-\uA7D9\uA7F2-\uA801\uA803-\uA805\uA807-\uA80A\uA80C-\uA822\uA840-\uA873\uA882-\uA8B3\uA8F2-\uA8F7\uA8FB\uA8FD\uA8FE\uA90A-\uA925\uA930-\uA946\uA960-\uA97C\uA984-\uA9B2\uA9CF\uA9E0-\uA9E4\uA9E6-\uA9EF\uA9FA-\uA9FE\uAA00-\uAA28\uAA40-\uAA42\uAA44-\uAA4B\uAA60-\uAA76\uAA7A\uAA7E-\uAAAF\uAAB1\uAAB5\uAAB6\uAAB9-\uAABD\uAAC0\uAAC2\uAADB-\uAADD\uAAE0-\uAAEA\uAAF2-\uAAF4\uAB01-\uAB06\uAB09-\uAB0E\uAB11-\uAB16\uAB20-\uAB26\uAB28-\uAB2E\uAB30-\uAB5A\uAB5C-\uAB69\uAB70-\uABE2\uAC00-\uD7A3\uD7B0-\uD7C6\uD7CB-\uD7FB\uF900-\uFA6D\uFA70-\uFAD9\uFB00-\uFB06\uFB13-\uFB17\uFB1D\uFB1F-\uFB28\uFB2A-\uFB36\uFB38-\uFB3C\uFB3E\uFB40\uFB41\uFB43\uFB44\uFB46-\uFBB1\uFBD3-\uFD3D\uFD50-\uFD8F\uFD92-\uFDC7\uFDF0-\uFDFB\uFE70-\uFE74\uFE76-\uFEFC\uFF21-\uFF3A\uFF41-\uFF5A\uFF66-\uFFBE\uFFC2-\uFFC7\uFFCA-\uFFCF\uFFD2-\uFFD7\uFFDA-\uFFDC]|\uD800[\uDC00-\uDC0B\uDC0D-\uDC26\uDC28-\uDC3A\uDC3C\uDC3D\uDC3F-\uDC4D\uDC50-\uDC5D\uDC80-\uDCFA\uDE80-\uDE9C\uDEA0-\uDED0\uDF00-\uDF1F\uDF2D-\uDF40\uDF42-\uDF49\uDF50-\uDF75\uDF80-\uDF9D\uDFA0-\uDFC3\uDFC8-\uDFCF]|\uD801[\uDC00-\uDC9D\uDCB0-\uDCD3\uDCD8-\uDCFB\uDD00-\uDD27\uDD30-\uDD63\uDD70-\uDD7A\uDD7C-\uDD8A\uDD8C-\uDD92\uDD94\uDD95\uDD97-\uDDA1\uDDA3-\uDDB1\uDDB3-\uDDB9\uDDBB\uDDBC\uDE00-\uDF36\uDF40-\uDF55\uDF60-\uDF67\uDF80-\uDF85\uDF87-\uDFB0\uDFB2-\uDFBA]|\uD802[\uDC00-\uDC05\uDC08\uDC0A-\uDC35\uDC37\uDC38\uDC3C\uDC3F-\uDC55\uDC60-\uDC76\uDC80-\uDC9E\uDCE0-\uDCF2\uDCF4\uDCF5\uDD00-\uDD15\uDD20-\uDD39\uDD80-\uDDB7\uDDBE\uDDBF\uDE00\uDE10-\uDE13\uDE15-\uDE17\uDE19-\uDE35\uDE60-\uDE7C\uDE80-\uDE9C\uDEC0-\uDEC7\uDEC9-\uDEE4\uDF00-\uDF35\uDF40-\uDF55\uDF60-\uDF72\uDF80-\uDF91]|\uD803[\uDC00-\uDC48\uDC80-\uDCB2\uDCC0-\uDCF2\uDD00-\uDD23\uDE80-\uDEA9\uDEB0\uDEB1\uDF00-\uDF1C\uDF27\uDF30-\uDF45\uDF70-\uDF81\uDFB0-\uDFC4\uDFE0-\uDFF6]|\uD804[\uDC03-\uDC37\uDC71\uDC72\uDC75\uDC83-\uDCAF\uDCD0-\uDCE8\uDD03-\uDD26\uDD44\uDD47\uDD50-\uDD72\uDD76\uDD83-\uDDB2\uDDC1-\uDDC4\uDDDA\uDDDC\uDE00-\uDE11\uDE13-\uDE2B\uDE80-\uDE86\uDE88\uDE8A-\uDE8D\uDE8F-\uDE9D\uDE9F-\uDEA8\uDEB0-\uDEDE\uDF05-\uDF0C\uDF0F\uDF10\uDF13-\uDF28\uDF2A-\uDF30\uDF32\uDF33\uDF35-\uDF39\uDF3D\uDF50\uDF5D-\uDF61]|\uD805[\uDC00-\uDC34\uDC47-\uDC4A\uDC5F-\uDC61\uDC80-\uDCAF\uDCC4\uDCC5\uDCC7\uDD80-\uDDAE\uDDD8-\uDDDB\uDE00-\uDE2F\uDE44\uDE80-\uDEAA\uDEB8\uDF00-\uDF1A\uDF40-\uDF46]|\uD806[\uDC00-\uDC2B\uDCA0-\uDCDF\uDCFF-\uDD06\uDD09\uDD0C-\uDD13\uDD15\uDD16\uDD18-\uDD2F\uDD3F\uDD41\uDDA0-\uDDA7\uDDAA-\uDDD0\uDDE1\uDDE3\uDE00\uDE0B-\uDE32\uDE3A\uDE50\uDE5C-\uDE89\uDE9D\uDEB0-\uDEF8]|\uD807[\uDC00-\uDC08\uDC0A-\uDC2E\uDC40\uDC72-\uDC8F\uDD00-\uDD06\uDD08\uDD09\uDD0B-\uDD30\uDD46\uDD60-\uDD65\uDD67\uDD68\uDD6A-\uDD89\uDD98\uDEE0-\uDEF2\uDFB0]|\uD808[\uDC00-\uDF99]|\uD809[\uDC80-\uDD43]|\uD80B[\uDF90-\uDFF0]|[\uD80C\uD81C-\uD820\uD822\uD840-\uD868\uD86A-\uD86C\uD86F-\uD872\uD874-\uD879\uD880-\uD883][\uDC00-\uDFFF]|\uD80D[\uDC00-\uDC2E]|\uD811[\uDC00-\uDE46]|\uD81A[\uDC00-\uDE38\uDE40-\uDE5E\uDE70-\uDEBE\uDED0-\uDEED\uDF00-\uDF2F\uDF40-\uDF43\uDF63-\uDF77\uDF7D-\uDF8F]|\uD81B[\uDE40-\uDE7F\uDF00-\uDF4A\uDF50\uDF93-\uDF9F\uDFE0\uDFE1\uDFE3]|\uD821[\uDC00-\uDFF7]|\uD823[\uDC00-\uDCD5\uDD00-\uDD08]|\uD82B[\uDFF0-\uDFF3\uDFF5-\uDFFB\uDFFD\uDFFE]|\uD82C[\uDC00-\uDD22\uDD50-\uDD52\uDD64-\uDD67\uDD70-\uDEFB]|\uD82F[\uDC00-\uDC6A\uDC70-\uDC7C\uDC80-\uDC88\uDC90-\uDC99]|\uD835[\uDC00-\uDC54\uDC56-\uDC9C\uDC9E\uDC9F\uDCA2\uDCA5\uDCA6\uDCA9-\uDCAC\uDCAE-\uDCB9\uDCBB\uDCBD-\uDCC3\uDCC5-\uDD05\uDD07-\uDD0A\uDD0D-\uDD14\uDD16-\uDD1C\uDD1E-\uDD39\uDD3B-\uDD3E\uDD40-\uDD44\uDD46\uDD4A-\uDD50\uDD52-\uDEA5\uDEA8-\uDEC0\uDEC2-\uDEDA\uDEDC-\uDEFA\uDEFC-\uDF14\uDF16-\uDF34\uDF36-\uDF4E\uDF50-\uDF6E\uDF70-\uDF88\uDF8A-\uDFA8\uDFAA-\uDFC2\uDFC4-\uDFCB]|\uD837[\uDF00-\uDF1E]|\uD838[\uDD00-\uDD2C\uDD37-\uDD3D\uDD4E\uDE90-\uDEAD\uDEC0-\uDEEB]|\uD839[\uDFE0-\uDFE6\uDFE8-\uDFEB\uDFED\uDFEE\uDFF0-\uDFFE]|\uD83A[\uDC00-\uDCC4\uDD00-\uDD43\uDD4B]|\uD83B[\uDE00-\uDE03\uDE05-\uDE1F\uDE21\uDE22\uDE24\uDE27\uDE29-\uDE32\uDE34-\uDE37\uDE39\uDE3B\uDE42\uDE47\uDE49\uDE4B\uDE4D-\uDE4F\uDE51\uDE52\uDE54\uDE57\uDE59\uDE5B\uDE5D\uDE5F\uDE61\uDE62\uDE64\uDE67-\uDE6A\uDE6C-\uDE72\uDE74-\uDE77\uDE79-\uDE7C\uDE7E\uDE80-\uDE89\uDE8B-\uDE9B\uDEA1-\uDEA3\uDEA5-\uDEA9\uDEAB-\uDEBB]|\uD869[\uDC00-\uDEDF\uDF00-\uDFFF]|\uD86D[\uDC00-\uDF38\uDF40-\uDFFF]|\uD86E[\uDC00-\uDC1D\uDC20-\uDFFF]|\uD873[\uDC00-\uDEA1\uDEB0-\uDFFF]|\uD87A[\uDC00-\uDFE0]|\uD87E[\uDC00-\uDE1D]|\uD884[\uDC00-\uDF4A])/; // Any Unicode character with letter data type
+
+var EMOJI = /(?:[#\*0-9\xA9\xAE\u203C\u2049\u2122\u2139\u2194-\u2199\u21A9\u21AA\u231A\u231B\u2328\u23CF\u23E9-\u23F3\u23F8-\u23FA\u24C2\u25AA\u25AB\u25B6\u25C0\u25FB-\u25FE\u2600-\u2604\u260E\u2611\u2614\u2615\u2618\u261D\u2620\u2622\u2623\u2626\u262A\u262E\u262F\u2638-\u263A\u2640\u2642\u2648-\u2653\u265F\u2660\u2663\u2665\u2666\u2668\u267B\u267E\u267F\u2692-\u2697\u2699\u269B\u269C\u26A0\u26A1\u26A7\u26AA\u26AB\u26B0\u26B1\u26BD\u26BE\u26C4\u26C5\u26C8\u26CE\u26CF\u26D1\u26D3\u26D4\u26E9\u26EA\u26F0-\u26F5\u26F7-\u26FA\u26FD\u2702\u2705\u2708-\u270D\u270F\u2712\u2714\u2716\u271D\u2721\u2728\u2733\u2734\u2744\u2747\u274C\u274E\u2753-\u2755\u2757\u2763\u2764\u2795-\u2797\u27A1\u27B0\u27BF\u2934\u2935\u2B05-\u2B07\u2B1B\u2B1C\u2B50\u2B55\u3030\u303D\u3297\u3299]|\uD83C[\uDC04\uDCCF\uDD70\uDD71\uDD7E\uDD7F\uDD8E\uDD91-\uDD9A\uDDE6-\uDDFF\uDE01\uDE02\uDE1A\uDE2F\uDE32-\uDE3A\uDE50\uDE51\uDF00-\uDF21\uDF24-\uDF93\uDF96\uDF97\uDF99-\uDF9B\uDF9E-\uDFF0\uDFF3-\uDFF5\uDFF7-\uDFFF]|\uD83D[\uDC00-\uDCFD\uDCFF-\uDD3D\uDD49-\uDD4E\uDD50-\uDD67\uDD6F\uDD70\uDD73-\uDD7A\uDD87\uDD8A-\uDD8D\uDD90\uDD95\uDD96\uDDA4\uDDA5\uDDA8\uDDB1\uDDB2\uDDBC\uDDC2-\uDDC4\uDDD1-\uDDD3\uDDDC-\uDDDE\uDDE1\uDDE3\uDDE8\uDDEF\uDDF3\uDDFA-\uDE4F\uDE80-\uDEC5\uDECB-\uDED2\uDED5-\uDED7\uDEDD-\uDEE5\uDEE9\uDEEB\uDEEC\uDEF0\uDEF3-\uDEFC\uDFE0-\uDFEB\uDFF0]|\uD83E[\uDD0C-\uDD3A\uDD3C-\uDD45\uDD47-\uDDFF\uDE70-\uDE74\uDE78-\uDE7C\uDE80-\uDE86\uDE90-\uDEAC\uDEB0-\uDEBA\uDEC0-\uDEC5\uDED0-\uDED9\uDEE0-\uDEE7\uDEF0-\uDEF6])/; // Any Unicode emoji character
+
+var EMOJI_VARIATION = /\uFE0F/; // Variation selector, follows heart and others
+
+var DIGIT = /\d/;
+var SPACE = /\s/;
+/**
+ * Initialize the scanner character-based state machine for the given start state
+ * @return {State} scanner starting state
+ */
+
+function init$2() {
+  var customProtocols = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+  // Frequently used states
+  var S_START = makeState();
+  var S_NUM = makeAcceptingState(NUM);
+  var S_DOMAIN = makeAcceptingState(DOMAIN);
+  var S_DOMAIN_HYPHEN = makeState(); // domain followed by 1 or more hyphen characters
+
+  var S_WS = makeAcceptingState(WS);
+  var DOMAIN_REGEX_TRANSITIONS = [[DIGIT, S_DOMAIN], [LETTER, S_DOMAIN], [EMOJI, S_DOMAIN], [EMOJI_VARIATION, S_DOMAIN]]; // Create a state which emits a domain token
+
+  var makeDomainState = function makeDomainState() {
+    var state = makeAcceptingState(DOMAIN);
+    state.j = {
+      '-': S_DOMAIN_HYPHEN
+    };
+    state.jr = [].concat(DOMAIN_REGEX_TRANSITIONS);
+    return state;
+  }; // Create a state which does not emit a domain state but the usual alphanumeric
+  // transitions are domains
+
+
+  var makeNearDomainState = function makeNearDomainState(token) {
+    var state = makeDomainState();
+    state.t = token;
+    return state;
+  }; // States for special URL symbols that accept immediately after start
+
+
+  makeBatchT(S_START, [["'", makeAcceptingState(APOSTROPHE)], ['{', makeAcceptingState(OPENBRACE)], ['[', makeAcceptingState(OPENBRACKET)], ['<', makeAcceptingState(OPENANGLEBRACKET)], ['(', makeAcceptingState(OPENPAREN)], ['}', makeAcceptingState(CLOSEBRACE)], [']', makeAcceptingState(CLOSEBRACKET)], ['>', makeAcceptingState(CLOSEANGLEBRACKET)], [')', makeAcceptingState(CLOSEPAREN)], ['&', makeAcceptingState(AMPERSAND)], ['*', makeAcceptingState(ASTERISK)], ['@', makeAcceptingState(AT)], ['`', makeAcceptingState(BACKTICK)], ['^', makeAcceptingState(CARET)], [':', makeAcceptingState(COLON)], [',', makeAcceptingState(COMMA)], ['$', makeAcceptingState(DOLLAR)], ['.', makeAcceptingState(DOT)], ['=', makeAcceptingState(EQUALS)], ['!', makeAcceptingState(EXCLAMATION)], ['-', makeAcceptingState(HYPHEN)], ['%', makeAcceptingState(PERCENT)], ['|', makeAcceptingState(PIPE)], ['+', makeAcceptingState(PLUS)], ['#', makeAcceptingState(POUND)], ['?', makeAcceptingState(QUERY)], ['"', makeAcceptingState(QUOTE)], ['/', makeAcceptingState(SLASH)], [';', makeAcceptingState(SEMI)], ['~', makeAcceptingState(TILDE)], ['_', makeAcceptingState(UNDERSCORE)], ['\\', makeAcceptingState(BACKSLASH)]]); // Whitespace jumps
+  // Tokens of only non-newline whitespace are arbitrarily long
+
+  makeT(S_START, '\n', makeAcceptingState(NL));
+  makeRegexT(S_START, SPACE, S_WS); // If any whitespace except newline, more whitespace!
+
+  makeT(S_WS, '\n', makeState()); // non-accepting state
+
+  makeRegexT(S_WS, SPACE, S_WS); // Generates states for top-level domains
+  // Note that this is most accurate when tlds are in alphabetical order
+
+  for (var i = 0; i < tlds.length; i++) {
+    makeChainT(S_START, tlds[i], makeNearDomainState(TLD), makeDomainState);
+  } // Collect the states generated by different protocls
+
+
+  var S_PROTOCOL_FILE = makeDomainState();
+  var S_PROTOCOL_FTP = makeDomainState();
+  var S_PROTOCOL_HTTP = makeDomainState();
+  var S_MAILTO = makeDomainState();
+  makeChainT(S_START, 'file', S_PROTOCOL_FILE, makeDomainState);
+  makeChainT(S_START, 'ftp', S_PROTOCOL_FTP, makeDomainState);
+  makeChainT(S_START, 'http', S_PROTOCOL_HTTP, makeDomainState);
+  makeChainT(S_START, 'mailto', S_MAILTO, makeDomainState); // Protocol states
+
+  var S_PROTOCOL_SECURE = makeDomainState();
+  var S_FULL_PROTOCOL = makeAcceptingState(PROTOCOL); // Full protocol ends with COLON
+
+  var S_FULL_MAILTO = makeAcceptingState(MAILTO); // Mailto ends with COLON
+  // Secure protocols (end with 's')
+
+  makeT(S_PROTOCOL_FTP, 's', S_PROTOCOL_SECURE);
+  makeT(S_PROTOCOL_FTP, ':', S_FULL_PROTOCOL);
+  makeT(S_PROTOCOL_HTTP, 's', S_PROTOCOL_SECURE);
+  makeT(S_PROTOCOL_HTTP, ':', S_FULL_PROTOCOL); // Become protocol tokens after a COLON
+
+  makeT(S_PROTOCOL_FILE, ':', S_FULL_PROTOCOL);
+  makeT(S_PROTOCOL_SECURE, ':', S_FULL_PROTOCOL);
+  makeT(S_MAILTO, ':', S_FULL_MAILTO); // Register custom protocols
+
+  var S_CUSTOM_PROTOCOL = makeDomainState();
+
+  for (var _i = 0; _i < customProtocols.length; _i++) {
+    makeChainT(S_START, customProtocols[_i], S_CUSTOM_PROTOCOL, makeDomainState);
+  }
+
+  makeT(S_CUSTOM_PROTOCOL, ':', S_FULL_PROTOCOL); // Localhost
+
+  makeChainT(S_START, 'localhost', makeNearDomainState(LOCALHOST), makeDomainState); // Everything else
+  // DOMAINs make more DOMAINs
+  // Number and character transitions
+
+  makeRegexT(S_START, DIGIT, S_NUM);
+  makeRegexT(S_START, LETTER, S_DOMAIN);
+  makeRegexT(S_START, EMOJI, S_DOMAIN);
+  makeRegexT(S_START, EMOJI_VARIATION, S_DOMAIN);
+  makeRegexT(S_NUM, DIGIT, S_NUM);
+  makeRegexT(S_NUM, LETTER, S_DOMAIN); // number becomes DOMAIN
+
+  makeRegexT(S_NUM, EMOJI, S_DOMAIN); // number becomes DOMAIN
+
+  makeRegexT(S_NUM, EMOJI_VARIATION, S_DOMAIN); // number becomes DOMAIN
+
+  makeT(S_NUM, '-', S_DOMAIN_HYPHEN); // Default domain transitions
+
+  makeT(S_DOMAIN, '-', S_DOMAIN_HYPHEN);
+  makeT(S_DOMAIN_HYPHEN, '-', S_DOMAIN_HYPHEN);
+  makeRegexT(S_DOMAIN, DIGIT, S_DOMAIN);
+  makeRegexT(S_DOMAIN, LETTER, S_DOMAIN);
+  makeRegexT(S_DOMAIN, EMOJI, S_DOMAIN);
+  makeRegexT(S_DOMAIN, EMOJI_VARIATION, S_DOMAIN);
+  makeRegexT(S_DOMAIN_HYPHEN, DIGIT, S_DOMAIN);
+  makeRegexT(S_DOMAIN_HYPHEN, LETTER, S_DOMAIN);
+  makeRegexT(S_DOMAIN_HYPHEN, EMOJI, S_DOMAIN);
+  makeRegexT(S_DOMAIN_HYPHEN, EMOJI_VARIATION, S_DOMAIN); // Set default transition for start state (some symbol)
+
+  S_START.jd = makeAcceptingState(SYM);
+  return S_START;
+}
+/**
+	Given a string, returns an array of TOKEN instances representing the
+	composition of that string.
+
+	@method run
+	@param {State} start scanner starting state
+	@param {string} str input string to scan
+	@return {{t: string, v: string, s: number, l: number}[]} list of tokens, each with a type and value
+*/
+
+function run$1(start, str) {
+  // State machine is not case sensitive, so input is tokenized in lowercased
+  // form (still returns the regular case though) Uses selective `toLowerCase`
+  // is used because lowercasing the entire string causes the length and
+  // character position to vary in some non-English strings with V8-based
+  // runtimes.
+  var iterable = stringToArray(str.replace(/[A-Z]/g, function (c) {
+    return c.toLowerCase();
+  }));
+  var charCount = iterable.length; // <= len if there are emojis, etc
+
+  var tokens = []; // return value
+  // cursor through the string itself, accounting for characters that have
+  // width with length 2 such as emojis
+
+  var cursor = 0; // Cursor through the array-representation of the string
+
+  var charCursor = 0; // Tokenize the string
+
+  while (charCursor < charCount) {
+    var state = start;
+    var nextState = null;
+    var tokenLength = 0;
+    var latestAccepting = null;
+    var sinceAccepts = -1;
+    var charsSinceAccepts = -1;
+
+    while (charCursor < charCount && (nextState = takeT(state, iterable[charCursor]))) {
+      state = nextState; // Keep track of the latest accepting state
+
+      if (state.accepts()) {
+        sinceAccepts = 0;
+        charsSinceAccepts = 0;
+        latestAccepting = state;
+      } else if (sinceAccepts >= 0) {
+        sinceAccepts += iterable[charCursor].length;
+        charsSinceAccepts++;
+      }
+
+      tokenLength += iterable[charCursor].length;
+      cursor += iterable[charCursor].length;
+      charCursor++;
+    } // Roll back to the latest accepting state
+
+
+    cursor -= sinceAccepts;
+    charCursor -= charsSinceAccepts;
+    tokenLength -= sinceAccepts; // No more jumps, just make a new token from the last accepting one
+    // TODO: If possible, don't output v, instead output range where values ocur
+
+    tokens.push({
+      t: latestAccepting.t,
+      // token type/name
+      v: str.substr(cursor - tokenLength, tokenLength),
+      // string value
+      s: cursor - tokenLength,
+      // start index
+      e: cursor // end index (excluding)
+
+    });
+  }
+
+  return tokens;
+}
+/**
+ * Convert a String to an Array of characters, taking into account that some
+ * characters like emojis take up two string indexes.
+ *
+ * Adapted from core-js (MIT license)
+ * https://github.com/zloirock/core-js/blob/2d69cf5f99ab3ea3463c395df81e5a15b68f49d9/packages/core-js/internals/string-multibyte.js
+ *
+ * @function stringToArray
+ * @param {string} str
+ * @returns {string[]}
+ */
+
+function stringToArray(str) {
+  var result = [];
+  var len = str.length;
+  var index = 0;
+
+  while (index < len) {
+    var first = str.charCodeAt(index);
+    var second = void 0;
+    var char = first < 0xd800 || first > 0xdbff || index + 1 === len || (second = str.charCodeAt(index + 1)) < 0xdc00 || second > 0xdfff ? str[index] // single character
+    : str.slice(index, index + 2); // two-index characters
+
+    result.push(char);
+    index += char.length;
+  }
+
+  return result;
+}
+
+function _typeof(obj) {
+  "@babel/helpers - typeof";
+
+  if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
+    _typeof = function (obj) {
+      return typeof obj;
+    };
+  } else {
+    _typeof = function (obj) {
+      return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+    };
+  }
+
+  return _typeof(obj);
 }
 
 /**
-	Converts a string into tokens that represent linkable and non-linkable bits
-	@method tokenize
-	@param {String} str
-	@return {Array} tokens
-*/
-var tokenize = function tokenize(str) {
-	return parser.run(scanner.run(str));
+ * @property {string} defaultProtocol
+ * @property {{[string]: (event) => void}]} [events]
+ */
+var defaults = {
+  defaultProtocol: 'http',
+  events: null,
+  format: noop,
+  formatHref: noop,
+  nl2br: false,
+  tagName: 'a',
+  target: null,
+  rel: null,
+  validate: true,
+  truncate: 0,
+  className: null,
+  attributes: null,
+  ignoreTags: []
 };
-
 /**
-	Returns a list of linkable items in the given string.
-*/
-var find = function find(str) {
-	var type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+ * @class Options
+ * @param {Object} [opts] Set option properties besides the defaults
+ */
 
-	var tokens = tokenize(str);
-	var filtered = [];
+function Options(opts) {
+  opts = opts || {};
+  this.defaultProtocol = 'defaultProtocol' in opts ? opts.defaultProtocol : defaults.defaultProtocol;
+  this.events = 'events' in opts ? opts.events : defaults.events;
+  this.format = 'format' in opts ? opts.format : defaults.format;
+  this.formatHref = 'formatHref' in opts ? opts.formatHref : defaults.formatHref;
+  this.nl2br = 'nl2br' in opts ? opts.nl2br : defaults.nl2br;
+  this.tagName = 'tagName' in opts ? opts.tagName : defaults.tagName;
+  this.target = 'target' in opts ? opts.target : defaults.target;
+  this.rel = 'rel' in opts ? opts.rel : defaults.rel;
+  this.validate = 'validate' in opts ? opts.validate : defaults.validate;
+  this.truncate = 'truncate' in opts ? opts.truncate : defaults.truncate;
+  this.className = 'className' in opts ? opts.className : defaults.className;
+  this.attributes = opts.attributes || defaults.attributes;
+  this.ignoreTags = []; // Make all tags names upper case
 
-	for (var i = 0; i < tokens.length; i++) {
-		var token = tokens[i];
-		if (token.isLink && (!type || token.type === type)) {
-			filtered.push(token.toObject());
-		}
-	}
+  var ignoredTags = 'ignoreTags' in opts ? opts.ignoreTags : defaults.ignoreTags;
 
-	return filtered;
+  for (var i = 0; i < ignoredTags.length; i++) {
+    this.ignoreTags.push(ignoredTags[i].toUpperCase());
+  }
+}
+Options.prototype = {
+  /**
+   * Given the token, return all options for how it should be displayed
+   */
+  resolve: function resolve(token) {
+    var href = token.toHref(this.defaultProtocol);
+    return {
+      formatted: this.get('format', token.toString(), token),
+      formattedHref: this.get('formatHref', href, token),
+      tagName: this.get('tagName', href, token),
+      className: this.get('className', href, token),
+      target: this.get('target', href, token),
+      rel: this.get('rel', href, token),
+      events: this.getObject('events', href, token),
+      attributes: this.getObject('attributes', href, token),
+      truncate: this.get('truncate', href, token)
+    };
+  },
+
+  /**
+   * Returns true or false based on whether a token should be displayed as a
+   * link based on the user options. By default,
+   */
+  check: function check(token) {
+    return this.get('validate', token.toString(), token);
+  },
+  // Private methods
+
+  /**
+   * Resolve an option's value based on the value of the option and the given
+   * params.
+   * @param {string} key Name of option to use
+   * @param operator will be passed to the target option if it's method
+   * @param {MultiToken} token The token from linkify.tokenize
+   */
+  get: function get(key, operator, token) {
+    var option = this[key];
+
+    if (!option) {
+      return option;
+    }
+
+    var optionValue;
+
+    switch (_typeof(option)) {
+      case 'function':
+        return option(operator, token.t);
+
+      case 'object':
+        optionValue = token.t in option ? option[token.t] : defaults[key];
+        return typeof optionValue === 'function' ? optionValue(operator, token.t) : optionValue;
+    }
+
+    return option;
+  },
+  getObject: function getObject(key, operator, token) {
+    var option = this[key];
+    return typeof option === 'function' ? option(operator, token.t) : option;
+  }
 };
 
+function noop(val) {
+  return val;
+}
+
+var options = /*#__PURE__*/Object.freeze({
+	__proto__: null,
+	defaults: defaults,
+	Options: Options
+});
+
+/******************************************************************************
+	Multi-Tokens
+	Tokens composed of arrays of TextTokens
+******************************************************************************/
+
+function inherits(parent, child) {
+  var props = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+  var extended = Object.create(parent.prototype);
+
+  for (var p in props) {
+    extended[p] = props[p];
+  }
+
+  extended.constructor = child;
+  child.prototype = extended;
+  return child;
+}
 /**
-	Is the given string valid linkable text of some sort
-	Note that this does not trim the text for you.
+	Abstract class used for manufacturing tokens of text tokens. That is rather
+	than the value for a token being a small string of text, it's value an array
+	of text tokens.
 
-	Optionally pass in a second `type` param, which is the type of link to test
-	for.
+	Used for grouping together URLs, emails, hashtags, and other potential
+	creations.
 
-	For example,
-
-		test(str, 'email');
-
-	Will return `true` if str is a valid email.
+	@class MultiToken
+	@param {string} value
+	@param {{t: string, v: string, s: number, e: number}[]} tokens
+	@abstract
 */
-var test = function test(str) {
-	var type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
 
-	var tokens = tokenize(str);
-	return tokens.length === 1 && tokens[0].isLink && (!type || tokens[0].type === type);
-};
 
-// Scanner and parser provide states and tokens for the lexicographic stage
-// (will be used to add additional link types)
-exports.find = find;
-exports.inherits = _class.inherits;
-exports.options = options;
-exports.parser = parser;
-exports.scanner = scanner;
-exports.test = test;
-exports.tokenize = tokenize;
-},{"./linkify/core/parser":22,"./linkify/core/scanner":23,"./linkify/utils/class":28,"./linkify/utils/options":29}],22:[function(require,module,exports){
-'use strict';
+function MultiToken() {}
+MultiToken.prototype = {
+  /**
+  	String representing the type for this token
+  	@property t
+  	@default 'token'
+  */
+  t: 'token',
 
-exports.__esModule = true;
-exports.start = exports.run = exports.TOKENS = exports.State = undefined;
+  /**
+  	Is this multitoken a link?
+  	@property isLink
+  	@default false
+  */
+  isLink: false,
 
-var _state = require('./state');
+  /**
+  	Return the string this token represents.
+  	@method toString
+  	@return {string}
+  */
+  toString: function toString() {
+    return this.v;
+  },
 
-var _multi = require('./tokens/multi');
+  /**
+  	What should the value for this token be in the `href` HTML attribute?
+  	Returns the `.toString` value by default.
+  		@method toHref
+  	@return {string}
+  */
+  toHref: function toHref() {
+    return this.toString();
+  },
 
-var MULTI_TOKENS = _interopRequireWildcard(_multi);
+  /**
+   * The start index of this token in the original input string
+   * @returns {number}
+   */
+  startIndex: function startIndex() {
+    return this.tk[0].s;
+  },
 
-var _text = require('./tokens/text');
+  /**
+   * The end index of this token in the original input string (up to this
+   * index but not including it)
+   * @returns {number}
+   */
+  endIndex: function endIndex() {
+    return this.tk[this.tk.length - 1].e;
+  },
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+  /**
+  	Returns a hash of relevant values for this token, which includes keys
+  	* type - Kind of token ('url', 'email', etc.)
+  	* value - Original text
+  	* href - The value that should be added to the anchor tag's href
+  		attribute
+  		@method toObject
+  	@param {string} [protocol] `'http'` by default
+  */
+  toObject: function toObject() {
+    var protocol = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : defaults.defaultProtocol;
+    return {
+      type: this.t,
+      value: this.v,
+      isLink: this.isLink,
+      href: this.toHref(protocol),
+      start: this.startIndex(),
+      end: this.endIndex()
+    };
+  }
+}; // Base token
+/**
+ * Create a new token that can be emitted by the parser state machine
+ * @param {string} type readable type of the token
+ * @param {object} props properties to assign or override, including isLink = true or false
+ * @returns {(value: string, tokens: {t: string, v: string, s: number, e: number}) => MultiToken} new token class
+ */
+
+function createTokenClass(type, props) {
+  function Token(value, tokens) {
+    this.t = type;
+    this.v = value;
+    this.tk = tokens;
+  }
+
+  inherits(MultiToken, Token, props);
+  return Token;
+}
+/**
+	Represents an arbitrarily mailto email address with the prefix included
+	@class MailtoEmail
+	@extends MultiToken
+*/
+
+var MailtoEmail = createTokenClass('email', {
+  isLink: true
+});
+/**
+	Represents a list of tokens making up a valid email address
+	@class Email
+	@extends MultiToken
+*/
+
+var Email = createTokenClass('email', {
+  isLink: true,
+  toHref: function toHref() {
+    return 'mailto:' + this.toString();
+  }
+});
+/**
+	Represents some plain text
+	@class Text
+	@extends MultiToken
+*/
+
+var Text = createTokenClass('text');
+/**
+	Multi-linebreak token - represents a line break
+	@class Nl
+	@extends MultiToken
+*/
+
+var Nl = createTokenClass('nl');
+/**
+	Represents a list of text tokens making up a valid URL
+	@class Url
+	@extends MultiToken
+*/
+
+var Url = createTokenClass('url', {
+  isLink: true,
+
+  /**
+  	Lowercases relevant parts of the domain and adds the protocol if
+  	required. Note that this will not escape unsafe HTML characters in the
+  	URL.
+  		@method href
+  	@param {string} protocol
+  	@return {string}
+  */
+  toHref: function toHref() {
+    var protocol = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : defaults.defaultProtocol;
+    var tokens = this.tk;
+    var hasProtocol = false;
+    var hasSlashSlash = false;
+    var result = [];
+    var i = 0; // Make the first part of the domain lowercase
+    // Lowercase protocol
+
+    while (tokens[i].t === PROTOCOL) {
+      hasProtocol = true;
+      result.push(tokens[i].v);
+      i++;
+    } // Skip slash-slash
+
+
+    while (tokens[i].t === SLASH) {
+      hasSlashSlash = true;
+      result.push(tokens[i].v);
+      i++;
+    } // Continue pushing characters
+
+
+    for (; i < tokens.length; i++) {
+      result.push(tokens[i].v);
+    }
+
+    result = result.join('');
+
+    if (!(hasProtocol || hasSlashSlash)) {
+      result = "".concat(protocol, "://").concat(result);
+    }
+
+    return result;
+  },
+  hasProtocol: function hasProtocol() {
+    return this.tk[0].t === PROTOCOL;
+  }
+});
+
+var multi = /*#__PURE__*/Object.freeze({
+	__proto__: null,
+	MultiToken: MultiToken,
+	Base: MultiToken,
+	createTokenClass: createTokenClass,
+	MailtoEmail: MailtoEmail,
+	Email: Email,
+	Text: Text,
+	Nl: Nl,
+	Url: Url
+});
 
 /**
 	Not exactly parser, more like the second-stage scanner (although we can
@@ -5609,1260 +8649,483 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 
 	@module linkify
 	@submodule parser
-	@main parser
+	@main run
 */
-
-var makeState = function makeState(tokenClass) {
-	return new _state.TokenState(tokenClass);
-};
-
-// The universal starting state.
-var S_START = makeState();
-
-// Intermediate states for URLs. Note that domains that begin with a protocol
-// are treated slighly differently from those that don't.
-var S_PROTOCOL = makeState(); // e.g., 'http:'
-var S_MAILTO = makeState(); // 'mailto:'
-var S_PROTOCOL_SLASH = makeState(); // e.g., '/', 'http:/''
-var S_PROTOCOL_SLASH_SLASH = makeState(); // e.g., '//', 'http://'
-var S_DOMAIN = makeState(); // parsed string ends with a potential domain name (A)
-var S_DOMAIN_DOT = makeState(); // (A) domain followed by DOT
-var S_TLD = makeState(_multi.URL); // (A) Simplest possible URL with no query string
-var S_TLD_COLON = makeState(); // (A) URL followed by colon (potential port number here)
-var S_TLD_PORT = makeState(_multi.URL); // TLD followed by a port number
-var S_URL = makeState(_multi.URL); // Long URL with optional port and maybe query string
-var S_URL_NON_ACCEPTING = makeState(); // URL followed by some symbols (will not be part of the final URL)
-var S_URL_OPENBRACE = makeState(); // URL followed by {
-var S_URL_OPENBRACKET = makeState(); // URL followed by [
-var S_URL_OPENANGLEBRACKET = makeState(); // URL followed by <
-var S_URL_OPENPAREN = makeState(); // URL followed by (
-var S_URL_OPENBRACE_Q = makeState(_multi.URL); // URL followed by { and some symbols that the URL can end it
-var S_URL_OPENBRACKET_Q = makeState(_multi.URL); // URL followed by [ and some symbols that the URL can end it
-var S_URL_OPENANGLEBRACKET_Q = makeState(_multi.URL); // URL followed by < and some symbols that the URL can end it
-var S_URL_OPENPAREN_Q = makeState(_multi.URL); // URL followed by ( and some symbols that the URL can end it
-var S_URL_OPENBRACE_SYMS = makeState(); // S_URL_OPENBRACE_Q followed by some symbols it cannot end it
-var S_URL_OPENBRACKET_SYMS = makeState(); // S_URL_OPENBRACKET_Q followed by some symbols it cannot end it
-var S_URL_OPENANGLEBRACKET_SYMS = makeState(); // S_URL_OPENANGLEBRACKET_Q followed by some symbols it cannot end it
-var S_URL_OPENPAREN_SYMS = makeState(); // S_URL_OPENPAREN_Q followed by some symbols it cannot end it
-var S_EMAIL_DOMAIN = makeState(); // parsed string starts with local email info + @ with a potential domain name (C)
-var S_EMAIL_DOMAIN_DOT = makeState(); // (C) domain followed by DOT
-var S_EMAIL = makeState(_multi.EMAIL); // (C) Possible email address (could have more tlds)
-var S_EMAIL_COLON = makeState(); // (C) URL followed by colon (potential port number here)
-var S_EMAIL_PORT = makeState(_multi.EMAIL); // (C) Email address with a port
-var S_MAILTO_EMAIL = makeState(_multi.MAILTOEMAIL); // Email that begins with the mailto prefix (D)
-var S_MAILTO_EMAIL_NON_ACCEPTING = makeState(); // (D) Followed by some non-query string chars
-var S_LOCALPART = makeState(); // Local part of the email address
-var S_LOCALPART_AT = makeState(); // Local part of the email address plus @
-var S_LOCALPART_DOT = makeState(); // Local part of the email address plus '.' (localpart cannot end in .)
-var S_NL = makeState(_multi.NL); // single new line
-
-// Make path from start to protocol (with '//')
-S_START.on(_text.NL, S_NL).on(_text.PROTOCOL, S_PROTOCOL).on(_text.MAILTO, S_MAILTO).on(_text.SLASH, S_PROTOCOL_SLASH);
-
-S_PROTOCOL.on(_text.SLASH, S_PROTOCOL_SLASH);
-S_PROTOCOL_SLASH.on(_text.SLASH, S_PROTOCOL_SLASH_SLASH);
-
-// The very first potential domain name
-S_START.on(_text.TLD, S_DOMAIN).on(_text.DOMAIN, S_DOMAIN).on(_text.LOCALHOST, S_TLD).on(_text.NUM, S_DOMAIN);
-
-// Force URL for protocol followed by anything sane
-S_PROTOCOL_SLASH_SLASH.on(_text.TLD, S_URL).on(_text.DOMAIN, S_URL).on(_text.NUM, S_URL).on(_text.LOCALHOST, S_URL);
-
-// Account for dots and hyphens
-// hyphens are usually parts of domain names
-S_DOMAIN.on(_text.DOT, S_DOMAIN_DOT);
-S_EMAIL_DOMAIN.on(_text.DOT, S_EMAIL_DOMAIN_DOT);
-
-// Hyphen can jump back to a domain name
-
-// After the first domain and a dot, we can find either a URL or another domain
-S_DOMAIN_DOT.on(_text.TLD, S_TLD).on(_text.DOMAIN, S_DOMAIN).on(_text.NUM, S_DOMAIN).on(_text.LOCALHOST, S_DOMAIN);
-
-S_EMAIL_DOMAIN_DOT.on(_text.TLD, S_EMAIL).on(_text.DOMAIN, S_EMAIL_DOMAIN).on(_text.NUM, S_EMAIL_DOMAIN).on(_text.LOCALHOST, S_EMAIL_DOMAIN);
-
-// S_TLD accepts! But the URL could be longer, try to find a match greedily
-// The `run` function should be able to "rollback" to the accepting state
-S_TLD.on(_text.DOT, S_DOMAIN_DOT);
-S_EMAIL.on(_text.DOT, S_EMAIL_DOMAIN_DOT);
-
-// Become real URLs after `SLASH` or `COLON NUM SLASH`
-// Here PSS and non-PSS converge
-S_TLD.on(_text.COLON, S_TLD_COLON).on(_text.SLASH, S_URL);
-S_TLD_COLON.on(_text.NUM, S_TLD_PORT);
-S_TLD_PORT.on(_text.SLASH, S_URL);
-S_EMAIL.on(_text.COLON, S_EMAIL_COLON);
-S_EMAIL_COLON.on(_text.NUM, S_EMAIL_PORT);
-
-// Types of characters the URL can definitely end in
-var qsAccepting = [_text.DOMAIN, _text.AT, _text.LOCALHOST, _text.NUM, _text.PLUS, _text.POUND, _text.PROTOCOL, _text.SLASH, _text.TLD, _text.UNDERSCORE, _text.SYM, _text.AMPERSAND];
-
-// Types of tokens that can follow a URL and be part of the query string
-// but cannot be the very last characters
-// Characters that cannot appear in the URL at all should be excluded
-var qsNonAccepting = [_text.COLON, _text.DOT, _text.QUERY, _text.PUNCTUATION, _text.CLOSEBRACE, _text.CLOSEBRACKET, _text.CLOSEANGLEBRACKET, _text.CLOSEPAREN, _text.OPENBRACE, _text.OPENBRACKET, _text.OPENANGLEBRACKET, _text.OPENPAREN];
-
-// These states are responsible primarily for determining whether or not to
-// include the final round bracket.
-
-// URL, followed by an opening bracket
-S_URL.on(_text.OPENBRACE, S_URL_OPENBRACE).on(_text.OPENBRACKET, S_URL_OPENBRACKET).on(_text.OPENANGLEBRACKET, S_URL_OPENANGLEBRACKET).on(_text.OPENPAREN, S_URL_OPENPAREN);
-
-// URL with extra symbols at the end, followed by an opening bracket
-S_URL_NON_ACCEPTING.on(_text.OPENBRACE, S_URL_OPENBRACE).on(_text.OPENBRACKET, S_URL_OPENBRACKET).on(_text.OPENANGLEBRACKET, S_URL_OPENANGLEBRACKET).on(_text.OPENPAREN, S_URL_OPENPAREN);
-
-// Closing bracket component. This character WILL be included in the URL
-S_URL_OPENBRACE.on(_text.CLOSEBRACE, S_URL);
-S_URL_OPENBRACKET.on(_text.CLOSEBRACKET, S_URL);
-S_URL_OPENANGLEBRACKET.on(_text.CLOSEANGLEBRACKET, S_URL);
-S_URL_OPENPAREN.on(_text.CLOSEPAREN, S_URL);
-S_URL_OPENBRACE_Q.on(_text.CLOSEBRACE, S_URL);
-S_URL_OPENBRACKET_Q.on(_text.CLOSEBRACKET, S_URL);
-S_URL_OPENANGLEBRACKET_Q.on(_text.CLOSEANGLEBRACKET, S_URL);
-S_URL_OPENPAREN_Q.on(_text.CLOSEPAREN, S_URL);
-S_URL_OPENBRACE_SYMS.on(_text.CLOSEBRACE, S_URL);
-S_URL_OPENBRACKET_SYMS.on(_text.CLOSEBRACKET, S_URL);
-S_URL_OPENANGLEBRACKET_SYMS.on(_text.CLOSEANGLEBRACKET, S_URL);
-S_URL_OPENPAREN_SYMS.on(_text.CLOSEPAREN, S_URL);
-
-// URL that beings with an opening bracket, followed by a symbols.
-// Note that the final state can still be `S_URL_OPENBRACE_Q` (if the URL only
-// has a single opening bracket for some reason).
-S_URL_OPENBRACE.on(qsAccepting, S_URL_OPENBRACE_Q);
-S_URL_OPENBRACKET.on(qsAccepting, S_URL_OPENBRACKET_Q);
-S_URL_OPENANGLEBRACKET.on(qsAccepting, S_URL_OPENANGLEBRACKET_Q);
-S_URL_OPENPAREN.on(qsAccepting, S_URL_OPENPAREN_Q);
-S_URL_OPENBRACE.on(qsNonAccepting, S_URL_OPENBRACE_SYMS);
-S_URL_OPENBRACKET.on(qsNonAccepting, S_URL_OPENBRACKET_SYMS);
-S_URL_OPENANGLEBRACKET.on(qsNonAccepting, S_URL_OPENANGLEBRACKET_SYMS);
-S_URL_OPENPAREN.on(qsNonAccepting, S_URL_OPENPAREN_SYMS);
-
-// URL that begins with an opening bracket, followed by some symbols
-S_URL_OPENBRACE_Q.on(qsAccepting, S_URL_OPENBRACE_Q);
-S_URL_OPENBRACKET_Q.on(qsAccepting, S_URL_OPENBRACKET_Q);
-S_URL_OPENANGLEBRACKET_Q.on(qsAccepting, S_URL_OPENANGLEBRACKET_Q);
-S_URL_OPENPAREN_Q.on(qsAccepting, S_URL_OPENPAREN_Q);
-S_URL_OPENBRACE_Q.on(qsNonAccepting, S_URL_OPENBRACE_Q);
-S_URL_OPENBRACKET_Q.on(qsNonAccepting, S_URL_OPENBRACKET_Q);
-S_URL_OPENANGLEBRACKET_Q.on(qsNonAccepting, S_URL_OPENANGLEBRACKET_Q);
-S_URL_OPENPAREN_Q.on(qsNonAccepting, S_URL_OPENPAREN_Q);
-
-S_URL_OPENBRACE_SYMS.on(qsAccepting, S_URL_OPENBRACE_Q);
-S_URL_OPENBRACKET_SYMS.on(qsAccepting, S_URL_OPENBRACKET_Q);
-S_URL_OPENANGLEBRACKET_SYMS.on(qsAccepting, S_URL_OPENANGLEBRACKET_Q);
-S_URL_OPENPAREN_SYMS.on(qsAccepting, S_URL_OPENPAREN_Q);
-S_URL_OPENBRACE_SYMS.on(qsNonAccepting, S_URL_OPENBRACE_SYMS);
-S_URL_OPENBRACKET_SYMS.on(qsNonAccepting, S_URL_OPENBRACKET_SYMS);
-S_URL_OPENANGLEBRACKET_SYMS.on(qsNonAccepting, S_URL_OPENANGLEBRACKET_SYMS);
-S_URL_OPENPAREN_SYMS.on(qsNonAccepting, S_URL_OPENPAREN_SYMS);
-
-// Account for the query string
-S_URL.on(qsAccepting, S_URL);
-S_URL_NON_ACCEPTING.on(qsAccepting, S_URL);
-
-S_URL.on(qsNonAccepting, S_URL_NON_ACCEPTING);
-S_URL_NON_ACCEPTING.on(qsNonAccepting, S_URL_NON_ACCEPTING);
-
-// Email address-specific state definitions
-// Note: We are not allowing '/' in email addresses since this would interfere
-// with real URLs
-
-// For addresses with the mailto prefix
-// 'mailto:' followed by anything sane is a valid email
-S_MAILTO.on(_text.TLD, S_MAILTO_EMAIL).on(_text.DOMAIN, S_MAILTO_EMAIL).on(_text.NUM, S_MAILTO_EMAIL).on(_text.LOCALHOST, S_MAILTO_EMAIL);
-
-// Greedily get more potential valid email values
-S_MAILTO_EMAIL.on(qsAccepting, S_MAILTO_EMAIL).on(qsNonAccepting, S_MAILTO_EMAIL_NON_ACCEPTING);
-S_MAILTO_EMAIL_NON_ACCEPTING.on(qsAccepting, S_MAILTO_EMAIL).on(qsNonAccepting, S_MAILTO_EMAIL_NON_ACCEPTING);
-
-// For addresses without the mailto prefix
-// Tokens allowed in the localpart of the email
-var localpartAccepting = [_text.DOMAIN, _text.NUM, _text.PLUS, _text.POUND, _text.QUERY, _text.UNDERSCORE, _text.SYM, _text.AMPERSAND, _text.TLD];
-
-// Some of the tokens in `localpartAccepting` are already accounted for here and
-// will not be overwritten (don't worry)
-S_DOMAIN.on(localpartAccepting, S_LOCALPART).on(_text.AT, S_LOCALPART_AT);
-S_TLD.on(localpartAccepting, S_LOCALPART).on(_text.AT, S_LOCALPART_AT);
-S_DOMAIN_DOT.on(localpartAccepting, S_LOCALPART);
-
-// Okay we're on a localpart. Now what?
-// TODO: IP addresses and what if the email starts with numbers?
-S_LOCALPART.on(localpartAccepting, S_LOCALPART).on(_text.AT, S_LOCALPART_AT) // close to an email address now
-.on(_text.DOT, S_LOCALPART_DOT);
-S_LOCALPART_DOT.on(localpartAccepting, S_LOCALPART);
-S_LOCALPART_AT.on(_text.TLD, S_EMAIL_DOMAIN).on(_text.DOMAIN, S_EMAIL_DOMAIN).on(_text.LOCALHOST, S_EMAIL);
-// States following `@` defined above
-
-var run = function run(tokens) {
-	var len = tokens.length;
-	var cursor = 0;
-	var multis = [];
-	var textTokens = [];
-
-	while (cursor < len) {
-		var state = S_START;
-		var secondState = null;
-		var nextState = null;
-		var multiLength = 0;
-		var latestAccepting = null;
-		var sinceAccepts = -1;
-
-		while (cursor < len && !(secondState = state.next(tokens[cursor]))) {
-			// Starting tokens with nowhere to jump to.
-			// Consider these to be just plain text
-			textTokens.push(tokens[cursor++]);
-		}
-
-		while (cursor < len && (nextState = secondState || state.next(tokens[cursor]))) {
-
-			// Get the next state
-			secondState = null;
-			state = nextState;
-
-			// Keep track of the latest accepting state
-			if (state.accepts()) {
-				sinceAccepts = 0;
-				latestAccepting = state;
-			} else if (sinceAccepts >= 0) {
-				sinceAccepts++;
-			}
-
-			cursor++;
-			multiLength++;
-		}
-
-		if (sinceAccepts < 0) {
-
-			// No accepting state was found, part of a regular text token
-			// Add all the tokens we looked at to the text tokens array
-			for (var i = cursor - multiLength; i < cursor; i++) {
-				textTokens.push(tokens[i]);
-			}
-		} else {
-
-			// Accepting state!
-
-			// First close off the textTokens (if available)
-			if (textTokens.length > 0) {
-				multis.push(new _multi.TEXT(textTokens));
-				textTokens = [];
-			}
-
-			// Roll back to the latest accepting state
-			cursor -= sinceAccepts;
-			multiLength -= sinceAccepts;
-
-			// Create a new multitoken
-			var MULTI = latestAccepting.emit();
-			multis.push(new MULTI(tokens.slice(cursor - multiLength, cursor)));
-		}
-	}
-
-	// Finally close off the textTokens (if available)
-	if (textTokens.length > 0) {
-		multis.push(new _multi.TEXT(textTokens));
-	}
-
-	return multis;
-};
-
-exports.State = _state.TokenState;
-exports.TOKENS = MULTI_TOKENS;
-exports.run = run;
-exports.start = S_START;
-},{"./state":24,"./tokens/multi":26,"./tokens/text":27}],23:[function(require,module,exports){
-'use strict';
-
-exports.__esModule = true;
-exports.start = exports.run = exports.TOKENS = exports.State = undefined;
-
-var _state = require('./state');
-
-var _text = require('./tokens/text');
-
-var TOKENS = _interopRequireWildcard(_text);
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-
-var tlds = 'aaa|aarp|abarth|abb|abbott|abbvie|abc|able|abogado|abudhabi|ac|academy|accenture|accountant|accountants|aco|active|actor|ad|adac|ads|adult|ae|aeg|aero|aetna|af|afamilycompany|afl|africa|ag|agakhan|agency|ai|aig|aigo|airbus|airforce|airtel|akdn|al|alfaromeo|alibaba|alipay|allfinanz|allstate|ally|alsace|alstom|am|americanexpress|americanfamily|amex|amfam|amica|amsterdam|analytics|android|anquan|anz|ao|aol|apartments|app|apple|aq|aquarelle|ar|arab|aramco|archi|army|arpa|art|arte|as|asda|asia|associates|at|athleta|attorney|au|auction|audi|audible|audio|auspost|author|auto|autos|avianca|aw|aws|ax|axa|az|azure|ba|baby|baidu|banamex|bananarepublic|band|bank|bar|barcelona|barclaycard|barclays|barefoot|bargains|baseball|basketball|bauhaus|bayern|bb|bbc|bbt|bbva|bcg|bcn|bd|be|beats|beauty|beer|bentley|berlin|best|bestbuy|bet|bf|bg|bh|bharti|bi|bible|bid|bike|bing|bingo|bio|biz|bj|black|blackfriday|blanco|blockbuster|blog|bloomberg|blue|bm|bms|bmw|bn|bnl|bnpparibas|bo|boats|boehringer|bofa|bom|bond|boo|book|booking|boots|bosch|bostik|boston|bot|boutique|box|br|bradesco|bridgestone|broadway|broker|brother|brussels|bs|bt|budapest|bugatti|build|builders|business|buy|buzz|bv|bw|by|bz|bzh|ca|cab|cafe|cal|call|calvinklein|cam|camera|camp|cancerresearch|canon|capetown|capital|capitalone|car|caravan|cards|care|career|careers|cars|cartier|casa|case|caseih|cash|casino|cat|catering|catholic|cba|cbn|cbre|cbs|cc|cd|ceb|center|ceo|cern|cf|cfa|cfd|cg|ch|chanel|channel|chase|chat|cheap|chintai|chloe|christmas|chrome|chrysler|church|ci|cipriani|circle|cisco|citadel|citi|citic|city|cityeats|ck|cl|claims|cleaning|click|clinic|clinique|clothing|cloud|club|clubmed|cm|cn|co|coach|codes|coffee|college|cologne|com|comcast|commbank|community|company|compare|computer|comsec|condos|construction|consulting|contact|contractors|cooking|cookingchannel|cool|coop|corsica|country|coupon|coupons|courses|cr|credit|creditcard|creditunion|cricket|crown|crs|cruise|cruises|csc|cu|cuisinella|cv|cw|cx|cy|cymru|cyou|cz|dabur|dad|dance|data|date|dating|datsun|day|dclk|dds|de|deal|dealer|deals|degree|delivery|dell|deloitte|delta|democrat|dental|dentist|desi|design|dev|dhl|diamonds|diet|digital|direct|directory|discount|discover|dish|diy|dj|dk|dm|dnp|do|docs|doctor|dodge|dog|doha|domains|dot|download|drive|dtv|dubai|duck|dunlop|duns|dupont|durban|dvag|dvr|dz|earth|eat|ec|eco|edeka|edu|education|ee|eg|email|emerck|energy|engineer|engineering|enterprises|epost|epson|equipment|er|ericsson|erni|es|esq|estate|esurance|et|etisalat|eu|eurovision|eus|events|everbank|exchange|expert|exposed|express|extraspace|fage|fail|fairwinds|faith|family|fan|fans|farm|farmers|fashion|fast|fedex|feedback|ferrari|ferrero|fi|fiat|fidelity|fido|film|final|finance|financial|fire|firestone|firmdale|fish|fishing|fit|fitness|fj|fk|flickr|flights|flir|florist|flowers|fly|fm|fo|foo|food|foodnetwork|football|ford|forex|forsale|forum|foundation|fox|fr|free|fresenius|frl|frogans|frontdoor|frontier|ftr|fujitsu|fujixerox|fun|fund|furniture|futbol|fyi|ga|gal|gallery|gallo|gallup|game|games|gap|garden|gb|gbiz|gd|gdn|ge|gea|gent|genting|george|gf|gg|ggee|gh|gi|gift|gifts|gives|giving|gl|glade|glass|gle|global|globo|gm|gmail|gmbh|gmo|gmx|gn|godaddy|gold|goldpoint|golf|goo|goodhands|goodyear|goog|google|gop|got|gov|gp|gq|gr|grainger|graphics|gratis|green|gripe|grocery|group|gs|gt|gu|guardian|gucci|guge|guide|guitars|guru|gw|gy|hair|hamburg|hangout|haus|hbo|hdfc|hdfcbank|health|healthcare|help|helsinki|here|hermes|hgtv|hiphop|hisamitsu|hitachi|hiv|hk|hkt|hm|hn|hockey|holdings|holiday|homedepot|homegoods|homes|homesense|honda|honeywell|horse|hospital|host|hosting|hot|hoteles|hotels|hotmail|house|how|hr|hsbc|ht|htc|hu|hughes|hyatt|hyundai|ibm|icbc|ice|icu|id|ie|ieee|ifm|ikano|il|im|imamat|imdb|immo|immobilien|in|industries|infiniti|info|ing|ink|institute|insurance|insure|int|intel|international|intuit|investments|io|ipiranga|iq|ir|irish|is|iselect|ismaili|ist|istanbul|it|itau|itv|iveco|iwc|jaguar|java|jcb|jcp|je|jeep|jetzt|jewelry|jio|jlc|jll|jm|jmp|jnj|jo|jobs|joburg|jot|joy|jp|jpmorgan|jprs|juegos|juniper|kaufen|kddi|ke|kerryhotels|kerrylogistics|kerryproperties|kfh|kg|kh|ki|kia|kim|kinder|kindle|kitchen|kiwi|km|kn|koeln|komatsu|kosher|kp|kpmg|kpn|kr|krd|kred|kuokgroup|kw|ky|kyoto|kz|la|lacaixa|ladbrokes|lamborghini|lamer|lancaster|lancia|lancome|land|landrover|lanxess|lasalle|lat|latino|latrobe|law|lawyer|lb|lc|lds|lease|leclerc|lefrak|legal|lego|lexus|lgbt|li|liaison|lidl|life|lifeinsurance|lifestyle|lighting|like|lilly|limited|limo|lincoln|linde|link|lipsy|live|living|lixil|lk|loan|loans|locker|locus|loft|lol|london|lotte|lotto|love|lpl|lplfinancial|lr|ls|lt|ltd|ltda|lu|lundbeck|lupin|luxe|luxury|lv|ly|ma|macys|madrid|maif|maison|makeup|man|management|mango|map|market|marketing|markets|marriott|marshalls|maserati|mattel|mba|mc|mckinsey|md|me|med|media|meet|melbourne|meme|memorial|men|menu|meo|merckmsd|metlife|mg|mh|miami|microsoft|mil|mini|mint|mit|mitsubishi|mk|ml|mlb|mls|mm|mma|mn|mo|mobi|mobile|mobily|moda|moe|moi|mom|monash|money|monster|mopar|mormon|mortgage|moscow|moto|motorcycles|mov|movie|movistar|mp|mq|mr|ms|msd|mt|mtn|mtr|mu|museum|mutual|mv|mw|mx|my|mz|na|nab|nadex|nagoya|name|nationwide|natura|navy|nba|nc|ne|nec|net|netbank|netflix|network|neustar|new|newholland|news|next|nextdirect|nexus|nf|nfl|ng|ngo|nhk|ni|nico|nike|nikon|ninja|nissan|nissay|nl|no|nokia|northwesternmutual|norton|now|nowruz|nowtv|np|nr|nra|nrw|ntt|nu|nyc|nz|obi|observer|off|office|okinawa|olayan|olayangroup|oldnavy|ollo|om|omega|one|ong|onl|online|onyourside|ooo|open|oracle|orange|org|organic|origins|osaka|otsuka|ott|ovh|pa|page|panasonic|panerai|paris|pars|partners|parts|party|passagens|pay|pccw|pe|pet|pf|pfizer|pg|ph|pharmacy|phd|philips|phone|photo|photography|photos|physio|piaget|pics|pictet|pictures|pid|pin|ping|pink|pioneer|pizza|pk|pl|place|play|playstation|plumbing|plus|pm|pn|pnc|pohl|poker|politie|porn|post|pr|pramerica|praxi|press|prime|pro|prod|productions|prof|progressive|promo|properties|property|protection|pru|prudential|ps|pt|pub|pw|pwc|py|qa|qpon|quebec|quest|qvc|racing|radio|raid|re|read|realestate|realtor|realty|recipes|red|redstone|redumbrella|rehab|reise|reisen|reit|reliance|ren|rent|rentals|repair|report|republican|rest|restaurant|review|reviews|rexroth|rich|richardli|ricoh|rightathome|ril|rio|rip|rmit|ro|rocher|rocks|rodeo|rogers|room|rs|rsvp|ru|rugby|ruhr|run|rw|rwe|ryukyu|sa|saarland|safe|safety|sakura|sale|salon|samsclub|samsung|sandvik|sandvikcoromant|sanofi|sap|sapo|sarl|sas|save|saxo|sb|sbi|sbs|sc|sca|scb|schaeffler|schmidt|scholarships|school|schule|schwarz|science|scjohnson|scor|scot|sd|se|search|seat|secure|security|seek|select|sener|services|ses|seven|sew|sex|sexy|sfr|sg|sh|shangrila|sharp|shaw|shell|shia|shiksha|shoes|shop|shopping|shouji|show|showtime|shriram|si|silk|sina|singles|site|sj|sk|ski|skin|sky|skype|sl|sling|sm|smart|smile|sn|sncf|so|soccer|social|softbank|software|sohu|solar|solutions|song|sony|soy|space|spiegel|spot|spreadbetting|sr|srl|srt|st|stada|staples|star|starhub|statebank|statefarm|statoil|stc|stcgroup|stockholm|storage|store|stream|studio|study|style|su|sucks|supplies|supply|support|surf|surgery|suzuki|sv|swatch|swiftcover|swiss|sx|sy|sydney|symantec|systems|sz|tab|taipei|talk|taobao|target|tatamotors|tatar|tattoo|tax|taxi|tc|tci|td|tdk|team|tech|technology|tel|telecity|telefonica|temasek|tennis|teva|tf|tg|th|thd|theater|theatre|tiaa|tickets|tienda|tiffany|tips|tires|tirol|tj|tjmaxx|tjx|tk|tkmaxx|tl|tm|tmall|tn|to|today|tokyo|tools|top|toray|toshiba|total|tours|town|toyota|toys|tr|trade|trading|training|travel|travelchannel|travelers|travelersinsurance|trust|trv|tt|tube|tui|tunes|tushu|tv|tvs|tw|tz|ua|ubank|ubs|uconnect|ug|uk|unicom|university|uno|uol|ups|us|uy|uz|va|vacations|vana|vanguard|vc|ve|vegas|ventures|verisign|versicherung|vet|vg|vi|viajes|video|vig|viking|villas|vin|vip|virgin|visa|vision|vista|vistaprint|viva|vivo|vlaanderen|vn|vodka|volkswagen|volvo|vote|voting|voto|voyage|vu|vuelos|wales|walmart|walter|wang|wanggou|warman|watch|watches|weather|weatherchannel|webcam|weber|website|wed|wedding|weibo|weir|wf|whoswho|wien|wiki|williamhill|win|windows|wine|winners|wme|wolterskluwer|woodside|work|works|world|wow|ws|wtc|wtf|xbox|xerox|xfinity|xihuan|xin|xn--11b4c3d|xn--1ck2e1b|xn--1qqw23a|xn--2scrj9c|xn--30rr7y|xn--3bst00m|xn--3ds443g|xn--3e0b707e|xn--3hcrj9c|xn--3oq18vl8pn36a|xn--3pxu8k|xn--42c2d9a|xn--45br5cyl|xn--45brj9c|xn--45q11c|xn--4gbrim|xn--54b7fta0cc|xn--55qw42g|xn--55qx5d|xn--5su34j936bgsg|xn--5tzm5g|xn--6frz82g|xn--6qq986b3xl|xn--80adxhks|xn--80ao21a|xn--80aqecdr1a|xn--80asehdb|xn--80aswg|xn--8y0a063a|xn--90a3ac|xn--90ae|xn--90ais|xn--9dbq2a|xn--9et52u|xn--9krt00a|xn--b4w605ferd|xn--bck1b9a5dre4c|xn--c1avg|xn--c2br7g|xn--cck2b3b|xn--cg4bki|xn--clchc0ea0b2g2a9gcd|xn--czr694b|xn--czrs0t|xn--czru2d|xn--d1acj3b|xn--d1alf|xn--e1a4c|xn--eckvdtc9d|xn--efvy88h|xn--estv75g|xn--fct429k|xn--fhbei|xn--fiq228c5hs|xn--fiq64b|xn--fiqs8s|xn--fiqz9s|xn--fjq720a|xn--flw351e|xn--fpcrj9c3d|xn--fzc2c9e2c|xn--fzys8d69uvgm|xn--g2xx48c|xn--gckr3f0f|xn--gecrj9c|xn--gk3at1e|xn--h2breg3eve|xn--h2brj9c|xn--h2brj9c8c|xn--hxt814e|xn--i1b6b1a6a2e|xn--imr513n|xn--io0a7i|xn--j1aef|xn--j1amh|xn--j6w193g|xn--jlq61u9w7b|xn--jvr189m|xn--kcrx77d1x4a|xn--kprw13d|xn--kpry57d|xn--kpu716f|xn--kput3i|xn--l1acc|xn--lgbbat1ad8j|xn--mgb9awbf|xn--mgba3a3ejt|xn--mgba3a4f16a|xn--mgba7c0bbn0a|xn--mgbaakc7dvf|xn--mgbaam7a8h|xn--mgbab2bd|xn--mgbai9azgqp6j|xn--mgbayh7gpa|xn--mgbb9fbpob|xn--mgbbh1a|xn--mgbbh1a71e|xn--mgbc0a9azcg|xn--mgbca7dzdo|xn--mgberp4a5d4ar|xn--mgbgu82a|xn--mgbi4ecexp|xn--mgbpl2fh|xn--mgbt3dhd|xn--mgbtx2b|xn--mgbx4cd0ab|xn--mix891f|xn--mk1bu44c|xn--mxtq1m|xn--ngbc5azd|xn--ngbe9e0a|xn--ngbrx|xn--node|xn--nqv7f|xn--nqv7fs00ema|xn--nyqy26a|xn--o3cw4h|xn--ogbpf8fl|xn--p1acf|xn--p1ai|xn--pbt977c|xn--pgbs0dh|xn--pssy2u|xn--q9jyb4c|xn--qcka1pmc|xn--qxam|xn--rhqv96g|xn--rovu88b|xn--rvc1e0am3e|xn--s9brj9c|xn--ses554g|xn--t60b56a|xn--tckwe|xn--tiq49xqyj|xn--unup4y|xn--vermgensberater-ctb|xn--vermgensberatung-pwb|xn--vhquv|xn--vuq861b|xn--w4r85el8fhu5dnra|xn--w4rs40l|xn--wgbh1c|xn--wgbl6a|xn--xhq521b|xn--xkc2al3hye2a|xn--xkc2dl3a5ee0h|xn--y9a3aq|xn--yfro4i67o|xn--ygbi2ammx|xn--zfr164b|xperia|xxx|xyz|yachts|yahoo|yamaxun|yandex|ye|yodobashi|yoga|yokohama|you|youtube|yt|yun|za|zappos|zara|zero|zip|zippo|zm|zone|zuerich|zw'.split('|'); // macro, see gulpfile.js
-
 /**
-	The scanner provides an interface that takes a string of text as input, and
-	outputs an array of tokens instances that can be used for easy URL parsing.
+ * Generate the parser multi token-based state machine
+ * @returns {State} the starting state
+ */
 
-	@module linkify
-	@submodule scanner
-	@main scanner
-*/
+function init$1() {
+  // The universal starting state.
+  var S_START = makeState(); // Intermediate states for URLs. Note that domains that begin with a protocol
+  // are treated slighly differently from those that don't.
 
-var NUMBERS = '0123456789'.split('');
-var ALPHANUM = '0123456789abcdefghijklmnopqrstuvwxyz'.split('');
-var WHITESPACE = [' ', '\f', '\r', '\t', '\v', '\xA0', '\u1680', '\u180E']; // excluding line breaks
+  var S_PROTOCOL = makeState(); // e.g., 'http:'
 
-var domainStates = []; // states that jump to DOMAIN on /[a-z0-9]/
-var makeState = function makeState(tokenClass) {
-	return new _state.CharacterState(tokenClass);
-};
+  var S_MAILTO = makeState(); // 'mailto:'
 
-// Frequently used states
-var S_START = makeState();
-var S_NUM = makeState(_text.NUM);
-var S_DOMAIN = makeState(_text.DOMAIN);
-var S_DOMAIN_HYPHEN = makeState(); // domain followed by 1 or more hyphen characters
-var S_WS = makeState(_text.WS);
+  var S_PROTOCOL_SLASH = makeState(); // e.g., 'http:/''
 
-// States for special URL symbols
-S_START.on('@', makeState(_text.AT)).on('.', makeState(_text.DOT)).on('+', makeState(_text.PLUS)).on('#', makeState(_text.POUND)).on('?', makeState(_text.QUERY)).on('/', makeState(_text.SLASH)).on('_', makeState(_text.UNDERSCORE)).on(':', makeState(_text.COLON)).on('{', makeState(_text.OPENBRACE)).on('[', makeState(_text.OPENBRACKET)).on('<', makeState(_text.OPENANGLEBRACKET)).on('(', makeState(_text.OPENPAREN)).on('}', makeState(_text.CLOSEBRACE)).on(']', makeState(_text.CLOSEBRACKET)).on('>', makeState(_text.CLOSEANGLEBRACKET)).on(')', makeState(_text.CLOSEPAREN)).on('&', makeState(_text.AMPERSAND)).on([',', ';', '!', '"', '\''], makeState(_text.PUNCTUATION));
+  var S_PROTOCOL_SLASH_SLASH = makeState(); // e.g.,'http://'
 
-// Whitespace jumps
-// Tokens of only non-newline whitespace are arbitrarily long
-S_START.on('\n', makeState(_text.NL)).on(WHITESPACE, S_WS);
+  var S_DOMAIN = makeState(); // parsed string ends with a potential domain name (A)
 
-// If any whitespace except newline, more whitespace!
-S_WS.on(WHITESPACE, S_WS);
+  var S_DOMAIN_DOT = makeState(); // (A) domain followed by DOT
 
-// Generates states for top-level domains
-// Note that this is most accurate when tlds are in alphabetical order
-for (var i = 0; i < tlds.length; i++) {
-	var newStates = (0, _state.stateify)(tlds[i], S_START, _text.TLD, _text.DOMAIN);
-	domainStates.push.apply(domainStates, newStates);
+  var S_TLD = makeAcceptingState(Url); // (A) Simplest possible URL with no query string
+
+  var S_TLD_COLON = makeState(); // (A) URL followed by colon (potential port number here)
+
+  var S_TLD_PORT = makeAcceptingState(Url); // TLD followed by a port number
+
+  var S_URL = makeAcceptingState(Url); // Long URL with optional port and maybe query string
+
+  var S_URL_NON_ACCEPTING = makeState(); // URL followed by some symbols (will not be part of the final URL)
+
+  var S_URL_OPENBRACE = makeState(); // URL followed by {
+
+  var S_URL_OPENBRACKET = makeState(); // URL followed by [
+
+  var S_URL_OPENANGLEBRACKET = makeState(); // URL followed by <
+
+  var S_URL_OPENPAREN = makeState(); // URL followed by (
+
+  var S_URL_OPENBRACE_Q = makeAcceptingState(Url); // URL followed by { and some symbols that the URL can end it
+
+  var S_URL_OPENBRACKET_Q = makeAcceptingState(Url); // URL followed by [ and some symbols that the URL can end it
+
+  var S_URL_OPENANGLEBRACKET_Q = makeAcceptingState(Url); // URL followed by < and some symbols that the URL can end it
+
+  var S_URL_OPENPAREN_Q = makeAcceptingState(Url); // URL followed by ( and some symbols that the URL can end it
+
+  var S_URL_OPENBRACE_SYMS = makeState(); // S_URL_OPENBRACE_Q followed by some symbols it cannot end it
+
+  var S_URL_OPENBRACKET_SYMS = makeState(); // S_URL_OPENBRACKET_Q followed by some symbols it cannot end it
+
+  var S_URL_OPENANGLEBRACKET_SYMS = makeState(); // S_URL_OPENANGLEBRACKET_Q followed by some symbols it cannot end it
+
+  var S_URL_OPENPAREN_SYMS = makeState(); // S_URL_OPENPAREN_Q followed by some symbols it cannot end it
+
+  var S_EMAIL_DOMAIN = makeState(); // parsed string starts with local email info + @ with a potential domain name (C)
+
+  var S_EMAIL_DOMAIN_DOT = makeState(); // (C) domain followed by DOT
+
+  var S_EMAIL = makeAcceptingState(Email); // (C) Possible email address (could have more tlds)
+
+  var S_EMAIL_COLON = makeState(); // (C) URL followed by colon (potential port number here)
+
+  var S_EMAIL_PORT = makeAcceptingState(Email); // (C) Email address with a port
+
+  var S_MAILTO_EMAIL = makeAcceptingState(MailtoEmail); // Email that begins with the mailto prefix (D)
+
+  var S_MAILTO_EMAIL_NON_ACCEPTING = makeState(); // (D) Followed by some non-query string chars
+
+  var S_LOCALPART = makeState(); // Local part of the email address
+
+  var S_LOCALPART_AT = makeState(); // Local part of the email address plus @
+
+  var S_LOCALPART_DOT = makeState(); // Local part of the email address plus '.' (localpart cannot end in .)
+
+  var S_NL = makeAcceptingState(Nl); // single new line
+  // Make path from start to protocol (with '//')
+
+  makeT(S_START, NL, S_NL);
+  makeT(S_START, PROTOCOL, S_PROTOCOL);
+  makeT(S_START, MAILTO, S_MAILTO);
+  makeT(S_PROTOCOL, SLASH, S_PROTOCOL_SLASH);
+  makeT(S_PROTOCOL_SLASH, SLASH, S_PROTOCOL_SLASH_SLASH); // The very first potential domain name
+
+  makeT(S_START, TLD, S_DOMAIN);
+  makeT(S_START, DOMAIN, S_DOMAIN);
+  makeT(S_START, LOCALHOST, S_TLD);
+  makeT(S_START, NUM, S_DOMAIN); // Force URL for protocol followed by anything sane
+
+  makeT(S_PROTOCOL_SLASH_SLASH, TLD, S_URL);
+  makeT(S_PROTOCOL_SLASH_SLASH, DOMAIN, S_URL);
+  makeT(S_PROTOCOL_SLASH_SLASH, NUM, S_URL);
+  makeT(S_PROTOCOL_SLASH_SLASH, LOCALHOST, S_URL); // Account for dots and hyphens
+  // hyphens are usually parts of domain names
+
+  makeT(S_DOMAIN, DOT, S_DOMAIN_DOT);
+  makeT(S_EMAIL_DOMAIN, DOT, S_EMAIL_DOMAIN_DOT); // Hyphen can jump back to a domain name
+  // After the first domain and a dot, we can find either a URL or another domain
+
+  makeT(S_DOMAIN_DOT, TLD, S_TLD);
+  makeT(S_DOMAIN_DOT, DOMAIN, S_DOMAIN);
+  makeT(S_DOMAIN_DOT, NUM, S_DOMAIN);
+  makeT(S_DOMAIN_DOT, LOCALHOST, S_DOMAIN);
+  makeT(S_EMAIL_DOMAIN_DOT, TLD, S_EMAIL);
+  makeT(S_EMAIL_DOMAIN_DOT, DOMAIN, S_EMAIL_DOMAIN);
+  makeT(S_EMAIL_DOMAIN_DOT, NUM, S_EMAIL_DOMAIN);
+  makeT(S_EMAIL_DOMAIN_DOT, LOCALHOST, S_EMAIL_DOMAIN); // S_TLD accepts! But the URL could be longer, try to find a match greedily
+  // The `run` function should be able to "rollback" to the accepting state
+
+  makeT(S_TLD, DOT, S_DOMAIN_DOT);
+  makeT(S_EMAIL, DOT, S_EMAIL_DOMAIN_DOT); // Become real URLs after `SLASH` or `COLON NUM SLASH`
+  // Here PSS and non-PSS converge
+
+  makeT(S_TLD, COLON, S_TLD_COLON);
+  makeT(S_TLD, SLASH, S_URL);
+  makeT(S_TLD_COLON, NUM, S_TLD_PORT);
+  makeT(S_TLD_PORT, SLASH, S_URL);
+  makeT(S_EMAIL, COLON, S_EMAIL_COLON);
+  makeT(S_EMAIL_COLON, NUM, S_EMAIL_PORT); // Types of characters the URL can definitely end in
+
+  var qsAccepting = [AMPERSAND, ASTERISK, AT, BACKSLASH, BACKTICK, CARET, DOLLAR, DOMAIN, EQUALS, HYPHEN, LOCALHOST, NUM, PERCENT, PIPE, PLUS, POUND, PROTOCOL, SLASH, SYM, TILDE, TLD, UNDERSCORE]; // Types of tokens that can follow a URL and be part of the query string
+  // but cannot be the very last characters
+  // Characters that cannot appear in the URL at all should be excluded
+
+  var qsNonAccepting = [APOSTROPHE, CLOSEANGLEBRACKET, CLOSEBRACE, CLOSEBRACKET, CLOSEPAREN, COLON, COMMA, DOT, EXCLAMATION, OPENANGLEBRACKET, OPENBRACE, OPENBRACKET, OPENPAREN, QUERY, QUOTE, SEMI]; // These states are responsible primarily for determining whether or not to
+  // include the final round bracket.
+  // URL, followed by an opening bracket
+
+  makeT(S_URL, OPENBRACE, S_URL_OPENBRACE);
+  makeT(S_URL, OPENBRACKET, S_URL_OPENBRACKET);
+  makeT(S_URL, OPENANGLEBRACKET, S_URL_OPENANGLEBRACKET);
+  makeT(S_URL, OPENPAREN, S_URL_OPENPAREN); // URL with extra symbols at the end, followed by an opening bracket
+
+  makeT(S_URL_NON_ACCEPTING, OPENBRACE, S_URL_OPENBRACE);
+  makeT(S_URL_NON_ACCEPTING, OPENBRACKET, S_URL_OPENBRACKET);
+  makeT(S_URL_NON_ACCEPTING, OPENANGLEBRACKET, S_URL_OPENANGLEBRACKET);
+  makeT(S_URL_NON_ACCEPTING, OPENPAREN, S_URL_OPENPAREN); // Closing bracket component. This character WILL be included in the URL
+
+  makeT(S_URL_OPENBRACE, CLOSEBRACE, S_URL);
+  makeT(S_URL_OPENBRACKET, CLOSEBRACKET, S_URL);
+  makeT(S_URL_OPENANGLEBRACKET, CLOSEANGLEBRACKET, S_URL);
+  makeT(S_URL_OPENPAREN, CLOSEPAREN, S_URL);
+  makeT(S_URL_OPENBRACE_Q, CLOSEBRACE, S_URL);
+  makeT(S_URL_OPENBRACKET_Q, CLOSEBRACKET, S_URL);
+  makeT(S_URL_OPENANGLEBRACKET_Q, CLOSEANGLEBRACKET, S_URL);
+  makeT(S_URL_OPENPAREN_Q, CLOSEPAREN, S_URL);
+  makeT(S_URL_OPENBRACE_SYMS, CLOSEBRACE, S_URL);
+  makeT(S_URL_OPENBRACKET_SYMS, CLOSEBRACKET, S_URL);
+  makeT(S_URL_OPENANGLEBRACKET_SYMS, CLOSEANGLEBRACKET, S_URL);
+  makeT(S_URL_OPENPAREN_SYMS, CLOSEPAREN, S_URL); // URL that beings with an opening bracket, followed by a symbols.
+  // Note that the final state can still be `S_URL_OPENBRACE_Q` (if the URL only
+  // has a single opening bracket for some reason).
+
+  makeMultiT(S_URL_OPENBRACE, qsAccepting, S_URL_OPENBRACE_Q);
+  makeMultiT(S_URL_OPENBRACKET, qsAccepting, S_URL_OPENBRACKET_Q);
+  makeMultiT(S_URL_OPENANGLEBRACKET, qsAccepting, S_URL_OPENANGLEBRACKET_Q);
+  makeMultiT(S_URL_OPENPAREN, qsAccepting, S_URL_OPENPAREN_Q);
+  makeMultiT(S_URL_OPENBRACE, qsNonAccepting, S_URL_OPENBRACE_SYMS);
+  makeMultiT(S_URL_OPENBRACKET, qsNonAccepting, S_URL_OPENBRACKET_SYMS);
+  makeMultiT(S_URL_OPENANGLEBRACKET, qsNonAccepting, S_URL_OPENANGLEBRACKET_SYMS);
+  makeMultiT(S_URL_OPENPAREN, qsNonAccepting, S_URL_OPENPAREN_SYMS); // URL that begins with an opening bracket, followed by some symbols
+
+  makeMultiT(S_URL_OPENBRACE_Q, qsAccepting, S_URL_OPENBRACE_Q);
+  makeMultiT(S_URL_OPENBRACKET_Q, qsAccepting, S_URL_OPENBRACKET_Q);
+  makeMultiT(S_URL_OPENANGLEBRACKET_Q, qsAccepting, S_URL_OPENANGLEBRACKET_Q);
+  makeMultiT(S_URL_OPENPAREN_Q, qsAccepting, S_URL_OPENPAREN_Q);
+  makeMultiT(S_URL_OPENBRACE_Q, qsNonAccepting, S_URL_OPENBRACE_Q);
+  makeMultiT(S_URL_OPENBRACKET_Q, qsNonAccepting, S_URL_OPENBRACKET_Q);
+  makeMultiT(S_URL_OPENANGLEBRACKET_Q, qsNonAccepting, S_URL_OPENANGLEBRACKET_Q);
+  makeMultiT(S_URL_OPENPAREN_Q, qsNonAccepting, S_URL_OPENPAREN_Q);
+  makeMultiT(S_URL_OPENBRACE_SYMS, qsAccepting, S_URL_OPENBRACE_Q);
+  makeMultiT(S_URL_OPENBRACKET_SYMS, qsAccepting, S_URL_OPENBRACKET_Q);
+  makeMultiT(S_URL_OPENANGLEBRACKET_SYMS, qsAccepting, S_URL_OPENANGLEBRACKET_Q);
+  makeMultiT(S_URL_OPENPAREN_SYMS, qsAccepting, S_URL_OPENPAREN_Q);
+  makeMultiT(S_URL_OPENBRACE_SYMS, qsNonAccepting, S_URL_OPENBRACE_SYMS);
+  makeMultiT(S_URL_OPENBRACKET_SYMS, qsNonAccepting, S_URL_OPENBRACKET_SYMS);
+  makeMultiT(S_URL_OPENANGLEBRACKET_SYMS, qsNonAccepting, S_URL_OPENANGLEBRACKET_SYMS);
+  makeMultiT(S_URL_OPENPAREN_SYMS, qsNonAccepting, S_URL_OPENPAREN_SYMS); // Account for the query string
+
+  makeMultiT(S_URL, qsAccepting, S_URL);
+  makeMultiT(S_URL_NON_ACCEPTING, qsAccepting, S_URL);
+  makeMultiT(S_URL, qsNonAccepting, S_URL_NON_ACCEPTING);
+  makeMultiT(S_URL_NON_ACCEPTING, qsNonAccepting, S_URL_NON_ACCEPTING); // Email address-specific state definitions
+  // Note: We are not allowing '/' in email addresses since this would interfere
+  // with real URLs
+  // For addresses with the mailto prefix
+  // 'mailto:' followed by anything sane is a valid email
+
+  makeT(S_MAILTO, TLD, S_MAILTO_EMAIL);
+  makeT(S_MAILTO, DOMAIN, S_MAILTO_EMAIL);
+  makeT(S_MAILTO, NUM, S_MAILTO_EMAIL);
+  makeT(S_MAILTO, LOCALHOST, S_MAILTO_EMAIL); // Greedily get more potential valid email values
+
+  makeMultiT(S_MAILTO_EMAIL, qsAccepting, S_MAILTO_EMAIL);
+  makeMultiT(S_MAILTO_EMAIL, qsNonAccepting, S_MAILTO_EMAIL_NON_ACCEPTING);
+  makeMultiT(S_MAILTO_EMAIL_NON_ACCEPTING, qsAccepting, S_MAILTO_EMAIL);
+  makeMultiT(S_MAILTO_EMAIL_NON_ACCEPTING, qsNonAccepting, S_MAILTO_EMAIL_NON_ACCEPTING); // For addresses without the mailto prefix
+  // Tokens allowed in the localpart of the email
+
+  var localpartAccepting = [AMPERSAND, APOSTROPHE, ASTERISK, BACKSLASH, BACKTICK, CARET, CLOSEBRACE, DOLLAR, DOMAIN, EQUALS, HYPHEN, NUM, OPENBRACE, PERCENT, PIPE, PLUS, POUND, QUERY, SLASH, SYM, TILDE, TLD, UNDERSCORE]; // Some of the tokens in `localpartAccepting` are already accounted for here and
+  // will not be overwritten (don't worry)
+
+  makeMultiT(S_DOMAIN, localpartAccepting, S_LOCALPART);
+  makeT(S_DOMAIN, AT, S_LOCALPART_AT);
+  makeMultiT(S_TLD, localpartAccepting, S_LOCALPART);
+  makeT(S_TLD, AT, S_LOCALPART_AT);
+  makeMultiT(S_DOMAIN_DOT, localpartAccepting, S_LOCALPART); // Now in localpart of address
+  // TODO: IP addresses and what if the email starts with numbers?
+
+  makeMultiT(S_LOCALPART, localpartAccepting, S_LOCALPART);
+  makeT(S_LOCALPART, AT, S_LOCALPART_AT); // close to an email address now
+
+  makeT(S_LOCALPART, DOT, S_LOCALPART_DOT);
+  makeMultiT(S_LOCALPART_DOT, localpartAccepting, S_LOCALPART);
+  makeT(S_LOCALPART_AT, TLD, S_EMAIL_DOMAIN);
+  makeT(S_LOCALPART_AT, DOMAIN, S_EMAIL_DOMAIN);
+  makeT(S_LOCALPART_AT, NUM, S_EMAIL_DOMAIN);
+  makeT(S_LOCALPART_AT, LOCALHOST, S_EMAIL); // States following `@` defined above
+
+  return S_START;
+}
+/**
+ * Run the parser state machine on a list of scanned string-based tokens to
+ * create a list of multi tokens, each of which represents a URL, email address,
+ * plain text, etc.
+ *
+ * @param {State} start parser start state
+ * @param {string} input the original input used to generate the given tokens
+ * @param {{t: string, v: string, s: number, e: number}[]} tokens list of scanned tokens
+ * @returns {MultiToken[]}
+ */
+
+function run(start, input, tokens) {
+  var len = tokens.length;
+  var cursor = 0;
+  var multis = [];
+  var textTokens = [];
+
+  while (cursor < len) {
+    var state = start;
+    var secondState = null;
+    var nextState = null;
+    var multiLength = 0;
+    var latestAccepting = null;
+    var sinceAccepts = -1;
+
+    while (cursor < len && !(secondState = takeT(state, tokens[cursor].t))) {
+      // Starting tokens with nowhere to jump to.
+      // Consider these to be just plain text
+      textTokens.push(tokens[cursor++]);
+    }
+
+    while (cursor < len && (nextState = secondState || takeT(state, tokens[cursor].t))) {
+      // Get the next state
+      secondState = null;
+      state = nextState; // Keep track of the latest accepting state
+
+      if (state.accepts()) {
+        sinceAccepts = 0;
+        latestAccepting = state;
+      } else if (sinceAccepts >= 0) {
+        sinceAccepts++;
+      }
+
+      cursor++;
+      multiLength++;
+    }
+
+    if (sinceAccepts < 0) {
+      // No accepting state was found, part of a regular text token
+      // Add all the tokens we looked at to the text tokens array
+      for (var i = cursor - multiLength; i < cursor; i++) {
+        textTokens.push(tokens[i]);
+      }
+    } else {
+      // Accepting state!
+      // First close off the textTokens (if available)
+      if (textTokens.length > 0) {
+        multis.push(parserCreateMultiToken(Text, input, textTokens));
+        textTokens = [];
+      } // Roll back to the latest accepting state
+
+
+      cursor -= sinceAccepts;
+      multiLength -= sinceAccepts; // Create a new multitoken
+
+      var Multi = latestAccepting.t;
+      var subtokens = tokens.slice(cursor - multiLength, cursor);
+      multis.push(parserCreateMultiToken(Multi, input, subtokens));
+    }
+  } // Finally close off the textTokens (if available)
+
+
+  if (textTokens.length > 0) {
+    multis.push(parserCreateMultiToken(Text, input, textTokens));
+  }
+
+  return multis;
+}
+/**
+ * Utility function for instantiating a new multitoken with all the relevant
+ * fields during parsing.
+ * @param {Class<MultiToken>} Multi class to instantiate
+ * @param {string} input original input string
+ * @param {{t: string, v: string, s: number, e: number}[]} tokens consecutive tokens scanned from input string
+ * @returns {MultiToken}
+ */
+
+function parserCreateMultiToken(Multi, input, tokens) {
+  var startIdx = tokens[0].s;
+  var endIdx = tokens[tokens.length - 1].e;
+  var value = input.substr(startIdx, endIdx - startIdx);
+  return new Multi(value, tokens);
 }
 
-// Collect the states generated by different protocls
-var partialProtocolFileStates = (0, _state.stateify)('file', S_START, _text.DOMAIN, _text.DOMAIN);
-var partialProtocolFtpStates = (0, _state.stateify)('ftp', S_START, _text.DOMAIN, _text.DOMAIN);
-var partialProtocolHttpStates = (0, _state.stateify)('http', S_START, _text.DOMAIN, _text.DOMAIN);
-var partialProtocolMailtoStates = (0, _state.stateify)('mailto', S_START, _text.DOMAIN, _text.DOMAIN);
+var warn = typeof console !== 'undefined' && console && console.warn || function () {}; // Side-effect initialization state
 
-// Add the states to the array of DOMAINeric states
-domainStates.push.apply(domainStates, partialProtocolFileStates);
-domainStates.push.apply(domainStates, partialProtocolFtpStates);
-domainStates.push.apply(domainStates, partialProtocolHttpStates);
-domainStates.push.apply(domainStates, partialProtocolMailtoStates);
 
-// Protocol states
-var S_PROTOCOL_FILE = partialProtocolFileStates.pop();
-var S_PROTOCOL_FTP = partialProtocolFtpStates.pop();
-var S_PROTOCOL_HTTP = partialProtocolHttpStates.pop();
-var S_MAILTO = partialProtocolMailtoStates.pop();
-var S_PROTOCOL_SECURE = makeState(_text.DOMAIN);
-var S_FULL_PROTOCOL = makeState(_text.PROTOCOL); // Full protocol ends with COLON
-var S_FULL_MAILTO = makeState(_text.MAILTO); // Mailto ends with COLON
-
-// Secure protocols (end with 's')
-S_PROTOCOL_FTP.on('s', S_PROTOCOL_SECURE).on(':', S_FULL_PROTOCOL);
-
-S_PROTOCOL_HTTP.on('s', S_PROTOCOL_SECURE).on(':', S_FULL_PROTOCOL);
-
-domainStates.push(S_PROTOCOL_SECURE);
-
-// Become protocol tokens after a COLON
-S_PROTOCOL_FILE.on(':', S_FULL_PROTOCOL);
-S_PROTOCOL_SECURE.on(':', S_FULL_PROTOCOL);
-S_MAILTO.on(':', S_FULL_MAILTO);
-
-// Localhost
-var partialLocalhostStates = (0, _state.stateify)('localhost', S_START, _text.LOCALHOST, _text.DOMAIN);
-domainStates.push.apply(domainStates, partialLocalhostStates);
-
-// Everything else
-// DOMAINs make more DOMAINs
-// Number and character transitions
-S_START.on(NUMBERS, S_NUM);
-S_NUM.on('-', S_DOMAIN_HYPHEN).on(NUMBERS, S_NUM).on(ALPHANUM, S_DOMAIN); // number becomes DOMAIN
-
-S_DOMAIN.on('-', S_DOMAIN_HYPHEN).on(ALPHANUM, S_DOMAIN);
-
-// All the generated states should have a jump to DOMAIN
-for (var _i = 0; _i < domainStates.length; _i++) {
-	domainStates[_i].on('-', S_DOMAIN_HYPHEN).on(ALPHANUM, S_DOMAIN);
-}
-
-S_DOMAIN_HYPHEN.on('-', S_DOMAIN_HYPHEN).on(NUMBERS, S_DOMAIN).on(ALPHANUM, S_DOMAIN);
-
-// Set default transition
-S_START.defaultTransition = makeState(_text.SYM);
-
-/**
-	Given a string, returns an array of TOKEN instances representing the
-	composition of that string.
-
-	@method run
-	@param {String} str Input string to scan
-	@return {Array} Array of TOKEN instances
-*/
-var run = function run(str) {
-
-	// The state machine only looks at lowercase strings.
-	// This selective `toLowerCase` is used because lowercasing the entire
-	// string causes the length and character position to vary in some in some
-	// non-English strings. This happens only on V8-based runtimes.
-	var lowerStr = str.replace(/[A-Z]/g, function (c) {
-		return c.toLowerCase();
-	});
-	var len = str.length;
-	var tokens = []; // return value
-
-	var cursor = 0;
-
-	// Tokenize the string
-	while (cursor < len) {
-		var state = S_START;
-		var nextState = null;
-		var tokenLength = 0;
-		var latestAccepting = null;
-		var sinceAccepts = -1;
-
-		while (cursor < len && (nextState = state.next(lowerStr[cursor]))) {
-			state = nextState;
-
-			// Keep track of the latest accepting state
-			if (state.accepts()) {
-				sinceAccepts = 0;
-				latestAccepting = state;
-			} else if (sinceAccepts >= 0) {
-				sinceAccepts++;
-			}
-
-			tokenLength++;
-			cursor++;
-		}
-
-		if (sinceAccepts < 0) {
-			continue;
-		} // Should never happen
-
-		// Roll back to the latest accepting state
-		cursor -= sinceAccepts;
-		tokenLength -= sinceAccepts;
-
-		// Get the class for the new token
-		var TOKEN = latestAccepting.emit(); // Current token class
-
-		// No more jumps, just make a new token
-		tokens.push(new TOKEN(str.substr(cursor - tokenLength, tokenLength)));
-	}
-
-	return tokens;
+var INIT = {
+  scanner: null,
+  parser: null,
+  pluginQueue: [],
+  customProtocols: [],
+  initialized: false
 };
+/**
+ * De-register all plugins and reset the internal state-machine. Used for
+ * testing; not required in practice.
+ * @private
+ */
 
-var start = S_START;
-exports.State = _state.CharacterState;
-exports.TOKENS = TOKENS;
-exports.run = run;
-exports.start = start;
-},{"./state":24,"./tokens/text":27}],24:[function(require,module,exports){
-'use strict';
+function reset() {
+  INIT.scanner = null;
+  INIT.parser = null;
+  INIT.pluginQueue = [];
+  INIT.customProtocols = [];
+  INIT.initialized = false;
+}
+/**
+ * Register a linkify extension plugin
+ * @param {string} name of plugin to register
+ * @param {Function} plugin function that accepts mutable linkify state
+ */
 
-exports.__esModule = true;
-exports.stateify = exports.TokenState = exports.CharacterState = undefined;
+function registerPlugin(name, plugin) {
+  for (var i = 0; i < INIT.pluginQueue.length; i++) {
+    if (name === INIT.pluginQueue[i][0]) {
+      warn("linkifyjs: plugin \"".concat(name, "\" already registered - will be overwritten"));
+      INIT.pluginQueue[i] = [name, plugin];
+      return;
+    }
+  }
 
-var _class = require('../utils/class');
+  INIT.pluginQueue.push([name, plugin]);
 
-function createStateClass() {
-	return function (tClass) {
-		this.j = [];
-		this.T = tClass || null;
-	};
+  if (INIT.initialized) {
+    warn("linkifyjs: already initialized - will not register plugin \"".concat(name, "\" until you manually call linkify.init(). To avoid this warning, please register all plugins before invoking linkify the first time."));
+  }
+}
+/**
+ * Detect URLs with the following additional protocol. Anything following
+ * "protocol:" will be considered a link.
+ * @param {string} protocol
+ */
+
+function registerCustomProtocol(protocol) {
+  if (INIT.initialized) {
+    warn("linkifyjs: already initialized - will not register custom protocol \"".concat(protocol, "\" until you manually call linkify.init(). To avoid this warning, please register all custom protocols before invoking linkify the first time."));
+  }
+
+  if (!/^[a-z-]+$/.test(protocol)) {
+    throw Error('linkifyjs: protocols containing characters other than a-z or - (hyphen) are not supported');
+  }
+
+  INIT.customProtocols.push(protocol);
+}
+/**
+ * Initialize the linkify state machine. Called automatically the first time
+ * linkify is called on a string, but may be called manually as well.
+ */
+
+function init() {
+  // Initialize state machines
+  INIT.scanner = {
+    start: init$2(INIT.customProtocols),
+    tokens: text
+  };
+  INIT.parser = {
+    start: init$1(),
+    tokens: multi
+  };
+  var utils = {
+    createTokenClass: createTokenClass
+  }; // Initialize plugins
+
+  for (var i = 0; i < INIT.pluginQueue.length; i++) {
+    INIT.pluginQueue[i][1]({
+      scanner: INIT.scanner,
+      parser: INIT.parser,
+      utils: utils
+    });
+  }
+
+  INIT.initialized = true;
+}
+/**
+	Parse a string into tokens that represent linkable and non-linkable sub-components
+	@param {string} str
+	@return {MultiToken[]} tokens
+*/
+
+function tokenize(str) {
+  if (!INIT.initialized) {
+    init();
+  }
+
+  return run(INIT.parser.start, str, run$1(INIT.scanner.start, str));
+}
+/**
+	Find a list of linkable items in the given string.
+	@param {string} str string to find links in
+	@param {string} [type] (optional) only find links of a specific type, e.g.,
+	'url' or 'email'
+*/
+
+function find(str) {
+  var type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+  var tokens = tokenize(str);
+  var filtered = [];
+
+  for (var i = 0; i < tokens.length; i++) {
+    var token = tokens[i];
+
+    if (token.isLink && (!type || token.t === type)) {
+      filtered.push(token.toObject());
+    }
+  }
+
+  return filtered;
+}
+/**
+ * Is the given string valid linkable text of some sort. Note that this does not
+ * trim the text for you.
+ *
+ * Optionally pass in a second `type` param, which is the type of link to test
+ * for.
+ *
+ * For example,
+ *
+ *     linkify.test(str, 'email');
+ *
+ * Returns `true` if str is a valid email.
+ * @param {string} str string to test for links
+ * @param {string} [type] optional specific link type to look for
+ * @returns boolean true/false
+ */
+
+function test(str) {
+  var type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+  var tokens = tokenize(str);
+  return tokens.length === 1 && tokens[0].isLink && (!type || tokens[0].t === type);
 }
 
-/**
-	A simple state machine that can emit token classes
-
-	The `j` property in this class refers to state jumps. It's a
-	multidimensional array where for each element:
-
-	* index [0] is a symbol or class of symbols to transition to.
-	* index [1] is a State instance which matches
-
-	The type of symbol will depend on the target implementation for this class.
-	In Linkify, we have a two-stage scanner. Each stage uses this state machine
-	but with a slighly different (polymorphic) implementation.
-
-	The `T` property refers to the token class.
-
-	TODO: Can the `on` and `next` methods be combined?
-
-	@class BaseState
-*/
-var BaseState = createStateClass();
-BaseState.prototype = {
-	defaultTransition: false,
-
-	/**
- 	@method constructor
- 	@param {Class} tClass Pass in the kind of token to emit if there are
- 		no jumps after this state and the state is accepting.
- */
-
-	/**
- 	On the given symbol(s), this machine should go to the given state
- 		@method on
- 	@param {Array|Mixed} symbol
- 	@param {BaseState} state Note that the type of this state should be the
- 		same as the current instance (i.e., don't pass in a different
- 		subclass)
- */
-	on: function on(symbol, state) {
-		if (symbol instanceof Array) {
-			for (var i = 0; i < symbol.length; i++) {
-				this.j.push([symbol[i], state]);
-			}
-			return this;
-		}
-		this.j.push([symbol, state]);
-		return this;
-	},
-
-
-	/**
- 	Given the next item, returns next state for that item
- 	@method next
- 	@param {Mixed} item Should be an instance of the symbols handled by
- 		this particular machine.
- 	@return {State} state Returns false if no jumps are available
- */
-	next: function next(item) {
-		for (var i = 0; i < this.j.length; i++) {
-			var jump = this.j[i];
-			var symbol = jump[0]; // Next item to check for
-			var state = jump[1]; // State to jump to if items match
-
-			// compare item with symbol
-			if (this.test(item, symbol)) {
-				return state;
-			}
-		}
-
-		// Nowhere left to jump!
-		return this.defaultTransition;
-	},
-
-
-	/**
- 	Does this state accept?
- 	`true` only of `this.T` exists
- 		@method accepts
- 	@return {Boolean}
- */
-	accepts: function accepts() {
-		return !!this.T;
-	},
-
-
-	/**
- 	Determine whether a given item "symbolizes" the symbol, where symbol is
- 	a class of items handled by this state machine.
- 		This method should be overriden in extended classes.
- 		@method test
- 	@param {Mixed} item Does this item match the given symbol?
- 	@param {Mixed} symbol
- 	@return {Boolean}
- */
-	test: function test(item, symbol) {
-		return item === symbol;
-	},
-
-
-	/**
- 	Emit the token for this State (just return it in this case)
- 	If this emits a token, this instance is an accepting state
- 	@method emit
- 	@return {Class} T
- */
-	emit: function emit() {
-		return this.T;
-	}
-};
-
-/**
-	State machine for string-based input
-
-	@class CharacterState
-	@extends BaseState
-*/
-var CharacterState = (0, _class.inherits)(BaseState, createStateClass(), {
-	/**
- 	Does the given character match the given character or regular
- 	expression?
- 		@method test
- 	@param {String} char
- 	@param {String|RegExp} charOrRegExp
- 	@return {Boolean}
- */
-	test: function test(character, charOrRegExp) {
-		return character === charOrRegExp || charOrRegExp instanceof RegExp && charOrRegExp.test(character);
-	}
-});
-
-/**
-	State machine for input in the form of TextTokens
-
-	@class TokenState
-	@extends BaseState
-*/
-var TokenState = (0, _class.inherits)(BaseState, createStateClass(), {
-
-	/**
-  * Similar to `on`, but returns the state the results in the transition from
-  * the given item
-  * @method jump
-  * @param {Mixed} item
-  * @param {Token} [token]
-  * @return state
-  */
-	jump: function jump(token) {
-		var tClass = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
-
-		var state = this.next(new token('')); // dummy temp token
-		if (state === this.defaultTransition) {
-			// Make a new state!
-			state = new this.constructor(tClass);
-			this.on(token, state);
-		} else if (tClass) {
-			state.T = tClass;
-		}
-		return state;
-	},
-
-
-	/**
- 	Is the given token an instance of the given token class?
- 		@method test
- 	@param {TextToken} token
- 	@param {Class} tokenClass
- 	@return {Boolean}
- */
-	test: function test(token, tokenClass) {
-		return token instanceof tokenClass;
-	}
-});
-
-/**
-	Given a non-empty target string, generates states (if required) for each
-	consecutive substring of characters in str starting from the beginning of
-	the string. The final state will have a special value, as specified in
-	options. All other "in between" substrings will have a default end state.
-
-	This turns the state machine into a Trie-like data structure (rather than a
-	intelligently-designed DFA).
-
-	Note that I haven't really tried these with any strings other than
-	DOMAIN.
-
-	@param {String} str
-	@param {CharacterState} start State to jump from the first character
-	@param {Class} endToken Token class to emit when the given string has been
-		matched and no more jumps exist.
-	@param {Class} defaultToken "Filler token", or which token type to emit when
-		we don't have a full match
-	@return {Array} list of newly-created states
-*/
-function stateify(str, start, endToken, defaultToken) {
-	var i = 0,
-	    len = str.length,
-	    state = start,
-	    newStates = [],
-	    nextState = void 0;
-
-	// Find the next state without a jump to the next character
-	while (i < len && (nextState = state.next(str[i]))) {
-		state = nextState;
-		i++;
-	}
-
-	if (i >= len) {
-		return [];
-	} // no new tokens were added
-
-	while (i < len - 1) {
-		nextState = new CharacterState(defaultToken);
-		newStates.push(nextState);
-		state.on(str[i], nextState);
-		state = nextState;
-		i++;
-	}
-
-	nextState = new CharacterState(endToken);
-	newStates.push(nextState);
-	state.on(str[len - 1], nextState);
-
-	return newStates;
-}
-
-exports.CharacterState = CharacterState;
-exports.TokenState = TokenState;
-exports.stateify = stateify;
-},{"../utils/class":28}],25:[function(require,module,exports){
-"use strict";
-
-exports.__esModule = true;
-function createTokenClass() {
-	return function (value) {
-		if (value) {
-			this.v = value;
-		}
-	};
-}
-
-exports.createTokenClass = createTokenClass;
-},{}],26:[function(require,module,exports){
-'use strict';
-
-exports.__esModule = true;
-exports.URL = exports.TEXT = exports.NL = exports.EMAIL = exports.MAILTOEMAIL = exports.Base = undefined;
-
-var _createTokenClass = require('./create-token-class');
-
-var _class = require('../../utils/class');
-
-var _text = require('./text');
-
-/******************************************************************************
-	Multi-Tokens
-	Tokens composed of arrays of TextTokens
-******************************************************************************/
-
-// Is the given token a valid domain token?
-// Should nums be included here?
-function isDomainToken(token) {
-	return token instanceof _text.DOMAIN || token instanceof _text.TLD;
-}
-
-/**
-	Abstract class used for manufacturing tokens of text tokens. That is rather
-	than the value for a token being a small string of text, it's value an array
-	of text tokens.
-
-	Used for grouping together URLs, emails, hashtags, and other potential
-	creations.
-
-	@class MultiToken
-	@abstract
-*/
-var MultiToken = (0, _createTokenClass.createTokenClass)();
-
-MultiToken.prototype = {
-	/**
- 	String representing the type for this token
- 	@property type
- 	@default 'TOKEN'
- */
-	type: 'token',
-
-	/**
- 	Is this multitoken a link?
- 	@property isLink
- 	@default false
- */
-	isLink: false,
-
-	/**
- 	Return the string this token represents.
- 	@method toString
- 	@return {String}
- */
-	toString: function toString() {
-		var result = [];
-		for (var i = 0; i < this.v.length; i++) {
-			result.push(this.v[i].toString());
-		}
-		return result.join('');
-	},
-
-
-	/**
- 	What should the value for this token be in the `href` HTML attribute?
- 	Returns the `.toString` value by default.
- 		@method toHref
- 	@return {String}
- */
-	toHref: function toHref() {
-		return this.toString();
-	},
-
-
-	/**
- 	Returns a hash of relevant values for this token, which includes keys
- 	* type - Kind of token ('url', 'email', etc.)
- 	* value - Original text
- 	* href - The value that should be added to the anchor tag's href
- 		attribute
- 		@method toObject
- 	@param {String} [protocol] `'http'` by default
- 	@return {Object}
- */
-	toObject: function toObject() {
-		var protocol = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 'http';
-
-		return {
-			type: this.type,
-			value: this.toString(),
-			href: this.toHref(protocol)
-		};
-	}
-};
-
-/**
-	Represents an arbitrarily mailto email address with the prefix included
-	@class MAILTO
-	@extends MultiToken
-*/
-var MAILTOEMAIL = (0, _class.inherits)(MultiToken, (0, _createTokenClass.createTokenClass)(), {
-	type: 'email',
-	isLink: true
-});
-
-/**
-	Represents a list of tokens making up a valid email address
-	@class EMAIL
-	@extends MultiToken
-*/
-var EMAIL = (0, _class.inherits)(MultiToken, (0, _createTokenClass.createTokenClass)(), {
-	type: 'email',
-	isLink: true,
-	toHref: function toHref() {
-		return 'mailto:' + this.toString();
-	}
-});
-
-/**
-	Represents some plain text
-	@class TEXT
-	@extends MultiToken
-*/
-var TEXT = (0, _class.inherits)(MultiToken, (0, _createTokenClass.createTokenClass)(), { type: 'text' });
-
-/**
-	Multi-linebreak token - represents a line break
-	@class NL
-	@extends MultiToken
-*/
-var NL = (0, _class.inherits)(MultiToken, (0, _createTokenClass.createTokenClass)(), { type: 'nl' });
-
-/**
-	Represents a list of tokens making up a valid URL
-	@class URL
-	@extends MultiToken
-*/
-var URL = (0, _class.inherits)(MultiToken, (0, _createTokenClass.createTokenClass)(), {
-	type: 'url',
-	isLink: true,
-
-	/**
- 	Lowercases relevant parts of the domain and adds the protocol if
- 	required. Note that this will not escape unsafe HTML characters in the
- 	URL.
- 		@method href
- 	@param {String} protocol
- 	@return {String}
- */
-	toHref: function toHref() {
-		var protocol = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 'http';
-
-		var hasProtocol = false;
-		var hasSlashSlash = false;
-		var tokens = this.v;
-		var result = [];
-		var i = 0;
-
-		// Make the first part of the domain lowercase
-		// Lowercase protocol
-		while (tokens[i] instanceof _text.PROTOCOL) {
-			hasProtocol = true;
-			result.push(tokens[i].toString().toLowerCase());
-			i++;
-		}
-
-		// Skip slash-slash
-		while (tokens[i] instanceof _text.SLASH) {
-			hasSlashSlash = true;
-			result.push(tokens[i].toString());
-			i++;
-		}
-
-		// Lowercase all other characters in the domain
-		while (isDomainToken(tokens[i])) {
-			result.push(tokens[i].toString().toLowerCase());
-			i++;
-		}
-
-		// Leave all other characters as they were written
-		for (; i < tokens.length; i++) {
-			result.push(tokens[i].toString());
-		}
-
-		result = result.join('');
-
-		if (!(hasProtocol || hasSlashSlash)) {
-			result = protocol + '://' + result;
-		}
-
-		return result;
-	},
-	hasProtocol: function hasProtocol() {
-		return this.v[0] instanceof _text.PROTOCOL;
-	}
-});
-
-exports.Base = MultiToken;
-exports.MAILTOEMAIL = MAILTOEMAIL;
-exports.EMAIL = EMAIL;
-exports.NL = NL;
-exports.TEXT = TEXT;
-exports.URL = URL;
-},{"../../utils/class":28,"./create-token-class":25,"./text":27}],27:[function(require,module,exports){
-'use strict';
-
-exports.__esModule = true;
-exports.AMPERSAND = exports.CLOSEPAREN = exports.CLOSEANGLEBRACKET = exports.CLOSEBRACKET = exports.CLOSEBRACE = exports.OPENPAREN = exports.OPENANGLEBRACKET = exports.OPENBRACKET = exports.OPENBRACE = exports.WS = exports.TLD = exports.SYM = exports.UNDERSCORE = exports.SLASH = exports.MAILTO = exports.PROTOCOL = exports.QUERY = exports.POUND = exports.PLUS = exports.NUM = exports.NL = exports.LOCALHOST = exports.PUNCTUATION = exports.DOT = exports.COLON = exports.AT = exports.DOMAIN = exports.Base = undefined;
-
-var _createTokenClass = require('./create-token-class');
-
-var _class = require('../../utils/class');
-
-/******************************************************************************
-	Text Tokens
-	Tokens composed of strings
-******************************************************************************/
-
-/**
-	Abstract class used for manufacturing text tokens.
-	Pass in the value this token represents
-
-	@class TextToken
-	@abstract
-*/
-var TextToken = (0, _createTokenClass.createTokenClass)();
-TextToken.prototype = {
-	toString: function toString() {
-		return this.v + '';
-	}
-};
-
-function inheritsToken(value) {
-	var props = value ? { v: value } : {};
-	return (0, _class.inherits)(TextToken, (0, _createTokenClass.createTokenClass)(), props);
-}
-
-/**
-	A valid domain token
-	@class DOMAIN
-	@extends TextToken
-*/
-var DOMAIN = inheritsToken();
-
-/**
-	@class AT
-	@extends TextToken
-*/
-var AT = inheritsToken('@');
-
-/**
-	Represents a single colon `:` character
-
-	@class COLON
-	@extends TextToken
-*/
-var COLON = inheritsToken(':');
-
-/**
-	@class DOT
-	@extends TextToken
-*/
-var DOT = inheritsToken('.');
-
-/**
-	A character class that can surround the URL, but which the URL cannot begin
-	or end with. Does not include certain English punctuation like parentheses.
-
-	@class PUNCTUATION
-	@extends TextToken
-*/
-var PUNCTUATION = inheritsToken();
-
-/**
-	The word localhost (by itself)
-	@class LOCALHOST
-	@extends TextToken
-*/
-var LOCALHOST = inheritsToken();
-
-/**
-	Newline token
-	@class NL
-	@extends TextToken
-*/
-var NL = inheritsToken('\n');
-
-/**
-	@class NUM
-	@extends TextToken
-*/
-var NUM = inheritsToken();
-
-/**
-	@class PLUS
-	@extends TextToken
-*/
-var PLUS = inheritsToken('+');
-
-/**
-	@class POUND
-	@extends TextToken
-*/
-var POUND = inheritsToken('#');
-
-/**
-	Represents a web URL protocol. Supported types include
-
-	* `http:`
-	* `https:`
-	* `ftp:`
-	* `ftps:`
-
-	@class PROTOCOL
-	@extends TextToken
-*/
-var PROTOCOL = inheritsToken();
-
-/**
-	Represents the start of the email URI protocol
-
-	@class MAILTO
-	@extends TextToken
-*/
-var MAILTO = inheritsToken('mailto:');
-
-/**
-	@class QUERY
-	@extends TextToken
-*/
-var QUERY = inheritsToken('?');
-
-/**
-	@class SLASH
-	@extends TextToken
-*/
-var SLASH = inheritsToken('/');
-
-/**
-	@class UNDERSCORE
-	@extends TextToken
-*/
-var UNDERSCORE = inheritsToken('_');
-
-/**
-	One ore more non-whitespace symbol.
-	@class SYM
-	@extends TextToken
-*/
-var SYM = inheritsToken();
-
-/**
-	@class TLD
-	@extends TextToken
-*/
-var TLD = inheritsToken();
-
-/**
-	Represents a string of consecutive whitespace characters
-
-	@class WS
-	@extends TextToken
-*/
-var WS = inheritsToken();
-
-/**
-	Opening/closing bracket classes
-*/
-
-var OPENBRACE = inheritsToken('{');
-var OPENBRACKET = inheritsToken('[');
-var OPENANGLEBRACKET = inheritsToken('<');
-var OPENPAREN = inheritsToken('(');
-var CLOSEBRACE = inheritsToken('}');
-var CLOSEBRACKET = inheritsToken(']');
-var CLOSEANGLEBRACKET = inheritsToken('>');
-var CLOSEPAREN = inheritsToken(')');
-
-var AMPERSAND = inheritsToken('&');
-
-exports.Base = TextToken;
-exports.DOMAIN = DOMAIN;
-exports.AT = AT;
-exports.COLON = COLON;
-exports.DOT = DOT;
-exports.PUNCTUATION = PUNCTUATION;
-exports.LOCALHOST = LOCALHOST;
-exports.NL = NL;
-exports.NUM = NUM;
-exports.PLUS = PLUS;
-exports.POUND = POUND;
-exports.QUERY = QUERY;
-exports.PROTOCOL = PROTOCOL;
-exports.MAILTO = MAILTO;
-exports.SLASH = SLASH;
-exports.UNDERSCORE = UNDERSCORE;
-exports.SYM = SYM;
-exports.TLD = TLD;
-exports.WS = WS;
-exports.OPENBRACE = OPENBRACE;
-exports.OPENBRACKET = OPENBRACKET;
-exports.OPENANGLEBRACKET = OPENANGLEBRACKET;
-exports.OPENPAREN = OPENPAREN;
-exports.CLOSEBRACE = CLOSEBRACE;
-exports.CLOSEBRACKET = CLOSEBRACKET;
-exports.CLOSEANGLEBRACKET = CLOSEANGLEBRACKET;
-exports.CLOSEPAREN = CLOSEPAREN;
-exports.AMPERSAND = AMPERSAND;
-},{"../../utils/class":28,"./create-token-class":25}],28:[function(require,module,exports){
-"use strict";
-
-exports.__esModule = true;
-exports.inherits = inherits;
-function inherits(parent, child) {
-	var props = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-
-	var extended = Object.create(parent.prototype);
-	for (var p in props) {
-		extended[p] = props[p];
-	}
-	extended.constructor = child;
-	child.prototype = extended;
-	return child;
-}
-},{}],29:[function(require,module,exports){
-'use strict';
-
-exports.__esModule = true;
-
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-var defaults = {
-	defaultProtocol: 'http',
-	events: null,
-	format: noop,
-	formatHref: noop,
-	nl2br: false,
-	tagName: 'a',
-	target: typeToTarget,
-	validate: true,
-	ignoreTags: [],
-	attributes: null,
-	className: 'linkified' // Deprecated value - no default class will be provided in the future
-};
-
-exports.defaults = defaults;
 exports.Options = Options;
-exports.contains = contains;
+exports.find = find;
+exports.init = init;
+exports.options = options;
+exports.registerCustomProtocol = registerCustomProtocol;
+exports.registerPlugin = registerPlugin;
+exports.reset = reset;
+exports.test = test;
+exports.tokenize = tokenize;
 
-
-function Options(opts) {
-	opts = opts || {};
-
-	this.defaultProtocol = opts.hasOwnProperty('defaultProtocol') ? opts.defaultProtocol : defaults.defaultProtocol;
-	this.events = opts.hasOwnProperty('events') ? opts.events : defaults.events;
-	this.format = opts.hasOwnProperty('format') ? opts.format : defaults.format;
-	this.formatHref = opts.hasOwnProperty('formatHref') ? opts.formatHref : defaults.formatHref;
-	this.nl2br = opts.hasOwnProperty('nl2br') ? opts.nl2br : defaults.nl2br;
-	this.tagName = opts.hasOwnProperty('tagName') ? opts.tagName : defaults.tagName;
-	this.target = opts.hasOwnProperty('target') ? opts.target : defaults.target;
-	this.validate = opts.hasOwnProperty('validate') ? opts.validate : defaults.validate;
-	this.ignoreTags = [];
-
-	// linkAttributes and linkClass is deprecated
-	this.attributes = opts.attributes || opts.linkAttributes || defaults.attributes;
-	this.className = opts.hasOwnProperty('className') ? opts.className : opts.linkClass || defaults.className;
-
-	// Make all tags names upper case
-	var ignoredTags = opts.hasOwnProperty('ignoreTags') ? opts.ignoreTags : defaults.ignoreTags;
-	for (var i = 0; i < ignoredTags.length; i++) {
-		this.ignoreTags.push(ignoredTags[i].toUpperCase());
-	}
-}
-
-Options.prototype = {
-	/**
-  * Given the token, return all options for how it should be displayed
-  */
-	resolve: function resolve(token) {
-		var href = token.toHref(this.defaultProtocol);
-		return {
-			formatted: this.get('format', token.toString(), token),
-			formattedHref: this.get('formatHref', href, token),
-			tagName: this.get('tagName', href, token),
-			className: this.get('className', href, token),
-			target: this.get('target', href, token),
-			events: this.getObject('events', href, token),
-			attributes: this.getObject('attributes', href, token)
-		};
-	},
-
-
-	/**
-  * Returns true or false based on whether a token should be displayed as a
-  * link based on the user options. By default,
-  */
-	check: function check(token) {
-		return this.get('validate', token.toString(), token);
-	},
-
-
-	// Private methods
-
-	/**
-  * Resolve an option's value based on the value of the option and the given
-  * params.
-  * @param {String} key Name of option to use
-  * @param operator will be passed to the target option if it's method
-  * @param {MultiToken} token The token from linkify.tokenize
-  */
-	get: function get(key, operator, token) {
-		var optionValue = void 0,
-		    option = this[key];
-		if (!option) {
-			return option;
-		}
-
-		switch (typeof option === 'undefined' ? 'undefined' : _typeof(option)) {
-			case 'function':
-				return option(operator, token.type);
-			case 'object':
-				optionValue = option.hasOwnProperty(token.type) ? option[token.type] : defaults[key];
-				return typeof optionValue === 'function' ? optionValue(operator, token.type) : optionValue;
-		}
-
-		return option;
-	},
-	getObject: function getObject(key, operator, token) {
-		var option = this[key];
-		return typeof option === 'function' ? option(operator, token.type) : option;
-	}
-};
-
-/**
- * Quick indexOf replacement for checking the ignoreTags option
- */
-function contains(arr, value) {
-	for (var i = 0; i < arr.length; i++) {
-		if (arr[i] === value) {
-			return true;
-		}
-	}
-	return false;
-}
-
-function noop(val) {
-	return val;
-}
-
-function typeToTarget(href, type) {
-	return type === 'url' ? '_blank' : null;
-}
-},{}],30:[function(require,module,exports){
-module.exports = require('./lib/linkify-string').default;
-
-},{"./lib/linkify-string":20}],31:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 // Top level file is just a mixin of submodules & constants
 'use strict';
 
@@ -13680,8 +15943,8 @@ module.exports = ZStream;
 
 },{}],47:[function(require,module,exports){
 (function (process){(function (){
-// .dirname, .basename, and .extname methods are extracted from Node.js v8.11.1,
-// backported and transplited with Babel, with backwards-compat fixes
+// 'path' module extracted from Node.js v8.11.1 (only the posix part)
+// transplited with Babel
 
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -13704,284 +15967,511 @@ module.exports = ZStream;
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-// resolves . and .. elements in a path array with directory names there
-// must be no slashes, empty elements, or device names (c:\) in the array
-// (so also no leading and trailing slashes - it does not distinguish
-// relative and absolute paths)
-function normalizeArray(parts, allowAboveRoot) {
-  // if the path tries to go above the root, `up` ends up > 0
-  var up = 0;
-  for (var i = parts.length - 1; i >= 0; i--) {
-    var last = parts[i];
-    if (last === '.') {
-      parts.splice(i, 1);
-    } else if (last === '..') {
-      parts.splice(i, 1);
-      up++;
-    } else if (up) {
-      parts.splice(i, 1);
-      up--;
-    }
-  }
+'use strict';
 
-  // if the path is allowed to go above the root, restore leading ..s
-  if (allowAboveRoot) {
-    for (; up--; up) {
-      parts.unshift('..');
-    }
+function assertPath(path) {
+  if (typeof path !== 'string') {
+    throw new TypeError('Path must be a string. Received ' + JSON.stringify(path));
   }
-
-  return parts;
 }
 
-// path.resolve([from ...], to)
-// posix version
-exports.resolve = function() {
-  var resolvedPath = '',
-      resolvedAbsolute = false;
-
-  for (var i = arguments.length - 1; i >= -1 && !resolvedAbsolute; i--) {
-    var path = (i >= 0) ? arguments[i] : process.cwd();
-
-    // Skip empty and invalid entries
-    if (typeof path !== 'string') {
-      throw new TypeError('Arguments to path.resolve must be strings');
-    } else if (!path) {
-      continue;
-    }
-
-    resolvedPath = path + '/' + resolvedPath;
-    resolvedAbsolute = path.charAt(0) === '/';
-  }
-
-  // At this point the path should be resolved to a full absolute path, but
-  // handle relative paths to be safe (might happen when process.cwd() fails)
-
-  // Normalize the path
-  resolvedPath = normalizeArray(filter(resolvedPath.split('/'), function(p) {
-    return !!p;
-  }), !resolvedAbsolute).join('/');
-
-  return ((resolvedAbsolute ? '/' : '') + resolvedPath) || '.';
-};
-
-// path.normalize(path)
-// posix version
-exports.normalize = function(path) {
-  var isAbsolute = exports.isAbsolute(path),
-      trailingSlash = substr(path, -1) === '/';
-
-  // Normalize the path
-  path = normalizeArray(filter(path.split('/'), function(p) {
-    return !!p;
-  }), !isAbsolute).join('/');
-
-  if (!path && !isAbsolute) {
-    path = '.';
-  }
-  if (path && trailingSlash) {
-    path += '/';
-  }
-
-  return (isAbsolute ? '/' : '') + path;
-};
-
-// posix version
-exports.isAbsolute = function(path) {
-  return path.charAt(0) === '/';
-};
-
-// posix version
-exports.join = function() {
-  var paths = Array.prototype.slice.call(arguments, 0);
-  return exports.normalize(filter(paths, function(p, index) {
-    if (typeof p !== 'string') {
-      throw new TypeError('Arguments to path.join must be strings');
-    }
-    return p;
-  }).join('/'));
-};
-
-
-// path.relative(from, to)
-// posix version
-exports.relative = function(from, to) {
-  from = exports.resolve(from).substr(1);
-  to = exports.resolve(to).substr(1);
-
-  function trim(arr) {
-    var start = 0;
-    for (; start < arr.length; start++) {
-      if (arr[start] !== '') break;
-    }
-
-    var end = arr.length - 1;
-    for (; end >= 0; end--) {
-      if (arr[end] !== '') break;
-    }
-
-    if (start > end) return [];
-    return arr.slice(start, end - start + 1);
-  }
-
-  var fromParts = trim(from.split('/'));
-  var toParts = trim(to.split('/'));
-
-  var length = Math.min(fromParts.length, toParts.length);
-  var samePartsLength = length;
-  for (var i = 0; i < length; i++) {
-    if (fromParts[i] !== toParts[i]) {
-      samePartsLength = i;
+// Resolves . and .. elements in a path with directory names
+function normalizeStringPosix(path, allowAboveRoot) {
+  var res = '';
+  var lastSegmentLength = 0;
+  var lastSlash = -1;
+  var dots = 0;
+  var code;
+  for (var i = 0; i <= path.length; ++i) {
+    if (i < path.length)
+      code = path.charCodeAt(i);
+    else if (code === 47 /*/*/)
       break;
-    }
-  }
-
-  var outputParts = [];
-  for (var i = samePartsLength; i < fromParts.length; i++) {
-    outputParts.push('..');
-  }
-
-  outputParts = outputParts.concat(toParts.slice(samePartsLength));
-
-  return outputParts.join('/');
-};
-
-exports.sep = '/';
-exports.delimiter = ':';
-
-exports.dirname = function (path) {
-  if (typeof path !== 'string') path = path + '';
-  if (path.length === 0) return '.';
-  var code = path.charCodeAt(0);
-  var hasRoot = code === 47 /*/*/;
-  var end = -1;
-  var matchedSlash = true;
-  for (var i = path.length - 1; i >= 1; --i) {
-    code = path.charCodeAt(i);
+    else
+      code = 47 /*/*/;
     if (code === 47 /*/*/) {
-        if (!matchedSlash) {
-          end = i;
-          break;
+      if (lastSlash === i - 1 || dots === 1) {
+        // NOOP
+      } else if (lastSlash !== i - 1 && dots === 2) {
+        if (res.length < 2 || lastSegmentLength !== 2 || res.charCodeAt(res.length - 1) !== 46 /*.*/ || res.charCodeAt(res.length - 2) !== 46 /*.*/) {
+          if (res.length > 2) {
+            var lastSlashIndex = res.lastIndexOf('/');
+            if (lastSlashIndex !== res.length - 1) {
+              if (lastSlashIndex === -1) {
+                res = '';
+                lastSegmentLength = 0;
+              } else {
+                res = res.slice(0, lastSlashIndex);
+                lastSegmentLength = res.length - 1 - res.lastIndexOf('/');
+              }
+              lastSlash = i;
+              dots = 0;
+              continue;
+            }
+          } else if (res.length === 2 || res.length === 1) {
+            res = '';
+            lastSegmentLength = 0;
+            lastSlash = i;
+            dots = 0;
+            continue;
+          }
+        }
+        if (allowAboveRoot) {
+          if (res.length > 0)
+            res += '/..';
+          else
+            res = '..';
+          lastSegmentLength = 2;
         }
       } else {
-      // We saw the first non-path separator
-      matchedSlash = false;
+        if (res.length > 0)
+          res += '/' + path.slice(lastSlash + 1, i);
+        else
+          res = path.slice(lastSlash + 1, i);
+        lastSegmentLength = i - lastSlash - 1;
+      }
+      lastSlash = i;
+      dots = 0;
+    } else if (code === 46 /*.*/ && dots !== -1) {
+      ++dots;
+    } else {
+      dots = -1;
     }
   }
-
-  if (end === -1) return hasRoot ? '/' : '.';
-  if (hasRoot && end === 1) {
-    // return '//';
-    // Backwards-compat fix:
-    return '/';
-  }
-  return path.slice(0, end);
-};
-
-function basename(path) {
-  if (typeof path !== 'string') path = path + '';
-
-  var start = 0;
-  var end = -1;
-  var matchedSlash = true;
-  var i;
-
-  for (i = path.length - 1; i >= 0; --i) {
-    if (path.charCodeAt(i) === 47 /*/*/) {
-        // If we reached a path separator that was not part of a set of path
-        // separators at the end of the string, stop now
-        if (!matchedSlash) {
-          start = i + 1;
-          break;
-        }
-      } else if (end === -1) {
-      // We saw the first non-path separator, mark this as the end of our
-      // path component
-      matchedSlash = false;
-      end = i + 1;
-    }
-  }
-
-  if (end === -1) return '';
-  return path.slice(start, end);
+  return res;
 }
 
-// Uses a mixed approach for backwards-compatibility, as ext behavior changed
-// in new Node.js versions, so only basename() above is backported here
-exports.basename = function (path, ext) {
-  var f = basename(path);
-  if (ext && f.substr(-1 * ext.length) === ext) {
-    f = f.substr(0, f.length - ext.length);
+function _format(sep, pathObject) {
+  var dir = pathObject.dir || pathObject.root;
+  var base = pathObject.base || (pathObject.name || '') + (pathObject.ext || '');
+  if (!dir) {
+    return base;
   }
-  return f;
-};
+  if (dir === pathObject.root) {
+    return dir + base;
+  }
+  return dir + sep + base;
+}
 
-exports.extname = function (path) {
-  if (typeof path !== 'string') path = path + '';
-  var startDot = -1;
-  var startPart = 0;
-  var end = -1;
-  var matchedSlash = true;
-  // Track the state of characters (if any) we see before our first dot and
-  // after any path separator we find
-  var preDotState = 0;
-  for (var i = path.length - 1; i >= 0; --i) {
-    var code = path.charCodeAt(i);
-    if (code === 47 /*/*/) {
-        // If we reached a path separator that was not part of a set of path
-        // separators at the end of the string, stop now
-        if (!matchedSlash) {
-          startPart = i + 1;
-          break;
-        }
+var posix = {
+  // path.resolve([from ...], to)
+  resolve: function resolve() {
+    var resolvedPath = '';
+    var resolvedAbsolute = false;
+    var cwd;
+
+    for (var i = arguments.length - 1; i >= -1 && !resolvedAbsolute; i--) {
+      var path;
+      if (i >= 0)
+        path = arguments[i];
+      else {
+        if (cwd === undefined)
+          cwd = process.cwd();
+        path = cwd;
+      }
+
+      assertPath(path);
+
+      // Skip empty entries
+      if (path.length === 0) {
         continue;
       }
-    if (end === -1) {
-      // We saw the first non-path separator, mark this as the end of our
-      // extension
-      matchedSlash = false;
-      end = i + 1;
-    }
-    if (code === 46 /*.*/) {
-        // If this is our first dot, mark it as the start of our extension
-        if (startDot === -1)
-          startDot = i;
-        else if (preDotState !== 1)
-          preDotState = 1;
-    } else if (startDot !== -1) {
-      // We saw a non-dot and non-path separator before our dot, so we should
-      // have a good chance at having a non-empty extension
-      preDotState = -1;
-    }
-  }
 
-  if (startDot === -1 || end === -1 ||
-      // We saw a non-dot character immediately before the dot
-      preDotState === 0 ||
-      // The (right-most) trimmed path component is exactly '..'
-      preDotState === 1 && startDot === end - 1 && startDot === startPart + 1) {
-    return '';
-  }
-  return path.slice(startDot, end);
+      resolvedPath = path + '/' + resolvedPath;
+      resolvedAbsolute = path.charCodeAt(0) === 47 /*/*/;
+    }
+
+    // At this point the path should be resolved to a full absolute path, but
+    // handle relative paths to be safe (might happen when process.cwd() fails)
+
+    // Normalize the path
+    resolvedPath = normalizeStringPosix(resolvedPath, !resolvedAbsolute);
+
+    if (resolvedAbsolute) {
+      if (resolvedPath.length > 0)
+        return '/' + resolvedPath;
+      else
+        return '/';
+    } else if (resolvedPath.length > 0) {
+      return resolvedPath;
+    } else {
+      return '.';
+    }
+  },
+
+  normalize: function normalize(path) {
+    assertPath(path);
+
+    if (path.length === 0) return '.';
+
+    var isAbsolute = path.charCodeAt(0) === 47 /*/*/;
+    var trailingSeparator = path.charCodeAt(path.length - 1) === 47 /*/*/;
+
+    // Normalize the path
+    path = normalizeStringPosix(path, !isAbsolute);
+
+    if (path.length === 0 && !isAbsolute) path = '.';
+    if (path.length > 0 && trailingSeparator) path += '/';
+
+    if (isAbsolute) return '/' + path;
+    return path;
+  },
+
+  isAbsolute: function isAbsolute(path) {
+    assertPath(path);
+    return path.length > 0 && path.charCodeAt(0) === 47 /*/*/;
+  },
+
+  join: function join() {
+    if (arguments.length === 0)
+      return '.';
+    var joined;
+    for (var i = 0; i < arguments.length; ++i) {
+      var arg = arguments[i];
+      assertPath(arg);
+      if (arg.length > 0) {
+        if (joined === undefined)
+          joined = arg;
+        else
+          joined += '/' + arg;
+      }
+    }
+    if (joined === undefined)
+      return '.';
+    return posix.normalize(joined);
+  },
+
+  relative: function relative(from, to) {
+    assertPath(from);
+    assertPath(to);
+
+    if (from === to) return '';
+
+    from = posix.resolve(from);
+    to = posix.resolve(to);
+
+    if (from === to) return '';
+
+    // Trim any leading backslashes
+    var fromStart = 1;
+    for (; fromStart < from.length; ++fromStart) {
+      if (from.charCodeAt(fromStart) !== 47 /*/*/)
+        break;
+    }
+    var fromEnd = from.length;
+    var fromLen = fromEnd - fromStart;
+
+    // Trim any leading backslashes
+    var toStart = 1;
+    for (; toStart < to.length; ++toStart) {
+      if (to.charCodeAt(toStart) !== 47 /*/*/)
+        break;
+    }
+    var toEnd = to.length;
+    var toLen = toEnd - toStart;
+
+    // Compare paths to find the longest common path from root
+    var length = fromLen < toLen ? fromLen : toLen;
+    var lastCommonSep = -1;
+    var i = 0;
+    for (; i <= length; ++i) {
+      if (i === length) {
+        if (toLen > length) {
+          if (to.charCodeAt(toStart + i) === 47 /*/*/) {
+            // We get here if `from` is the exact base path for `to`.
+            // For example: from='/foo/bar'; to='/foo/bar/baz'
+            return to.slice(toStart + i + 1);
+          } else if (i === 0) {
+            // We get here if `from` is the root
+            // For example: from='/'; to='/foo'
+            return to.slice(toStart + i);
+          }
+        } else if (fromLen > length) {
+          if (from.charCodeAt(fromStart + i) === 47 /*/*/) {
+            // We get here if `to` is the exact base path for `from`.
+            // For example: from='/foo/bar/baz'; to='/foo/bar'
+            lastCommonSep = i;
+          } else if (i === 0) {
+            // We get here if `to` is the root.
+            // For example: from='/foo'; to='/'
+            lastCommonSep = 0;
+          }
+        }
+        break;
+      }
+      var fromCode = from.charCodeAt(fromStart + i);
+      var toCode = to.charCodeAt(toStart + i);
+      if (fromCode !== toCode)
+        break;
+      else if (fromCode === 47 /*/*/)
+        lastCommonSep = i;
+    }
+
+    var out = '';
+    // Generate the relative path based on the path difference between `to`
+    // and `from`
+    for (i = fromStart + lastCommonSep + 1; i <= fromEnd; ++i) {
+      if (i === fromEnd || from.charCodeAt(i) === 47 /*/*/) {
+        if (out.length === 0)
+          out += '..';
+        else
+          out += '/..';
+      }
+    }
+
+    // Lastly, append the rest of the destination (`to`) path that comes after
+    // the common path parts
+    if (out.length > 0)
+      return out + to.slice(toStart + lastCommonSep);
+    else {
+      toStart += lastCommonSep;
+      if (to.charCodeAt(toStart) === 47 /*/*/)
+        ++toStart;
+      return to.slice(toStart);
+    }
+  },
+
+  _makeLong: function _makeLong(path) {
+    return path;
+  },
+
+  dirname: function dirname(path) {
+    assertPath(path);
+    if (path.length === 0) return '.';
+    var code = path.charCodeAt(0);
+    var hasRoot = code === 47 /*/*/;
+    var end = -1;
+    var matchedSlash = true;
+    for (var i = path.length - 1; i >= 1; --i) {
+      code = path.charCodeAt(i);
+      if (code === 47 /*/*/) {
+          if (!matchedSlash) {
+            end = i;
+            break;
+          }
+        } else {
+        // We saw the first non-path separator
+        matchedSlash = false;
+      }
+    }
+
+    if (end === -1) return hasRoot ? '/' : '.';
+    if (hasRoot && end === 1) return '//';
+    return path.slice(0, end);
+  },
+
+  basename: function basename(path, ext) {
+    if (ext !== undefined && typeof ext !== 'string') throw new TypeError('"ext" argument must be a string');
+    assertPath(path);
+
+    var start = 0;
+    var end = -1;
+    var matchedSlash = true;
+    var i;
+
+    if (ext !== undefined && ext.length > 0 && ext.length <= path.length) {
+      if (ext.length === path.length && ext === path) return '';
+      var extIdx = ext.length - 1;
+      var firstNonSlashEnd = -1;
+      for (i = path.length - 1; i >= 0; --i) {
+        var code = path.charCodeAt(i);
+        if (code === 47 /*/*/) {
+            // If we reached a path separator that was not part of a set of path
+            // separators at the end of the string, stop now
+            if (!matchedSlash) {
+              start = i + 1;
+              break;
+            }
+          } else {
+          if (firstNonSlashEnd === -1) {
+            // We saw the first non-path separator, remember this index in case
+            // we need it if the extension ends up not matching
+            matchedSlash = false;
+            firstNonSlashEnd = i + 1;
+          }
+          if (extIdx >= 0) {
+            // Try to match the explicit extension
+            if (code === ext.charCodeAt(extIdx)) {
+              if (--extIdx === -1) {
+                // We matched the extension, so mark this as the end of our path
+                // component
+                end = i;
+              }
+            } else {
+              // Extension does not match, so our result is the entire path
+              // component
+              extIdx = -1;
+              end = firstNonSlashEnd;
+            }
+          }
+        }
+      }
+
+      if (start === end) end = firstNonSlashEnd;else if (end === -1) end = path.length;
+      return path.slice(start, end);
+    } else {
+      for (i = path.length - 1; i >= 0; --i) {
+        if (path.charCodeAt(i) === 47 /*/*/) {
+            // If we reached a path separator that was not part of a set of path
+            // separators at the end of the string, stop now
+            if (!matchedSlash) {
+              start = i + 1;
+              break;
+            }
+          } else if (end === -1) {
+          // We saw the first non-path separator, mark this as the end of our
+          // path component
+          matchedSlash = false;
+          end = i + 1;
+        }
+      }
+
+      if (end === -1) return '';
+      return path.slice(start, end);
+    }
+  },
+
+  extname: function extname(path) {
+    assertPath(path);
+    var startDot = -1;
+    var startPart = 0;
+    var end = -1;
+    var matchedSlash = true;
+    // Track the state of characters (if any) we see before our first dot and
+    // after any path separator we find
+    var preDotState = 0;
+    for (var i = path.length - 1; i >= 0; --i) {
+      var code = path.charCodeAt(i);
+      if (code === 47 /*/*/) {
+          // If we reached a path separator that was not part of a set of path
+          // separators at the end of the string, stop now
+          if (!matchedSlash) {
+            startPart = i + 1;
+            break;
+          }
+          continue;
+        }
+      if (end === -1) {
+        // We saw the first non-path separator, mark this as the end of our
+        // extension
+        matchedSlash = false;
+        end = i + 1;
+      }
+      if (code === 46 /*.*/) {
+          // If this is our first dot, mark it as the start of our extension
+          if (startDot === -1)
+            startDot = i;
+          else if (preDotState !== 1)
+            preDotState = 1;
+      } else if (startDot !== -1) {
+        // We saw a non-dot and non-path separator before our dot, so we should
+        // have a good chance at having a non-empty extension
+        preDotState = -1;
+      }
+    }
+
+    if (startDot === -1 || end === -1 ||
+        // We saw a non-dot character immediately before the dot
+        preDotState === 0 ||
+        // The (right-most) trimmed path component is exactly '..'
+        preDotState === 1 && startDot === end - 1 && startDot === startPart + 1) {
+      return '';
+    }
+    return path.slice(startDot, end);
+  },
+
+  format: function format(pathObject) {
+    if (pathObject === null || typeof pathObject !== 'object') {
+      throw new TypeError('The "pathObject" argument must be of type Object. Received type ' + typeof pathObject);
+    }
+    return _format('/', pathObject);
+  },
+
+  parse: function parse(path) {
+    assertPath(path);
+
+    var ret = { root: '', dir: '', base: '', ext: '', name: '' };
+    if (path.length === 0) return ret;
+    var code = path.charCodeAt(0);
+    var isAbsolute = code === 47 /*/*/;
+    var start;
+    if (isAbsolute) {
+      ret.root = '/';
+      start = 1;
+    } else {
+      start = 0;
+    }
+    var startDot = -1;
+    var startPart = 0;
+    var end = -1;
+    var matchedSlash = true;
+    var i = path.length - 1;
+
+    // Track the state of characters (if any) we see before our first dot and
+    // after any path separator we find
+    var preDotState = 0;
+
+    // Get non-dir info
+    for (; i >= start; --i) {
+      code = path.charCodeAt(i);
+      if (code === 47 /*/*/) {
+          // If we reached a path separator that was not part of a set of path
+          // separators at the end of the string, stop now
+          if (!matchedSlash) {
+            startPart = i + 1;
+            break;
+          }
+          continue;
+        }
+      if (end === -1) {
+        // We saw the first non-path separator, mark this as the end of our
+        // extension
+        matchedSlash = false;
+        end = i + 1;
+      }
+      if (code === 46 /*.*/) {
+          // If this is our first dot, mark it as the start of our extension
+          if (startDot === -1) startDot = i;else if (preDotState !== 1) preDotState = 1;
+        } else if (startDot !== -1) {
+        // We saw a non-dot and non-path separator before our dot, so we should
+        // have a good chance at having a non-empty extension
+        preDotState = -1;
+      }
+    }
+
+    if (startDot === -1 || end === -1 ||
+    // We saw a non-dot character immediately before the dot
+    preDotState === 0 ||
+    // The (right-most) trimmed path component is exactly '..'
+    preDotState === 1 && startDot === end - 1 && startDot === startPart + 1) {
+      if (end !== -1) {
+        if (startPart === 0 && isAbsolute) ret.base = ret.name = path.slice(1, end);else ret.base = ret.name = path.slice(startPart, end);
+      }
+    } else {
+      if (startPart === 0 && isAbsolute) {
+        ret.name = path.slice(1, startDot);
+        ret.base = path.slice(1, end);
+      } else {
+        ret.name = path.slice(startPart, startDot);
+        ret.base = path.slice(startPart, end);
+      }
+      ret.ext = path.slice(startDot, end);
+    }
+
+    if (startPart > 0) ret.dir = path.slice(0, startPart - 1);else if (isAbsolute) ret.dir = '/';
+
+    return ret;
+  },
+
+  sep: '/',
+  delimiter: ':',
+  win32: null,
+  posix: null
 };
 
-function filter (xs, f) {
-    if (xs.filter) return xs.filter(f);
-    var res = [];
-    for (var i = 0; i < xs.length; i++) {
-        if (f(xs[i], i, xs)) res.push(xs[i]);
-    }
-    return res;
-}
+posix.posix = posix;
 
-// String.prototype.substr - negative index don't work in IE8
-var substr = 'ab'.substr(-1) === 'b'
-    ? function (str, start, len) { return str.substr(start, len) }
-    : function (str, start, len) {
-        if (start < 0) start = str.length + start;
-        return str.substr(start, len);
-    }
-;
+module.exports = posix;
 
 }).call(this)}).call(this,require('_process'))
 },{"_process":48}],48:[function(require,module,exports){

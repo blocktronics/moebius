@@ -137,7 +137,6 @@ function use_backup(value) {
     }
 }
 
-// electron.remote.getCurrentWebContents().openDevTools();
 on("new_document", (event, opts) => doc.new_document(opts));
 on("revert_to_last_save", (event, opts) => doc.open(doc.file));
 on("show_file_in_folder", (event, opts) => electron.shell.showItemInFolder(doc.file));

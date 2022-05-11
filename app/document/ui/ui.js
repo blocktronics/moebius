@@ -1,4 +1,5 @@
 const electron = require("electron");
+const remote = require("@electron/remote");
 const {on, send, send_sync, open_box} = require("../../senders");
 const doc = require("../doc");
 const palette = require("../palette");
@@ -223,18 +224,18 @@ function hide_scrollbars(value) {
 }
 
 function current_zoom_factor() {
-    return parseFloat(electron.remote.getCurrentWebContents().zoomFactor.toFixed(1));
+    return parseFloat(remote.getCurrentWebContents().zoomFactor.toFixed(1));
 }
 
 function set_zoom(factor) {
     const zoom_element = $("zoom");
-    electron.remote.getCurrentWebContents().zoomFactor = factor;
+    remote.getCurrentWebContents().zoomFactor = factor;
     zoom_element.textContent = `${Math.ceil(factor * 10) * 10}%`;
     zoom_element.classList.remove("fade");
     document.body.removeChild(zoom_element);
     document.body.appendChild(zoom_element);
     zoom_element.classList.add("fade");
-    send("update_menu_checkboxes", {actual_size: (electron.remote.getCurrentWebContents().zoomFactor == 1)});
+    send("update_menu_checkboxes", {actual_size: (remote.getCurrentWebContents().zoomFactor == 1)});
 }
 
 function zoom_in() {

@@ -1,8 +1,9 @@
 const electron = require("electron");
+const remote = require("@electron/remote");
 let saved_servers = [];
 
 function send(channel, opts) {
-    electron.ipcRenderer.send(channel, {id: electron.remote.getCurrentWindow().id, ...opts});
+    electron.ipcRenderer.send(channel, {id: remote.getCurrentWindow().id, ...opts});
 }
 
 function ok() {
@@ -12,12 +13,12 @@ function ok() {
         update("server", server);
         update("pass", pass);
         send("connect_to_server", {server, pass});
-        electron.remote.getCurrentWindow().close();
+        remote.getCurrentWindow().close();
     }
 }
 
 function cancel() {
-    electron.remote.getCurrentWindow().close();
+    remote.getCurrentWindow().close();
 }
 
 function override_submit(event) {

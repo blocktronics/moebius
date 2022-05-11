@@ -1,15 +1,16 @@
 const electron = require("electron");
+const remote = require("@electron/remote");
 
 function $(name) {
     return document.getElementById(name);
 }
 
 function send(channel, opts) {
-    electron.ipcRenderer.send(channel, {id: electron.remote.getCurrentWindow().getParentWindow().id, ...opts});
+    electron.ipcRenderer.send(channel, {id: remote.getCurrentWindow().getParentWindow().id, ...opts});
 }
 
 function send_parent(channel, opts) {
-    electron.remote.getCurrentWindow().getParentWindow().send(channel, opts);
+    remote.getCurrentWindow().getParentWindow().send(channel, opts);
     send("close_modal");
 }
 

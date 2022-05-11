@@ -1,21 +1,22 @@
 const electron = require("electron");
+const remote = require("@electron/remote");
 var save_method = '';
 var save_destroy_when_done = false;
 
 function send(channel, opts) {
-    electron.ipcRenderer.send(channel, {id: electron.remote.getCurrentWindow().id, ...opts});
+    electron.ipcRenderer.send(channel, {id: remote.getCurrentWindow().id, ...opts});
 }
 
 function ok() {
    let method = save_method;
    let destroy_when_done = save_destroy_when_done;
    let ignore_controlcharacters = true;
-   electron.remote.getCurrentWindow().getParentWindow().send('process_save', {method, destroy_when_done, ignore_controlcharacters});
-   electron.remote.getCurrentWindow().close();
+   remote.getCurrentWindow().getParentWindow().send('process_save', {method, destroy_when_done, ignore_controlcharacters});
+   remote.getCurrentWindow().close();
 }
 
 function cancel() {
-    electron.remote.getCurrentWindow().close();
+    remote.getCurrentWindow().close();
 }
 
 document.addEventListener("keydown", (event) => {
@@ -40,5 +41,3 @@ electron.ipcRenderer.on("get_save_data", (event, {method, destroy_when_done}) =>
     save_method = method;
     save_destroy_when_done = destroy_when_done;
 });
-
-//electron.remote.getCurrentWebContents().openDevTools();

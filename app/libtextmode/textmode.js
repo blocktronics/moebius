@@ -217,12 +217,9 @@ class Textmode {
 
 function resize_canvas(doc, columns, rows) {
     var client = false;
-    try { 
+    try {
         const electron = require("electron");
-        if (typeof electron == "object") {
-            const win = electron.remote.getCurrentWindow();
-            client = true;
-        }
+        client = (typeof electron == "object");
     } catch (err) {
         console.log(err);
     }
