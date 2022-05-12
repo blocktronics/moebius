@@ -1,5 +1,6 @@
 const electron = require("electron");
 const remote = require("@electron/remote");
+const png_path = remote.app.isPackaged ? `${process.resourcesPath}/png/` : "../../build/png/";
 var save_method = '';
 var save_destroy_when_done = false;
 
@@ -32,7 +33,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
     document.getElementById("cancel").addEventListener("click", event => cancel(), true);
 }, true);
 
-document.getElementById("img_cc").src=`${process.resourcesPath}/png/controlcharacters.png`;
+document.getElementById("img_cc").src=`${png_path}controlcharacters.png`;
 
 electron.ipcRenderer.on("ok", (event) => ok());
 electron.ipcRenderer.on("cancel", (event) => cancel());
