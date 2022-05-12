@@ -547,7 +547,7 @@ function encode_as_ansi(doc, save_without_sauce, {utf8 = false} = {}) {
                 }
             }
         }
-        if (i % doc.columns == 0) {
+        if (utf8 && (i % doc.columns == 0)) {
             output.push(10);
         }
         if (code == 32 && bg == 0) {
