@@ -128,6 +128,7 @@ function add_sauce_bytes({doc, data_type, file_type, bytes: file_bytes}) {
         } else {
             bytes[105] += 1 << 1;
         }
+        bytes[105] += 1 << 4;
         if (doc.font_name) add_text(bytes, 106, doc.font_name, doc.font_name.length);
     }
     if (doc.comments.length) bytes = add_comments_bytes(doc.comments, bytes);
