@@ -91,7 +91,8 @@ class ChatUI extends events.EventEmitter {
         const scroll = is_at_bottom();
         if (container) child = this.create_div({child});
         $("messages").appendChild(child);
-        if (scroll) scroll_to_bottom();
+        // if (scroll) scroll_to_bottom();
+        scroll_to_bottom();
     }
 
     create_div({classname, text, parent, child, linkify = false} = {}) {
@@ -220,7 +221,8 @@ class ChatUI extends events.EventEmitter {
             const scroll = is_at_bottom();
             const new_height = $("chat").getBoundingClientRect().bottom - event.clientY;
             set_var("chat-height", Math.max(new_height, 96));
-            if (scroll) scroll_to_bottom();
+            // if (scroll) scroll_to_bottom();
+            scroll_to_bottom();
             this.emit("update_frame");
         }
     }
