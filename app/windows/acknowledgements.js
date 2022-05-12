@@ -1,7 +1,6 @@
 const libtextmode = require("../libtextmode/libtextmode");
-const dev = require("electron-is-dev");
-const ans_path = dev ? "./build/ans/" : `${process.resourcesPath}/ans/`;
 const remote = require("@electron/remote");
+const ans_path = remote.app.isPackaged ? `${process.resourcesPath}/ans/` : "./build/ans/";
 
 document.addEventListener("keydown", (event) => {
     if (event.key == "Escape") remote.getCurrentWindow().close();
