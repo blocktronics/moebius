@@ -374,9 +374,13 @@ body.dark #statusbar > div > div {
     border: 2px solid;
     border-image: url("../img/selection_border.gif") 1 repeat;
     border-image-width: 2px;
+    animation: update-cursor 0.3s steps(1, end) infinite;
 }
 #editing_layer > canvas.selection.operation {
     border-image-source: url("../img/selection_border_operation.gif");
+}
+@keyframes update-cursor {
+    0% {border-color: black;} 50% {border-color: white;}
 }
 #reference_image {
     background-size: 100%;
