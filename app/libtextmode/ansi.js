@@ -547,10 +547,15 @@ function encode_as_ansi(doc, save_without_sauce, {utf8 = false} = {}) {
                 }
             }
         }
+        if (i % doc.columns == 0) {
+            output.push(10);
+        }
         if (code == 32 && bg == 0) {
             for (let j = i + 1; j < doc.data.length; j++) {
                 if (j % doc.columns == 0) {
-                    output.push(13, 10);
+                    if (!utf8) {
+                        output.push(13, 10);
+                    }
                     i = j - 1;
                     break;
                 }
