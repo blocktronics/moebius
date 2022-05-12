@@ -998,7 +998,7 @@ function unicode_to_cp437(unicode) {
 module.exports = {cp437_to_unicode, cp437_to_unicode_bytes, unicode_to_cp437};
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":23}],5:[function(require,module,exports){
+},{"buffer":15}],5:[function(require,module,exports){
 const {white, bright_white, get_rgba, convert_ega_to_vga, ega} = require("./palette");
 const {create_canvas} = require("./canvas");
 
@@ -2000,7 +2000,7 @@ function remove_ice_colors(doc) {
 module.exports = {Font, read_bytes, read_file, write_file, animate, render, render_split, render_at, render_insert_column, render_delete_column, render_insert_row, render_delete_row, new_document, clone_document, resize_canvas, cp437_to_unicode, cp437_to_unicode_bytes, unicode_to_cp437, render_blocks, merge_blocks, flip_code_x, flip_x, flip_y, rotate, insert_column, insert_row, delete_column, delete_row, scroll_canvas_up, scroll_canvas_down, scroll_canvas_left, scroll_canvas_right, render_scroll_canvas_up, render_scroll_canvas_down, render_scroll_canvas_left, render_scroll_canvas_right, get_data_url, ega, c64, convert_ega_to_style, compress, uncompress, get_blocks, get_all_blocks, export_as_png, export_as_apng, has_ansi_palette, has_c64_palette, encode_as_bin, encode_as_xbin, encode_as_ansi, remove_ice_colors};
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"./ansi":1,"./binary_text":2,"./canvas":3,"./encodings":4,"./font":5,"./palette":7,"./textmode":8,"./xbin":9,"buffer":23,"fs":22,"path":47,"upng-js":49}],7:[function(require,module,exports){
+},{"./ansi":1,"./binary_text":2,"./canvas":3,"./encodings":4,"./font":5,"./palette":7,"./textmode":8,"./xbin":9,"buffer":15,"fs":14,"path":38,"upng-js":40}],7:[function(require,module,exports){
 const black = {r: 0, g: 0, b: 0};
 const blue = {r: 0, g: 0, b: 42};
 const green = {r: 0, g: 42, b:   0};
@@ -2298,13 +2298,6 @@ class Textmode {
 }
 
 function resize_canvas(doc, columns, rows) {
-    var client = false;
-    try {
-        const electron = require("electron");
-        client = (typeof electron == "object");
-    } catch (err) {
-        console.log(err);
-    }
     const min_rows = Math.min(doc.rows, rows);
     const min_columns = Math.min(doc.columns, columns);
     const new_data = new Array(columns * rows);
@@ -2319,17 +2312,12 @@ function resize_canvas(doc, columns, rows) {
     doc.data = new_data;
     doc.columns = columns;
     doc.rows = rows;
-    if (client) {
-        const {send} = require("../senders");
-        $("drawing_grid").classList.add("hidden");
-        send("uncheck_all_guides");
-    }
 }
 
 module.exports = {bytes_to_blocks, bytes_to_utf8, current_date, Textmode, add_sauce_for_ans, add_sauce_for_bin, add_sauce_for_xbin, resize_canvas};
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"../senders":10,"buffer":23,"electron":24}],9:[function(require,module,exports){
+},{"buffer":15}],9:[function(require,module,exports){
 const {ega, has_c64_palette} = require("./palette");
 const {bytes_to_utf8, bytes_to_blocks, Textmode, add_sauce_for_xbin} = require("./textmode");
 const repeating = {NONE: 0, CHARACTERS: 1, ATTRIBUTES: 2, BOTH_CHARACTERS_AND_ATTRIBUTES: 3};
@@ -2444,45 +2432,6 @@ function encode_as_xbin(doc, save_without_sauce) {
 module.exports = {XBin, encode_as_xbin};
 
 },{"./binary_text":2,"./palette":7,"./textmode":8}],10:[function(require,module,exports){
-const electron = require("electron");
-const remote = require("@electron/remote");
-const path = require("path");
-const win = remote.getCurrentWindow();
-
-function on(channel, msg) {
-    return electron.ipcRenderer.on(channel, msg);
-}
-
-function send_sync(channel, opts) {
-    return electron.ipcRenderer.sendSync(channel, {id: remote.getCurrentWindow().id, ...opts});
-}
-
-function send(channel, opts) {
-    electron.ipcRenderer.send(channel, {id: remote.getCurrentWindow().id, ...opts});
-}
-
-function msg_box(message, detail, opts = {}) {
-    send("close_modal");
-    return remote.dialog.showMessageBoxSync(win, {message, detail, ...opts});
-}
-
-function open_box(opts) {
-    send("set_modal_menu");
-    const files = remote.dialog.showOpenDialogSync(win, opts);
-    send("set_doc_menu");
-    return files;
-}
-
-function save_box(default_file, ext, opts) {
-    send("set_modal_menu");
-    const file = remote.dialog.showSaveDialogSync(win, {defaultPath: `${default_file ? path.parse(default_file).name : "Untitled"}.${ext}`, ...opts});
-    send("set_doc_menu");
-    return file;
-}
-
-module.exports = {on, send_sync, send, msg_box, open_box, save_box};
-
-},{"@electron/remote":20,"electron":24,"path":47}],11:[function(require,module,exports){
 const doc = require("./web_doc");
 require("./web_canvas");
 const linkify = require("linkify-string");
@@ -2503,7 +2452,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
     if (mobile) document.body.classList.add("mobile");
 }, true);
 
-},{"./web_canvas":12,"./web_doc":13,"linkify-string":27}],12:[function(require,module,exports){
+},{"./web_canvas":11,"./web_doc":12,"linkify-string":18}],11:[function(require,module,exports){
 const doc = require("./web_doc");
 let interval, render;
 let mouse_button = false;
@@ -2639,7 +2588,7 @@ doc.on("use_9px_font", () => add(doc.render));
 doc.on("goto_row", (row_no) => goto_row(row_no));
 module.export = {update_frame};
 
-},{"./web_doc":13}],13:[function(require,module,exports){
+},{"./web_doc":12}],12:[function(require,module,exports){
 const libtextmode = require("../libtextmode/libtextmode");
 const events = require("events");
 let doc, render;
@@ -2812,689 +2761,7 @@ class TextModeDoc extends events.EventEmitter {
 
 module.exports = new TextModeDoc();
 
-},{"../libtextmode/libtextmode":6,"events":25}],14:[function(require,module,exports){
-(function (process){(function (){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.getElectronBinding = void 0;
-const getElectronBinding = (name) => {
-    if (process._linkedBinding) {
-        return process._linkedBinding('electron_common_' + name);
-    }
-    else if (process.electronBinding) {
-        return process.electronBinding(name);
-    }
-    else {
-        return null;
-    }
-};
-exports.getElectronBinding = getElectronBinding;
-
-}).call(this)}).call(this,require('_process'))
-},{"_process":48}],15:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.browserModuleNames = exports.commonModuleNames = void 0;
-const get_electron_binding_1 = require("./get-electron-binding");
-exports.commonModuleNames = [
-    'clipboard',
-    'nativeImage',
-    'shell',
-];
-exports.browserModuleNames = [
-    'app',
-    'autoUpdater',
-    'BaseWindow',
-    'BrowserView',
-    'BrowserWindow',
-    'contentTracing',
-    'crashReporter',
-    'dialog',
-    'globalShortcut',
-    'ipcMain',
-    'inAppPurchase',
-    'Menu',
-    'MenuItem',
-    'nativeTheme',
-    'net',
-    'netLog',
-    'MessageChannelMain',
-    'Notification',
-    'powerMonitor',
-    'powerSaveBlocker',
-    'protocol',
-    'safeStorage',
-    'screen',
-    'session',
-    'ShareMenu',
-    'systemPreferences',
-    'TopLevelWindow',
-    'TouchBar',
-    'Tray',
-    'View',
-    'webContents',
-    'WebContentsView',
-    'webFrameMain',
-].concat(exports.commonModuleNames);
-const features = get_electron_binding_1.getElectronBinding('features');
-if (!features || features.isDesktopCapturerEnabled()) {
-    exports.browserModuleNames.push('desktopCapturer');
-}
-if (!features || features.isViewApiEnabled()) {
-    exports.browserModuleNames.push('ImageView');
-}
-
-},{"./get-electron-binding":14}],16:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.deserialize = exports.serialize = exports.isSerializableObject = exports.isPromise = void 0;
-const electron_1 = require("electron");
-function isPromise(val) {
-    return (val &&
-        val.then &&
-        val.then instanceof Function &&
-        val.constructor &&
-        val.constructor.reject &&
-        val.constructor.reject instanceof Function &&
-        val.constructor.resolve &&
-        val.constructor.resolve instanceof Function);
-}
-exports.isPromise = isPromise;
-const serializableTypes = [
-    Boolean,
-    Number,
-    String,
-    Date,
-    Error,
-    RegExp,
-    ArrayBuffer
-];
-// https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm#Supported_types
-function isSerializableObject(value) {
-    return value === null || ArrayBuffer.isView(value) || serializableTypes.some(type => value instanceof type);
-}
-exports.isSerializableObject = isSerializableObject;
-const objectMap = function (source, mapper) {
-    const sourceEntries = Object.entries(source);
-    const targetEntries = sourceEntries.map(([key, val]) => [key, mapper(val)]);
-    return Object.fromEntries(targetEntries);
-};
-function serializeNativeImage(image) {
-    const representations = [];
-    const scaleFactors = image.getScaleFactors();
-    // Use Buffer when there's only one representation for better perf.
-    // This avoids compressing to/from PNG where it's not necessary to
-    // ensure uniqueness of dataURLs (since there's only one).
-    if (scaleFactors.length === 1) {
-        const scaleFactor = scaleFactors[0];
-        const size = image.getSize(scaleFactor);
-        const buffer = image.toBitmap({ scaleFactor });
-        representations.push({ scaleFactor, size, buffer });
-    }
-    else {
-        // Construct from dataURLs to ensure that they are not lost in creation.
-        for (const scaleFactor of scaleFactors) {
-            const size = image.getSize(scaleFactor);
-            const dataURL = image.toDataURL({ scaleFactor });
-            representations.push({ scaleFactor, size, dataURL });
-        }
-    }
-    return { __ELECTRON_SERIALIZED_NativeImage__: true, representations };
-}
-function deserializeNativeImage(value) {
-    const image = electron_1.nativeImage.createEmpty();
-    // Use Buffer when there's only one representation for better perf.
-    // This avoids compressing to/from PNG where it's not necessary to
-    // ensure uniqueness of dataURLs (since there's only one).
-    if (value.representations.length === 1) {
-        const { buffer, size, scaleFactor } = value.representations[0];
-        const { width, height } = size;
-        image.addRepresentation({ buffer, scaleFactor, width, height });
-    }
-    else {
-        // Construct from dataURLs to ensure that they are not lost in creation.
-        for (const rep of value.representations) {
-            const { dataURL, size, scaleFactor } = rep;
-            const { width, height } = size;
-            image.addRepresentation({ dataURL, scaleFactor, width, height });
-        }
-    }
-    return image;
-}
-function serialize(value) {
-    if (value && value.constructor && value.constructor.name === 'NativeImage') {
-        return serializeNativeImage(value);
-    }
-    if (Array.isArray(value)) {
-        return value.map(serialize);
-    }
-    else if (isSerializableObject(value)) {
-        return value;
-    }
-    else if (value instanceof Object) {
-        return objectMap(value, serialize);
-    }
-    else {
-        return value;
-    }
-}
-exports.serialize = serialize;
-function deserialize(value) {
-    if (value && value.__ELECTRON_SERIALIZED_NativeImage__) {
-        return deserializeNativeImage(value);
-    }
-    else if (Array.isArray(value)) {
-        return value.map(deserialize);
-    }
-    else if (isSerializableObject(value)) {
-        return value;
-    }
-    else if (value instanceof Object) {
-        return objectMap(value, deserialize);
-    }
-    else {
-        return value;
-    }
-}
-exports.deserialize = deserialize;
-
-},{"electron":24}],17:[function(require,module,exports){
-(function (global){(function (){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.CallbacksRegistry = void 0;
-class CallbacksRegistry {
-    constructor() {
-        this.nextId = 0;
-        this.callbacks = {};
-        this.callbackIds = new WeakMap();
-        this.locationInfo = new WeakMap();
-    }
-    add(callback) {
-        // The callback is already added.
-        let id = this.callbackIds.get(callback);
-        if (id != null)
-            return id;
-        id = this.nextId += 1;
-        this.callbacks[id] = callback;
-        this.callbackIds.set(callback, id);
-        // Capture the location of the function and put it in the ID string,
-        // so that release errors can be tracked down easily.
-        const regexp = /at (.*)/gi;
-        const stackString = (new Error()).stack;
-        if (!stackString)
-            return id;
-        let filenameAndLine;
-        let match;
-        while ((match = regexp.exec(stackString)) !== null) {
-            const location = match[1];
-            if (location.includes('(native)'))
-                continue;
-            if (location.includes('(<anonymous>)'))
-                continue;
-            if (location.includes('callbacks-registry.js'))
-                continue;
-            if (location.includes('remote.js'))
-                continue;
-            if (location.includes('@electron/remote/dist'))
-                continue;
-            const ref = /([^/^)]*)\)?$/gi.exec(location);
-            if (ref)
-                filenameAndLine = ref[1];
-            break;
-        }
-        this.locationInfo.set(callback, filenameAndLine);
-        return id;
-    }
-    get(id) {
-        return this.callbacks[id] || function () { };
-    }
-    getLocation(callback) {
-        return this.locationInfo.get(callback);
-    }
-    apply(id, ...args) {
-        return this.get(id).apply(global, ...args);
-    }
-    remove(id) {
-        const callback = this.callbacks[id];
-        if (callback) {
-            this.callbackIds.delete(callback);
-            delete this.callbacks[id];
-        }
-    }
-}
-exports.CallbacksRegistry = CallbacksRegistry;
-
-}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],18:[function(require,module,exports){
-(function (process){(function (){
-"use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __exportStar = (this && this.__exportStar) || function(m, exports) {
-    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-if (process.type === 'browser')
-    throw new Error(`"@electron/remote" cannot be required in the browser process. Instead require("@electron/remote/main").`);
-__exportStar(require("./remote"), exports);
-
-}).call(this)}).call(this,require('_process'))
-},{"./remote":19,"_process":48}],19:[function(require,module,exports){
-(function (process,global,Buffer){(function (){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.createFunctionWithReturnValue = exports.getGlobal = exports.getCurrentWebContents = exports.getCurrentWindow = exports.getBuiltin = void 0;
-const callbacks_registry_1 = require("./callbacks-registry");
-const type_utils_1 = require("../common/type-utils");
-const electron_1 = require("electron");
-const module_names_1 = require("../common/module-names");
-const get_electron_binding_1 = require("../common/get-electron-binding");
-const callbacksRegistry = new callbacks_registry_1.CallbacksRegistry();
-const remoteObjectCache = new Map();
-const finalizationRegistry = new FinalizationRegistry((id) => {
-    const ref = remoteObjectCache.get(id);
-    if (ref !== undefined && ref.deref() === undefined) {
-        remoteObjectCache.delete(id);
-        electron_1.ipcRenderer.send("REMOTE_BROWSER_DEREFERENCE" /* BROWSER_DEREFERENCE */, contextId, id, 0);
-    }
-});
-const electronIds = new WeakMap();
-const isReturnValue = new WeakSet();
-function getCachedRemoteObject(id) {
-    const ref = remoteObjectCache.get(id);
-    if (ref !== undefined) {
-        const deref = ref.deref();
-        if (deref !== undefined)
-            return deref;
-    }
-}
-function setCachedRemoteObject(id, value) {
-    const wr = new WeakRef(value);
-    remoteObjectCache.set(id, wr);
-    finalizationRegistry.register(value, id);
-    return value;
-}
-function getContextId() {
-    const v8Util = get_electron_binding_1.getElectronBinding('v8_util');
-    if (v8Util) {
-        return v8Util.getHiddenValue(global, 'contextId');
-    }
-    else {
-        throw new Error('Electron >=v13.0.0-beta.6 required to support sandboxed renderers');
-    }
-}
-// An unique ID that can represent current context.
-const contextId = process.contextId || getContextId();
-// Notify the main process when current context is going to be released.
-// Note that when the renderer process is destroyed, the message may not be
-// sent, we also listen to the "render-view-deleted" event in the main process
-// to guard that situation.
-process.on('exit', () => {
-    const command = "REMOTE_BROWSER_CONTEXT_RELEASE" /* BROWSER_CONTEXT_RELEASE */;
-    electron_1.ipcRenderer.send(command, contextId);
-});
-const IS_REMOTE_PROXY = Symbol('is-remote-proxy');
-// Convert the arguments object into an array of meta data.
-function wrapArgs(args, visited = new Set()) {
-    const valueToMeta = (value) => {
-        // Check for circular reference.
-        if (visited.has(value)) {
-            return {
-                type: 'value',
-                value: null
-            };
-        }
-        if (value && value.constructor && value.constructor.name === 'NativeImage') {
-            return { type: 'nativeimage', value: type_utils_1.serialize(value) };
-        }
-        else if (Array.isArray(value)) {
-            visited.add(value);
-            const meta = {
-                type: 'array',
-                value: wrapArgs(value, visited)
-            };
-            visited.delete(value);
-            return meta;
-        }
-        else if (value instanceof Buffer) {
-            return {
-                type: 'buffer',
-                value
-            };
-        }
-        else if (type_utils_1.isSerializableObject(value)) {
-            return {
-                type: 'value',
-                value
-            };
-        }
-        else if (typeof value === 'object') {
-            if (type_utils_1.isPromise(value)) {
-                return {
-                    type: 'promise',
-                    then: valueToMeta(function (onFulfilled, onRejected) {
-                        value.then(onFulfilled, onRejected);
-                    })
-                };
-            }
-            else if (electronIds.has(value)) {
-                return {
-                    type: 'remote-object',
-                    id: electronIds.get(value)
-                };
-            }
-            const meta = {
-                type: 'object',
-                name: value.constructor ? value.constructor.name : '',
-                members: []
-            };
-            visited.add(value);
-            for (const prop in value) { // eslint-disable-line guard-for-in
-                meta.members.push({
-                    name: prop,
-                    value: valueToMeta(value[prop])
-                });
-            }
-            visited.delete(value);
-            return meta;
-        }
-        else if (typeof value === 'function' && isReturnValue.has(value)) {
-            return {
-                type: 'function-with-return-value',
-                value: valueToMeta(value())
-            };
-        }
-        else if (typeof value === 'function') {
-            return {
-                type: 'function',
-                id: callbacksRegistry.add(value),
-                location: callbacksRegistry.getLocation(value),
-                length: value.length
-            };
-        }
-        else {
-            return {
-                type: 'value',
-                value
-            };
-        }
-    };
-    return args.map(valueToMeta);
-}
-// Populate object's members from descriptors.
-// The |ref| will be kept referenced by |members|.
-// This matches |getObjectMemebers| in rpc-server.
-function setObjectMembers(ref, object, metaId, members) {
-    if (!Array.isArray(members))
-        return;
-    for (const member of members) {
-        if (Object.prototype.hasOwnProperty.call(object, member.name))
-            continue;
-        const descriptor = { enumerable: member.enumerable };
-        if (member.type === 'method') {
-            const remoteMemberFunction = function (...args) {
-                let command;
-                if (this && this.constructor === remoteMemberFunction) {
-                    command = "REMOTE_BROWSER_MEMBER_CONSTRUCTOR" /* BROWSER_MEMBER_CONSTRUCTOR */;
-                }
-                else {
-                    command = "REMOTE_BROWSER_MEMBER_CALL" /* BROWSER_MEMBER_CALL */;
-                }
-                const ret = electron_1.ipcRenderer.sendSync(command, contextId, metaId, member.name, wrapArgs(args));
-                return metaToValue(ret);
-            };
-            let descriptorFunction = proxyFunctionProperties(remoteMemberFunction, metaId, member.name);
-            descriptor.get = () => {
-                descriptorFunction.ref = ref; // The member should reference its object.
-                return descriptorFunction;
-            };
-            // Enable monkey-patch the method
-            descriptor.set = (value) => {
-                descriptorFunction = value;
-                return value;
-            };
-            descriptor.configurable = true;
-        }
-        else if (member.type === 'get') {
-            descriptor.get = () => {
-                const command = "REMOTE_BROWSER_MEMBER_GET" /* BROWSER_MEMBER_GET */;
-                const meta = electron_1.ipcRenderer.sendSync(command, contextId, metaId, member.name);
-                return metaToValue(meta);
-            };
-            if (member.writable) {
-                descriptor.set = (value) => {
-                    const args = wrapArgs([value]);
-                    const command = "REMOTE_BROWSER_MEMBER_SET" /* BROWSER_MEMBER_SET */;
-                    const meta = electron_1.ipcRenderer.sendSync(command, contextId, metaId, member.name, args);
-                    if (meta != null)
-                        metaToValue(meta);
-                    return value;
-                };
-            }
-        }
-        Object.defineProperty(object, member.name, descriptor);
-    }
-}
-// Populate object's prototype from descriptor.
-// This matches |getObjectPrototype| in rpc-server.
-function setObjectPrototype(ref, object, metaId, descriptor) {
-    if (descriptor === null)
-        return;
-    const proto = {};
-    setObjectMembers(ref, proto, metaId, descriptor.members);
-    setObjectPrototype(ref, proto, metaId, descriptor.proto);
-    Object.setPrototypeOf(object, proto);
-}
-// Wrap function in Proxy for accessing remote properties
-function proxyFunctionProperties(remoteMemberFunction, metaId, name) {
-    let loaded = false;
-    // Lazily load function properties
-    const loadRemoteProperties = () => {
-        if (loaded)
-            return;
-        loaded = true;
-        const command = "REMOTE_BROWSER_MEMBER_GET" /* BROWSER_MEMBER_GET */;
-        const meta = electron_1.ipcRenderer.sendSync(command, contextId, metaId, name);
-        setObjectMembers(remoteMemberFunction, remoteMemberFunction, meta.id, meta.members);
-    };
-    return new Proxy(remoteMemberFunction, {
-        set: (target, property, value) => {
-            if (property !== 'ref')
-                loadRemoteProperties();
-            target[property] = value;
-            return true;
-        },
-        get: (target, property) => {
-            if (property === IS_REMOTE_PROXY)
-                return true;
-            if (!Object.prototype.hasOwnProperty.call(target, property))
-                loadRemoteProperties();
-            const value = target[property];
-            if (property === 'toString' && typeof value === 'function') {
-                return value.bind(target);
-            }
-            return value;
-        },
-        ownKeys: (target) => {
-            loadRemoteProperties();
-            return Object.getOwnPropertyNames(target);
-        },
-        getOwnPropertyDescriptor: (target, property) => {
-            const descriptor = Object.getOwnPropertyDescriptor(target, property);
-            if (descriptor)
-                return descriptor;
-            loadRemoteProperties();
-            return Object.getOwnPropertyDescriptor(target, property);
-        }
-    });
-}
-// Convert meta data from browser into real value.
-function metaToValue(meta) {
-    if (meta.type === 'value') {
-        return meta.value;
-    }
-    else if (meta.type === 'array') {
-        return meta.members.map((member) => metaToValue(member));
-    }
-    else if (meta.type === 'nativeimage') {
-        return type_utils_1.deserialize(meta.value);
-    }
-    else if (meta.type === 'buffer') {
-        return Buffer.from(meta.value.buffer, meta.value.byteOffset, meta.value.byteLength);
-    }
-    else if (meta.type === 'promise') {
-        return Promise.resolve({ then: metaToValue(meta.then) });
-    }
-    else if (meta.type === 'error') {
-        return metaToError(meta);
-    }
-    else if (meta.type === 'exception') {
-        if (meta.value.type === 'error') {
-            throw metaToError(meta.value);
-        }
-        else {
-            throw new Error(`Unexpected value type in exception: ${meta.value.type}`);
-        }
-    }
-    else {
-        let ret;
-        if ('id' in meta) {
-            const cached = getCachedRemoteObject(meta.id);
-            if (cached !== undefined) {
-                return cached;
-            }
-        }
-        // A shadow class to represent the remote function object.
-        if (meta.type === 'function') {
-            const remoteFunction = function (...args) {
-                let command;
-                if (this && this.constructor === remoteFunction) {
-                    command = "REMOTE_BROWSER_CONSTRUCTOR" /* BROWSER_CONSTRUCTOR */;
-                }
-                else {
-                    command = "REMOTE_BROWSER_FUNCTION_CALL" /* BROWSER_FUNCTION_CALL */;
-                }
-                const obj = electron_1.ipcRenderer.sendSync(command, contextId, meta.id, wrapArgs(args));
-                return metaToValue(obj);
-            };
-            ret = remoteFunction;
-        }
-        else {
-            ret = {};
-        }
-        setObjectMembers(ret, ret, meta.id, meta.members);
-        setObjectPrototype(ret, ret, meta.id, meta.proto);
-        if (ret.constructor && ret.constructor[IS_REMOTE_PROXY]) {
-            Object.defineProperty(ret.constructor, 'name', { value: meta.name });
-        }
-        // Track delegate obj's lifetime & tell browser to clean up when object is GCed.
-        electronIds.set(ret, meta.id);
-        setCachedRemoteObject(meta.id, ret);
-        return ret;
-    }
-}
-function metaToError(meta) {
-    const obj = meta.value;
-    for (const { name, value } of meta.members) {
-        obj[name] = metaToValue(value);
-    }
-    return obj;
-}
-function handleMessage(channel, handler) {
-    electron_1.ipcRenderer.on(channel, (event, passedContextId, id, ...args) => {
-        if (event.senderId !== 0) {
-            console.error(`Message ${channel} sent by unexpected WebContents (${event.senderId})`);
-            return;
-        }
-        if (passedContextId === contextId) {
-            handler(id, ...args);
-        }
-        else {
-            // Message sent to an un-exist context, notify the error to main process.
-            electron_1.ipcRenderer.send("REMOTE_BROWSER_WRONG_CONTEXT_ERROR" /* BROWSER_WRONG_CONTEXT_ERROR */, contextId, passedContextId, id);
-        }
-    });
-}
-const enableStacks = process.argv.includes('--enable-api-filtering-logging');
-function getCurrentStack() {
-    const target = { stack: undefined };
-    if (enableStacks) {
-        Error.captureStackTrace(target, getCurrentStack);
-    }
-    return target.stack;
-}
-// Browser calls a callback in renderer.
-handleMessage("REMOTE_RENDERER_CALLBACK" /* RENDERER_CALLBACK */, (id, args) => {
-    callbacksRegistry.apply(id, metaToValue(args));
-});
-// A callback in browser is released.
-handleMessage("REMOTE_RENDERER_RELEASE_CALLBACK" /* RENDERER_RELEASE_CALLBACK */, (id) => {
-    callbacksRegistry.remove(id);
-});
-exports.require = (module) => {
-    const command = "REMOTE_BROWSER_REQUIRE" /* BROWSER_REQUIRE */;
-    const meta = electron_1.ipcRenderer.sendSync(command, contextId, module, getCurrentStack());
-    return metaToValue(meta);
-};
-// Alias to remote.require('electron').xxx.
-function getBuiltin(module) {
-    const command = "REMOTE_BROWSER_GET_BUILTIN" /* BROWSER_GET_BUILTIN */;
-    const meta = electron_1.ipcRenderer.sendSync(command, contextId, module, getCurrentStack());
-    return metaToValue(meta);
-}
-exports.getBuiltin = getBuiltin;
-function getCurrentWindow() {
-    const command = "REMOTE_BROWSER_GET_CURRENT_WINDOW" /* BROWSER_GET_CURRENT_WINDOW */;
-    const meta = electron_1.ipcRenderer.sendSync(command, contextId, getCurrentStack());
-    return metaToValue(meta);
-}
-exports.getCurrentWindow = getCurrentWindow;
-// Get current WebContents object.
-function getCurrentWebContents() {
-    const command = "REMOTE_BROWSER_GET_CURRENT_WEB_CONTENTS" /* BROWSER_GET_CURRENT_WEB_CONTENTS */;
-    const meta = electron_1.ipcRenderer.sendSync(command, contextId, getCurrentStack());
-    return metaToValue(meta);
-}
-exports.getCurrentWebContents = getCurrentWebContents;
-// Get a global object in browser.
-function getGlobal(name) {
-    const command = "REMOTE_BROWSER_GET_GLOBAL" /* BROWSER_GET_GLOBAL */;
-    const meta = electron_1.ipcRenderer.sendSync(command, contextId, name, getCurrentStack());
-    return metaToValue(meta);
-}
-exports.getGlobal = getGlobal;
-// Get the process object in browser.
-Object.defineProperty(exports, 'process', {
-    enumerable: true,
-    get: () => exports.getGlobal('process')
-});
-// Create a function that will return the specified value when called in browser.
-function createFunctionWithReturnValue(returnValue) {
-    const func = () => returnValue;
-    isReturnValue.add(func);
-    return func;
-}
-exports.createFunctionWithReturnValue = createFunctionWithReturnValue;
-const addBuiltinProperty = (name) => {
-    Object.defineProperty(exports, name, {
-        enumerable: true,
-        get: () => exports.getBuiltin(name)
-    });
-};
-module_names_1.browserModuleNames
-    .forEach(addBuiltinProperty);
-
-}).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
-},{"../common/get-electron-binding":14,"../common/module-names":15,"../common/type-utils":16,"./callbacks-registry":17,"_process":48,"buffer":23,"electron":24}],20:[function(require,module,exports){
-module.exports = require('../dist/src/renderer')
-
-},{"../dist/src/renderer":18}],21:[function(require,module,exports){
+},{"../libtextmode/libtextmode":6,"events":16}],13:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -3646,9 +2913,9 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],22:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 
-},{}],23:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 (function (Buffer){(function (){
 /*!
  * The buffer module from node.js, for the browser.
@@ -5429,32 +4696,7 @@ function numberIsNaN (obj) {
 }
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"base64-js":21,"buffer":23,"ieee754":26}],24:[function(require,module,exports){
-(function (process,__dirname){(function (){
-const fs = require('fs');
-const path = require('path');
-
-const pathFile = path.join(__dirname, 'path.txt');
-
-function getElectronPath () {
-  let executablePath;
-  if (fs.existsSync(pathFile)) {
-    executablePath = fs.readFileSync(pathFile, 'utf-8');
-  }
-  if (process.env.ELECTRON_OVERRIDE_DIST_PATH) {
-    return path.join(process.env.ELECTRON_OVERRIDE_DIST_PATH, executablePath || 'electron');
-  }
-  if (executablePath) {
-    return path.join(__dirname, 'dist', executablePath);
-  } else {
-    throw new Error('Electron failed to install correctly, please delete node_modules/electron and try installing again');
-  }
-}
-
-module.exports = getElectronPath();
-
-}).call(this)}).call(this,require('_process'),"/node_modules/electron")
-},{"_process":48,"fs":22,"path":47}],25:[function(require,module,exports){
+},{"base64-js":13,"buffer":15,"ieee754":17}],16:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -5953,7 +5195,7 @@ function eventTargetAgnosticAddListener(emitter, name, listener, flags) {
   }
 }
 
-},{}],26:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 /*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
@@ -6040,13 +5282,13 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],27:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 module.exports = require('linkifyjs/lib/linkify-string');
 
-},{"linkifyjs/lib/linkify-string":29}],28:[function(require,module,exports){
+},{"linkifyjs/lib/linkify-string":20}],19:[function(require,module,exports){
 module.exports = require('./lib/linkify');
 
-},{"./lib/linkify":30}],29:[function(require,module,exports){
+},{"./lib/linkify":21}],20:[function(require,module,exports){
 'use strict';
 
 var linkifyjs = require('linkifyjs');
@@ -6150,7 +5392,7 @@ if (!String.prototype.linkify) {
 
 module.exports = linkifyStr;
 
-},{"linkifyjs":28}],30:[function(require,module,exports){
+},{"linkifyjs":19}],21:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', { value: true });
@@ -9125,7 +8367,7 @@ exports.reset = reset;
 exports.test = test;
 exports.tokenize = tokenize;
 
-},{}],31:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 // Top level file is just a mixin of submodules & constants
 'use strict';
 
@@ -9141,7 +8383,7 @@ assign(pako, deflate, inflate, constants);
 
 module.exports = pako;
 
-},{"./lib/deflate":32,"./lib/inflate":33,"./lib/utils/common":34,"./lib/zlib/constants":37}],32:[function(require,module,exports){
+},{"./lib/deflate":23,"./lib/inflate":24,"./lib/utils/common":25,"./lib/zlib/constants":28}],23:[function(require,module,exports){
 'use strict';
 
 
@@ -9543,7 +8785,7 @@ exports.deflate = deflate;
 exports.deflateRaw = deflateRaw;
 exports.gzip = gzip;
 
-},{"./utils/common":34,"./utils/strings":35,"./zlib/deflate":39,"./zlib/messages":44,"./zlib/zstream":46}],33:[function(require,module,exports){
+},{"./utils/common":25,"./utils/strings":26,"./zlib/deflate":30,"./zlib/messages":35,"./zlib/zstream":37}],24:[function(require,module,exports){
 'use strict';
 
 
@@ -9968,7 +9210,7 @@ exports.inflate = inflate;
 exports.inflateRaw = inflateRaw;
 exports.ungzip  = inflate;
 
-},{"./utils/common":34,"./utils/strings":35,"./zlib/constants":37,"./zlib/gzheader":40,"./zlib/inflate":42,"./zlib/messages":44,"./zlib/zstream":46}],34:[function(require,module,exports){
+},{"./utils/common":25,"./utils/strings":26,"./zlib/constants":28,"./zlib/gzheader":31,"./zlib/inflate":33,"./zlib/messages":35,"./zlib/zstream":37}],25:[function(require,module,exports){
 'use strict';
 
 
@@ -10075,7 +9317,7 @@ exports.setTyped = function (on) {
 
 exports.setTyped(TYPED_OK);
 
-},{}],35:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 // String encode/decode helpers
 'use strict';
 
@@ -10264,7 +9506,7 @@ exports.utf8border = function (buf, max) {
   return (pos + _utf8len[buf[pos]] > max) ? pos : max;
 };
 
-},{"./common":34}],36:[function(require,module,exports){
+},{"./common":25}],27:[function(require,module,exports){
 'use strict';
 
 // Note: adler32 takes 12% for level 0 and 2% for level 6.
@@ -10317,7 +9559,7 @@ function adler32(adler, buf, len, pos) {
 
 module.exports = adler32;
 
-},{}],37:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -10387,7 +9629,7 @@ module.exports = {
   //Z_NULL:                 null // Use -1 or null inline, depending on var type
 };
 
-},{}],38:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 'use strict';
 
 // Note: we can't get significant speed boost here.
@@ -10448,7 +9690,7 @@ function crc32(crc, buf, len, pos) {
 
 module.exports = crc32;
 
-},{}],39:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -12324,7 +11566,7 @@ exports.deflatePrime = deflatePrime;
 exports.deflateTune = deflateTune;
 */
 
-},{"../utils/common":34,"./adler32":36,"./crc32":38,"./messages":44,"./trees":45}],40:[function(require,module,exports){
+},{"../utils/common":25,"./adler32":27,"./crc32":29,"./messages":35,"./trees":36}],31:[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -12384,7 +11626,7 @@ function GZheader() {
 
 module.exports = GZheader;
 
-},{}],41:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -12731,7 +11973,7 @@ module.exports = function inflate_fast(strm, start) {
   return;
 };
 
-},{}],42:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -14289,7 +13531,7 @@ exports.inflateSyncPoint = inflateSyncPoint;
 exports.inflateUndermine = inflateUndermine;
 */
 
-},{"../utils/common":34,"./adler32":36,"./crc32":38,"./inffast":41,"./inftrees":43}],43:[function(require,module,exports){
+},{"../utils/common":25,"./adler32":27,"./crc32":29,"./inffast":32,"./inftrees":34}],34:[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -14634,7 +13876,7 @@ module.exports = function inflate_table(type, lens, lens_index, codes, table, ta
   return 0;
 };
 
-},{"../utils/common":34}],44:[function(require,module,exports){
+},{"../utils/common":25}],35:[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -14668,7 +13910,7 @@ module.exports = {
   '-6':   'incompatible version' /* Z_VERSION_ERROR (-6) */
 };
 
-},{}],45:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -15892,7 +15134,7 @@ exports._tr_flush_block  = _tr_flush_block;
 exports._tr_tally = _tr_tally;
 exports._tr_align = _tr_align;
 
-},{"../utils/common":34}],46:[function(require,module,exports){
+},{"../utils/common":25}],37:[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -15941,7 +15183,7 @@ function ZStream() {
 
 module.exports = ZStream;
 
-},{}],47:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 (function (process){(function (){
 // 'path' module extracted from Node.js v8.11.1 (only the posix part)
 // transplited with Babel
@@ -16474,7 +15716,7 @@ posix.posix = posix;
 module.exports = posix;
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":48}],48:[function(require,module,exports){
+},{"_process":39}],39:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -16660,7 +15902,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],49:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 (function (process){(function (){
 
 ;(function(){
@@ -17484,4 +16726,4 @@ UPNG.encode.alphaMul = function(img, roundA) {
 
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":48,"pako":31}]},{},[11]);
+},{"_process":39,"pako":22}]},{},[10]);

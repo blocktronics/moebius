@@ -701,6 +701,8 @@ class TextModeDoc extends events.EventEmitter {
         connection.on("set_canvas_size", (columns, rows) => {
             this.undo_history.reset_undos();
             libtextmode.resize_canvas(doc, columns, rows);
+            document.getElementById("drawing_grid").classList.add("hidden");
+            send("uncheck_all_guides");
             this.start_rendering();
         });
         connection.on("goto_row", (line_no) => this.emit("goto_row", line_no));
@@ -884,6 +886,8 @@ class TextModeDoc extends events.EventEmitter {
             this.undo_history.reset_undos();
         }
         libtextmode.resize_canvas(doc, columns, rows);
+        document.getElementById("drawing_grid").classList.add("hidden");
+        send("uncheck_all_guides");
         this.start_rendering();
         if (connection) connection.set_canvas_size(columns, rows);
     }
