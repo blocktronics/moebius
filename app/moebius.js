@@ -13,6 +13,8 @@ const frameless = darwin ? {frame: false, titleBarStyle: "hiddenInset"} : {frame
 let prevent_splash_screen_at_startup = false;
 let splash_screen;
 const discord = require("./discord");
+const fs = require("fs");
+const argv = require("minimist")(process.argv);
 
 function cleanup(id) {
     menu.cleanup(id);
@@ -336,8 +338,9 @@ if (darwin) {
 }
 
 electron.app.on("ready", (event) => {
-    if (!darwin && process.argv.length > 1 && require("path").parse(process.argv[0]).name != "electron") {
-        for (let i = 1; i < process.argv.length; i++) open_file(process.argv[i]);
+    const files = argv._.filter((file, index) => index > 0 && fs.existsSync(file) && fs.statSync(file).isFile());
+    if (files.length > 0) {
+        files.forEach((file) => open_file(file));
     } else {
         if (!prevent_splash_screen_at_startup) show_splash_screen();
     }
