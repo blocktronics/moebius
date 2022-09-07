@@ -28,6 +28,7 @@ function body_key_down(params) {
         if (konami_index == konami_code.length) {
             konami_index = 0;
             send("konami_code");
+            new Audio(remote.app.isPackaged ? `${ans_path}6.5.ans` : "../../build/ans/6.5.ans").play();
         }
     } else {
         konami_index = 0;
