@@ -15,7 +15,8 @@ body {
 }
 #viewport {
     float: left;
-    width: calc(100% - 300px);
+    left: 1px;
+    width: calc(100% - 302px);
     height: 100%;
     overflow: auto;
 }

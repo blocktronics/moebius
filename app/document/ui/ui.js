@@ -243,7 +243,7 @@ function zoom_in() {
 }
 
 function zoom_out() {
-    set_zoom(Math.max(current_zoom_factor() - 0.1, 0.4));
+    set_zoom(Math.max(current_zoom_factor() - 0.1, 0.5));
 }
 
 function actual_size() {
