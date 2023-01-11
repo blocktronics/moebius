@@ -175,34 +175,34 @@ class KeyboardEvent extends events.EventEmitter {
         if(this.use_numrow) {
             switch (event.code) {
                 case "Digit1":
-                    this.emit("f_key", 1);
+                    this.emit("f_key", 0);
                     return;
                 case "Digit2":
-                    this.emit("f_key", 2);
+                    this.emit("f_key", 1);
                     return;
                 case "Digit3":
-                    this.emit("f_key", 3);
+                    this.emit("f_key", 2);
                     return;
                 case "Digit4":
-                    this.emit("f_key", 4);
+                    this.emit("f_key", 3);
                     return;
                 case "Digit5":
-                    this.emit("f_key", 5);
+                    this.emit("f_key", 4);
                     return;
                 case "Digit6":
-                    this.emit("f_key", 6);
+                    this.emit("f_key", 5);
                     return;
                 case "Digit7":
-                    this.emit("f_key", 7);
+                    this.emit("f_key", 6);
                     return;
                 case "Digit8":
-                    this.emit("f_key", 8);
+                    this.emit("f_key", 7);
                     return;
                 case "Digit9":
-                    this.emit("f_key", 9);
+                    this.emit("f_key", 8);
                     return;
                 case "Digit0":
-                    this.emit("f_key", 0);
+                    this.emit("f_key", 9);
                     return;
             }
         }
