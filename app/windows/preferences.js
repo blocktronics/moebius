@@ -11,6 +11,7 @@ function prefs({nick, group, use_numpad, use_shift, chunked_undo, use_flashing_c
     $("nick").value = nick;
     $("group").value = group;
     $("use_numpad").checked = use_numpad;
+    $("use_numrow").checked = use_numrow;
     $("use_shift").checked = use_shift;
     $("chunked_undo").checked = chunked_undo;
     $("use_flashing_cursor").checked = use_flashing_cursor;
@@ -43,6 +44,10 @@ function group() {
 
 function use_numpad() {
     update("use_numpad", $("use_numpad").checked);
+}
+
+function use_numrow() {
+    update("use_numrow", $("use_numrow").checked);
 }
 
 function use_shift() {
@@ -146,6 +151,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
     $("group").addEventListener("keydown", override_submit, true);
     $("group").addEventListener("input", (event) => group(), true);
     $("use_numpad").addEventListener("change", (event) => use_numpad(), true);
+    $("use_numrow").addEventListener("change", (event) => use_numrow(), true);
     $("use_shift").addEventListener("change", (event) => use_shift(), true);
     $("chunked_undo").addEventListener("change", (event) => chunked_undo(), true);
     $("use_flashing_cursor").addEventListener("change", (event) => use_flashing_cursor(), true);
