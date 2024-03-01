@@ -83,6 +83,10 @@ function get_canvas_size(win) {
     win.setTouchBar(simple_touch_bar(win, "Resize"));
 }
 
+function get_drawgrid_size(win) {
+    win.setTouchBar(simple_touch_bar(win, "OK"));
+}
+
 function new_connection(win) {
     win.setTouchBar(simple_touch_bar(win, "Connect"));
 }
@@ -132,4 +136,4 @@ electron.ipcMain.on("show_selection_touchbar", (event, {id}) => touchbars[id].wi
 electron.ipcMain.on("show_operation_touchbar", (event, {id}) => touchbars[id].win.setTouchBar(touchbars[id].touchbar.operation));
 electron.ipcMain.on("show_brush_touchbar", (event, {id}) => touchbars[id].win.setTouchBar(touchbars[id].touchbar.brush));
 
-module.exports = {create_touch_bars, get_sauce_info, get_canvas_size, select_attribute, new_connection, splash_screen};
+module.exports = {create_touch_bars, get_sauce_info, get_canvas_size, get_drawgrid_size, select_attribute, new_connection, splash_screen};

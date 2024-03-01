@@ -61,7 +61,14 @@
             </select>
         </div>
         <div>
-            <label for="smallscale_guide">80×25 Guide Turned on by Default:</label><input type="checkbox" name="smallscale_guide" id="smallscale_guide">
+            <label for="default_guide_enabled">Enable Guide Turned on by Default:</label><input type="checkbox" name="default_guide_enabled" id="default_guide_enabled">
+        </div>
+        <div style="text-align: right;">
+            <label for="default_guide" style="display: inline;">Grid Turned On by Default:</label>
+            <div id="default_guide" style="display: inline;">
+                <input type="number" name="default_guide_columns" id="default_guide_columns" disabled> ×
+                <input type="number" name="default_guide_rows" id="default_guide_rows" disabled>
+            </div>
         </div>
         <div>
             <label for="debug">Enable Debug Menu:</label><input type="checkbox" name="debug" id="debug">

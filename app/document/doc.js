@@ -1128,6 +1128,7 @@ class TextModeDoc extends events.EventEmitter {
         on("change_font", (event, font_name) => this.font_name = font_name);
         on("get_sauce_info", (event) => send_sync("get_sauce_info", {title: doc.title, author: doc.author, group: doc.group, comments: doc.comments}));
         on("get_canvas_size", (event) => send_sync("get_canvas_size", {columns: doc.columns, rows: doc.rows}));
+        on("get_drawgrid_size", (event) => send_sync("get_drawgrid_size", {columns: Math.floor(doc.columns / 4), rows: Math.floor(doc.rows)}));
         on("set_canvas_size", (event, {columns, rows}) => this.resize(columns, rows));
         on("set_sauce_info", (event, {title, author, group, comments}) => this.set_sauce(title, author, group, comments));
         on("mirror_mode", (event, value) => this.mirror_mode = value);

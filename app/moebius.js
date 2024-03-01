@@ -183,6 +183,13 @@ electron.ipcMain.on("get_canvas_size", async (event, {id, columns, rows}) => {
     event.returnValue = true;
 });
 
+electron.ipcMain.on("get_drawgrid_size", async (event, {id, columns, rows}) => {
+    docs[id].modal = await window.new_modal("app/html/custom_drawgrid.html", {width: 300, height: 190, parent: docs[id].win, frame: false, ...get_centered_xy(id, 300, 190)}, touchbar.get_drawgrid_size);
+    if (darwin) add_darwin_window_menu_handler(id);
+    docs[id].modal.send("set_drawgrid_size", {columns, rows});
+    event.returnValue = true;
+});
+
 electron.ipcMain.on("document_changed", (event, {id}) => {
     if (!docs[id].network) {
         docs[id].edited = true;
@@ -312,6 +319,11 @@ electron.ipcMain.on("set_fkey", async (event, {id, num, fkey_index, code}) => {
 electron.ipcMain.on("ready", async (event, {id}) => {
     if (splash_screen && !splash_screen.isDestroyed()) splash_screen.close();
     if (prefs.get("smallscale_guide")) docs[id].win.send("toggle_smallscale_guide", true);
+    if (prefs.get("default_guide_enabled")) {
+        const columns = prefs.get("default_guide_columns");
+        const rows = prefs.get("default_guide_rows");
+        if (columns && rows) docs[id].win.send("toggle_drawinggrid", true, columns, rows);
+    }
 });
 
 electron.ipcMain.on("show_controlcharacters", async (event, {id, method, destroy_when_done}) => {

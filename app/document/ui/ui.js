@@ -131,20 +131,20 @@ function rescale_guide() {
     }
 }
 
-function toggle_drawinggrid(visible, columns) {
+function toggle_drawinggrid(visible, columns, rows) {
     $("guide").classList.add("hidden");
     send("uncheck_all_guides");
     if (visible) {
-        rescale_drawinggrid(columns);
+        rescale_drawinggrid(columns, rows);
         $("drawing_grid").classList.remove("hidden");
-        send("check_drawinggrid_" + columns + "x" + (columns / 2));
+        send("check_drawinggrid_" + columns + "x" + rows || (columns / 2));
     } else {
         $("drawing_grid").classList.add("hidden");
     }
 }
 
-function rescale_drawinggrid(columns) {
-    rows = Math.floor(columns / 2);
+function rescale_drawinggrid(columns, rows) {
+    rows = rows || Math.floor(columns / 2);
     width = doc.render.font.width * doc.columns;
     height = doc.render.font.height * doc.rows;
     $("drawing_grid").innerHTML = '';
@@ -171,7 +171,7 @@ on("toggle_square_guide", (event, visible) => toggle_square_guide(visible));
 on("toggle_instagram_guide", (event, visible) => toggle_instagram_guide(visible));
 on("toggle_file_id_guide", (event, visible) => toggle_file_id_guide(visible));
 on("toggle_petscii_guide", (event, visible) => toggle_petscii_guide(visible));
-on("toggle_drawinggrid", (event, visible, columns) => toggle_drawinggrid(visible, columns));
+on("toggle_drawinggrid", (event, visible, columns, rows) => toggle_drawinggrid(visible, columns, rows));
 
 doc.on("render", () => rescale_guide());
 

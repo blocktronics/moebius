@@ -7,7 +7,7 @@ function $(name) {
     return document.getElementById(name);
 }
 
-function prefs({nick, group, use_numpad, use_shift, chunked_undo, use_flashing_cursor, use_pixel_aliasing, hide_scrollbars, unsaved_changes, scroll_margin, new_document_rows, retention, smallscale_guide, debug, ignore_hdpi, discord, use_backup, backup_folder}) {
+function prefs({nick, group, use_numpad, use_shift, chunked_undo, use_flashing_cursor, use_pixel_aliasing, hide_scrollbars, unsaved_changes, scroll_margin, new_document_rows, retention, default_guide_enabled, default_guide_columns, default_guide_rows, debug, ignore_hdpi, discord, use_backup, backup_folder}) {
     $("nick").value = nick;
     $("group").value = group;
     $("use_numpad").checked = use_numpad;
@@ -20,7 +20,9 @@ function prefs({nick, group, use_numpad, use_shift, chunked_undo, use_flashing_c
     $("scroll_margin").value = scroll_margin;
     $("new_document_rows").value = new_document_rows;
     $("retention").value = retention;
-    $("smallscale_guide").checked = smallscale_guide;
+    $("default_guide_enabled").checked = default_guide_enabled;
+    $("default_guide_columns").value = default_guide_columns;
+    $("default_guide_rows").value = default_guide_rows;
     $("debug").checked = debug;
     $("ignore_hdpi").checked = ignore_hdpi;
     $("discord").checked = discord;
@@ -77,8 +79,15 @@ function new_document_rows() {
     update("new_document_rows", $("new_document_rows").value);
 }
 
-function smallscale_guide() {
-    update("smallscale_guide", $("smallscale_guide").checked);
+function default_guide_enabled() {
+    const checked = $("default_guide_enabled").checked;
+    update("default_guide_enabled", checked);
+    $("default_guide_rows").disabled = !checked;
+    $("default_guide_columns").disabled = !checked;
+}
+
+function default_guide(type) {
+    update(`default_guide_${type}`, $(`default_guide_${type}`).value);
 }
 
 function retention() {
@@ -157,7 +166,9 @@ document.addEventListener("DOMContentLoaded", (event) => {
     $("new_document_rows").addEventListener("input", (event) => new_document_rows(), true);
     $("new_document_rows").addEventListener("keydown", override_submit, true);
     $("retention").addEventListener("change", retention, true);
-    $("smallscale_guide").addEventListener("change", (event) => smallscale_guide(), true);
+    $("default_guide_enabled").addEventListener("change", (event) => default_guide_enabled(), true);
+    $("default_guide_columns").addEventListener("change", (event) => default_guide("columns"), true);
+    $("default_guide_rows").addEventListener("change", (event) => default_guide("rows"), true);
     $("debug").addEventListener("change", (event) => debug(), true);
     $("ignore_hdpi").addEventListener("change", (event) => ignore_hdpi(), true);
     $("discord").addEventListener("change", (event) => discord(), true);
