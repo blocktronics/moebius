@@ -13,7 +13,7 @@ function send_parent(channel, ...opts) {
 function ok() {
     const columns = parseInt(document.getElementById("columns").value, 10);
     const rows = parseInt(document.getElementById("rows").value, 10);
-    if (columns && columns > 0 && columns <= 3000 && rows && rows > 0 && rows <= 10000) send_parent("toggle_drawinggrid", true, columns, rows);
+    if (columns && columns > 0 && columns <= 3000 && rows && rows > 0 && rows <= 10000) send_parent("toggle_custom_drawinggrid", true, columns, rows);
 }
 
 function cancel() {

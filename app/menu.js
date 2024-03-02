@@ -267,7 +267,7 @@ function view_menu_template(win) {
                     {label: "16x8", id: "drawinggrid_16x8", click(item) {win.send("toggle_drawinggrid", item.checked, 16 );}, type: "checkbox", checked: false},
                     {label: "64x24", id: "drawinggrid_64x24", click(item) {win.send("toggle_drawinggrid", item.checked, 64, 24 );}, type: "checkbox", checked: false},
                     {type: "separator"},
-                    {label: "Custom", id: "drawinggrid_custom", click(item) {item.checked ? win.send("get_drawgrid_size"): win.send("toggle_drawinggrid", false);}, type: "checkbox", checked: false},
+                    {label: "Custom", id: "drawinggrid_custom", click(item) {win.send("toggle_custom_drawinggrid", item.checked);}, type: "checkbox", checked: false},
                 ]},
             ]},
             {type: "separator"},
@@ -609,6 +609,7 @@ electron.ipcMain.on("update_menu_checkboxes", (event, {id, insert_mode, overwrit
 
 electron.ipcMain.on("uncheck_transparent", (event, {id}) => uncheck(id, "transparent"));
 electron.ipcMain.on("uncheck_underneath", (event, {id}) => uncheck(id, "underneath"));
+electron.ipcMain.on("uncheck_drawinggrid_custom", (event, {id}) => uncheck(id, "drawinggrid_custom"));
 electron.ipcMain.on("check_underneath", (event, {id}) => check(id, "underneath"));
 electron.ipcMain.on("uncheck_over", (event, {id}) => uncheck(id, "over"));
 electron.ipcMain.on("check_over", (event, {id}) => check(id, "over"));
@@ -623,6 +624,8 @@ electron.ipcMain.on("check_drawinggrid_6x3", (event, {id}) => check(id, "drawing
 electron.ipcMain.on("check_drawinggrid_8x4", (event, {id}) => check(id, "drawinggrid_8x4"));
 electron.ipcMain.on("check_drawinggrid_12x6", (event, {id}) => check(id, "drawinggrid_12x6"));
 electron.ipcMain.on("check_drawinggrid_16x8", (event, {id}) => check(id, "drawinggrid_16x8"));
+electron.ipcMain.on("check_drawinggrid_64x24", (event, {id}) => check(id, "drawinggrid_64x24"));
+electron.ipcMain.on("check_drawinggrid_custom", (event, {id}) => check(id, "drawinggrid_custom"));
 electron.ipcMain.on("uncheck_all_guides", (event, {id}) => {
     uncheck(id, "smallscale_guide");
     uncheck(id, "square_guide");
@@ -634,6 +637,8 @@ electron.ipcMain.on("uncheck_all_guides", (event, {id}) => {
     uncheck(id, "drawinggrid_8x4");
     uncheck(id, "drawinggrid_12x6");
     uncheck(id, "drawinggrid_16x8");
+    uncheck(id, "drawinggrid_64x24");
+    uncheck(id, "drawinggrid_custom");
 });
 
 electron.ipcMain.on("enable_chat_window_toggle", (event, {id}) => {

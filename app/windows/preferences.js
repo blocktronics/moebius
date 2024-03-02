@@ -23,6 +23,8 @@ function prefs({nick, group, use_numpad, use_shift, chunked_undo, use_flashing_c
     $("default_guide_enabled").checked = default_guide_enabled;
     $("default_guide_columns").value = default_guide_columns;
     $("default_guide_rows").value = default_guide_rows;
+    $("default_guide_rows").disabled = !default_guide_enabled;
+    $("default_guide_columns").disabled = !default_guide_enabled;
     $("debug").checked = debug;
     $("ignore_hdpi").checked = ignore_hdpi;
     $("discord").checked = discord;
@@ -87,7 +89,8 @@ function default_guide_enabled() {
 }
 
 function default_guide(type) {
-    update(`default_guide_${type}`, $(`default_guide_${type}`).value);
+    const value = $(`default_guide_${type}`).value;
+    if (value && value > 0 && value <= 5000) update(`default_guide_${type}`, value);
 }
 
 function retention() {

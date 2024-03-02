@@ -137,7 +137,24 @@ function toggle_drawinggrid(visible, columns, rows) {
     if (visible) {
         rescale_drawinggrid(columns, rows);
         $("drawing_grid").classList.remove("hidden");
-        send("check_drawinggrid_" + columns + "x" + rows || (columns / 2));
+        rows = rows || (columns / 2);
+        send("check_drawinggrid_" + columns + "x" + rows);
+    } else {
+        $("drawing_grid").classList.add("hidden");
+    }
+}
+
+function toggle_custom_drawinggrid(visible, columns, rows) {
+    send("uncheck_drawinggrid_custom");
+    if (columns && rows) {
+        rescale_drawinggrid(columns, rows);
+        $("drawing_grid").classList.remove("hidden");
+        send("uncheck_all_guides");
+        send("check_drawinggrid_custom");
+        return;
+    }
+    if (visible) {
+        send("get_drawgrid_size", {columns: Math.floor(doc.columns / 2), rows: Math.floor(doc.rows / 2)});
     } else {
         $("drawing_grid").classList.add("hidden");
     }
@@ -172,6 +189,7 @@ on("toggle_instagram_guide", (event, visible) => toggle_instagram_guide(visible)
 on("toggle_file_id_guide", (event, visible) => toggle_file_id_guide(visible));
 on("toggle_petscii_guide", (event, visible) => toggle_petscii_guide(visible));
 on("toggle_drawinggrid", (event, visible, columns, rows) => toggle_drawinggrid(visible, columns, rows));
+on("toggle_custom_drawinggrid", (event, visible, columns, rows) => toggle_custom_drawinggrid(visible, columns, rows));
 
 doc.on("render", () => rescale_guide());
 
