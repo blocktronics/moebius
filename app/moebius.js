@@ -318,7 +318,6 @@ electron.ipcMain.on("set_fkey", async (event, {id, num, fkey_index, code}) => {
 
 electron.ipcMain.on("ready", async (event, {id}) => {
     if (splash_screen && !splash_screen.isDestroyed()) splash_screen.close();
-    if (prefs.get("smallscale_guide")) docs[id].win.send("toggle_smallscale_guide", true);
     if (prefs.get("default_guide_enabled")) {
         const columns = prefs.get("default_guide_columns");
         const rows = prefs.get("default_guide_rows");
