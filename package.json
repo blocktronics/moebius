@@ -21,7 +21,7 @@
   "devDependencies": {
     "browserify": "17.0",
     "electron": "28.0",
-    "electron-builder": "24.9",
+    "electron-builder": "24.13",
     "express": "4.18"
   },
   "dependencies": {
