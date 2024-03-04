@@ -259,6 +259,11 @@ class Font {
         this.cursor = coloured_background(this.width, 2, convert_ega_to_vga(bright_white));
     }
 
+    replace_cache_at(index, rgb) {
+        this.backgrounds[index] = coloured_background(this.width, this.height, rgb);
+        this.glyphs[index] = coloured_glyphs(this.canvas, rgb);
+    }
+
     draw(ctx, block, x, y, c64_background) {
         if (c64_background != undefined) {
             ctx.drawImage(this.backgrounds[c64_background], x, y);

@@ -1,5 +1,6 @@
 const doc = require("./doc");
 const libtextmode = require("../libtextmode/libtextmode");
+const pallet = require("../libtextmode/palette");
 const keyboard = require("./input/keyboard");
 const {on, send_sync} = require("../senders");
 const events = require("events");
@@ -94,6 +95,14 @@ class PaletteChooser extends events.EventEmitter {
         if (doc.connection) doc.connection.set_bg(this.bg);
     }
 
+    set_color_palette(name) {
+        const p = pallet.palettes[name];
+        for (let i = 0; i < p.length; i++) {
+            doc.update_palette(i, p[i])
+        }
+        this.update_swatches();
+    }
+
     switch_foreground_background() {
         const tmp = this.fg;
         this.fg = this.bg;
@@ -138,6 +147,7 @@ class PaletteChooser extends events.EventEmitter {
         on("previous_background_color", (event) => this.previous_background_color());
         on("next_background_color", (event) => this.next_background_color());
         on("default_color", (event) => this.default_color());
+        on("set_color_palette", (event, name) => this.set_color_palette(name));
         on("switch_foreground_background", (event) => this.switch_foreground_background());
         on("set_fg", (event, new_fg) => this.fg = new_fg);
         on("set_bg", (event, new_bg) => {

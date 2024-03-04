@@ -1,39 +1,63 @@
-const black = {r: 0, g: 0, b: 0};
-const blue = {r: 0, g: 0, b: 42};
-const green = {r: 0, g: 42, b:   0};
-const cyan = {r: 0, g: 42, b: 42};
-const red = {r: 42, g: 0, b: 0};
-const magenta = {r: 42, g: 0, b: 42};
-const yellow = {r: 42, g: 21, b: 0};
-const white = {r: 42, g: 42, b: 42};
-const bright_black = {r: 21, g: 21, b: 21};
-const bright_blue = {r: 21, g: 21, b: 63};
-const bright_green = {r: 21, g: 63, b: 21};
-const bright_cyan = {r: 21, g: 63, b: 63};
-const bright_red = {r: 63, g: 21, b: 21};
-const bright_magenta = {r: 63, g: 21, b: 63};
-const bright_yellow = {r: 63, g: 63, b: 21};
-const bright_white = {r: 63, g: 63, b: 63};
+const rgb = (r, g, b) => ({r, g, b});
 
-const c64_black = {r: 0, g: 0, b: 0};
-const c64_white = {r: 63, g: 63, b: 63};
-const c64_red = {r: 32, g: 13, b: 14};
-const c64_cyan = {r: 29, g: 51, b: 50};
-const c64_violet = {r: 35, g: 15, b: 37};
-const c64_green = {r: 21, g: 43, b: 19};
-const c64_blue = {r: 12, g: 11, b: 38};
-const c64_yellow = {r: 59, g: 60, b: 28};
-const c64_orange = {r: 35, g: 20, b: 10};
-const c64_brown = {r: 21, g: 14, b: 0};
-const c64_light_red = {r: 48, g: 27, b: 28};
-const c64_dark_grey = {r: 19, g: 19, b: 18};
-const c64_grey = {r: 31, g: 31, b: 31};
-const c64_light_green = {r: 42, g: 63, b: 39};
-const c64_light_blue = {r: 26, g: 27, b: 58};
-const c64_light_grey = {r: 44, g: 44, b: 44};
+const black = rgb(0, 0, 0);
+const blue = rgb(0, 0, 42);
+const green = rgb(0, 42, 0);
+const cyan = rgb(0, 42, 42);
+const red = rgb(42, 0, 0);
+const magenta = rgb(42, 0, 42);
+const yellow = rgb(42, 21, 0);
+const white = rgb(42, 42, 42);
+const bright_black = rgb(21, 21, 21);
+const bright_blue = rgb(21, 21, 63);
+const bright_green = rgb(21, 63, 21);
+const bright_cyan = rgb(21, 63, 63);
+const bright_red = rgb(63, 21, 21);
+const bright_magenta = rgb(63, 21, 63);
+const bright_yellow = rgb(63, 63, 21);
+const bright_white = rgb(63, 63, 63);
+
+const c64_black = rgb(0, 0, 0);
+const c64_white = rgb(63, 63, 63);
+const c64_red = rgb(32, 13, 14);
+const c64_cyan = rgb(29, 51, 50);
+const c64_violet = rgb(35, 15, 37);
+const c64_green = rgb(21, 43, 19);
+const c64_blue = rgb(12, 11, 38);
+const c64_yellow = rgb(59, 60, 28);
+const c64_orange = rgb(35, 20, 10);
+const c64_brown = rgb(21, 14, 0);
+const c64_light_red = rgb(48, 27, 28);
+const c64_dark_grey = rgb(19, 19, 18);
+const c64_grey = rgb(31, 31, 31);
+const c64_light_green = rgb(42, 63, 39);
+const c64_light_blue = rgb(26, 27, 58);
+const c64_light_grey = rgb(44, 44, 44);
+
+const zx_black = rgb(0, 0, 0)
+const zx_dark_blue = rgb(0, 0, 216)
+const zx_blue = rgb(0, 0, 255)
+const zx_dark_red = rgb(216, 0, 0)
+const zx_red = rgb(255, 0, 0)
+const zx_purple = rgb(216, 0, 216)
+const zx_magenta = rgb(255, 0, 255)
+const zx_dark_green = rgb(0, 216, 0)
+const zx_green = rgb(0, 255, 0)
+const zx_dark_cyan = rgb(0, 216, 216)
+const zx_cyan = rgb(0, 255, 255)
+const zx_dark_yellow = rgb(216, 216, 0)
+const zx_yellow = rgb(255, 255, 0)
+const zx_beige = rgb(216, 216, 216)
+const zx_white = rgb(255, 255, 255)
 
 const ega = [black, blue, green, cyan, red, magenta, yellow, white, bright_black, bright_blue, bright_green, bright_cyan, bright_red, bright_magenta, bright_yellow, bright_white];
 const c64 = [c64_black, c64_white, c64_red, c64_cyan, c64_violet, c64_green, c64_blue, c64_yellow, c64_orange, c64_brown, c64_light_red, c64_dark_grey, c64_grey, c64_light_green, c64_light_blue, c64_light_grey];
+const zx = [zx_black, zx_dark_blue, zx_blue, zx_dark_red, zx_red, zx_purple, zx_magenta, zx_dark_green, zx_green, zx_dark_cyan, zx_cyan, zx_dark_yellow, zx_yellow, zx_beige, zx_white, zx_white];
+
+const palettes = {
+    zx,
+    default: ega
+}
 
 function get_rgba(rgb) {
     return new Uint8Array([rgb.r, rgb.g, rgb.b, 255]);
@@ -73,4 +97,4 @@ function has_c64_palette(palette) {
     return true;
 }
 
-module.exports = {white, bright_white, ega, c64, get_rgba, convert_ega_to_vga, convert_ega_to_style, has_ansi_palette, has_c64_palette};
+module.exports = {white, bright_white, ega, c64, zx, palettes, get_rgba, convert_ega_to_vga, convert_ega_to_style, has_ansi_palette, has_c64_palette};

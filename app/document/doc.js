@@ -728,6 +728,7 @@ class TextModeDoc extends events.EventEmitter {
     get data() {return doc.data;}
     get c64_background() {return doc.c64_background;}
     set c64_background(value) {doc.c64_background = value;}
+    set palette(value) {doc.palette = value;}
 
     set_sauce(title, author, group, comments) {
         doc.title = title;
@@ -791,6 +792,19 @@ class TextModeDoc extends events.EventEmitter {
         if (this.mirror_mode && mirrored) {
             const opposing_x = Math.floor(doc.columns / 2) - (x - Math.ceil(doc.columns / 2)) - 1;
             this.change_data(opposing_x, y, libtextmode.flip_code_x(code), fg, bg, undefined, undefined, false);
+        }
+    }
+
+    update_palette(index, rgb) {
+        this.font.replace_cache_at(index, this.palette[index] = rgb)
+
+        for (let y = 0; y <= doc.rows - 1; y++) {
+            for (let x = 0; x <= doc.columns - 1; x++) {
+                const block = doc.data[doc.columns * y + x];
+                if (block.bg === index || block.fg === index) {
+                    libtextmode.render_at(render, x, y, block);
+                }
+            }
         }
     }
 

@@ -298,6 +298,11 @@ function colors_menu_template(win) {
             {label: "Default Color", id: "default_color", accelerator: "CmdorCtrl+D", click(item) {win.send("default_color");}},
             {label: "Switch Foreground / Background", id: "switch_foreground_background", accelerator: "Shift+CmdorCtrl+X", click(item) {win.send("switch_foreground_background");}},
             {type: "separator"},
+            {label: "Select Pallette", submenu: [
+                {label: "Default", id: "default_pallet", click(item) {win.send("toggle_default_pallet", "default");}, type: "checkbox", checked: false},
+                {label: "ZX Spectrum", id: "zx_spectrum_pallet", click(item) {win.send("set_color_palette", "zx");}, type: "checkbox", checked: false},
+            ]},
+            {type: "separator"},
             {label: "Use iCE Colors", id: "ice_colors", accelerator: "CmdorCtrl+E", click(item) {win.send("ice_colors", item.checked);}, type: "checkbox", checked: false},
             {type: "separator"},
             {label: "Remove iCE Colors as New Document", id: "remove_ice_colors", click(item) {win.send("remove_ice_colors");}},
@@ -326,7 +331,7 @@ function debug_menu_template(win) {
 
 function create_menu_template(win, chat, debug) {
     const menu_lists = [file_menu_template(win), edit_menu_template(win, chat), selection_menu_template(win, chat), colors_menu_template(win), view_menu_template(win), network_menu_template(win, chat)];
-    if (debug) menu_lists.push(debug_menu_template(win));
+    if (!debug) menu_lists.push(debug_menu_template(win));
     return menu_lists;
 }
 
